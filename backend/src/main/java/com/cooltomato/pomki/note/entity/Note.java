@@ -1,4 +1,46 @@
 package com.cooltomato.pomki.note.entity;
 
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+import com.cooltomato.pomki.member.entity.Member;
+
+@Entity
+@Table(name = "review_note")
+@Data
+
 public class Note {
+    @Id
+    @Column(name = "note_id", length = 50, nullable = false)
+    private String noteId;
+
+    // FK: member_id → member 테이블
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+    @Column(name = "note_title", length = 255)
+    private String noteTitle;
+
+    @Column(name = "note_content", columnDefinition = "LONGTEXT", nullable = false)
+    private String noteContent;
+
+    @Column(name = "ai_enhanced")
+    private Boolean aiEnhanced;
+
+    @Column(name = "original_content", columnDefinition = "LONGTEXT")
+    private String originalContent;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
+
+
 } 
