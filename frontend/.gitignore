@@ -24,5 +24,9 @@ dist-ssr
 *.sw?
 
 
-*.lh
-*.history
+.vscode/
+.lh/
+.history/
+
+.env
+
