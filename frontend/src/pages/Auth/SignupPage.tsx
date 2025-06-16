@@ -27,6 +27,7 @@ const SignupPage = () => {
         <Input  fullWidth sx={{ mb: 4 }} />
         <Typography variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>비밀번호</Typography>
         <Input  fullWidth sx={{ mb: 4 }} />
+        <FormControlLabel control={<Checkbox defaultChecked />} label="서비스 개선을 위한 피드백 요청에 참여할 수 있어요. [선택]" sx={{ mb: 4 }} />
         <Button variant="contained" color="primary" fullWidth style={{ marginBottom: 32 }}>회원가입</Button>
     </Container>
   );
