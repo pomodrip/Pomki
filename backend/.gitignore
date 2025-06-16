@@ -39,3 +39,10 @@ out/
 # env
 .env
 .env.*
+
+# environment
+application-local.yaml
+application-*.yaml
+
+# cursor
+.cursor/
