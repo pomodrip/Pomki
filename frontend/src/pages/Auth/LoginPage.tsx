@@ -1,28 +1,34 @@
 import React from "react";
 import styled from "styled-components";
 import kakaoImg from "../../assets/icons/kakao.png";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
+import { Box, Checkbox, Typography } from "@mui/material";
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Container from '@mui/material/Container';
+
 
 const KakaoButton = styled.button`
-  width: 20rem;
+  width: 100%;
   display: flex;
   align-items: center;
   background: #fee500;
   border-radius: 12px;
   border: none;
   padding: 0 24px;
-  height: 60px;
+  height: 45px;
   cursor: pointer;
   justify-content: center;
 `;
 
 const KakaoIcon = styled.img`
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   margin-right: 16px;
 `;
 
 const KakaoLabel = styled.span`
-  font-size: 20px;
+  font-size: 15px;
   font-family: system-ui, sans-serif;
   color: #000;
   opacity: 0.85;
@@ -30,14 +36,14 @@ const KakaoLabel = styled.span`
 `;
 
 const GoogleButton = styled.button`
-  width: 20rem;
+  width: 100%;
   display: flex;
   align-items: center;
   background: #fff;
   border-radius: 12px;
   border: 1px solid #dadce0;
   padding: 0 24px;
-  height: 60px;
+  height: 45px;
   cursor: pointer;
   justify-content: center;
   margin-top: 12px;
@@ -45,8 +51,8 @@ const GoogleButton = styled.button`
 `;
 
 const GoogleIconWrapper = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   margin-right: 16px;
   display: flex;
   align-items: center;
@@ -54,7 +60,7 @@ const GoogleIconWrapper = styled.div`
 `;
 
 const GoogleLabel = styled.span`
-  font-size: 20px;
+  font-size: 15px;
   font-family: system-ui, sans-serif;
   color: #3c4043;
   opacity: 0.85;
@@ -71,20 +77,72 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const LoginPage = () => (
-    <div>
-        <KakaoButton>
-            <KakaoIcon src={kakaoImg} alt="카카오 심볼" />
-            <KakaoLabel>카카오 로그인</KakaoLabel>
-        </KakaoButton>
-        <br />
-        <GoogleButton>
-            <GoogleIconWrapper>
-                <GoogleIcon />
-            </GoogleIconWrapper>
-            <GoogleLabel>구글 로그인</GoogleLabel>
-        </GoogleButton>
-    </div>
-);
+const LoginPage = () => {
+  const [id, setId] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [checked, setChecked] = React.useState(false);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+  };
+
+  return (
+    <Container
+      maxWidth="xs"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        padding: { xs: '24px 8px', sm: '32px 16px' },
+      }}
+    >
+      <Typography variant="h1" style={{ marginBottom: 16, fontSize: 32, fontWeight: 700, textAlign: 'center' }}>학습의 새로운 차원</Typography>
+      <Typography variant="body1" style={{ marginBottom: 16, textAlign: 'center' }}>Pomki와 함께 생성하세요.</Typography>
+      <Input
+        placeholder="이메일"
+        value={id}
+        onChange={e => setId(e.target.value)}
+        fullWidth
+        style={{ marginBottom: 16 }}
+      />
+      <Input
+        placeholder="비밀번호"
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        fullWidth
+        style={{ marginBottom: 24 }}
+      />
+      <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
+        <FormControlLabel
+          control={<Checkbox checked={checked} onChange={handleChange} />}
+          label="아이디 저장"
+        />
+      </Box>
+      <Button variant="contained" color="primary" fullWidth style={{ marginBottom: 32 }}>
+        로그인
+      </Button>
+
+      <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Button color="secondary">회원가입</Button>
+        <Button color="secondary">비밀번호 찾기</Button>
+      </Box>
+
+      <KakaoButton>
+        <KakaoIcon src={kakaoImg} alt="카카오 심볼" />
+        <KakaoLabel>카카오 로그인</KakaoLabel>
+      </KakaoButton>
+      <br />
+      <GoogleButton>
+        <GoogleIconWrapper>
+          <GoogleIcon />
+        </GoogleIconWrapper>
+        <GoogleLabel>구글 로그인</GoogleLabel>
+      </GoogleButton>
+    </Container>
+  );
+};
 
 export default LoginPage;
