@@ -134,7 +134,7 @@ const LoginPage = () => {
         <KakaoIcon src={kakaoImg} alt="카카오 심볼" />
         <KakaoLabel>카카오 로그인</KakaoLabel>
       </KakaoButton>
-      <br />
+      
       <GoogleButton>
         <GoogleIconWrapper>
           <GoogleIcon />
