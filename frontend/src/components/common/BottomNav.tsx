@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import HomeIcon  from '../../assets/icons/home.svg?react';
 import TimerIcon  from '../../assets/icons/timer.svg?react';
@@ -7,7 +7,19 @@ import DocumentIcon  from '../../assets/icons/documents.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
 
+const MOBILE_BREAKPOINT = 768;
+
 const BottomNav: React.FC = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   const [value, setValue] = useState(0);
   const theme = useTheme();
 
@@ -19,7 +31,7 @@ const BottomNav: React.FC = () => {
     { label: '프로필', inactiveIcon: <ProfileIcon />, activeIcon: <ProfileIcon /> }
   ];
 
-  return (
+  return isMobile ?(
     <Paper
       sx={{
         position: 'fixed',
@@ -66,7 +78,7 @@ const BottomNav: React.FC = () => {
         ))}
       </BottomNavigation>
     </Paper>
-  );
+  ) : null;
 };
 
 export default BottomNav;
