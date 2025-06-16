@@ -1,0 +1,55 @@
+package com.cooltomato.pomki.auth.controller;
+
+import com.cooltomato.pomki.auth.dto.AccessTokenResponseDto;
+import com.cooltomato.pomki.auth.dto.LoginRequestDto;
+import com.cooltomato.pomki.auth.dto.TokenResponseDto;
+import com.cooltomato.pomki.auth.service.AuthService;
+import com.cooltomato.pomki.member.dto.MemberSignUpRequestDto;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class AuthController {
+    private final AuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
+        TokenResponseDto tokenDto = authService.login(request);
+
+        Cookie cookie = new Cookie("refresh_token", tokenDto.getRefreshToken());
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new AccessTokenResponseDto(tokenDto.getAccessToken()));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AccessTokenResponseDto> refresh(@CookieValue(name = "refresh_token") String refreshToken) {
+        AccessTokenResponseDto newAccessToken = authService.refresh(refreshToken);
+        return ResponseEntity.ok(newAccessToken);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@CookieValue(name = "refresh_token") String refreshToken, HttpServletResponse response) {
+        authService.logout(refreshToken);
+
+        Cookie cookie = new Cookie("refresh_token", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok().build();
+    }
+} 
