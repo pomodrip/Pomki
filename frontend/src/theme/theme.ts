@@ -62,7 +62,14 @@ let theme = createTheme({
   shape: {
     borderRadius: 12, // 28. Global Border Radius
   },
-  shadows:.concat(Array(22).fill('none')) as any,
+  shadows: [
+    'none',
+    '0px 2px 8px rgba(0, 0, 0, 0.08)', // 30. Shadow 1 (기본 그림자)
+    '0px 4px 16px rgba(0, 0, 0, 0.12)', // 31. Shadow 2 (강조 그림자)
+    'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none',
+    'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none',
+    'none', 'none', 'none', 'none', 'none', 'none'
+  ],
 
   // II. 공통 컴포넌트 가이드 (MUI 컴포넌트 기본 스타일 오버라이드)
   components: {
