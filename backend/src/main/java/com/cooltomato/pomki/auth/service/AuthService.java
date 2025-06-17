@@ -45,7 +45,7 @@ public class AuthService {
 
         Member member = memberRepository.findByMemberEmail(request.getEmail()).orElseThrow();
         MemberInfoDto memberInfo = MemberInfoDto.builder()
-                .id(member.getMemberId())
+                .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .roles(member.getMemberRoles())
                 .isSocialLogin(member.isSocialLogin())
@@ -64,7 +64,9 @@ public class AuthService {
         Authentication authentication = tokenProvider.getAuthentication(refreshToken);
         String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
 
-        return new AccessTokenResponseDto(newAccessToken);
+        return AccessTokenResponseDto.builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 
     @Transactional
@@ -82,6 +84,8 @@ public class AuthService {
         Authentication authentication = tokenProvider.getAuthentication(refreshToken);
         String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
 
-        return new AccessTokenResponseDto(newAccessToken);
+        return AccessTokenResponseDto.builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 }

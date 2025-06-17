@@ -1,6 +1,5 @@
 package com.cooltomato.pomki.global.exception;
-
-import com.cooltomato.pomki.auth.exception.*;
+ 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;

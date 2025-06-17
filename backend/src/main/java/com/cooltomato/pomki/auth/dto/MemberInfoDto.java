@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 public class MemberInfoDto {
-    private final Long id;
+    private final Long memberId;
     private final String email;
     private final String password;
     private final Role roles;
@@ -18,8 +18,8 @@ public class MemberInfoDto {
     private final boolean isSocialLogin;
 
     @Builder
-    public MemberInfoDto(Long id, String email, String password, Role roles, boolean isDeleted, String providerUserId, AuthType provider, boolean isSocialLogin) {
-        this.id = id;
+    public MemberInfoDto(Long memberId, String email, String password, Role roles, boolean isDeleted, String providerUserId, AuthType provider, boolean isSocialLogin) {
+        this.memberId = memberId;
         this.email = email;
         this.password = password;
         this.roles = roles;
@@ -31,7 +31,7 @@ public class MemberInfoDto {
 
     public static MemberInfoDto from(Member member) {
         return MemberInfoDto.builder()
-                .id(member.getMemberId())
+                .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .password(member.getMemberPassword())
                 .roles(member.getMemberRoles())

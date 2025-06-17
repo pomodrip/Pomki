@@ -40,7 +40,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
             MemberInfoDto memberInfo = MemberInfoDto.builder()
-                    .id(member.getMemberId())
+                    .memberId(member.getMemberId())
                     .email(member.getMemberEmail())
                     .roles(member.getMemberRoles())
                     .isSocialLogin(member.isSocialLogin())

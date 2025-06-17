@@ -32,7 +32,9 @@ public class AuthController {
 
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new AccessTokenResponseDto(tokenDto.getAccessToken()));
+        return ResponseEntity.ok(AccessTokenResponseDto.builder()
+                .accessToken(tokenDto.getAccessToken())
+                .build());
     }
 
     @PostMapping("/refresh")

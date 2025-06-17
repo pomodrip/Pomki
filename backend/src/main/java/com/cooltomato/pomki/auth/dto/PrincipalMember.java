@@ -72,11 +72,11 @@ public class PrincipalMember implements UserDetails, OAuth2User {
 
     @Override
     public String getName() {
-        return String.valueOf(memberInfo.getId());
+        return String.valueOf(memberInfo.getMemberId());
     }
 
     public Long getMemberId() {
-        return memberInfo.getId();
+        return memberInfo.getMemberId();
     }
 
     public MemberInfoDto getMemberInfo() {

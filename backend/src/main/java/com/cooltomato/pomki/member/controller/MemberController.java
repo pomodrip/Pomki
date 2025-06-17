@@ -28,13 +28,13 @@ public class MemberController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<MemberInfoResponseDto> readMyInfo(@AuthenticationPrincipal PrincipalMember principal) {
-        MemberInfoResponseDto response = memberService.readMemberInfo(principal.getMemberInfo().getId());
+    public ResponseEntity<MemberInfoResponseDto> readMemberInfo(@AuthenticationPrincipal PrincipalMember principal) {
+        MemberInfoResponseDto response = memberService.readMemberInfo(principal.getMemberInfo().getMemberId());
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteMyAccount(@AuthenticationPrincipal PrincipalMember principal) {
+    public ResponseEntity<Void> deleteMember(@AuthenticationPrincipal PrincipalMember principal) {
         memberService.softDeleteMember(principal.getMemberId());
         return ResponseEntity.ok().build();
     }
