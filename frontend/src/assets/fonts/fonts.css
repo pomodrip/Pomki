@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
+@font-face {
+    font-family: 'KoddiUD';
+    src: url('./KoddiUDOnGothic-Regular.woff2') format('woff2'),
+         url('./KoddiUDOnGothic-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'KoddiUD';
+    src: url('./KoddiUDOnGothic-Bold.woff2') format('woff2'),
+         url('./KoddiUDOnGothic-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'KoddiUD';
+    src: url('./KoddiUDOnGothic-ExtraBold.woff2') format('woff2'),
+         url('./KoddiUDOnGothic-ExtraBold.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  

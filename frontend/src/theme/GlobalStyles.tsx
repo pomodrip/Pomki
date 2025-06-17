@@ -1,4 +1,5 @@
 import { GlobalStyles as MuiGlobalStyles } from '@mui/material';
+import '../assets/fonts/fonts.css'
 
 const GlobalStyles = () => {
   return (

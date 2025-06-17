@@ -7,6 +7,7 @@ import DocumentIcon  from '../../assets/icons/documents.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -47,7 +48,7 @@ const BottomNav: React.FC = () => {
         navigate('/note');
         break;
       case 2:
-        navigate('/');
+        navigate('/dashboard');
         break;
       case 3:
         navigate('/study');

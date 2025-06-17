@@ -1,80 +1,48 @@
 import React, { useState } from 'react';
-import { Box, Typography, Link as MuiLink } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Card from '../../components/ui/Card';
-import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { loginUser } from '../../store/slices/authSlice';
 
 interface LoginFormData {
   email: string;
   password: string;
+  rememberMe: boolean;
 }
 
 const LoginPage: React.FC = () => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { status, error } = useAppSelector((state) => state.auth);
   
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
+    rememberMe: false,
   });
-
-  const [errors, setErrors] = useState<Partial<LoginFormData>>({});
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<LoginFormData> = {};
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleInputChange = (field: keyof LoginFormData) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    const value = field === 'rememberMe' ? event.target.checked : event.target.value;
     setFormData(prev => ({
       ...prev,
-      [field]: event.target.value,
+      [field]: value,
     }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: '',
-      }));
-    }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    // 임시로 대시보드로 이동
+    navigate('/dashboard');
+  };
 
-    try {
-      const result = await dispatch(loginUser(formData));
-      if (loginUser.fulfilled.match(result)) {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
+  const handleKakaoLogin = () => {
+    // 카카오 로그인 로직
+    console.log('카카오 로그인');
+  };
+
+  const handleGoogleLogin = () => {
+    // 구글 로그인 로직
+    console.log('구글 로그인');
   };
 
   return (
@@ -85,81 +53,184 @@ const LoginPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        padding: 3,
-        backgroundColor: 'background.default',
+        padding: '32px 24px', // design.md 패딩 적용
+        backgroundColor: '#F8F9FA', // Background Secondary
       }}
     >
-      {/* 토마토 아이콘 */}
-      <Box
+      {/* 페이지 제목 */}
+      <Typography 
+        variant="h1"
         sx={{
-          width: '80px',
-          height: '80px',
-          backgroundColor: 'primary.main',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '48px',
-          mb: 3,
+          fontSize: '28px', // H2 크기 사용
+          fontWeight: 700,
+          color: '#1A1A1A', // Text Primary
+          lineHeight: 1.25,
+          marginBottom: '8px',
+          textAlign: 'center',
         }}
       >
-        🍅
-      </Box>
-
-      <Typography variant="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-        Welcome to Pomki
+        학습의 새로운 차원
       </Typography>
 
-      <Card sx={{ width: '100%', maxWidth: 400 }}>
-        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-          <Input
-            fullWidth
-            label="Email"
-            type="email"
-            margin="normal"
-            value={formData.email}
-            onChange={handleInputChange('email')}
-            error={!!errors.email}
-            helperText={errors.email}
-          />
-          
-          <Input
-            fullWidth
-            label="Password"
-            type="password"
-            margin="normal"
-            value={formData.password}
-            onChange={handleInputChange('password')}
-            error={!!errors.password}
-            helperText={errors.password}
-          />
+      <Typography 
+        sx={{
+          fontSize: '16px', // Body Regular
+          fontWeight: 400,
+          color: '#6B7280', // Text Secondary
+          lineHeight: 1.5,
+          marginBottom: '32px',
+          textAlign: 'center',
+        }}
+      >
+        Pomki와 함께 생산하세요.
+      </Typography>
 
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={status === 'loading'}
-            sx={{ mt: 3, mb: 2 }}
+      {/* 로그인 폼 */}
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          width: '100%',
+          maxWidth: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px', // Medium Spacing
+        }}
+      >
+        <Input
+          fullWidth
+          placeholder="이메일"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange('email')}
+          sx={{
+            backgroundColor: '#FFFFFF', // Background Primary
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px', // Medium Radius
+            },
+          }}
+        />
+        
+        <Input
+          fullWidth
+          placeholder="비밀번호"
+          type="password"
+          value={formData.password}
+          onChange={handleInputChange('password')}
+          sx={{
+            backgroundColor: '#FFFFFF',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+            },
+          }}
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={formData.rememberMe}
+              onChange={handleInputChange('rememberMe')}
+              sx={{ color: '#2563EB' }} // Primary Main
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
+              아이디 저장
+            </Typography>
+          }
+          sx={{ alignSelf: 'flex-start', mb: 1 }}
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          sx={{
+            backgroundColor: '#2563EB', // Primary Main
+            color: '#FFFFFF',
+            fontSize: '16px', // Button Large
+            fontWeight: 600,
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textTransform: 'none',
+            mb: 2,
+            '&:hover': {
+              backgroundColor: '#1D4ED8', // Primary Dark
+            },
+          }}
+        >
+          로그인
+        </Button>
+
+        {/* 하단 링크들 */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          mb: 3
+        }}>
+          <Typography 
+            sx={{ 
+              fontSize: '14px', 
+              color: '#6B7280',
+              cursor: 'pointer',
+              '&:hover': { color: '#1A1A1A' }
+            }}
           >
-            {status === 'loading' ? 'Signing in...' : 'Sign In'}
-          </Button>
-
-          {error && (
-            <Typography color="error" variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
-              {error}
-            </Typography>
-          )}
-
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
-              <MuiLink component={Link} to="/signup" color="primary">
-                Sign up
-              </MuiLink>
-            </Typography>
-          </Box>
+            회원가입
+          </Typography>
+          <Typography 
+            sx={{ 
+              fontSize: '14px', 
+              color: '#6B7280',
+              cursor: 'pointer',
+              '&:hover': { color: '#1A1A1A' }
+            }}
+          >
+            비밀번호 찾기
+          </Typography>
         </Box>
-      </Card>
+
+        {/* 소셜 로그인 버튼들 */}
+        <Button
+          fullWidth
+          onClick={handleKakaoLogin}
+          sx={{
+            backgroundColor: '#FEE500', // 카카오 옐로우
+            color: '#000000',
+            fontSize: '16px',
+            fontWeight: 600,
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textTransform: 'none',
+            mb: 1,
+            '&:hover': {
+              backgroundColor: '#FDD835',
+            },
+          }}
+        >
+          💬 카카오 로그인
+        </Button>
+
+        <Button
+          fullWidth
+          onClick={handleGoogleLogin}
+          sx={{
+            backgroundColor: '#FFFFFF',
+            color: '#1A1A1A',
+            fontSize: '16px',
+            fontWeight: 600,
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textTransform: 'none',
+            border: '1px solid #E5E7EB', // Border Medium
+            '&:hover': {
+              backgroundColor: '#F8F9FA',
+            },
+          }}
+        >
+          G 구글 로그인
+        </Button>
+      </Box>
     </Box>
   );
 };

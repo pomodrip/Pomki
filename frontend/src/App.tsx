@@ -4,7 +4,6 @@ import { CssBaseline } from '@mui/material';
 import theme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
 import AppRoutes from './routes';
-import Toast from './components/common/Toast';
 
 function App() {
   return (
@@ -12,9 +11,6 @@ function App() {
       <CssBaseline />
       <GlobalStyles />
       <AppRoutes />
-      
-      {/* 전역 알림 시스템 컴포넌트 */}
-      <Toast />
     </ThemeProvider>
   );
 }

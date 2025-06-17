@@ -4265,7 +4265,7 @@ use-sync-external-store@^1.4.0:
 
 vite-plugin-pwa@^1.0.0:
   version "1.0.0"
-  resolved "https://registry.yarnpkg.com/vite-plugin-pwa/-/vite-plugin-pwa-1.0.0.tgz#bd0ee81e71851bd45cae2f4aec90e52e9833152d"
+  resolved "https://registry.npmjs.org/vite-plugin-pwa/-/vite-plugin-pwa-1.0.0.tgz"
   integrity sha512-X77jo0AOd5OcxmWj3WnVti8n7Kw2tBgV1c8MCXFclrSlDV23ePzv2eTDIALXI2Qo6nJ5pZJeZAuX0AawvRfoeA==
   dependencies:
     debug "^4.3.6"
