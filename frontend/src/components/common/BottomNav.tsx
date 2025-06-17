@@ -24,11 +24,11 @@ const BottomNav: React.FC = () => {
   const theme = useTheme();
 
   const navItems = [
-    { label: '타이머', inactiveIcon: <TimerIcon />, activeIcon: <TimerIcon /> },
-    { label: '노트', inactiveIcon: <NoteIcon />, activeIcon: <NoteIcon /> },
-    { label: '홈', inactiveIcon: <HomeIcon />, activeIcon: <HomeIcon /> },
-    { label: '학습', inactiveIcon: <DocumentIcon />, activeIcon: <DocumentIcon /> },
-    { label: '프로필', inactiveIcon: <ProfileIcon />, activeIcon: <ProfileIcon /> }
+    { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.secondary.main}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
+    { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.secondary.main}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
+    { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.secondary.main}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
+    { label: '학습', inactiveIcon: <DocumentIcon fill={theme.palette.secondary.main}/>, activeIcon: <DocumentIcon fill={theme.palette.primary.main}/> },
+    { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.secondary.main} />, activeIcon: <ProfileIcon fill={theme.palette.primary.main} /> }
   ];
 
   return isMobile ?(
