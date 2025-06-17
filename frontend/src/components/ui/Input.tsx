@@ -1,5 +1,7 @@
 import React from 'react';
-import { TextField, TextFieldProps, styled } from '@mui/material';
+import { TextField, TextFieldProps, styled, InputAdornment, IconButton } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 // 41, 42, 43, 44, 45, 46번 가이드 적용
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -38,6 +40,12 @@ interface InputProps extends Omit<TextFieldProps, 'variant'> {
 }
 
 const Input: React.FC<InputProps> = ({ variant = 'standard', ...props }) => {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
   if (variant === 'pin') {
     return (
       <StyledTextField
@@ -65,7 +73,32 @@ const Input: React.FC<InputProps> = ({ variant = 'standard', ...props }) => {
     );
   }
 
-  return <StyledTextField {...props} variant="outlined" />;
+  if (props.type !== 'password') {
+    return <StyledTextField {...props} variant="outlined" />;
+  }
+
+  return (
+    <StyledTextField
+      {...props}
+      variant="outlined"
+      type={showPassword ? 'text' : 'password'}
+      InputProps={{
+        ...props.InputProps,
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+              onClick={handleClickShowPassword}
+              onMouseDown={handleMouseDownPassword}
+              edge="end"
+            >
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  );
 };
 
 export default Input;

@@ -2,92 +2,163 @@ import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, styled, Button } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 
-// 58. Page Header Height와 디자인 시스템 원칙 적용
+// design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  backgroundColor: theme.palette.background.default,
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  height: '56px', // 58. Page Header Height
+  backgroundColor: '#FFFFFF', // 2. 헤더 배경색
+  borderBottom: '1px solid #E5E5E7', // 3. 헤더 하단 경계선
+  height: '64px', // 1. 헤더 높이
   boxShadow: 'none',
   position: 'sticky',
   zIndex: theme.zIndex.appBar,
 }));
 
-const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+const StyledToolbar = styled(Toolbar)(() => ({
   justifyContent: 'space-between',
-  paddingX: theme.spacing(2),
-  minHeight: '56px',
+  paddingX: '16px', // 모바일 기본 패딩 (축소)
+  minHeight: '64px', // 1. 헤더 높이
+  position: 'relative', // 중앙 제목 절대 위치를 위해
   
-  [theme.breakpoints.up('md')]: {
-    paddingX: theme.spacing(4),
+  // 태블릿에서 패딩 증가
+  '@media (min-width: 600px)': {
+    paddingX: '20px',
+  },
+  
+  // 데스크톱에서 최대 패딩
+  '@media (min-width: 900px)': {
+    paddingX: '24px',
   },
 }));
 
-const TomatoIcon = styled('div')(({ theme }) => ({
-  width: '32px',
-  height: '32px',
-  backgroundColor: theme.palette.primary.main,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '18px',
+const TomatoIcon = styled('div')(() => ({
+  fontSize: '32px',
   cursor: 'pointer',
+  transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
   '&::before': {
     content: '"🍅"',
   },
   '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-    transition: 'background-color 0.2s ease',
+    transform: 'scale(1.1)',
   },
 }));
 
-// 데스크톱 네비게이션 메뉴
-const DesktopNav = styled(Box)(({ theme }) => ({
-  display: 'none',
-  gap: theme.spacing(1),
+// 브랜드 섹션 - design.md 가이드 6-10번 적용
+const BrandText = styled(Typography)(() => ({
+  fontFamily: "'Pretendard', sans-serif", // 6. 브랜드명 폰트
+  fontSize: '20px', // 모바일 기본 크기 (24px에서 축소)
+  fontWeight: 700, // 8. 브랜드명 폰트 무게
+  color: '#1A1A1A', // 9. 브랜드명 색상
+  marginLeft: '8px', // 10. 토마토 아이콘과 텍스트 간격
+  whiteSpace: 'nowrap', // 줄바꿈 방지
+  overflow: 'hidden',
+  textOverflow: 'ellipsis', // 말줄임표
   
-  [theme.breakpoints.up('md')]: {
+  // 반응형 폰트 크기
+  '@media (min-width: 400px)': {
+    fontSize: '22px', // 중간 크기 모바일
+  },
+  '@media (min-width: 600px)': {
+    fontSize: '24px', // 태블릿/데스크톱
+  },
+}));
+
+// 데스크톱 네비게이션 메뉴 - design.md 가이드 11-20번 적용
+const DesktopNav = styled(Box)(() => ({
+  display: 'none',
+  gap: '16px', // 좁은 화면을 위해 간격 축소 (32px → 16px)
+  
+  // 900px 이상에서만 데스크톱 네비게이션 표시
+  '@media (min-width: 900px)': {
     display: 'flex',
     alignItems: 'center',
+    gap: '24px', // 데스크톱에서는 더 넓은 간격
+  },
+  
+  '@media (min-width: 1200px)': {
+    gap: '32px', // 큰 화면에서는 원래 간격
   },
 }));
 
-const NavButton = styled(Button)(({ theme }) => ({
-  color: theme.palette.text.secondary,
+const NavButton = styled(Button)(() => ({
+  fontSize: '14px', // 모바일/태블릿용 축소 크기 (16px → 14px)
+  fontWeight: 500, // 12. 네비게이션 메뉴 폰트 무게
+  color: '#6B7280', // 13. 네비게이션 메뉴 기본 색상
   textTransform: 'none',
-  fontWeight: 500,
-  padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
-  borderRadius: theme.shape.borderRadius,
+  padding: '6px 12px', // 패딩 축소 (8px 16px → 6px 12px)
+  borderRadius: '8px', // 19. 네비게이션 메뉴 border-radius
+  transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
+  whiteSpace: 'nowrap', // 줄바꿈 방지
+  minWidth: 'auto', // 최소 너비 제거
   
   '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-    color: theme.palette.text.primary,
+    backgroundColor: 'rgba(26, 26, 26, 0.04)', // 18. 네비게이션 메뉴 hover 배경
+    color: '#1A1A1A', // 14. 네비게이션 메뉴 호버 색상
   },
   
   '&.active': {
-    color: theme.palette.primary.main,
-    backgroundColor: theme.palette.primary.light,
+    color: '#1A1A1A', // 15. 네비게이션 메뉴 활성 색상
+    backgroundColor: 'rgba(26, 26, 26, 0.04)',
+  },
+  
+  // 데스크톱에서는 원래 크기
+  '@media (min-width: 900px)': {
+    fontSize: '15px',
+    padding: '8px 14px',
+  },
+  
+  '@media (min-width: 1200px)': {
+    fontSize: '16px', // 큰 화면에서는 원래 크기
+    padding: '8px 16px',
   },
 }));
 
-const BrandSection = styled(Box)(({ theme }) => ({
+// 우측 영역 - design.md 가이드 21-25번 적용
+const NotificationButton = styled(IconButton)(() => ({
+  width: '40px', // 24. 알림 아이콘 배경 크기
+  height: '40px', // 24. 알림 아이콘 배경 크기
+  borderRadius: '8px', // 25. 알림 아이콘 border-radius
+  color: '#6B7280', // 22. 알림 아이콘 색상
+  
+  '&:hover': {
+    backgroundColor: 'rgba(107, 114, 128, 0.1)', // 23. 알림 아이콘 hover 배경
+  },
+  
+  '& .MuiSvgIcon-root': {
+    fontSize: '24px', // 21. 알림 아이콘 크기
+  },
+}));
+
+// 햄버거 메뉴 버튼
+const MenuButton = styled(IconButton)(() => ({
+  width: '40px',
+  height: '40px',
+  borderRadius: '8px',
+  color: '#6B7280',
+  
+  '&:hover': {
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+  },
+  
+  '& .MuiSvgIcon-root': {
+    fontSize: '24px',
+  },
+}));
+
+const BrandSection = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
-  gap: theme.spacing(1),
   cursor: 'pointer',
 }));
 
 interface HeaderProps {
-  title?: string;
   showBackButton?: boolean;
   rightContent?: React.ReactNode;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
-  title, 
   showBackButton,
   rightContent 
 }) => {
@@ -100,16 +171,18 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   const handleBrandClick = () => {
-    navigate('/');
+    navigate('/dashboard');
+  };
+
+  const handleMenuClick = () => {
+    // 사이드바 열기 로직 추가 예정
+    console.log('메뉴 클릭');
   };
 
   const getTitle = () => {
-    if (title) return title;
-    
     const path = location.pathname;
     if (path.startsWith('/note/')) return 'Note Detail';
     if (path === '/note') return 'My Notes';
-    if (path === '/' || path === '/dashboard') return 'Pomki';
     if (path === '/timer') return 'Focus Timer';
     if (path === '/study') return 'Study';
     if (path === '/profile') return 'Profile';
@@ -119,18 +192,12 @@ const Header: React.FC<HeaderProps> = ({
   const shouldShowBackButton = showBackButton ?? (location.pathname !== '/' && location.pathname !== '/dashboard');
   const isHomePage = location.pathname === '/' || location.pathname === '/dashboard';
 
-  // 디버깅 정보
-  console.log('Header - isMobile:', isMobile, 'pathname:', location.pathname, 'shouldShowBackButton:', shouldShowBackButton);
-
   const getDefaultRightContent = () => {
-    if (isHomePage) {
-      return (
-        <IconButton>
-          <NotificationsNoneIcon />
-        </IconButton>
-      );
-    }
-    return null;
+    return (
+      <NotificationButton>
+        <NotificationsNoneIcon />
+      </NotificationButton>
+    );
   };
 
   const isActiveRoute = (path: string) => {
@@ -140,32 +207,63 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <StyledAppBar position="sticky" color="inherit">
       <StyledToolbar>
-        {/* 왼쪽: 브랜드 또는 뒤로가기 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: '120px' }}>
+        {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {shouldShowBackButton && isMobile ? (
             <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }}>
               <ArrowBackIosNewIcon />
             </IconButton>
           ) : (
-            <BrandSection onClick={handleBrandClick}>
-              <TomatoIcon />
-              <Typography variant="h6" component="div" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                Pomki
-              </Typography>
-            </BrandSection>
+            <>
+              <MenuButton onClick={handleMenuClick}>
+                <MenuIcon />
+              </MenuButton>
+              <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
+                <TomatoIcon />
+                <BrandText>
+                  Pomki
+                </BrandText>
+              </BrandSection>
+            </>
           )}
         </Box>
 
-        {/* 중앙: 모바일 타이틀 또는 데스크톱 네비게이션 */}
-        {isMobile ? (
-          <Typography variant="h6" component="div" sx={{ fontWeight: 600, textAlign: 'center' }}>
-            {shouldShowBackButton ? getTitle() : ''}
+        {/* 중앙: 페이지 제목 (뒤로가기 버튼이 있을 때만) */}
+        {shouldShowBackButton && isMobile && (
+          <Typography variant="h6" component="div" sx={{ 
+            fontWeight: 600, 
+            textAlign: 'center',
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            color: '#1A1A1A',
+            fontSize: '16px', // 기본 크기
+            whiteSpace: 'nowrap', // 줄바꿈 방지
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '40%', // 최대 너비 제한
+            
+            // 반응형 폰트 크기
+            '@media (min-width: 400px)': {
+              fontSize: '18px',
+              maxWidth: '50%',
+            },
+            '@media (min-width: 600px)': {
+              fontSize: '20px',
+              maxWidth: '60%',
+            },
+          }}>
+            {getTitle()}
           </Typography>
-        ) : (
+        )}
+        
+        {/* 오른쪽: 데스크톱 네비게이션 + 알림 아이콘 */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, gap: 2 }}>
+          {/* 데스크톱에서만 네비게이션 메뉴 표시 */}
           <DesktopNav>
             <NavButton 
-              className={isActiveRoute('/') ? 'active' : ''}
-              onClick={() => navigate('/')}
+              className={isActiveRoute('/dashboard') ? 'active' : ''}
+              onClick={() => navigate('/dashboard')}
             >
               홈
             </NavButton>
@@ -194,10 +292,8 @@ const Header: React.FC<HeaderProps> = ({
               프로필
             </NavButton>
           </DesktopNav>
-        )}
-        
-        {/* 오른쪽: 알림 또는 커스텀 컨텐츠 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', minWidth: '120px' }}>
+          
+          {/* 알림 아이콘 (항상 표시) */}
           {rightContent || getDefaultRightContent()}
         </Box>
       </StyledToolbar>
