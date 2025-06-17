@@ -39,7 +39,7 @@ let theme = createTheme({
 
   // I.B. 타이포그래피 (Typography)
   typography: {
-    fontFamily: "'Pretendard', 'Roboto', 'Helvetica', 'Arial', sans-serif", // 13. Global Font Family
+    fontFamily: "'KoddiUD', 'Noto Sans KR', 'Arial', sans-serif", // 13. Global Font Family
     htmlFontSize: 16, // 14. Global htmlFontSize
     h1: { fontSize: '1.75rem', fontWeight: 700 }, // 15. h1 (28px)
     h2: { fontSize: '1.5rem', fontWeight: 700 }, // 16. h2 (24px)
