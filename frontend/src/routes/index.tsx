@@ -2,6 +2,9 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import MainLayout from '../pages/_layout/MainLayout';
+import LoginPage from '../pages/Auth/LoginPage';
+import SignupPage from '../pages/Auth/SignupPage';
+import SetGoalPage from '../pages/Auth/SetGoalPage';
 
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
@@ -33,6 +36,9 @@ const AppRoutes = () => {
         <Route path="note" element={<TestPage title="노트 페이지" />} />
         <Route path="study" element={<TestPage title="학습 페이지" />} />
         <Route path="profile" element={<TestPage title="프로필 페이지" />} />
+        <Route path="auth" element={<LoginPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="set-goal" element={<SetGoalPage />} />
       </Route>
       
       {/* 404 페이지 */}
