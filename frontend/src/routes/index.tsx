@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import MainLayout from '../pages/_layout/MainLayout';
+import FlashcardDeckListPage from '../pages/Study/FlashcardDeckListPage';
 
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
@@ -31,7 +32,8 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<TestPage title="대시보드 페이지" />} />
         <Route path="timer" element={<TestPage title="타이머 페이지" />} />
         <Route path="note" element={<TestPage title="노트 페이지" />} />
-        <Route path="study" element={<TestPage title="학습 페이지" />} />
+        {/* <Route path="study" element={<TestPage title="학습 페이지" />} /> */}
+        <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="profile" element={<TestPage title="프로필 페이지" />} />
       </Route>
       
