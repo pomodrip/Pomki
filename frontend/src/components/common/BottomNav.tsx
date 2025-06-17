@@ -6,32 +6,67 @@ import NoteIcon  from '../../assets/icons/note.svg?react';
 import DocumentIcon  from '../../assets/icons/documents.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const MOBILE_BREAKPOINT = 768;
 
 const BottomNav: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
+    
+    // 초기 설정
+    handleResize();
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
-  const [value, setValue] = useState(0);
-  const theme = useTheme();
+
+  const getActiveTab = () => {
+    const pathname = location.pathname;
+    if (pathname.startsWith('/timer')) return 0;
+    if (pathname.startsWith('/note')) return 1;
+    if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
+    if (pathname.startsWith('/study')) return 3;
+    if (pathname.startsWith('/profile')) return 4;
+    return 2; // default to home
+  };
+
+  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    switch (newValue) {
+      case 0:
+        navigate('/timer');
+        break;
+      case 1:
+        navigate('/note');
+        break;
+      case 2:
+        navigate('/');
+        break;
+      case 3:
+        navigate('/study');
+        break;
+      case 4:
+        navigate('/profile');
+        break;
+    }
+  };
 
   const navItems = [
-    { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.secondary.main}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
-    { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.secondary.main}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
-    { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.secondary.main}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
-    { label: '학습', inactiveIcon: <DocumentIcon fill={theme.palette.secondary.main}/>, activeIcon: <DocumentIcon fill={theme.palette.primary.main}/> },
-    { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.secondary.main} />, activeIcon: <ProfileIcon fill={theme.palette.primary.main} /> }
+    { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
+    { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.text.secondary}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
+    { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.text.secondary}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
+    { label: '학습', inactiveIcon: <DocumentIcon fill={theme.palette.text.secondary}/>, activeIcon: <DocumentIcon fill={theme.palette.primary.main}/> },
+    { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.text.secondary}/>, activeIcon: <ProfileIcon fill={theme.palette.primary.main}/> }
   ];
 
-  return isMobile ?(
+  return isMobile ? (
     <Paper
       sx={{
         position: 'fixed',
@@ -46,10 +81,8 @@ const BottomNav: React.FC = () => {
     >
       <BottomNavigation
         showLabels
-        value={value}
-        onChange={(event, newValue) => {
-          setValue(newValue);
-        }}
+        value={getActiveTab()}
+        onChange={handleChange}
         sx={{
           height: '100%',
         }}
@@ -58,7 +91,7 @@ const BottomNav: React.FC = () => {
           <BottomNavigationAction
             key={item.label}
             label={item.label}
-            icon={value === index ? item.activeIcon : item.inactiveIcon}
+            icon={getActiveTab() === index ? item.activeIcon : item.inactiveIcon}
             sx={{
               padding: '0',
               minWidth: 'auto',
@@ -72,7 +105,7 @@ const BottomNav: React.FC = () => {
               '& .MuiSvgIcon-root': {
                 fontSize: '24px',
               },
-              color: value === index ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: getActiveTab() === index ? theme.palette.primary.main : theme.palette.text.secondary,
             }}
           />
         ))}
