@@ -169,7 +169,7 @@ const FlashcardDeckListPage: React.FC = () => {
   };
 
   const handleDeckClick = (deckId: number) => {
-    navigate(`/flashcards/${deckId}`);
+    navigate(`/flashcards/${deckId}/cards`);
   };
 
   const handleEditDeck = (deckId: number, event: React.MouseEvent) => {
@@ -189,7 +189,7 @@ const FlashcardDeckListPage: React.FC = () => {
 
   const handleCreateQuiz = (deckId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/flashcards/${deckId}/study`);
+    navigate(`/flashcards/${deckId}/practice`);
   };
 
   const handleToggleBookmark = (deckId: number, event: React.MouseEvent) => {
