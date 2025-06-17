@@ -1,21 +1,11 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
 import MainLayout from '../pages/_layout/MainLayout';
 
-// 임시 간단한 테스트 컴포넌트 (디버깅용)
-const TestPage = ({ title }: { title: string }) => {
-  console.log(`${title} page rendering...`);
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4">{title}</Typography>
-      <Typography>이 페이지가 표시되면 라우팅이 작동하는 것입니다.</Typography>
-      <Typography variant="body2" sx={{ mt: 2, color: 'gray' }}>
-        하단에 네비게이션이 보여야 합니다.
-      </Typography>
-    </Box>
-  );
-};
+// 실제 페이지 컴포넌트들 import
+import DashboardPage from '../pages/Dashboard/DashboardPage';
+import TimerPage from '../pages/Timer/TimerPage';
+import LoginPage from '../pages/Auth/LoginPage';
 
 const AppRoutes = () => {
   console.log('AppRoutes rendering...');
@@ -23,20 +13,20 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* 인증 관련 페이지 (레이아웃 없음) */}
-      <Route path="/login" element={<TestPage title="로그인 페이지 (레이아웃 없음)" />} />
+      <Route path="/login" element={<LoginPage />} />
       
       {/* 메인 애플리케이션 (MainLayout 적용) */}
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Navigate replace to="/dashboard" />} />
-        <Route path="dashboard" element={<TestPage title="대시보드 페이지" />} />
-        <Route path="timer" element={<TestPage title="타이머 페이지" />} />
-        <Route path="note" element={<TestPage title="노트 페이지" />} />
-        <Route path="study" element={<TestPage title="학습 페이지" />} />
-        <Route path="profile" element={<TestPage title="프로필 페이지" />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="timer" element={<TimerPage />} />
+        <Route path="note" element={<div>노트 페이지 (구현 예정)</div>} />
+        <Route path="study" element={<div>학습 페이지 (구현 예정)</div>} />
+        <Route path="profile" element={<div>프로필 페이지 (구현 예정)</div>} />
       </Route>
       
       {/* 404 페이지 */}
-      <Route path="*" element={<TestPage title="404 - 페이지를 찾을 수 없습니다" />} />
+      <Route path="*" element={<div>404 - 페이지를 찾을 수 없습니다</div>} />
     </Routes>
   );
 };
