@@ -64,7 +64,6 @@ const LoginPage = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
         padding: { xs: '24px 8px', sm: '32px 16px' },
       }}
     >
