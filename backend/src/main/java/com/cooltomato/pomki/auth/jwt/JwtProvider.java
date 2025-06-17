@@ -20,10 +20,10 @@ import com.cooltomato.pomki.auth.dto.MemberInfoDto;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.auth.dto.TokenResponseDto;
 import com.cooltomato.pomki.auth.entity.RefreshToken;
-import com.cooltomato.pomki.auth.exception.InvalidTokenException;
 import com.cooltomato.pomki.auth.repository.RefreshTokenRepository;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
+import com.cooltomato.pomki.global.exception.InvalidTokenException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 
@@ -60,19 +60,23 @@ public class JwtProvider {
 
         RefreshToken tokenEntity = RefreshToken.builder()
                 .refreshToken(refreshToken)
-                .memberId(memberInfo.getId())
+                .memberId(memberInfo.getMemberId())
                 .createdAt(LocalDateTime.now())
+                .expiresAt(REFRESH_TOKEN_EXPIRE_TIME / 1000)
                 .build();
         refreshTokenRepository.save(tokenEntity);
 
-        return new TokenResponseDto(accessToken, refreshToken);
+        return TokenResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     public String createAccessToken(MemberInfoDto memberInfo) {
         Instant now = Instant.now();
         Instant expires_time = now.plusMillis(ACCESS_TOKEN_EXPIRE_TIME);
         return Jwts.builder()
-                .subject(String.valueOf(memberInfo.getId()))
+                .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
                 .claim("email", memberInfo.getEmail())
                 .claim("isSocial", memberInfo.isSocialLogin())
@@ -105,7 +109,7 @@ public class JwtProvider {
         Instant expires_time = now.plusMillis(ACCESS_TOKEN_EXPIRE_TIME);
 
         return Jwts.builder()
-                .subject(String.valueOf(memberInfo.getId()))
+                .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", role)
                 .claim("email", memberInfo.getEmail())
                 .claim("isSocial", memberInfo.isSocialLogin())
@@ -120,7 +124,7 @@ public class JwtProvider {
         Instant now = Instant.now();
         Instant expires_time = now.plusMillis(REFRESH_TOKEN_EXPIRE_TIME);
         return Jwts.builder()
-                .subject(String.valueOf(memberInfo.getId()))
+                .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expires_time))
@@ -156,7 +160,7 @@ public class JwtProvider {
         }
 
         MemberInfoDto memberInfo = MemberInfoDto.builder()
-                .id(member.getMemberId())
+                .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .roles(member.getMemberRoles())
                 .isSocialLogin(member.isSocialLogin())
@@ -177,7 +181,7 @@ public class JwtProvider {
         AuthType provider = providerName != null ? AuthType.valueOf(providerName) : null;
 
         MemberInfoDto memberInfo = MemberInfoDto.builder()
-                .id(Long.valueOf(claims.getSubject()))
+                .memberId(Long.valueOf(claims.getSubject()))
                 .email(claims.get("email", String.class))
                 .roles(Role.valueOf(claims.get("role", String.class)))
                 .isSocialLogin(isSocial)
