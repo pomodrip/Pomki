@@ -1,57 +1,98 @@
 package com.cooltomato.pomki.member.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-import com.cooltomato.pomki.bookmark.entity.Bookmark;
-import com.cooltomato.pomki.note.entity.Note;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import com.cooltomato.pomki.global.constant.AuthType;
+import com.cooltomato.pomki.global.constant.Role;
 
 @Entity
-@Table(name = "member")
+@Table(name = "MEMBER", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "member_email"),
+        @UniqueConstraint(columnNames = { "social_provider_user_id", "social_provider" })
+})
+@Getter
+@Setter
+@NoArgsConstructor
 public class Member {
+
     @Id
-    @Column(name = "member_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
-    @Column(name = "member_email", nullable = false, length = 255)
+    @Column(nullable = false, unique = true)
     private String memberEmail;
 
-    @Column(name = "current_email", nullable = false, length = 255)
+    @Column(nullable = false)
     private String currentEmail;
 
-    @Column(name = "member_name", nullable = false, length = 100)
-    private String memberName;
+    @Column(nullable = false, length = 100)
+    private String memberNickname;
 
-    @Column(name = "member_password", length = 512)
+    @Column(name = "social_provider_user_id")
+    private String providerUserId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "social_provider")
+    private AuthType provider;
+
+    @Column(length = 512)
     private String memberPassword;
 
-    @Column(name = "is_social_login", nullable = false)
-    private Boolean isSocialLogin;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 400)
+    private Role memberRoles;
 
-    @Column(name = "created_at")
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    @Column(nullable = false)
+    private boolean isSocialLogin;
+
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted;
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 
-    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // 연관관계: NOTE(1:N)
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
-    private List<Note> notes;
+    @Builder
+    public Member(String memberEmail, String currentEmail, String memberNickname,
+                 String memberPassword, Role memberRoles, boolean emailVerified,
+                 boolean isSocialLogin, boolean isDeleted, String providerUserId, AuthType provider) {
+        this.memberEmail = memberEmail;
+        this.currentEmail = currentEmail;
+        this.memberNickname = memberNickname;
+        this.providerUserId = providerUserId;
+        this.provider = provider;
+        this.memberPassword = memberPassword;
+        this.memberRoles = memberRoles;
+        this.emailVerified = emailVerified;
+        this.isSocialLogin = isSocialLogin;
+        this.isDeleted = isDeleted;
+    }
 
-    // 연관관계: BOOKMARK_NOTE(1:N)
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
-    private List<Bookmark> bookmarkNotes;
-} 
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+}
