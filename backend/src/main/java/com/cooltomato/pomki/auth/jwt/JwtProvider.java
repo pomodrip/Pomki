@@ -62,6 +62,7 @@ public class JwtProvider {
                 .refreshToken(refreshToken)
                 .memberId(memberInfo.getId())
                 .createdAt(LocalDateTime.now())
+                .expiresAt(REFRESH_TOKEN_EXPIRE_TIME / 1000)
                 .build();
         refreshTokenRepository.save(tokenEntity);
 
