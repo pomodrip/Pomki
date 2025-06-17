@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, styled, IconButton, Select, MenuItem, FormControl } from '@mui/material';
+import { Box, Typography, styled, IconButton, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress } from '@mui/material';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import Button from '../../components/ui/Button';
@@ -403,6 +403,7 @@ const TimerPage: React.FC = () => {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [summaryStyle, setSummaryStyle] = useState('concept');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [settings, setSettings] = useState<TimerSettings>({
     sessions: 3,
     focusMinutes: 25,
@@ -498,6 +499,57 @@ const TimerPage: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // AI 노트 생성 핸들러 (임시 구현)
+  const handleGenerateAI = async () => {
+    if (!notes.trim()) {
+      alert('먼저 노트에 내용을 작성해주세요.');
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    
+    // 임시 AI 생성 시뮬레이션
+    setTimeout(() => {
+      const aiContent = generateMockAIContent(summaryStyle, taskName);
+      setNotes(prevNotes => {
+        const separator = prevNotes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '';
+        return prevNotes + separator + aiContent;
+      });
+      setIsGeneratingAI(false);
+      alert('AI 노트가 성공적으로 생성되었습니다!');
+    }, 2000);
+  };
+
+  // 임시 AI 컨텐츠 생성 함수
+  const generateMockAIContent = (style: string, task: string) => {
+    const taskPrefix = task ? `${task}에 대한 ` : '';
+    
+    switch (style) {
+      case 'concept':
+        return `${taskPrefix}핵심 개념 정리:
+• 주요 아이디어와 개념들을 체계적으로 정리
+• 개념 간의 연관성과 관계 파악
+• 실무 적용 가능한 포인트 도출`;
+      
+      case 'detail':
+        return `${taskPrefix}상세 분석:
+1. 구체적인 실행 단계와 방법론
+2. 세부 사항과 주의해야 할 점들
+3. 예상되는 문제점과 해결 방안
+4. 성과 측정 및 평가 기준`;
+      
+      case 'summary':
+        return `${taskPrefix}요약:
+- 핵심 내용을 간결하게 정리
+- 주요 학습 포인트 3가지
+- 다음 단계 액션 아이템
+- 기억해야 할 중요 사항`;
+      
+      default:
+        return `${taskPrefix}학습 내용 정리 및 다음 단계 계획`;
+    }
   };
 
   // SVG 원의 둘레 계산 (반지름 기준)
@@ -615,16 +667,33 @@ const TimerPage: React.FC = () => {
         <Button
           variant="contained"
           size="small"
+          onClick={handleGenerateAI}
+          disabled={isGeneratingAI || !notes.trim()}
           sx={{
             backgroundColor: '#10B981',
             '&:hover': {
               backgroundColor: '#059669',
             },
+            '&:disabled': {
+              backgroundColor: '#D1D5DB',
+              color: '#9CA3AF',
+            },
             fontWeight: 600,
             textTransform: 'none',
+            minWidth: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          AI 생성
+          {isGeneratingAI ? (
+            <>
+              <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
+              생성 중...
+            </>
+          ) : (
+            'AI 생성'
+          )}
         </Button>
       </ExpandedNotesFeatures>
     </NotesSection>
