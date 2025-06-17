@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, styled, IconButton } from '@mui/material';
+import { Box, Typography, styled, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
+import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -48,12 +49,44 @@ const FocusTimeLabel = styled(Typography)(() => ({
   textAlign: 'center',
 }));
 
-const SessionInfo = styled(Typography)(() => ({
-  fontSize: '14px', // Caption
+// 실행 중 상태 헤더
+const RunningHeader = styled(Box)(() => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  marginBottom: '32px',
+  width: '100%',
+}));
+
+const SessionProgress = styled(Typography)(() => ({
+  fontSize: '18px',
+  fontWeight: 600,
+  color: '#1A1A1A',
+  marginBottom: '8px',
+}));
+
+const ElapsedTime = styled(Typography)(() => ({
+  fontSize: '16px',
   fontWeight: 500,
-  color: '#6B7280', // Text Secondary
-  marginBottom: '24px',
-  textAlign: 'center',
+  color: '#2563EB', // Primary color
+  marginBottom: '16px',
+}));
+
+const ProgressBarContainer = styled(Box)(() => ({
+  width: '100%',
+  maxWidth: '400px',
+  height: '8px',
+  backgroundColor: '#E5E7EB',
+  borderRadius: '4px',
+  overflow: 'hidden',
+  marginBottom: '32px',
+}));
+
+const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress }) => ({
+  width: `${progress}%`,
+  height: '100%',
+  backgroundColor: '#2563EB',
+  transition: 'width 0.3s ease',
 }));
 
 // 타이머 원형 컨테이너
@@ -142,37 +175,108 @@ const TaskInputLabel = styled(Typography)(() => ({
 }));
 
 // 노트 섹션
-const NotesSection = styled(Box)(() => ({
+const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
   width: '100%',
-  maxWidth: '400px',
+  maxWidth: expanded ? 'none' : '400px',
   marginTop: '32px',
+  transition: 'all 0.3s ease',
+  ...(expanded && {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    zIndex: 9999,
+    margin: 0,
+    padding: '24px',
+    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+}));
+
+// 확대된 노트의 타이머 바
+const ExpandedTimerBar = styled(Box)(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '20px 24px',
+  backgroundColor: '#FFFFFF',
+  borderRadius: '16px',
+  marginBottom: '24px',
+  border: '2px solid #E5E7EB',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+}));
+
+const ExpandedTimerInfo = styled(Box)(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '20px',
+}));
+
+const ExpandedTimerDisplay = styled(Typography)(() => ({
+  fontSize: '28px',
+  fontWeight: 700,
+  color: '#1A1A1A',
+  fontFamily: "'Pretendard', monospace",
+}));
+
+const ExpandedSessionInfo = styled(Typography)(() => ({
+  fontSize: '16px',
+  fontWeight: 500,
+  color: '#6B7280',
+}));
+
+const ExpandedProgressBar = styled(Box)(() => ({
+  flex: 1,
+  height: '12px',
+  backgroundColor: '#F3F4F6',
+  borderRadius: '6px',
+  overflow: 'hidden',
+  margin: '0 20px',
+  border: '1px solid #E5E7EB',
+}));
+
+const ExpandedProgressFill = styled(Box)<{ progress: number }>(({ progress }) => ({
+  width: `${progress}%`,
+  height: '100%',
+  backgroundColor: '#2563EB',
+  transition: 'width 0.3s ease',
+  borderRadius: '6px',
+  boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
 }));
 
 const NotesHeader = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginBottom: '16px',
+  marginBottom: '20px',
 }));
 
 const NotesTitle = styled(Typography)(() => ({
-  fontSize: '18px',
-  fontWeight: 600,
+  fontSize: '24px',
+  fontWeight: 700,
   color: '#1A1A1A',
 }));
 
-const NotesTextArea = styled('textarea')(() => ({
+const NotesTextArea = styled('textarea')<{ expanded: boolean }>(({ expanded }) => ({
   width: '100%',
-  minHeight: '120px',
+  minHeight: expanded ? '60vh' : '120px',
   padding: '16px',
   border: '1px solid #E5E7EB',
   borderRadius: '8px',
   fontSize: '14px',
   fontFamily: "'Pretendard', sans-serif",
-  color: '#6B7280',
+  color: '#1A1A1A',
   backgroundColor: '#FFFFFF',
   resize: 'vertical',
   outline: 'none',
+  transition: 'min-height 0.3s ease',
+  flex: expanded ? 1 : 'none',
   
   '&:focus': {
     borderColor: '#2563EB',
@@ -181,6 +285,30 @@ const NotesTextArea = styled('textarea')(() => ({
   '&::placeholder': {
     color: '#9CA3AF',
   },
+}));
+
+// 확장된 노트 기능들
+const ExpandedNotesFeatures = styled(Box)(() => ({
+  marginTop: '16px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '16px',
+  backgroundColor: '#F9FAFB',
+  borderRadius: '8px',
+  border: '1px solid #E5E7EB',
+}));
+
+const StudyModeSection = styled(Box)(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+}));
+
+const StudyModeLabel = styled(Typography)(() => ({
+  fontSize: '14px',
+  fontWeight: 500,
+  color: '#6B7280',
 }));
 
 // 설정 다이얼로그 스타일
@@ -271,13 +399,17 @@ const TimerPage: React.FC = () => {
   const [taskName, setTaskName] = useState('');
   const [notes, setNotes] = useState('');
   const [session, setSession] = useState(1);
-  const [totalTime] = useState(25 * 60); // 25분 = 1500초
   const [showSettings, setShowSettings] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [summaryStyle, setSummaryStyle] = useState('concept');
   const [settings, setSettings] = useState<TimerSettings>({
     sessions: 3,
     focusMinutes: 25,
     breakMinutes: 5,
   });
+
+  const totalTime = settings.focusMinutes * 60;
 
   // 진행률 계산
   const currentTime = minutes * 60 + seconds;
@@ -289,6 +421,7 @@ const TimerPage: React.FC = () => {
     
     if (isRunning && (minutes > 0 || seconds > 0)) {
       interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
         if (seconds > 0) {
           setSeconds(seconds - 1);
         } else if (minutes > 0) {
@@ -303,6 +436,7 @@ const TimerPage: React.FC = () => {
         setSession(session + 1);
         setMinutes(settings.focusMinutes);
         setSeconds(0);
+        setElapsedTime(0);
       }
     }
 
@@ -312,6 +446,9 @@ const TimerPage: React.FC = () => {
   }, [isRunning, minutes, seconds, session, settings]);
 
   const handleStart = () => {
+    if (!isRunning) {
+      setElapsedTime(0);
+    }
     setIsRunning(!isRunning);
   };
 
@@ -320,6 +457,7 @@ const TimerPage: React.FC = () => {
     setMinutes(settings.focusMinutes);
     setSeconds(0);
     setSession(1);
+    setElapsedTime(0);
   };
 
   const handleSettings = () => {
@@ -334,6 +472,7 @@ const TimerPage: React.FC = () => {
     setMinutes(settings.focusMinutes);
     setSeconds(0);
     setSession(1);
+    setElapsedTime(0);
     setShowSettings(false);
   };
 
@@ -355,6 +494,12 @@ const TimerPage: React.FC = () => {
     return `${min.toString().padStart(2, '0')} : ${sec.toString().padStart(2, '0')}`;
   };
 
+  const formatElapsedTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // SVG 원의 둘레 계산 (반지름 기준)
   const radius = 136; // 280px 원의 반지름에서 stroke-width 고려
   const circumference = 2 * Math.PI * radius;
@@ -369,22 +514,152 @@ const TimerPage: React.FC = () => {
     </Button>
   );
 
+  // 확대된 노트 렌더링 함수
+  const renderExpandedNotes = () => (
+    <NotesSection expanded={true}>
+      {/* 타이머 바 */}
+      <ExpandedTimerBar>
+        <ExpandedTimerInfo>
+          <ExpandedTimerDisplay>
+            {formatTime(minutes, seconds)}
+          </ExpandedTimerDisplay>
+          {isRunning ? (
+            <ExpandedSessionInfo>
+              세션 {session}/{settings.sessions} • {formatElapsedTime(elapsedTime)}
+            </ExpandedSessionInfo>
+          ) : (
+            <ExpandedSessionInfo>
+              세션 {session}/{settings.sessions} • 준비됨
+            </ExpandedSessionInfo>
+          )}
+        </ExpandedTimerInfo>
+        
+        <ExpandedProgressBar>
+          <ExpandedProgressFill progress={isRunning ? progress : 0} />
+        </ExpandedProgressBar>
+        
+        <IconButton 
+          size="small" 
+          sx={{ 
+            color: '#6B7280',
+            backgroundColor: '#F3F4F6',
+            '&:hover': {
+              backgroundColor: '#E5E7EB',
+            },
+          }}
+          onClick={() => setNotesExpanded(false)}
+        >
+          <CompressIcon fontSize="small" />
+        </IconButton>
+      </ExpandedTimerBar>
+
+      {/* 노트 제목과 작업명 */}
+      <NotesHeader>
+        <Box>
+          <NotesTitle>
+            📝 집중 노트
+          </NotesTitle>
+          {taskName && (
+            <Typography 
+              sx={{ 
+                fontSize: '16px', 
+                color: '#6B7280', 
+                marginTop: '4px',
+                fontWeight: 500,
+              }}
+            >
+              현재 작업: {taskName}
+            </Typography>
+          )}
+        </Box>
+      </NotesHeader>
+      
+      {/* 노트 텍스트 영역 */}
+      <NotesTextArea
+        expanded={true}
+        placeholder="이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
+
+      {/* 확장된 기능들 */}
+      <ExpandedNotesFeatures>
+        <StudyModeSection>
+          <StudyModeLabel>요약 스타일</StudyModeLabel>
+          <FormControl size="small" variant="outlined">
+            <Select
+              value={summaryStyle}
+              onChange={(e) => setSummaryStyle(e.target.value as string)}
+              displayEmpty
+              sx={{
+                minWidth: '150px',
+                backgroundColor: '#FFFFFF',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#E5E7EB',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#D1D5DB',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#2563EB',
+                },
+              }}
+            >
+              <MenuItem value="concept">Concept-focused</MenuItem>
+              <MenuItem value="detail">Detail-focused</MenuItem>
+              <MenuItem value="summary">Summary-focused</MenuItem>
+            </Select>
+          </FormControl>
+        </StudyModeSection>
+        
+        <Button
+          variant="contained"
+          size="small"
+          sx={{
+            backgroundColor: '#10B981',
+            '&:hover': {
+              backgroundColor: '#059669',
+            },
+            fontWeight: 600,
+            textTransform: 'none',
+          }}
+        >
+          AI 생성
+        </Button>
+      </ExpandedNotesFeatures>
+    </NotesSection>
+  );
+
+  // 확대된 노트가 표시 중일 때는 오버레이만 렌더링
+  if (notesExpanded) {
+    return renderExpandedNotes();
+  }
+
   return (
     <PageContainer>
       <PageTitle>
         타이머
       </PageTitle>
 
-      <FocusTimeSection>
-        <FocusTimeLabel>
-          집중시간
-        </FocusTimeLabel>
-        {isRunning && (
-          <SessionInfo>
+      {isRunning ? (
+        <RunningHeader>
+          <SessionProgress>
             세션 {session}/{settings.sessions}
-          </SessionInfo>
-        )}
-      </FocusTimeSection>
+          </SessionProgress>
+          <ElapsedTime>
+            {formatElapsedTime(elapsedTime)}
+          </ElapsedTime>
+          <ProgressBarContainer>
+            <ProgressBarFill progress={progress} />
+          </ProgressBarContainer>
+        </RunningHeader>
+      ) : (
+        <FocusTimeSection>
+          <FocusTimeLabel>
+            집중시간
+          </FocusTimeLabel>
+        </FocusTimeSection>
+      )}
 
       <TimerCircle>
         {isRunning && (
@@ -468,39 +743,108 @@ const TimerPage: React.FC = () => {
       </ButtonContainer>
 
       {!isRunning ? (
-        <TaskInputSection>
-          <TaskInputLabel>
-            이번 세션에 집중할 일은 무엇인가요?
-          </TaskInputLabel>
-          
-          <Input
-            fullWidth
-            placeholder="e.g. Draft presentation report"
-            value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
-            sx={{
-              backgroundColor: '#FFFFFF',
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#9CA3AF',
-              },
-            }}
-          />
-        </TaskInputSection>
+        <>
+          <TaskInputSection>
+            <TaskInputLabel>
+              이번 세션에 집중할 일은 무엇인가요?
+            </TaskInputLabel>
+            
+            <Input
+              fullWidth
+              placeholder="e.g. Draft presentation report"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+              sx={{
+                backgroundColor: '#FFFFFF',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  color: '#9CA3AF',
+                },
+              }}
+            />
+          </TaskInputSection>
+
+          <NotesSection expanded={false}>
+            <NotesHeader>
+              <Box>
+                <NotesTitle>
+                  📝 집중 노트
+                </NotesTitle>
+                {taskName && (
+                  <Typography 
+                    sx={{ 
+                      fontSize: '14px', 
+                      color: '#6B7280', 
+                      marginTop: '4px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    현재 작업: {taskName}
+                  </Typography>
+                )}
+              </Box>
+              <IconButton 
+                size="small" 
+                sx={{ 
+                  color: '#6B7280',
+                  backgroundColor: '#F3F4F6',
+                  '&:hover': {
+                    backgroundColor: '#E5E7EB',
+                  },
+                }}
+                onClick={() => setNotesExpanded(true)}
+              >
+                <ExpandIcon fontSize="small" />
+              </IconButton>
+            </NotesHeader>
+            
+            <NotesTextArea
+              expanded={false}
+              placeholder="이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </NotesSection>
+        </>
       ) : (
-        <NotesSection>
+        <NotesSection expanded={false}>
           <NotesHeader>
-            <NotesTitle>
-              Your Notes ✨
-            </NotesTitle>
-            <IconButton size="small" sx={{ color: '#6B7280' }}>
+            <Box>
+              <NotesTitle>
+                📝 집중 노트
+              </NotesTitle>
+              {taskName && (
+                <Typography 
+                  sx={{ 
+                    fontSize: '14px', 
+                    color: '#6B7280', 
+                    marginTop: '4px',
+                    fontWeight: 500,
+                  }}
+                >
+                  현재 작업: {taskName}
+                </Typography>
+              )}
+            </Box>
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: '#6B7280',
+                backgroundColor: '#F3F4F6',
+                '&:hover': {
+                  backgroundColor: '#E5E7EB',
+                },
+              }}
+              onClick={() => setNotesExpanded(true)}
+            >
               <ExpandIcon fontSize="small" />
             </IconButton>
           </NotesHeader>
           
           <NotesTextArea
-            placeholder="오늘 무엇이 떠올랐나요?"
+            expanded={false}
+            placeholder="이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
