@@ -47,3 +47,27 @@ export interface StudyStats {
   averageGrade: number;
   streak: number; // 연속 학습 일수
 }
+
+// 플래시카드 생성을 위한 퀴즈 타입
+export interface QuizQuestion {
+  id: string;
+  title: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface FlashcardGenerationSession {
+  id: string;
+  questions: QuizQuestion[];
+  currentQuestionIndex: number;
+  userAnswers: Record<string, number>;
+  feedback: string;
+  isCompleted: boolean;
+}
+
+export interface GenerationResult {
+  success: boolean;
+  deckId?: string;
+  error?: string;
+}
