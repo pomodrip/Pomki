@@ -59,27 +59,26 @@ const FlashcardDeckListPage: React.FC = () => {
 
   return (
     <Box sx={{ pb: '64px', minHeight: '100vh', background: theme.palette.background.default }}>
-      {/* 상단 헤더 */}
+      {/* 상단 헤더 :왼쪽 정렬 + 배경 제거*/}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           height: 56,
           px: 2,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          background: theme.palette.background.paper,
         }}
       >
         <IconButton onClick={() => navigate(-1)}>
           <ArrowBackIosNewIcon />
         </IconButton>
-        <Typography variant="h6" fontWeight={700}>
+        <Typography variant="h6" fontWeight={700} sx={{ ml: 1 }}>
           Flash Deck
         </Typography>
-        <IconButton>
-          <AddIcon />
-        </IconButton>
+        <Box sx={{ ml: 'auto' }}>
+          <IconButton>
+            <AddIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* 태그 드롭다운 */}
