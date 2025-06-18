@@ -25,14 +25,6 @@ const StyledButton = styled(MuiButton)<ButtonProps>(({ theme, variant, color }) 
       },
     }),
     
-  ...(variant === 'outlined' && {
-    borderColor: theme.palette.grey[300], // 36
-    color: theme.palette.text.primary,
-    '&:hover': {
-      backgroundColor: theme.palette.action.hover,
-      borderColor: theme.palette.primary.main,
-    },
-  }),
 }));  
 
 const Button: React.FC<ButtonProps> = (props) => {
