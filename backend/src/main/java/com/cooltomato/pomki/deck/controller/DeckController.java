@@ -47,7 +47,7 @@ public class DeckController {
         return ResponseEntity.ok(response);
     }
     
-
+    // 작업 중
     // 덱 안 카드 전체 조회
     @GetMapping("/{deckId}")
     public ResponseEntity<List<CardEntity>> readAllCardInAdeck(@RequestParam("deckId") String deckId) {

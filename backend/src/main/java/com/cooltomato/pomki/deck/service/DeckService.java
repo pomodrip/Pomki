@@ -72,7 +72,7 @@ public class DeckService {
                     .toList();
         }
 
-
+        // 덱 안 카드 전체 조회
         public List<CardEntity> readAllCards(String deckId) {
             log.info("debug >>> DeckService readAllCards");
             List<CardEntity> cardsLst = deckRepository.findAllCardsByDeckId(deckId);
