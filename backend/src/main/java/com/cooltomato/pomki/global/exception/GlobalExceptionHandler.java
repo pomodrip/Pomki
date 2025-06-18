@@ -7,8 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.validation.FieldError;
 
 import java.sql.SQLException;
 
@@ -91,5 +93,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleInvalidTokenException(InvalidTokenException exception) {
         log.error("InvalidTokenException: ", exception);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException exception) {
+        log.error("Validation exception: ", exception);
+        
+        StringBuilder errorMessage = new StringBuilder();
+        for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
+            if (errorMessage.length() > 0) {
+                errorMessage.append(", ");
+            }
+            errorMessage.append(fieldError.getDefaultMessage());
+        }
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
     }
 }

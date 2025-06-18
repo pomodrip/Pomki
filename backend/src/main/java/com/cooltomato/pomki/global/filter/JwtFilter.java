@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtProvider tokenProvider;
-    private static final List<String> allowUrlList=List.of("/h2-console","/api/auth/refresh","/api/members/register","/v3/api-docs","/api/auth/login","/api/members/check","/login","/favicon.ico","/api/auth/oauth2/login");
+    private static final List<String> allowUrlList=List.of("/h2-console","/api/auth/refresh","/api/members/register","/v3/api-docs","/api/auth/login","/api/members/check","/login","/favicon.ico","/api/auth/oauth2/login","/api/email/verification","/api/email/code");
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         if(allowUrlList.contains(request.getRequestURI())){

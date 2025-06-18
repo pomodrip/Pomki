@@ -15,8 +15,14 @@ import com.cooltomato.pomki.member.dto.MemberSignUpRequestDto;
 import com.cooltomato.pomki.member.dto.MemberUpdateRequestDto;
 import com.cooltomato.pomki.member.dto.MemberUpdateResponseDto;
 import com.cooltomato.pomki.member.dto.SocialSignUpRequestDto;
+import com.cooltomato.pomki.member.dto.MemberEmailUpdateRequestDto;
+import com.cooltomato.pomki.member.dto.MemberEmailUpdateConfirmDto;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
+import com.cooltomato.pomki.email.constant.EmailVerificationCode;
+import com.cooltomato.pomki.email.dto.EmailVerificationRequestDto;
+import com.cooltomato.pomki.email.service.EmailService;
+import com.cooltomato.pomki.auth.jwt.JwtProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,12 +32,23 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final JwtProvider jwtProvider;
 
     @Transactional
     public Member signUp(MemberSignUpRequestDto request) {
+        if (!emailService.isValidVerificationToken(request.getEmail(), request.getVerificationToken())) {
+            throw new BadRequestException("이메일 인증이 완료되지 않았거나 만료된 요청입니다.");
+        }
+        
+        return createMember(request);
+    }
+    
+    private Member createMember(MemberSignUpRequestDto request) {
         if (memberRepository.existsByMemberEmail(request.getEmail())) {
             throw new RuntimeException("이미 사용중인 이메일입니다.");
         }
+
         Member newMember = Member.builder()
                 .memberEmail(request.getEmail())
                 .currentEmail(request.getEmail())
@@ -39,26 +56,16 @@ public class MemberService {
                 .memberPassword(passwordEncoder.encode(request.getPassword()))
                 .memberRoles(Role.USER)
                 .isSocialLogin(false)
+                .emailVerified(true) // 이메일 인증 완료
                 .build();
-        return memberRepository.save(newMember);
+
+        Member savedMember = memberRepository.save(newMember);
+
+        return savedMember;
     }
 
-    @Transactional
-    public Member socialSignUp(SocialSignUpRequestDto request) {
-        Member newMember = Member.builder()
-                .memberEmail(request.getEmail())
-                .currentEmail(request.getEmail())
-                .memberNickname(request.getNickname())
-                .memberRoles(Role.USER)
-                .isSocialLogin(true)
-                .emailVerified(true)
-                .provider(request.getProvider())
-                .providerUserId(request.getProviderId())
-                .build();
-        return memberRepository.save(newMember);
-    }
-
-    public MemberInfoResponseDto readMemberInfo(Long memberId) {
+    @Transactional(readOnly = true)
+    public MemberInfoResponseDto readMember(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
         return MemberInfoResponseDto.from(member);
@@ -78,7 +85,7 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberUpdateResponseDto updateMemberInfo(Long memberId, MemberUpdateRequestDto request) {
+    public MemberUpdateResponseDto updateMember(Long memberId, MemberUpdateRequestDto request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
         
@@ -94,9 +101,6 @@ public class MemberService {
             member.setMemberNickname(request.getNickname());
         }
         
-        if (StringUtils.hasText(request.getCurrentEmail())) {
-            member.setCurrentEmail(request.getCurrentEmail());
-        }
         
         return MemberUpdateResponseDto.builder()
                 .memberId(member.getMemberId())
@@ -116,5 +120,47 @@ public class MemberService {
         if (!passwordEncoder.matches(request.getCurrentPassword(), member.getMemberPassword())) {
             throw new BadRequestException("현재 패스워드가 일치하지 않습니다.");
         }
+    }
+
+    public void requestEmailChange(Long memberId, MemberEmailUpdateRequestDto request) {
+        validateEmailChangeRequest(memberId, request);
+        
+        EmailVerificationRequestDto emailRequest = 
+        EmailVerificationRequestDto.builder()
+                .email(request.getNewEmail())
+                .type(EmailVerificationCode.EMAIL_CHANGE)
+                .build();
+        
+        emailService.sendVerificationCode(emailRequest);
+    }
+    
+    private void validateEmailChangeRequest(Long memberId, MemberEmailUpdateRequestDto request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
+        
+        if (memberRepository.existsByMemberEmail(request.getNewEmail())) {
+            throw new BadRequestException("이미 사용 중인 이메일입니다.");
+        }
+        
+        if (member.getMemberEmail().equals(request.getNewEmail())) {
+            throw new BadRequestException("현재 이메일과 동일합니다.");
+        }
+    }
+
+    @Transactional
+    public void confirmEmailChange(Long memberId, MemberEmailUpdateConfirmDto request) {
+        if (!jwtProvider.validateEmailVerificationToken(request.getToken(), request.getNewEmail())) {
+            throw new BadRequestException("유효하지 않은 인증 토큰입니다.");
+        }
+        
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
+        
+        if (memberRepository.existsByMemberEmail(request.getNewEmail())) {
+            throw new BadRequestException("이미 사용 중인 이메일입니다.");
+        }
+        
+        member.setCurrentEmail(request.getNewEmail());
+        member.setEmailVerified(true);
     }
 } 
