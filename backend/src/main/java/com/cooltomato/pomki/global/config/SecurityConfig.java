@@ -3,6 +3,8 @@ package com.cooltomato.pomki.global.config;
 import com.cooltomato.pomki.auth.handler.OAuth2LoginSuccessHandler;
 import com.cooltomato.pomki.auth.handler.OAuth2LoginFailureHandler;
 import com.cooltomato.pomki.global.filter.JwtFilter;
+import com.cooltomato.pomki.global.handler.CustomAuthenticationEntryPoint;
+import com.cooltomato.pomki.global.handler.CustomAccessDeniedHandler;
 import com.cooltomato.pomki.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +37,8 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CorsConfig corsConfig;
 
     private static final String[] PERMIT_PATTERNS = List.of(
@@ -70,7 +74,10 @@ public class SecurityConfig {
                                         .userService(customOAuth2UserService)
                         )
                 )
-
+                .exceptionHandling((exceptions) -> exceptions
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 
         return http.build();

@@ -90,9 +90,4 @@ public class Member {
         this.isSocialLogin = isSocialLogin;
         this.isDeleted = isDeleted;
     }
-
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-    }
 }

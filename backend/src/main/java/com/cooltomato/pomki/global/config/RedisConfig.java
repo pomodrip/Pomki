@@ -18,6 +18,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
@@ -41,7 +42,12 @@ public class RedisConfig {
 
     private final RedisProperties redisProperties;
 
-
+    @Bean
+    public LettuceClientConfiguration lettuceClientConfiguration() {
+        return LettuceClientConfiguration.builder()
+                .useSsl()
+                .build();
+    }
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -49,7 +55,7 @@ public class RedisConfig {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(redisProperties.host(), redisProperties.port());
         redisStandaloneConfiguration.setUsername(redisProperties.username());
         redisStandaloneConfiguration.setPassword(RedisPassword.of(redisProperties.password()));
-        return new LettuceConnectionFactory(redisStandaloneConfiguration);
+        return new LettuceConnectionFactory(redisStandaloneConfiguration, lettuceClientConfiguration());
     }
 
     @Bean
