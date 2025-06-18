@@ -7,13 +7,19 @@ import {
   InputAdornment,
   Button,
   Stack,
-  Container
+  Container,
+  Menu,
+  MenuItem,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
+  FilterList as FilterListIcon,
+  BookmarkBorder,
+  Bookmark,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import FlashCard from '../../components/ui/FlashCard';
@@ -59,20 +65,62 @@ const FlashCardListPage: React.FC = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
-  const [showTagsFilter, setShowTagsFilter] = useState(false);
-  const [showBookmarkedFilter, setShowBookmarkedFilter] = useState(false);
+  // const [showTagsFilter, setShowTagsFilter] = useState(false);
+  // const [showBookmarkedFilter, setShowBookmarkedFilter] = useState(false);
+  
+  // FlashcardDeckListPage와 동일한 필터링 상태 추가
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showBookmarked, setShowBookmarked] = useState(false);
+  const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
+  const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+  const [cardBookmarks, setCardBookmarks] = useState<{[key: number]: boolean}>({
+    1: false,
+    2: true,
+    3: false,
+    4: true,
+    5: false,
+  });
+
+  // 모든 태그 목록 추출
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    flashCards.forEach((card) => {
+      card.tags.forEach((tag: string) => tagSet.add(tag));
+    });
+    return Array.from(tagSet);
+  }, []);
 
   // 필터링된 카드 목록
   const filteredCards = useMemo(() => {
     return flashCards.filter((card) => {
       const matchesSearch = card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            card.back.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+      
+      const matchesTags = selectedTags.length === 0 || 
+                         selectedTags.some((tag: string) => card.tags.includes(tag));
+      
+      const matchesBookmark = !showBookmarked || cardBookmarks[card.id];
+
+      return matchesSearch && matchesTags && matchesBookmark;
     });
-  }, [searchQuery]);
+  }, [searchQuery, selectedTags, showBookmarked, cardBookmarks]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
+  };
+
+  const handleTagSelect = (tag: string) => {
+    const newSelectedTags = selectedTags.includes(tag)
+      ? selectedTags.filter((t: string) => t !== tag)
+      : [...selectedTags, tag];
+    
+    setSelectedTags(newSelectedTags);
+    setTagMenuAnchor(null);
+  };
+
+  const handleBookmarkFilter = (showBookmarkedValue: boolean) => {
+    setShowBookmarked(showBookmarkedValue);
+    setBookmarkMenuAnchor(null);
   };
 
   const handleCardSelect = (id: number, selected: boolean) => {
@@ -92,6 +140,14 @@ const FlashCardListPage: React.FC = () => {
     if (confirmed) {
       console.log('Delete card:', id);
     }
+  };
+
+  const handleToggleBookmark = (cardId: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setCardBookmarks(prev => ({
+      ...prev,
+      [cardId]: !prev[cardId]
+    }));
   };
 
   const handleAddCard = () => {
@@ -146,7 +202,75 @@ const FlashCardListPage: React.FC = () => {
           />
         </Box>
 
-        {/* 필터 버튼들 */}
+        {/* 필터 버튼들 - FlashcardDeckListPage와 동일한 스타일로 변경 */}
+        <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+          <Button
+            variant="outlined"
+            onClick={(e) => setTagMenuAnchor(e.currentTarget)}
+            endIcon={<FilterListIcon />}
+            sx={{ borderRadius: 2 }}
+          >
+            Tags {selectedTags.length > 0 && `(${selectedTags.length})`}
+          </Button>
+          
+          <Button
+            variant="outlined"
+            onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
+            endIcon={<FilterListIcon />}
+            sx={{ borderRadius: 2 }}
+          >
+            Bookmarked
+          </Button>
+
+          {/* 선택된 태그들 표시 */}
+          {selectedTags.map((tag: string) => (
+            <Chip
+              key={tag}
+              label={tag}
+              onDelete={() => handleTagSelect(tag)}
+              color="primary"
+              variant="filled"
+              sx={{
+                fontSize: '0.75rem',
+                height: 24,
+                marginRight: 0.5,
+              }}
+            />
+          ))}
+        </Box>
+
+        {/* 태그 메뉴 */}
+        <Menu
+          anchorEl={tagMenuAnchor}
+          open={Boolean(tagMenuAnchor)}
+          onClose={() => setTagMenuAnchor(null)}
+        >
+          {allTags.map((tag: string) => (
+            <MenuItem 
+              key={tag} 
+              onClick={() => handleTagSelect(tag)}
+              selected={selectedTags.includes(tag)}
+            >
+              {tag}
+            </MenuItem>
+          ))}
+        </Menu>
+
+        {/* 북마크 메뉴 */}
+        <Menu
+          anchorEl={bookmarkMenuAnchor}
+          open={Boolean(bookmarkMenuAnchor)}
+          onClose={() => setBookmarkMenuAnchor(null)}
+        >
+          <MenuItem onClick={() => handleBookmarkFilter(false)}>
+            모든 카드
+          </MenuItem>
+          <MenuItem onClick={() => handleBookmarkFilter(true)}>
+            북마크된 카드만
+          </MenuItem>
+        </Menu>
+
+        {/* 기존 필터 버튼들 - 주석처리
         <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
           <Button
             variant="outlined"
@@ -166,6 +290,7 @@ const FlashCardListPage: React.FC = () => {
             Bookmarked
           </Button>
         </Box>
+        */}
 
         {/* 카드 리스트 */}
         <Stack spacing={0}>
@@ -177,9 +302,11 @@ const FlashCardListPage: React.FC = () => {
               content=""
               tags={card.tags}
               isSelected={selectedCards.includes(card.id)}
+              isBookmarked={cardBookmarks[card.id]}
               onSelect={handleCardSelect}
               onEdit={handleEditCard}
               onDelete={handleDeleteCard}
+              onToggleBookmark={handleToggleBookmark}
             />
           ))}
         </Stack>

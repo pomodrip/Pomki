@@ -66,23 +66,47 @@ const TagChip = styled(Chip)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
+  // Z Fold 5와 같은 작은 화면에서 태그 크기 조정
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.65rem',
+    height: 20,
+    marginRight: theme.spacing(0.3),
+    '& .MuiChip-label': {
+      paddingLeft: theme.spacing(0.5),
+      paddingRight: theme.spacing(0.5),
+    },
+  },
 }));
 
 const ActionBox = styled(Box)(({ theme }) => ({
   display: 'flex',
-  gap: theme.spacing(1),
+  //액션버튼들 사이 간격
+  gap: theme.spacing(3),
   marginTop: theme.spacing(1),
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   minWidth: 'auto',
-  padding: theme.spacing(0.5, 1),
-  fontSize: '0.75rem',
+  padding: theme.spacing(0.3, 0.6),
+  fontSize: '0.7rem',
   color: theme.palette.text.secondary,
   border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.spacing(1),
+  borderRadius: theme.spacing(0.8),
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
+  },
+  '& .MuiButton-startIcon': {
+    marginRight: theme.spacing(0.3),
+    fontSize: '0.9rem',
+  },
+  // 작은 화면에서 더 컴팩트하게
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(0.2, 0.4),
+    fontSize: '0.65rem',
+    '& .MuiButton-startIcon': {
+      marginRight: theme.spacing(0.2),
+      fontSize: '0.8rem',
+    },
   },
 }));
 
@@ -355,57 +379,71 @@ const FlashcardDeckListPage: React.FC = () => {
         {!searchQuery.trim() && filteredDecks.map((deck) => (
           <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
             <CardContent>
-              
-              {/* 카드 개수와 북마크 */}
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {deck.flashcards.length} cards
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={(e) => handleToggleBookmark(deck.id, e)}
+              {/* 태그와 북마크 */}
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    gap: 0.5,
+                    flex: 1,
+                    marginRight: 1,
+                    overflow: 'hidden'
+                  }}
                 >
-                  {deckBookmarks[deck.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
-                </IconButton>
-              </Box>
-
-              {/* 제목 */}
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                {deck.title}
-              </Typography>
-
-              {/* 태그들 */}
-              <Box mt={2}>
-                <Stack direction="row" spacing={0.5}>
-                  {deck.tags.map((tag: string) => (
+                  {deck.tags.slice(0, 3).map((tag: string) => (
                     <TagChip
                       key={tag}
-                      label={`#${tag}`}
+                      label={`#${tag.length > 5 ? tag.substring(0, 5) + '...' : tag}`}
                       size="small"
                       color="primary"
                       variant="outlined"
                     />
                   ))}
-                </Stack>
+                  {deck.tags.length > 3 && (
+                    <TagChip
+                      label={`+${deck.tags.length - 3}`}
+                      size="small"
+                      color="default"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleToggleBookmark(deck.id, e)}
+                  sx={{ flexShrink: 0 }}
+                >
+                  {deckBookmarks[deck.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                </IconButton>
               </Box>
+              
+              {/* 제목 */}
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                {deck.title}
+              </Typography>
+
+              {/* 카드 개수 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {deck.flashcards.length} cards
+              </Typography>
 
               {/* 액션 버튼들 */}
               <ActionBox>
                 <ActionButton
                   onClick={(e) => handleEditDeck(deck.id, e)}
-                  startIcon={<span>✏️</span>}
+                  startIcon={<EditIcon fontSize="small" />}
                 >
                   수정
                 </ActionButton>
                 <ActionButton
                   onClick={(e) => handleDeleteDeck(deck.id, e)}
-                  startIcon={<span>🗑️</span>}
+                  startIcon={<DeleteIcon fontSize="small" />}
                 >
                   삭제
                 </ActionButton>
                 <ActionButton
                   onClick={(e) => handleCreateQuiz(deck.id, e)}
-                  startIcon={<span>📚</span>}
+                  startIcon={<QuizIcon fontSize="small" />}
                 >
                   학습하기
                 </ActionButton>
@@ -450,17 +488,25 @@ const FlashcardDeckListPage: React.FC = () => {
 
               {/* 태그들 */}
               <Box mt={2}>
-                <Stack direction="row" spacing={0.5}>
-                  {card.deckTags.map((tag: string) => (
+                <Box sx={{ display: 'flex', gap: 0.5, overflow: 'hidden' }}>
+                  {card.deckTags.slice(0, 3).map((tag: string) => (
                     <TagChip
                       key={tag}
-                      label={`#${tag}`}
+                      label={`#${tag.length > 5 ? tag.substring(0, 5) + '...' : tag}`}
                       size="small"
                       color="primary"
                       variant="outlined"
                     />
                   ))}
-                </Stack>
+                  {card.deckTags.length > 3 && (
+                    <TagChip
+                      label={`+${card.deckTags.length - 3}`}
+                      size="small"
+                      color="default"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
               </Box>
             </CardContent>
           </DeckCard>
