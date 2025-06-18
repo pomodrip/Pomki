@@ -1,31 +1,31 @@
 package com.cooltomato.pomki.deck.service;
 
+import com.cooltomato.pomki.card.entity.CardEntity;
 import com.cooltomato.pomki.deck.dto.DeckRequestDto;
 import com.cooltomato.pomki.deck.dto.DeckResponseDto;
 import com.cooltomato.pomki.deck.entity.DeckEntity;
 import com.cooltomato.pomki.deck.repository.DeckRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DeckService {
-    
-        @Autowired
-        private DeckRepository deckRepository;
+
+        private final DeckRepository deckRepository;
     
         @Transactional
         public DeckResponseDto createDeck(String deckName) {
             // 동일한 이름의 덱 존재할 때 예외처리
-            System.out.println("debug >>> DeckService createDeck");
+            log.info("debug >>> DeckService createDeck");
             if (deckRepository.existsByMemberIdAndDeckNameAndIsDeletedFalse(777L, deckName)) {
                 throw new IllegalArgumentException("동일한 이름의 덱이 존재합니다.");
             }
@@ -52,18 +52,34 @@ public class DeckService {
 
         
         // 덱 전체조회
-        public List<DeckEntity> searchAllDecks(Long memberId) {
-            System.out.println("debug >>> DeckService searchAllDecks");
-            List<DeckEntity> decksLst = deckRepository.findAllDecksByMemberId(memberId);
-            if (decksLst.size() != 0) {
-                System.out.println("debug >>> 멤버별 덱 전체 조회 성공");
+        public List<DeckResponseDto> readAllDecks(Long memberId) {
+            log.info("debug >>> DeckService searchAllDecks");
+            List<DeckEntity> decks = deckRepository.findAllDecksByMemberId(memberId);
+            
+            if (decks.isEmpty()) {
+                log.info("debug >>> 멤버의 덱이 존재하지 않습니다.");
+                return List.of();
             }
-            return decksLst;
+            
+            log.info("debug >>> 멤버별 덱 전체 조회 성공");
+            return decks.stream()
+                    .map(deck -> DeckResponseDto.builder()
+                            .deckId(deck.getDeckId())
+                            .deckName(deck.getDeckName())
+                            .createdAt(deck.getCreatedAt())
+                            .cardCnt(deck.getCardCnt())
+                            .build())
+                    .toList();
         }
 
 
-        public void searchAllCardsInAdeck(String deckId) {
-            System.out.println("debug >>> DeckService searchAllCardsInAdeck");
+        public List<CardEntity> readAllCards(String deckId) {
+            log.info("debug >>> DeckService readAllCards");
+            List<CardEntity> cardsLst = deckRepository.findAllCardsByDeckId(deckId);
+            if (cardsLst.size() != 0) {
+                log.info("debug >>> 덱 안 카드 전체 조회 성공");
+            }
+            return cardsLst;    // responseDto로 형 변환할 것.
         }
         
     }
