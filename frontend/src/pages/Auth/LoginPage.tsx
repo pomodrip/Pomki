@@ -7,6 +7,7 @@ import Button from "../../components/ui/Button";
 import { Box, Checkbox, Typography } from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Container from '@mui/material/Container';
+import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
 
 const SocialButton = styled(Button)(({ theme }) => ({
   height: '45px',
@@ -52,6 +53,8 @@ const LoginPage = () => {
   const [id, setId] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [checked, setChecked] = React.useState(false);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [passwordError, setPasswordError] = React.useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +63,31 @@ const LoginPage = () => {
 
   const handleSignupClick = () => {
     navigate('/signup');
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setId(value);
+    setEmailError(getEmailValidationMessage(value));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    setPasswordError(getPasswordValidationMessage(value));
+  };
+
+  const handleLoginClick = () => {
+    const emailValidationError = getEmailValidationMessage(id);
+    const passwordValidationError = getPasswordValidationMessage(password);
+    
+    setEmailError(emailValidationError);
+    setPasswordError(passwordValidationError);
+    
+    if (!emailValidationError && !passwordValidationError) {
+      // 로그인 로직 실행
+      console.log('로그인 처리:', { email: id, password });
+    }
   };
 
   return (
@@ -75,28 +103,48 @@ const LoginPage = () => {
     >
       <Typography variant="h1" sx={{ mb: 2, fontSize: '32px', fontWeight: 700, textAlign: 'center' }}>학습의 새로운 차원</Typography>
       <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>Pomki와 함께 생성하세요.</Typography>
-      <Input
-        placeholder="이메일"
-        value={id}
-        onChange={e => setId(e.target.value)}
-        fullWidth
-        sx={{ mb: 2 }}
-      />
-      <Input
-        placeholder="비밀번호"
-        type="password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        fullWidth
-        sx={{ mb: 3 }}
-      />
+      <Box sx={{ width: '100%', mb: 2 }}>
+        <Input
+          placeholder="이메일"
+          value={id}
+          onChange={handleEmailChange}
+          fullWidth
+          error={!!emailError}
+        />
+        {emailError && (
+          <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+            {emailError}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ width: '100%', mb: 3 }}>
+        <Input
+          placeholder="비밀번호"
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          fullWidth
+          error={!!passwordError}
+        />
+        {passwordError && (
+          <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+            {passwordError}
+          </Typography>
+        )}
+      </Box>
       <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
         <FormControlLabel
           control={<Checkbox checked={checked} onChange={handleChange} />}
           label="아이디 저장"
         />
       </Box>
-      <Button variant="contained" color="primary" fullWidth sx={{ mb: 4 }}>
+      <Button 
+        variant="contained" 
+        color="primary" 
+        fullWidth 
+        sx={{ mb: 4 }}
+        onClick={handleLoginClick}
+      >
         로그인
       </Button>
 
