@@ -34,13 +34,13 @@ public class MemberController {
 
     @GetMapping("/my")
     public ResponseEntity<MemberInfoResponseDto> readMemberInfo(@AuthenticationPrincipal PrincipalMember principal) {
-        MemberInfoResponseDto response = memberService.readMemberInfo(principal.getMemberInfo().getMemberId());
+        MemberInfoResponseDto response = memberService.readMember(principal.getMemberInfo().getMemberId());
         return ResponseEntity.ok(response);
     }
 
     @PutMapping
     public ResponseEntity<MemberUpdateResponseDto> updateMemberInfo(@AuthenticationPrincipal PrincipalMember principal, @Valid @RequestBody MemberUpdateRequestDto request) {
-        MemberUpdateResponseDto response = memberService.updateMemberInfo(
+        MemberUpdateResponseDto response = memberService.updateMember(
                 principal.getMemberInfo().getMemberId(), request);
         return ResponseEntity.ok(response);
     }

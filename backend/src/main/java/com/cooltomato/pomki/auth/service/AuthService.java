@@ -37,13 +37,13 @@ public class AuthService {
         memberService.signUp(request);
     }
 
+    // @Transactional(readOnly = true) //내부망에서 트랜잭션에러발생 외부는 문제없음 어째서?
     public TokenResponseDto login(LoginRequestDto request) {
-        MemberInfoDto memberInfo = loginAuthenticateHelper(request);
+        MemberInfoDto memberInfo = loginAuthenticate(request);
         return tokenProvider.createAndSaveTokens(memberInfo);
     }
     
-    @Transactional(readOnly = true)
-    private MemberInfoDto loginAuthenticateHelper(LoginRequestDto request) {
+    private MemberInfoDto loginAuthenticate(LoginRequestDto request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);

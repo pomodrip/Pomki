@@ -16,7 +16,7 @@ public class EmailUtil {
     private final JavaMailSender mailSender;
     @Value("${pomki.email.sender-name}")
     private String senderName;
-    @Value("${pomki.email.sender-name}")
+    @Value("${spring.mail.username}")
     private String fromEmail;
     
     public void sendEmail(String toEmail, String subject, String content) {

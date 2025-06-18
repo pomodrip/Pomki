@@ -37,14 +37,18 @@ public class MemberService {
 
     @Transactional
     public Member signUp(MemberSignUpRequestDto request) {
-        if (memberRepository.existsByMemberEmail(request.getEmail())) {
-            throw new RuntimeException("이미 사용중인 이메일입니다.");
-        }
-        
         if (!emailService.isValidVerificationToken(request.getEmail(), request.getVerificationToken())) {
             throw new BadRequestException("이메일 인증이 완료되지 않았거나 만료된 요청입니다.");
         }
         
+        return createMember(request);
+    }
+    
+    private Member createMember(MemberSignUpRequestDto request) {
+        if (memberRepository.existsByMemberEmail(request.getEmail())) {
+            throw new RuntimeException("이미 사용중인 이메일입니다.");
+        }
+
         Member newMember = Member.builder()
                 .memberEmail(request.getEmail())
                 .currentEmail(request.getEmail())
@@ -54,29 +58,14 @@ public class MemberService {
                 .isSocialLogin(false)
                 .emailVerified(true) // 이메일 인증 완료
                 .build();
-        
+
         Member savedMember = memberRepository.save(newMember);
-        
+
         return savedMember;
     }
 
-    @Transactional
-    public Member socialSignUp(SocialSignUpRequestDto request) {
-        Member newMember = Member.builder()
-                .memberEmail(request.getEmail())
-                .currentEmail(request.getEmail())
-                .memberNickname(request.getNickname())
-                .memberRoles(Role.USER)
-                .isSocialLogin(true)
-                .emailVerified(true)
-                .provider(request.getProvider())
-                .providerUserId(request.getProviderId())
-                .build();
-        return memberRepository.save(newMember);
-    }
-
     @Transactional(readOnly = true)
-    public MemberInfoResponseDto readMemberInfo(Long memberId) {
+    public MemberInfoResponseDto readMember(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
         return MemberInfoResponseDto.from(member);
@@ -96,7 +85,7 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberUpdateResponseDto updateMemberInfo(Long memberId, MemberUpdateRequestDto request) {
+    public MemberUpdateResponseDto updateMember(Long memberId, MemberUpdateRequestDto request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
         
@@ -133,8 +122,19 @@ public class MemberService {
         }
     }
 
-    @Transactional
     public void requestEmailChange(Long memberId, MemberEmailUpdateRequestDto request) {
+        validateEmailChangeRequest(memberId, request);
+        
+        EmailVerificationRequestDto emailRequest = 
+        EmailVerificationRequestDto.builder()
+                .email(request.getNewEmail())
+                .type(EmailVerificationCode.EMAIL_CHANGE)
+                .build();
+        
+        emailService.sendVerificationCode(emailRequest);
+    }
+    
+    private void validateEmailChangeRequest(Long memberId, MemberEmailUpdateRequestDto request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
         
@@ -145,36 +145,21 @@ public class MemberService {
         if (member.getMemberEmail().equals(request.getNewEmail())) {
             throw new BadRequestException("현재 이메일과 동일합니다.");
         }
-        
-        member.setCurrentEmail(request.getNewEmail());
-        member.setEmailVerified(false);
-        EmailVerificationRequestDto emailRequest = 
-        EmailVerificationRequestDto.builder()
-                .email(request.getNewEmail())
-                .type(EmailVerificationCode.EMAIL_CHANGE)
-                .build();
-        
-        emailService.sendVerificationCode(emailRequest);
     }
 
-    public void confirmEmailChange(Long memberId, MemberEmailUpdateConfirmDto request) {
-        updateMemberEmail(memberId, request);
-        
-        jwtProvider.invalidateAllMemberToken(memberId);
-    }
-    
     @Transactional
-    private void updateMemberEmail(Long memberId, MemberEmailUpdateConfirmDto request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
-            
+    public void confirmEmailChange(Long memberId, MemberEmailUpdateConfirmDto request) {
         if (!jwtProvider.validateEmailVerificationToken(request.getToken(), request.getNewEmail())) {
             throw new BadRequestException("유효하지 않은 인증 토큰입니다.");
         }
         
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원 정보를 찾을 수 없습니다."));
+        
         if (memberRepository.existsByMemberEmail(request.getNewEmail())) {
             throw new BadRequestException("이미 사용 중인 이메일입니다.");
         }
+        
         member.setCurrentEmail(request.getNewEmail());
         member.setEmailVerified(true);
     }
