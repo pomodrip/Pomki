@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${DB_URL-DEV}
+    driver-class-name: ${DB_DRIVER-DEV}
+    username: ${DB_USERNAME-DEV}
+    password: ${DB_PASSWORD-DEV}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: ${DB_PLATFORM-DEV}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    defer-datasource-initialization: true 
