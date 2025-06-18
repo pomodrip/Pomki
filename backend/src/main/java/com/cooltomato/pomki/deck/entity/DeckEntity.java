@@ -37,10 +37,10 @@ public class DeckEntity {
     @Column(name = "deck_name", nullable = false, length = 255)
     private String deckName;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Column(name = "is_deleted", nullable = false)
