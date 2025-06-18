@@ -37,24 +37,27 @@ public class AuthService {
         memberService.signUp(request);
     }
 
-    @Transactional
     public TokenResponseDto login(LoginRequestDto request) {
+        MemberInfoDto memberInfo = loginAuthenticateHelper(request);
+        return tokenProvider.createAndSaveTokens(memberInfo);
+    }
+    
+    @Transactional(readOnly = true)
+    private MemberInfoDto loginAuthenticateHelper(LoginRequestDto request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Member member = memberRepository.findByMemberEmail(request.getEmail()).orElseThrow();
-        MemberInfoDto memberInfo = MemberInfoDto.builder()
+        return MemberInfoDto.builder()
                 .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .roles(member.getMemberRoles())
                 .isSocialLogin(member.isSocialLogin())
                 .provider(member.getProvider())
                 .build();
-        return tokenProvider.createAndSaveTokens(memberInfo);
     }
 
-    @Transactional
     public AccessTokenResponseDto refresh(String refreshToken) {
         tokenProvider.validateToken(refreshToken);
 
@@ -69,12 +72,10 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
     public void logout(String refreshToken) {
         refreshTokenRepository.deleteById(refreshToken);
     }
 
-    @Transactional
     public AccessTokenResponseDto reissue(String refreshToken) {
         tokenProvider.validateToken(refreshToken);
 

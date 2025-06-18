@@ -82,7 +82,8 @@ public class EmailService {
         }
 
         String verificationToken = null;
-        if (EmailVerificationCode.SIGNUP == request.getType()) {
+        if (EmailVerificationCode.SIGNUP == request.getType() || 
+            EmailVerificationCode.EMAIL_CHANGE == request.getType()) {
             verificationToken = jwtProvider.createEmailVerificationToken(request.getEmail());
         }
         

@@ -9,6 +9,8 @@ import com.cooltomato.pomki.member.dto.MemberInfoResponseDto;
 import com.cooltomato.pomki.member.dto.MemberSignUpRequestDto;
 import com.cooltomato.pomki.member.dto.MemberUpdateRequestDto;
 import com.cooltomato.pomki.member.dto.MemberUpdateResponseDto;
+import com.cooltomato.pomki.member.dto.MemberEmailUpdateRequestDto;
+import com.cooltomato.pomki.member.dto.MemberEmailUpdateConfirmDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,6 +48,22 @@ public class MemberController {
     @DeleteMapping
     public ResponseEntity<Void> deleteMember(@AuthenticationPrincipal PrincipalMember principal) {
         memberService.softDeleteMember(principal.getMemberId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/my/email")
+    public ResponseEntity<Void> requestEmailChange(
+            @AuthenticationPrincipal PrincipalMember principal, 
+            @Valid @RequestBody MemberEmailUpdateRequestDto request) {
+        memberService.requestEmailChange(principal.getMemberInfo().getMemberId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/my/email/verification")
+    public ResponseEntity<Void> confirmEmailChange(
+            @AuthenticationPrincipal PrincipalMember principal,
+            @Valid @RequestBody MemberEmailUpdateConfirmDto request) {
+        memberService.confirmEmailChange(principal.getMemberInfo().getMemberId(), request);
         return ResponseEntity.ok().build();
     }
 } 

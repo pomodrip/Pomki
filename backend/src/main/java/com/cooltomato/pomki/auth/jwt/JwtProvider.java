@@ -132,7 +132,6 @@ public class JwtProvider {
                 .compact();
     }
 
-    @Transactional(readOnly = true)
     public String createAccessTokenFromRefreshToken(String accessToken, String refreshToken) {
         if (!validateToken(refreshToken)) {
             throw new InvalidTokenException("유효하지 않은 리프레시 토큰입니다.");
@@ -151,7 +150,13 @@ public class JwtProvider {
         refreshTokenRepository.findById(refreshToken)
                 .orElseThrow(() -> new InvalidTokenException("DB에 존재하지 않는 리프레시 토큰입니다."));
 
-        Long memberId = Long.valueOf(refreshTokenSubject);
+            // DB 조회는 별도 메서드로 분리
+        MemberInfoDto memberInfo = getMemberInfoById(Long.valueOf(refreshTokenSubject));
+        return createAccessToken(memberInfo);
+    }
+    
+    @Transactional(readOnly = true)
+    private MemberInfoDto getMemberInfoById(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new InvalidTokenException("존재하지 않는 사용자입니다."));
 
@@ -159,15 +164,13 @@ public class JwtProvider {
             throw new InvalidTokenException("삭제된 사용자입니다.");
         }
 
-        MemberInfoDto memberInfo = MemberInfoDto.builder()
+        return MemberInfoDto.builder()
                 .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .roles(member.getMemberRoles())
                 .isSocialLogin(member.isSocialLogin())
                 .provider(member.getProvider())
                 .build();
-
-        return createAccessToken(memberInfo);
     }
 
     public Authentication getAuthentication(String token) {
@@ -223,7 +226,6 @@ public class JwtProvider {
         }
     }
 
-    @Transactional(readOnly = true)
     public void invalidateAllMemberToken(Long memberId) {
         List<RefreshToken> userTokens = refreshTokenRepository.findByMemberId(memberId);
         refreshTokenRepository.deleteAll(userTokens);
