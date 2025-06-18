@@ -169,7 +169,8 @@ const NoteListPage: React.FC = () => {
 
   const handleCreateQuiz = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/notes/${noteId}/quiz`);
+    // navigate(`/notes/${noteId}/quiz`);
+    navigate(`/study/${noteId}/flashcard-generation`);
   };
 
   const handleToggleBookmark = (noteId: string, event: React.MouseEvent) => {
