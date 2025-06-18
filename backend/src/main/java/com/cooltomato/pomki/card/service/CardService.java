@@ -18,6 +18,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Slf4j
 public class CardService {
     
     private final CardRepository cardRepository;
