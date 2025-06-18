@@ -54,9 +54,68 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h3">최근 활동</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" color="text.secondary">
-                No recent activity to display. Start using Pomki to see your progress here!
-              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider'
+                }}>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      포모도로 세션 완료
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      25분 집중 학습
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    2시간 전
+                  </Typography>
+                </Box>
+
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider'
+                }}>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      플래시카드 학습
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      영어 단어 20개 복습
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    4시간 전
+                  </Typography>
+                </Box>
+
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '8px 0'
+                }}>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      노트 작성
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      "React 컴포넌트 설계" 노트 생성
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    6시간 전
+                  </Typography>
+                </Box>
+              </Box>
             </AccordionDetails>
           </Accordion>
         </Card>
