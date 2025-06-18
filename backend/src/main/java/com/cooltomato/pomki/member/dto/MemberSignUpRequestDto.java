@@ -20,4 +20,7 @@ public class MemberSignUpRequestDto {
     @NotBlank
     @Size(min = 6, max = 100)
     private String password;
+    
+    @NotBlank
+    private String verificationToken; // 이메일 인증 완료 토큰
 } 

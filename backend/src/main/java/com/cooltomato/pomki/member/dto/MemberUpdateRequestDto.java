@@ -23,12 +23,15 @@ public class MemberUpdateRequestDto {
              message = "패스워드는 8자 이상이며, 영문과 숫자를 포함해야 합니다. 특수문자는 !@#$%^&*()_+=- 만 허용됩니다.")
     private String newPassword;
     
+    private boolean isEmailChanged; // 이메일 변경 여부
+    
     @Builder
     public MemberUpdateRequestDto(String currentEmail, String nickname, 
-                                 String currentPassword, String newPassword) {
+                                 String currentPassword, String newPassword, boolean isEmailChanged) {
         this.currentEmail = currentEmail;
         this.nickname = nickname;
         this.currentPassword = currentPassword;
         this.newPassword = newPassword;
+        this.isEmailChanged = isEmailChanged;
     }
 } 

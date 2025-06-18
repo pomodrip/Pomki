@@ -17,6 +17,8 @@ import com.cooltomato.pomki.member.dto.MemberUpdateResponseDto;
 import com.cooltomato.pomki.member.dto.SocialSignUpRequestDto;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
+import com.cooltomato.pomki.email.service.EmailService;
+import com.cooltomato.pomki.email.constant.EmailVerificationCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,12 +28,18 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Transactional
     public Member signUp(MemberSignUpRequestDto request) {
         if (memberRepository.existsByMemberEmail(request.getEmail())) {
             throw new RuntimeException("이미 사용중인 이메일입니다.");
         }
+        
+        if (!emailService.isValidVerificationToken(request.getEmail(), request.getVerificationToken())) {
+            throw new BadRequestException("이메일 인증이 완료되지 않았거나 유효하지 않은 인증 토큰입니다.");
+        }
+        
         Member newMember = Member.builder()
                 .memberEmail(request.getEmail())
                 .currentEmail(request.getEmail())
@@ -39,8 +47,12 @@ public class MemberService {
                 .memberPassword(passwordEncoder.encode(request.getPassword()))
                 .memberRoles(Role.USER)
                 .isSocialLogin(false)
+                .emailVerified(true) // 이메일 인증 완료
                 .build();
-        return memberRepository.save(newMember);
+        
+        Member savedMember = memberRepository.save(newMember);
+        
+        return savedMember;
     }
 
     @Transactional
@@ -94,7 +106,10 @@ public class MemberService {
             member.setMemberNickname(request.getNickname());
         }
         
-        if (StringUtils.hasText(request.getCurrentEmail())) {
+        if (StringUtils.hasText(request.getCurrentEmail()) && request.isEmailChanged()) {
+            member.setCurrentEmail(request.getCurrentEmail());
+            member.setEmailVerified(true);
+        } else if (StringUtils.hasText(request.getCurrentEmail())) {
             member.setCurrentEmail(request.getCurrentEmail());
         }
         

@@ -60,7 +60,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,
                                         "/api/auth/login",
                                         "/api/auth/refresh",
-                                        "/api/auth/logout"
+                                        "/api/auth/logout",
+                                        "/api/email/verification",
+                                        "/api/email/code"
                                 ).permitAll()
                                 .requestMatchers("/api/**").hasAnyRole("ADMIN", "USER")
                 .anyRequest().authenticated()
@@ -74,10 +76,10 @@ public class SecurityConfig {
                                         .userService(customOAuth2UserService)
                         )
                 )
-                .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
+                // .exceptionHandling((exceptions) -> exceptions
+                //         .authenticationEntryPoint(customAuthenticationEntryPoint)
+                //         .accessDeniedHandler(customAccessDeniedHandler)
+                // )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 
         return http.build();
