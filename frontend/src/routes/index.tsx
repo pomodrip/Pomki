@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import MainLayout from '../pages/_layout/MainLayout';
+import NotFoundPage from '../pages/Etc/NotFoundPage';
 
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
@@ -36,7 +37,7 @@ const AppRoutes = () => {
       </Route>
       
       {/* 404 페이지 */}
-      <Route path="*" element={<TestPage title="404 - 페이지를 찾을 수 없습니다" />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
