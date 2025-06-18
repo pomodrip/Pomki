@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,13 +11,20 @@ import {
   IconButton,
   Chip,
   Stack,
-  Container,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { ArrowForward, ArrowBack, AutoAwesome, Bookmark, BookmarkBorder } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import {
+  ArrowForward,
+  ArrowBack,
+  AutoAwesome,
+  CheckBoxOutlineBlank,
+  CheckBox as CheckBoxIcon,
+  EditNote as EditNoteIcon,
+} from '@mui/icons-material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { QuizQuestion, FlashcardGenerationSession } from '../../types/card';
+import { useAppSelector } from '../../hooks/useRedux';
 import { studyApi } from '../../api/studyApi';
 
 // 품질 개선된 퀴즈 데이터
@@ -82,8 +89,20 @@ const sampleQuestions: QuizQuestion[] = [
 const FlashcardGenerationPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const { noteId } = useParams<{ noteId: string }>();
+  const { notes } = useAppSelector((state) => state.note);
+  const [noteTitle, setNoteTitle] = useState('플래시카드 생성');
   
+  useEffect(() => {
+    if (noteId) {
+      const currentNote = notes.find(note => note.id === noteId);
+      if (currentNote) {
+        setNoteTitle(currentNote.title);
+      }
+    }
+  }, [noteId, notes]);
+
   const [session, setSession] = useState<FlashcardGenerationSession>({
     id: 'session-1',
     questions: sampleQuestions,
@@ -101,14 +120,11 @@ const FlashcardGenerationPage: React.FC = () => {
   const isLastQuestion = session.currentQuestionIndex === session.questions.length - 1;
   const isFirstQuestion = session.currentQuestionIndex === 0;
   
-  // 선택된 문제 수 계산
   const selectedQuestionsCount = session.selectedQuestions.size;
   const isCurrentQuestionSelected = session.selectedQuestions.has(currentQuestion.id);
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
-    
-    // 답변 즉시 저장
     setSession(prev => ({
       ...prev,
       userAnswers: {
@@ -119,16 +135,13 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    // 순환 네비게이션: 마지막 문제에서 다음 버튼 클릭 시 첫 번째 문제로
     const nextIndex = isLastQuestion ? 0 : session.currentQuestionIndex + 1;
-    
     setSession(prev => ({
       ...prev,
       currentQuestionIndex: nextIndex,
       isCompleted: false,
     }));
     
-    // 다음 문제의 답변과 피드백 복원
     const nextQuestionId = session.questions[nextIndex].id;
     const nextAnswer = session.userAnswers[nextQuestionId];
     const nextFeedback = session.questionFeedbacks.find(f => f.questionId === nextQuestionId)?.feedback || '';
@@ -138,16 +151,13 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const handlePrevious = () => {
-    // 순환 네비게이션: 첫 번째 문제에서 이전 버튼 클릭 시 마지막 문제로
     const prevIndex = isFirstQuestion ? session.questions.length - 1 : session.currentQuestionIndex - 1;
-    
     setSession(prev => ({
       ...prev,
       currentQuestionIndex: prevIndex,
       isCompleted: false,
     }));
     
-    // 이전 문제의 답변과 피드백 복원
     const prevQuestionId = session.questions[prevIndex].id;
     const previousAnswer = session.userAnswers[prevQuestionId];
     const previousFeedback = session.questionFeedbacks.find(f => f.questionId === prevQuestionId)?.feedback || '';
@@ -175,7 +185,6 @@ const FlashcardGenerationPage: React.FC = () => {
     const newFeedback = event.target.value;
     setCurrentQuestionFeedback(newFeedback);
     
-    // 문제별 피드백 업데이트
     setSession(prev => {
       const existingFeedbackIndex = prev.questionFeedbacks.findIndex(
         f => f.questionId === currentQuestion.id
@@ -183,14 +192,12 @@ const FlashcardGenerationPage: React.FC = () => {
       
       let newQuestionFeedbacks;
       if (existingFeedbackIndex >= 0) {
-        // 기존 피드백 업데이트
         newQuestionFeedbacks = [...prev.questionFeedbacks];
         newQuestionFeedbacks[existingFeedbackIndex] = {
           questionId: currentQuestion.id,
           feedback: newFeedback
         };
       } else {
-        // 새 피드백 추가
         newQuestionFeedbacks = [
           ...prev.questionFeedbacks,
           { questionId: currentQuestion.id, feedback: newFeedback }
@@ -205,16 +212,7 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const generateFlashcards = async () => {
-    console.log('플래시카드 생성 중...', {
-      selectedQuestions: Array.from(session.selectedQuestions),
-      answers: session.userAnswers,
-      globalFeedback: session.feedback,
-      questionFeedbacks: session.questionFeedbacks,
-      session: session
-    });
-    
     try {
-      // 백엔드 API 호출
       const result = await studyApi.createFlashcardsFromQuiz({
         sessionId: session.id,
         answers: session.userAnswers,
@@ -223,15 +221,10 @@ const FlashcardGenerationPage: React.FC = () => {
       });
       
       if (result.success) {
-        console.log('플래시카드 생성 성공:', result.deckId);
-        navigate('/study/flashcard-decks');
-      } else {
-        console.error('플래시카드 생성 실패:', result.error);
-        // TODO: 에러 스낵바 표시
+    navigate('/study/flashcard-decks');
       }
     } catch (error) {
       console.error('플래시카드 생성 중 오류:', error);
-      // TODO: 에러 스낵바 표시
     }
   };
 
@@ -242,7 +235,6 @@ const FlashcardGenerationPage: React.FC = () => {
     }));
   };
 
-  // 현재 문제의 피드백 초기화
   React.useEffect(() => {
     const currentFeedback = session.questionFeedbacks.find(
       f => f.questionId === currentQuestion.id
@@ -254,176 +246,149 @@ const FlashcardGenerationPage: React.FC = () => {
     <Box 
       sx={{ 
         minHeight: '100vh',
-        bgcolor: 'background.paper',
+        bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column',
-        pb: isMobile ? 12 : 0, // 모바일에서만 하단 버튼 공간 확보
+        overflow: 'hidden',
       }}
     >
-      {/* 컴팩트한 헤더 */}
+      {/* 컨텍스트 헤더 (제목) */}
       <Box 
         sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           p: 2,
+          height: 72,
+          bgcolor: 'grey.50',
           borderBottom: '1px solid',
           borderColor: 'divider',
         }}
       >
-        <IconButton 
-          onClick={() => navigate(-1)}
-          size="small"
-        >
-          <ArrowBack />
-        </IconButton>
-        
-        {/* 제목과 선택 버튼을 함께 배치 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h6" fontWeight={600}>
-            React 이해도
-          </Typography>
-          <IconButton
-            onClick={handleQuestionSelection}
-            size="small"
-            sx={{ 
-              color: isCurrentQuestionSelected ? 'warning.main' : 'grey.400',
-              '&:hover': {
-                bgcolor: isCurrentQuestionSelected ? 'warning.50' : 'grey.50'
-              }
-            }}
-          >
-            {isCurrentQuestionSelected ? <Bookmark /> : <BookmarkBorder />}
-          </IconButton>
-        </Box>
-        
-        <Box /> {/* 균형을 위한 빈 공간 */}
+        <Typography variant="h6" fontWeight={600} noWrap>
+          {noteTitle}
+        </Typography>
       </Box>
 
-      {/* 메인 컨텐츠 - 반응형 컨테이너 */}
-      <Container 
-        maxWidth="lg" 
+      {/* 메인 컨텐츠 */}
+      <Box 
         sx={{ 
-          flex: 1, 
-          p: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          height: isMobile ? 'auto' : 'calc(100vh - 80px)', // 데스크탑에서는 헤더 제외한 전체 높이
+          flex: 1,
+          height: `calc(100vh - ${isMobile ? 72 : 72}px)`,
+          overflow: 'hidden',
         }}
       >
-        {/* 상단 네비게이션 바 */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            mb: { xs: 2, md: 3 },
-            py: 1,
-          }}
-        >
-          <IconButton 
-            onClick={handlePrevious}
-            size="medium"
-            sx={{ 
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              boxShadow: 1,
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-
-          {/* 중앙 진행 표시 */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Typography variant="body1" fontWeight={600} color="primary.main">
-              {session.currentQuestionIndex + 1}/{session.questions.length}
-            </Typography>
-            {/* 페이지 인디케이터 */}
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              {session.questions.map((question, index) => {
-                const isSelected = session.selectedQuestions.has(question.id);
-                const isCurrent = index === session.currentQuestionIndex;
-                
-                return (
-                  <Box
-                    key={index}
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: isCurrent 
-                        ? 'primary.main' 
-                        : isSelected 
-                          ? 'warning.main' 
-                          : 'grey.300',
-                      boxShadow: isCurrent ? 1 : 0,
-                      transition: 'all 0.2s',
-                    }}
-                  />
-                );
-              })}
-            </Box>
-          </Box>
-
-          <IconButton 
-            onClick={handleNext}
-            size="medium"
-            sx={{ 
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              boxShadow: 1,
-            }}
-          >
-            <ArrowForward />
-          </IconButton>
-        </Box>
-
-        {/* 컨텐츠 영역 - 태블릿/데스크탑에서 2컬럼, 모바일에서 1컬럼 */}
-        <Box 
-          sx={{ 
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            gap: { xs: 2, md: 4 },
-            flex: 1,
-            minHeight: 0, // flex 컨테이너에서 overflow 허용
-          }}
-        >
-          {/* 왼쪽: 질문과 선택지 */}
+        {isMobile ? (
+          // 모바일/태블릿 레이아웃 (1컬럼)
           <Box 
             sx={{ 
-              flex: { md: 2 },
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
+              pb: 12,
             }}
           >
-            {/* 질문 */}
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: { xs: 2, md: 3 }, 
-                fontWeight: 600, 
-                lineHeight: 1.4,
-                fontSize: { xs: '1.1rem', md: '1.2rem' },
-                textAlign: 'center',
-                color: 'text.primary',
-              }}
-            >
-              {currentQuestion.question}
-            </Typography>
+            <Box sx={{ flex: 1, p: { xs: 1.5, sm: 2 }, overflow: 'auto' }}>
+              {/* 네비게이션 */}
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  mb: 3,
+                  py: 1,
+                }}
+              >
+                <IconButton 
+                  onClick={handlePrevious}
+                  size="medium"
+                  sx={{ 
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowBack />
+                </IconButton>
 
-            {/* 선택지 - 스크롤 가능 영역 */}
-            <Box 
-              sx={{ 
-                flex: 1,
-                overflow: 'auto',
-                pr: { md: 1 }, // 데스크탑에서만 우측 패딩
-              }}
-            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Typography variant="body1" fontWeight={600} color="primary.main">
+                    {session.currentQuestionIndex + 1}/{session.questions.length}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    {session.questions.map((question, index) => {
+                      const isSelected = session.selectedQuestions.has(question.id);
+                      const isCurrent = index === session.currentQuestionIndex;
+                      
+                      return (
+                        <Box
+                          key={index}
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: isCurrent 
+                              ? 'primary.main' 
+                              : isSelected 
+                                ? 'warning.main' 
+                                : 'grey.300',
+                            boxShadow: isCurrent ? 1 : 0,
+                            transition: 'all 0.2s',
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Box>
+
+                <IconButton 
+                  onClick={handleNext}
+                  size="medium"
+                  sx={{ 
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowForward />
+                </IconButton>
+              </Box>
+
+              {/* 질문 */}
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 600, 
+                  lineHeight: 1.4,
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  textAlign: 'center',
+                  color: 'text.primary',
+                }}
+              >
+                {currentQuestion.question}
+              </Typography>
+
+              {/* 플래시카드 선택 버튼 */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: { xs: 1.5, sm: 2 } }}>
+                <Button
+                  variant={isCurrentQuestionSelected ? 'contained' : 'outlined'}
+                  onClick={handleQuestionSelection}
+                  size="small"
+                  startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
+                  sx={{ borderRadius: '20px', px: 2, textTransform: 'none', fontSize: '0.8rem' }}
+                >
+                  {isCurrentQuestionSelected ? '선택됨' : '이 문제 선택'}
+                </Button>
+              </Box>
+
+              {/* 선택지 */}
               <RadioGroup 
                 value={selectedAnswer?.toString() || ''} 
                 onChange={(e) => handleAnswerSelect(Number(e.target.value))}
+                sx={{ mb: 3 }}
               >
                 {currentQuestion.options.map((option, index) => (
                   <Paper
@@ -462,10 +427,10 @@ const FlashcardGenerationPage: React.FC = () => {
                       label={option}
                       sx={{
                         m: 0,
-                        p: { xs: 1.5, md: 2 },
+                        p: 1.5,
                         width: '100%',
                         '& .MuiFormControlLabel-label': {
-                          fontSize: { xs: '0.95rem', md: '1rem' },
+                          fontSize: { xs: '0.85rem', sm: '0.95rem' },
                           lineHeight: 1.4,
                           color: selectedAnswer === index ? 'primary.main' : 'text.primary',
                           fontWeight: selectedAnswer === index ? 500 : 400,
@@ -475,221 +440,444 @@ const FlashcardGenerationPage: React.FC = () => {
                   </Paper>
                 ))}
               </RadioGroup>
-            </Box>
-          </Box>
 
-          {/* 오른쪽: 피드백과 생성 버튼 (데스크탑/태블릿) 또는 하단 (모바일) */}
-          <Box 
-            sx={{ 
-              flex: { md: 1 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            {/* 피드백 섹션 */}
-            <Paper
-              elevation={1}
+              {/* 피드백 섹션 */}
+              <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                  <EditNoteIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
+                  <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    피드백 (선택사항)
+                  </Typography>
+                </Box>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                      이 문제에 대한 피드백
+                    </Typography>
+                    <TextField
+                      placeholder="예: 더 자세한 설명이 필요해요"
+                      value={currentQuestionFeedback}
+                      onChange={handleQuestionFeedbackChange}
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.85rem',
+                          bgcolor: 'grey.50',
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                      전체적인 피드백
+                    </Typography>
+                    <TextField
+                      placeholder="예: 실무 예시를 더 포함해주세요"
+                      value={session.feedback}
+                      onChange={handleGlobalFeedbackChange}
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.85rem',
+                          bgcolor: 'grey.50',
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
+
+            {/* 모바일 하단 고정 버튼 */}
+            <Box
               sx={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                bgcolor: 'background.paper',
+                borderTop: '2px solid',
+                borderColor: 'divider',
                 p: 2,
-                borderRadius: 2,
-                flex: { md: 1 },
+                pb: 3,
+                zIndex: 1100,
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
               }}
             >
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>
-                📝 피드백 (선택사항)
-              </Typography>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                    이 문제에 대한 피드백
-                  </Typography>
-                  <TextField
-                    placeholder="예: 더 자세한 설명이 필요해요"
-                    value={currentQuestionFeedback}
-                    onChange={handleQuestionFeedbackChange}
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    multiline={!isMobile}
-                    rows={!isMobile ? 2 : 1}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        fontSize: '0.85rem',
-                        bgcolor: 'grey.50',
-                        borderRadius: 2,
-                        '&:hover': {
-                          bgcolor: 'grey.100',
-                        },
-                        '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                        }
-                      }
-                    }}
-                  />
-                </Box>
-                
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                    전체적인 피드백
-                  </Typography>
-                  <TextField
-                    placeholder="예: 실무 예시를 더 포함해주세요"
-                    value={session.feedback}
-                    onChange={handleGlobalFeedbackChange}
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    multiline={!isMobile}
-                    rows={!isMobile ? 2 : 1}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        fontSize: '0.85rem',
-                        bgcolor: 'grey.50',
-                        borderRadius: 2,
-                        '&:hover': {
-                          bgcolor: 'grey.100',
-                        },
-                        '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                        }
-                      }
-                    }}
-                  />
-                </Box>
-              </Stack>
-            </Paper>
-
-            {/* 데스크탑/태블릿용 생성 버튼 */}
-            {!isMobile && (
-              <Paper
-                elevation={2}
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<AutoAwesome />}
+                onClick={generateFlashcards}
+                disabled={selectedQuestionsCount === 0}
                 sx={{
-                  p: 2,
-                  borderRadius: 2,
+                  py: 1.8,
+                  borderRadius: 3,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  boxShadow: 2,
+                  '&:hover': {
+                    boxShadow: 4,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                    color: 'grey.500',
+                  }
                 }}
               >
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<AutoAwesome />}
-                  onClick={generateFlashcards}
-                  disabled={selectedQuestionsCount === 0}
-                  sx={{
-                    py: 1.8,
-                    borderRadius: 3,
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    boxShadow: 2,
-                    '&:hover': {
-                      boxShadow: 4,
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:disabled': {
-                      bgcolor: 'grey.300',
-                      color: 'grey.500',
-                    }
-                  }}
-                >
-                  {selectedQuestionsCount === 0 
-                    ? '문제를 선택해주세요' 
-                    : `플래시카드 생성 (${selectedQuestionsCount}개)`
-                  }
-                </Button>
-                
-                {selectedQuestionsCount > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5, gap: 1, flexWrap: 'wrap' }}>
-                    {session.questions.map((question, index) => {
-                      const isSelected = session.selectedQuestions.has(question.id);
-                      return isSelected ? (
-                        <Chip
-                          key={index}
-                          label={`Q${index + 1}`}
-                          size="small"
-                          color="warning"
-                          variant="filled"
-                          sx={{
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                          }}
-                        />
-                      ) : null;
-                    })}
-                  </Box>
-                )}
-              </Paper>
-            )}
+                {selectedQuestionsCount === 0 
+                  ? '문제를 선택해주세요' 
+                  : `플래시카드 생성 (${selectedQuestionsCount}개)`
+                }
+              </Button>
+              
+              {selectedQuestionsCount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5, gap: 1, flexWrap: 'wrap' }}>
+                  {session.questions.map((question, index) => {
+                    const isSelected = session.selectedQuestions.has(question.id);
+                    return isSelected ? (
+                      <Chip
+                        key={index}
+                        label={`Q${index + 1}`}
+                        size="small"
+                        color="warning"
+                        variant="filled"
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                    ) : null;
+                  })}
+                </Box>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Container>
-
-      {/* 모바일용 하단 고정 생성 버튼 */}
-      {isMobile && (
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            bgcolor: 'background.paper',
-            borderTop: '2px solid',
-            borderColor: 'divider',
-            p: 2,
-            pb: 3,
-            zIndex: 1100,
-            boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-          }}
-        >
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<AutoAwesome />}
-            onClick={generateFlashcards}
-            disabled={selectedQuestionsCount === 0}
-            sx={{
-              py: 1.8,
-              borderRadius: 3,
-              fontWeight: 600,
-              fontSize: '1rem',
-              boxShadow: 2,
-              '&:hover': {
-                boxShadow: 4,
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                bgcolor: 'grey.300',
-                color: 'grey.500',
-              }
+        ) : (
+          // 데스크탑 2컬럼 레이아웃
+          <Box 
+            sx={{ 
+              height: '100%',
+              py: 4,
+              px: 5,
             }}
           >
-            {selectedQuestionsCount === 0 
-              ? '문제를 선택해주세요' 
-              : `플래시카드 생성 (${selectedQuestionsCount}개)`
-            }
-          </Button>
-          
-          {selectedQuestionsCount > 0 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5, gap: 1, flexWrap: 'wrap' }}>
-              {session.questions.map((question, index) => {
-                const isSelected = session.selectedQuestions.has(question.id);
-                return isSelected ? (
-                  <Chip
-                    key={index}
-                    label={`Q${index + 1}`}
-                    size="small"
-                    color="warning"
-                    variant="filled"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: '0.75rem',
+            <Box 
+              sx={{ 
+                display: 'flex',
+                gap: 4,
+                height: '100%',
+              }}
+            >
+              {/* 왼쪽 컬럼: 문제 영역 */}
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                {/* 네비게이션 */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    mb: 3,
+                  }}
+                >
+                  <IconButton 
+                    onClick={handlePrevious}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
                     }}
-                  />
-                ) : null;
-              })}
+                  >
+                    <ArrowBack />
+                  </IconButton>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="h5" fontWeight={700} color="primary.main">
+                      {session.currentQuestionIndex + 1}/{session.questions.length}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {session.questions.map((question, index) => {
+                        const isSelected = session.selectedQuestions.has(question.id);
+                        const isCurrent = index === session.currentQuestionIndex;
+                        
+                        return (
+                          <Box
+                            key={index}
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              bgcolor: isCurrent 
+                                ? 'primary.main' 
+                                : isSelected 
+                                  ? 'warning.main' 
+                                  : 'grey.300',
+                              boxShadow: isCurrent ? 2 : 0,
+                              transition: 'all 0.3s',
+                              transform: isCurrent ? 'scale(1.3)' : 'scale(1)',
+                            }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  </Box>
+
+                  <IconButton 
+                    onClick={handleNext}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
+                    }}
+                  >
+                    <ArrowForward />
+                  </IconButton>
+                </Box>
+
+                {/* 질문 */}
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    mb: 4, 
+                    fontWeight: 600, 
+                    lineHeight: 1.4,
+                    textAlign: 'center',
+                    color: 'text.primary',
+                  }}
+                >
+                  {currentQuestion.question}
+                </Typography>
+
+                {/* 플래시카드 선택 버튼 */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: 4 }}>
+                  <Button
+                    variant={isCurrentQuestionSelected ? 'contained' : 'outlined'}
+                    size="large"
+                    onClick={handleQuestionSelection}
+                    startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
+                    sx={{ borderRadius: '20px', px: 4, py: 1, textTransform: 'none' }}
+                  >
+                    {isCurrentQuestionSelected ? '선택됨' : '이 문제 선택'}
+                  </Button>
+                </Box>
+
+                {/* 선택지 - 스크롤 가능 */}
+                <Box sx={{ flex: 1, overflow: 'auto', pr: 2 }}>
+                  <RadioGroup 
+                    value={selectedAnswer?.toString() || ''} 
+                    onChange={(e) => handleAnswerSelect(Number(e.target.value))}
+                  >
+                    <Stack spacing={2}>
+                      {currentQuestion.options.map((option, index) => (
+                        <Paper
+                          key={index}
+                          elevation={selectedAnswer === index ? 3 : 1}
+                          sx={{
+                            border: '3px solid',
+                            borderColor: selectedAnswer === index ? 'primary.main' : 'grey.200',
+                            borderRadius: 3,
+                            bgcolor: selectedAnswer === index ? 'primary.50' : 'background.paper',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              bgcolor: selectedAnswer === index ? 'primary.100' : 'primary.25',
+                              transform: 'translateY(-2px)',
+                              boxShadow: 4,
+                            }
+                          }}
+                          onClick={() => handleAnswerSelect(index)}
+                        >
+                          <FormControlLabel
+                            value={index.toString()}
+                            control={
+                              <Radio 
+                                size="medium"
+                                sx={{ 
+                                  color: selectedAnswer === index ? 'primary.main' : 'grey.400',
+                                  '&.Mui-checked': {
+                                    color: 'primary.main',
+                                  }
+                                }} 
+                              />
+                            }
+                            label={option}
+                            sx={{
+                              m: 0,
+                              p: 3,
+                              width: '100%',
+                              '& .MuiFormControlLabel-label': {
+                                fontSize: '1.1rem',
+                                lineHeight: 1.5,
+                                color: selectedAnswer === index ? 'primary.main' : 'text.primary',
+                                fontWeight: selectedAnswer === index ? 600 : 400,
+                              },
+                            }}
+                          />
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </RadioGroup>
+                </Box>
+              </Box>
+
+              {/* 오른쪽 컬럼: 피드백 및 생성 버튼 */}
+              <Box sx={{ flex: '0 0 420px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* 피드백 섹션 */}
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <EditNoteIcon color="action" sx={{ mr: 1.5, fontSize: '1.5rem' }}/>
+                    <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
+                      피드백 (선택사항)
+                    </Typography>
+                  </Box>
+                  
+                  <Stack spacing={3} sx={{ flex: 1 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary" 
+                        sx={{ mb: 1, fontWeight: 600 }}
+                      >
+                        이 문제에 대한 피드백
+                      </Typography>
+                      <TextField
+                        placeholder="예: 더 자세한 설명이 필요해요"
+                        value={currentQuestionFeedback}
+                        onChange={handleQuestionFeedbackChange}
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={4}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            fontSize: '0.95rem',
+                            bgcolor: 'grey.50',
+                            borderRadius: 2,
+                          }
+                        }}
+                      />
+                    </Box>
+                    
+                    <Box sx={{ flex: 1 }}>
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary" 
+                        sx={{ mb: 1, fontWeight: 600 }}
+                      >
+                        전체적인 피드백
+                      </Typography>
+                      <TextField
+                        placeholder="예: 실무 예시를 더 포함해주세요"
+                        value={session.feedback}
+                        onChange={handleGlobalFeedbackChange}
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={4}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            fontSize: '0.95rem',
+                            bgcolor: 'grey.50',
+                            borderRadius: 2,
+                          }
+                        }}
+                      />
+                    </Box>
+                  </Stack>
+                </Paper>
+
+                {/* 생성 버튼 */}
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    bgcolor: 'primary.50',
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    startIcon={<AutoAwesome />}
+                    onClick={generateFlashcards}
+                    disabled={selectedQuestionsCount === 0}
+                    sx={{
+                      py: 2.5,
+                      borderRadius: 3,
+                      fontWeight: 600,
+                      fontSize: '1.2rem',
+                      boxShadow: 3,
+                      '&:hover': {
+                        boxShadow: 6,
+                        transform: 'translateY(-2px)',
+                      },
+                      '&:disabled': {
+                        bgcolor: 'grey.300',
+                        color: 'grey.500',
+                      }
+                    }}
+                  >
+                    {selectedQuestionsCount === 0 
+                      ? '문제를 선택해주세요' 
+                      : `플래시카드 생성 (${selectedQuestionsCount}개)`
+                    }
+                  </Button>
+                  
+                  {selectedQuestionsCount > 0 && (
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      mt: 2, 
+                      gap: 1, 
+                      flexWrap: 'wrap' 
+                    }}>
+                      {session.questions.map((question, index) => {
+                        const isSelected = session.selectedQuestions.has(question.id);
+                        return isSelected ? (
+                          <Chip
+                            key={index}
+                            label={`Q${index + 1}`}
+                            size="medium"
+                            color="warning"
+                            variant="filled"
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: '0.9rem',
+                            }}
+                          />
+                        ) : null;
+                      })}
+                    </Box>
+                  )}
+                </Paper>
+              </Box>
             </Box>
-          )}
-        </Box>
-      )}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

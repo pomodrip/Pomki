@@ -13,12 +13,10 @@ import {
   CardContent,
   Menu,
   MenuItem,
-  Stack,
   Fab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -182,14 +180,9 @@ const NoteListPage: React.FC = () => {
     <StyledContainer maxWidth="md">
       {/* 헤더 */}
       <HeaderBox>
-        <Box display="flex" alignItems="center">
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5" fontWeight="bold">
-            My Notes
-          </Typography>
-        </Box>
+        <Typography variant="h5" fontWeight="bold">
+          My Notes
+        </Typography>
         <IconButton onClick={() => navigate('/notes/create')}>
           <AddIcon />
         </IconButton>
@@ -285,31 +278,35 @@ const NoteListPage: React.FC = () => {
       {filteredNotes.map((note) => (
         <NoteCard key={note.id} onClick={() => handleNoteClick(note.id)}>
           <CardContent>
-            {/* 태그와 북마크 */}
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-              <Stack direction="row" spacing={0.5}>
-                {note.tags.map((tag: string) => (
-                  <TagChip
-                    key={tag}
-                    label={tag}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
-              </Stack>
-              <IconButton
-                size="small"
-                onClick={(e) => handleToggleBookmark(note.id, e)}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  flexGrow: 1, 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis',
+                  minWidth: 0, // flex item이 넘칠 때 줄어들 수 있도록 보장
+                }}
               >
-                {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                {note.title}
+              </Typography>
+              <IconButton onClick={(e) => handleToggleBookmark(note.id, e)} size="small" sx={{ flexShrink: 0 }}>
+                {note.isBookmarked ? <Bookmark color="warning" /> : <BookmarkBorder />}
               </IconButton>
             </Box>
 
-            {/* 제목 */}
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              {note.title}
-            </Typography>
+            <Box sx={{ mb: 1.5 }}>
+              {note.tags.map((tag) => (
+                <TagChip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
 
             {/* 내용 미리보기 */}
             <Typography 
