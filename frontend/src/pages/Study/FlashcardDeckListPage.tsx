@@ -92,28 +92,40 @@ const decks = [
     id: 1,
     category: '코딩',
     title: 'React 이해도',
-    description: 'React는 Facebook에서 개발한 JavaScript 라이브러리...',
-    cardCount: 2,
+    // description: 'React는 Facebook에서 개발한 JavaScript 라이브러리...',
     isBookmarked: true,
     tags: ['코딩', 'Frontend'],
+    flashcards: [
+      { id: 1, front: 'React란 무엇인가?', back: 'Facebook에서 개발한 JavaScript 라이브러리' },
+      { id: 2, front: 'JSX란?', back: 'JavaScript XML의 줄임말로 React에서 사용하는 문법' },
+      { id: 3, front: 'useState란?', back: 'React에서 상태를 관리하기 위한 Hook' },
+      { id: 4, front: 'useEffect란?', back: '컴포넌트의 생명주기와 부수 효과를 관리하는 Hook' },
+      { id: 5, front: 'Virtual DOM이란?', back: 'React에서 실제 DOM을 추상화한 가상 DOM' }
+    ]
   },
   {
     id: 2,
     category: '회계',
     title: '손익계산서',
-    description: '정의: 일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표...',
-    cardCount: 12,
+    // description: '정의: 일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표...',
     isBookmarked: false,
     tags: ['회계', '재무'],
+    flashcards: [
+      { id: 6, front: '손익계산서란?', back: '일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표' },
+      { id: 7, front: '매출액이란?', back: '기업이 상품이나 서비스를 판매하여 얻은 총 수입' }
+    ]
   },
   {
     id: 3,
     category: '정보처리기사',
     title: '1.시스템 개발 생명주기(SDLC)',
-    description: '암기 팁: 써-분-설-구-테-유 (계분설구테유)...',
-    cardCount: 9,
+    // description: '암기 팁: 써-분-설-구-테-유 (계분설구테유)...',
     isBookmarked: true,
     tags: ['정보처리기사', '자격증'],
+    flashcards: [
+      { id: 8, front: 'SDLC란?', back: '시스템 개발 생명주기(System Development Life Cycle)' },
+      { id: 9, front: '요구사항 분석 단계에서 하는 일은?', back: '사용자의 요구사항을 수집하고 분석하는 단계' }
+    ]
   },
 ];
 
@@ -125,6 +137,11 @@ const FlashcardDeckListPage: React.FC = () => {
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+  const [deckBookmarks, setDeckBookmarks] = useState<{[key: number]: boolean}>({
+    1: true,
+    2: false,
+    3: true,
+  });
 
   // 모든 태그 목록 추출
   const allTags = useMemo(() => {
@@ -135,20 +152,50 @@ const FlashcardDeckListPage: React.FC = () => {
     return Array.from(tagSet);
   }, []);
 
-  // 필터링된 덱 목록
+  // 필터링된 덱 목록 (검색어가 없을 때만 사용)
   const filteredDecks = useMemo(() => {
+    if (searchQuery.trim()) return []; // 검색 중일 때는 덱 목록 숨김
+    
     return decks.filter((deck) => {
-      const matchesSearch = deck.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           deck.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
       const matchesTags = selectedTags.length === 0 || 
                          selectedTags.some((tag: string) => deck.tags.includes(tag));
       
-      const matchesBookmark = !showBookmarked || deck.isBookmarked;
+      const matchesBookmark = !showBookmarked || deckBookmarks[deck.id];
 
-      return matchesSearch && matchesTags && matchesBookmark;
+      return matchesTags && matchesBookmark;
     });
-  }, [searchQuery, selectedTags, showBookmarked]);
+  }, [searchQuery, selectedTags, showBookmarked, deckBookmarks]);
+
+  // 검색된 플래시카드 목록
+  const searchedCards = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    
+    const cards: any[] = [];
+    decks.forEach((deck) => {
+      // 태그 및 북마크 필터링도 적용
+      const matchesTags = selectedTags.length === 0 || 
+                         selectedTags.some((tag: string) => deck.tags.includes(tag));
+      const matchesBookmark = !showBookmarked || deckBookmarks[deck.id];
+      
+      if (matchesTags && matchesBookmark) {
+        deck.flashcards.forEach((card: any) => {
+          if (card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              card.back.toLowerCase().includes(searchQuery.toLowerCase())) {
+            cards.push({
+              ...card,
+              deckId: deck.id,
+              deckTitle: deck.title,
+              deckTags: deck.tags
+            });
+          }
+        });
+      }
+    });
+    
+    return cards;
+  }, [searchQuery, selectedTags, showBookmarked, deckBookmarks]);
+
+
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -194,7 +241,10 @@ const FlashcardDeckListPage: React.FC = () => {
 
   const handleToggleBookmark = (deckId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    console.log('Toggle bookmark for deck:', deckId);
+    setDeckBookmarks(prev => ({
+      ...prev,
+      [deckId]: !prev[deckId]
+    }));
   };
 
   return (
@@ -301,28 +351,21 @@ const FlashcardDeckListPage: React.FC = () => {
           </MenuItem>
         </Menu>
 
-        {/* 덱 목록 */}
-        {filteredDecks.map((deck) => (
+        {/* 덱 목록 (검색어가 없을 때) */}
+        {!searchQuery.trim() && filteredDecks.map((deck) => (
           <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
             <CardContent>
-              {/* 태그와 북마크 */}
-              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                <Stack direction="row" spacing={0.5}>
-                  {deck.tags.map((tag: string) => (
-                    <TagChip
-                      key={tag}
-                      label={tag}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ))}
-                </Stack>
+              
+              {/* 카드 개수와 북마크 */}
+              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {deck.flashcards.length} cards
+                </Typography>
                 <IconButton
                   size="small"
                   onClick={(e) => handleToggleBookmark(deck.id, e)}
                 >
-                  {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  {deckBookmarks[deck.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
                 </IconButton>
               </Box>
 
@@ -331,25 +374,20 @@ const FlashcardDeckListPage: React.FC = () => {
                 {deck.title}
               </Typography>
 
-              {/* 내용 미리보기 */}
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                sx={{ 
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  mb: 1
-                }}
-              >
-                {deck.description}
-              </Typography>
-
-              {/* 카드 개수 */}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {deck.cardCount} cards
-              </Typography>
+              {/* 태그들 */}
+              <Box mt={2}>
+                <Stack direction="row" spacing={0.5}>
+                  {deck.tags.map((tag: string) => (
+                    <TagChip
+                      key={tag}
+                      label={`#${tag}`}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              </Box>
 
               {/* 액션 버튼들 */}
               <ActionBox>
@@ -376,8 +414,60 @@ const FlashcardDeckListPage: React.FC = () => {
           </DeckCard>
         ))}
 
+        {/* 검색된 플래시카드 목록 */}
+        {searchQuery.trim() && searchedCards.map((card) => (
+          <DeckCard key={`${card.deckId}-${card.id}`} onClick={() => handleDeckClick(card.deckId)}>
+            <CardContent>
+              {/* 덱 정보 */}
+              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  from: {card.deckTitle}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleToggleBookmark(card.deckId, e)}
+                >
+                  {deckBookmarks[card.deckId] ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                </IconButton>
+              </Box>
+
+              {/* 플래시카드 내용 */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  질문:
+                </Typography>
+                <Typography variant="body1" fontWeight="bold" sx={{ mb: 2 }}>
+                  {card.front}
+                </Typography>
+                
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  답변:
+                </Typography>
+                <Typography variant="body1">
+                  {card.back}
+                </Typography>
+              </Box>
+
+              {/* 태그들 */}
+              <Box mt={2}>
+                <Stack direction="row" spacing={0.5}>
+                  {card.deckTags.map((tag: string) => (
+                    <TagChip
+                      key={tag}
+                      label={`#${tag}`}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            </CardContent>
+          </DeckCard>
+        ))}
+
         {/* 빈 상태 */}
-        {filteredDecks.length === 0 && (
+        {!searchQuery.trim() && filteredDecks.length === 0 && (
           <Box 
             display="flex" 
             flexDirection="column" 
@@ -398,6 +488,24 @@ const FlashcardDeckListPage: React.FC = () => {
             >
               덱 만들기
             </Button>
+          </Box>
+        )}
+
+        {/* 검색 결과 없음 */}
+        {searchQuery.trim() && searchedCards.length === 0 && (
+          <Box 
+            display="flex" 
+            flexDirection="column" 
+            alignItems="center" 
+            justifyContent="center"
+            py={8}
+          >
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              검색 결과가 없습니다
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              다른 키워드로 검색해보세요.
+            </Typography>
           </Box>
         )}
 

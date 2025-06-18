@@ -19,25 +19,37 @@ import { useNavigate, useParams } from 'react-router-dom';
 import FlashCard from '../../components/ui/FlashCard';
 import BottomNav from '../../components/common/BottomNav';
 
-// 예시 데이터
+// 예시 데이터 - FlashcardDeckListPage와 동일한 구조로 변경
 const flashCards = [
   {
     id: 1,
-    title: '컴포넌트',
-    content: 'React에서 사용자 인터페이스를 구성하는 기본 단위입니다. 독립적이고 재사용 가능한 코드 블록입니다.',
+    front: 'React란 무엇인가?',
+    back: 'Facebook에서 개발한 JavaScript 라이브러리',
     tags: ['React', '컴포넌트', 'Frontend'],
   },
   {
     id: 2,
-    title: 'React에서 컴포넌트란 다이어트로 전환을 때시',
-    content: 'React에서 사용자 인터페이스를 구성하는 기본 단위입니다.',
-    tags: ['React', '컴포넌트', 'props'],
+    front: 'JSX란?',
+    back: 'JavaScript XML의 줄임말로 React에서 사용하는 문법',
+    tags: ['React', 'JSX', 'Frontend'],
   },
   {
     id: 3,
-    title: 'React에서 컴포넌트란 다이어트로 전환을 때시',
-    content: '사용자 올릴 수 있나요?',
-    tags: ['React', '컴포넌트', 'props'],
+    front: 'React 컴포넌트란?',
+    back: '사용자 인터페이스를 구성하는 독립적이고 재사용 가능한 코드 블록',
+    tags: ['React', '컴포넌트', 'Frontend'],
+  },
+  {
+    id: 4,
+    front: 'Props란 무엇인가?',
+    back: '부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법',
+    tags: ['React', 'Props', 'Frontend'],
+  },
+  {
+    id: 5,
+    front: 'State란?',
+    back: '컴포넌트 내부에서 관리되는 동적인 데이터',
+    tags: ['React', 'State', 'Frontend'],
   },
 ];
 
@@ -53,8 +65,8 @@ const FlashCardListPage: React.FC = () => {
   // 필터링된 카드 목록
   const filteredCards = useMemo(() => {
     return flashCards.filter((card) => {
-      const matchesSearch = card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           card.content.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           card.back.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   }, [searchQuery]);
@@ -103,7 +115,7 @@ const FlashCardListPage: React.FC = () => {
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h6" fontWeight={600}>
-              Reach 이해도
+              React 이해도
             </Typography>
           </Box>
           <IconButton onClick={handleAddCard}>
@@ -115,7 +127,7 @@ const FlashCardListPage: React.FC = () => {
         <Box sx={{ mb: 2 }}>
           <TextField
             fullWidth
-            placeholder="Search notes"
+            placeholder="Search cards"
             value={searchQuery}
             onChange={handleSearchChange}
             InputProps={{
@@ -161,8 +173,8 @@ const FlashCardListPage: React.FC = () => {
             <FlashCard
               key={card.id}
               id={card.id}
-              title={card.title}
-              content={card.content}
+              title={card.front}
+              content=""
               tags={card.tags}
               isSelected={selectedCards.includes(card.id)}
               onSelect={handleCardSelect}
