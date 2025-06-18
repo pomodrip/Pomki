@@ -1,5 +1,6 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -51,9 +52,14 @@ const LoginPage = () => {
   const [id, setId] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [checked, setChecked] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
+  };
+
+  const handleSignupClick = () => {
+    navigate('/signup');
   };
 
   return (
@@ -95,7 +101,7 @@ const LoginPage = () => {
       </Button>
 
       <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Button variant="text" sx={{ color: 'text.secondary' }}>회원가입</Button>
+        <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick}>회원가입</Button>
         <Button variant="text" sx={{ color: 'text.secondary' }}>비밀번호 찾기</Button>
       </Box>
 

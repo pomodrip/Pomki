@@ -26,7 +26,9 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* 인증 관련 페이지 (레이아웃 없음) */}
-      <Route path="/login" element={<TestPage title="로그인 페이지 (레이아웃 없음)" />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/set-goal" element={<SetGoalPage />} />
       
       {/* 메인 애플리케이션 (MainLayout 적용) */}
       <Route path="/" element={<MainLayout />}>
@@ -36,9 +38,6 @@ const AppRoutes = () => {
         <Route path="note" element={<TestPage title="노트 페이지" />} />
         <Route path="study" element={<TestPage title="학습 페이지" />} />
         <Route path="profile" element={<TestPage title="프로필 페이지" />} />
-        <Route path="auth" element={<LoginPage />} />
-        <Route path="signup" element={<SignupPage />} />
-        <Route path="set-goal" element={<SetGoalPage />} />
       </Route>
       
       {/* 404 페이지 */}
