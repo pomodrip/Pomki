@@ -30,7 +30,7 @@ const MainLayout: React.FC = () => {
       
       <Container
         component="main"
-        maxWidth={isMobile ? 'sm' : 'lg'}
+        maxWidth={isMobile ? 'sm' : 'md'}
         sx={{
           flexGrow: 1,
           paddingTop: (theme) => `${theme.spacing(2)}`, // 25. Page Content Padding (상하)

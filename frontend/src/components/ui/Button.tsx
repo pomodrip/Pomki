@@ -33,14 +33,7 @@ const StyledButton = styled(MuiButton)<ButtonProps>(({ theme, variant, color }) 
       borderColor: theme.palette.primary.main,
     },
   }),
-  
-  ...(variant === 'text' && {
-    color: theme.palette.primary.main, // 35
-    '&:hover': {
-      backgroundColor: theme.palette.action.hover,
-    },
-  }),
-}));
+}));  
 
 const Button: React.FC<ButtonProps> = (props) => {
   return <StyledButton {...props} />;
