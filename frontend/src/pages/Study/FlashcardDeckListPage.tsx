@@ -29,6 +29,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../../components/common/BottomNav';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { setFilters, toggleDeckBookmark } from '../../store/slices/studySlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -110,62 +112,15 @@ const ActionButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-// 예시 데이터
-const decks = [
-  {
-    id: 1,
-    category: '코딩',
-    title: 'React 이해도',
-    // description: 'React는 Facebook에서 개발한 JavaScript 라이브러리...',
-    isBookmarked: true,
-    tags: ['코딩', 'Frontend'],
-    flashcards: [
-      { id: 1, front: 'React란 무엇인가?', back: 'Facebook에서 개발한 JavaScript 라이브러리' },
-      { id: 2, front: 'JSX란?', back: 'JavaScript XML의 줄임말로 React에서 사용하는 문법' },
-      { id: 3, front: 'useState란?', back: 'React에서 상태를 관리하기 위한 Hook' },
-      { id: 4, front: 'useEffect란?', back: '컴포넌트의 생명주기와 부수 효과를 관리하는 Hook' },
-      { id: 5, front: 'Virtual DOM이란?', back: 'React에서 실제 DOM을 추상화한 가상 DOM' }
-    ]
-  },
-  {
-    id: 2,
-    category: '회계',
-    title: '손익계산서',
-    // description: '정의: 일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표...',
-    isBookmarked: false,
-    tags: ['회계', '재무'],
-    flashcards: [
-      { id: 6, front: '손익계산서란?', back: '일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표' },
-      { id: 7, front: '매출액이란?', back: '기업이 상품이나 서비스를 판매하여 얻은 총 수입' }
-    ]
-  },
-  {
-    id: 3,
-    category: '정보처리기사',
-    title: '1.시스템 개발 생명주기(SDLC)',
-    // description: '암기 팁: 써-분-설-구-테-유 (계분설구테유)...',
-    isBookmarked: true,
-    tags: ['정보처리기사', '자격증'],
-    flashcards: [
-      { id: 8, front: 'SDLC란?', back: '시스템 개발 생명주기(System Development Life Cycle)' },
-      { id: 9, front: '요구사항 분석 단계에서 하는 일은?', back: '사용자의 요구사항을 수집하고 분석하는 단계' }
-    ]
-  },
-];
+
 
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { decks, filters, deckBookmarks } = useAppSelector((state) => state.study);
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showBookmarked, setShowBookmarked] = useState(false);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
-  const [deckBookmarks, setDeckBookmarks] = useState<{[key: number]: boolean}>({
-    1: true,
-    2: false,
-    3: true,
-  });
 
   // 모든 태그 목록 추출
   const allTags = useMemo(() => {
@@ -178,33 +133,33 @@ const FlashcardDeckListPage: React.FC = () => {
 
   // 필터링된 덱 목록 (검색어가 없을 때만 사용)
   const filteredDecks = useMemo(() => {
-    if (searchQuery.trim()) return []; // 검색 중일 때는 덱 목록 숨김
+    if (filters.searchQuery.trim()) return []; // 검색 중일 때는 덱 목록 숨김
     
     return decks.filter((deck) => {
-      const matchesTags = selectedTags.length === 0 || 
-                         selectedTags.some((tag: string) => deck.tags.includes(tag));
+      const matchesTags = filters.selectedTags.length === 0 || 
+                         filters.selectedTags.some((tag: string) => deck.tags.includes(tag));
       
-      const matchesBookmark = !showBookmarked || deckBookmarks[deck.id];
+      const matchesBookmark = !filters.showBookmarked || deckBookmarks[deck.id];
 
       return matchesTags && matchesBookmark;
     });
-  }, [searchQuery, selectedTags, showBookmarked, deckBookmarks]);
+  }, [filters.searchQuery, filters.selectedTags, filters.showBookmarked, deckBookmarks, decks]);
 
   // 검색된 플래시카드 목록
   const searchedCards = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!filters.searchQuery.trim()) return [];
     
     const cards: any[] = [];
     decks.forEach((deck) => {
       // 태그 및 북마크 필터링도 적용
-      const matchesTags = selectedTags.length === 0 || 
-                         selectedTags.some((tag: string) => deck.tags.includes(tag));
-      const matchesBookmark = !showBookmarked || deckBookmarks[deck.id];
+      const matchesTags = filters.selectedTags.length === 0 || 
+                         filters.selectedTags.some((tag: string) => deck.tags.includes(tag));
+      const matchesBookmark = !filters.showBookmarked || deckBookmarks[deck.id];
       
       if (matchesTags && matchesBookmark) {
         deck.flashcards.forEach((card: any) => {
-          if (card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              card.back.toLowerCase().includes(searchQuery.toLowerCase())) {
+          if (card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+              card.back.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
             cards.push({
               ...card,
               deckId: deck.id,
@@ -217,25 +172,25 @@ const FlashcardDeckListPage: React.FC = () => {
     });
     
     return cards;
-  }, [searchQuery, selectedTags, showBookmarked, deckBookmarks]);
+  }, [filters.searchQuery, filters.selectedTags, filters.showBookmarked, deckBookmarks, decks]);
 
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+    dispatch(setFilters({ searchQuery: event.target.value }));
   };
 
   const handleTagSelect = (tag: string) => {
-    const newSelectedTags = selectedTags.includes(tag)
-      ? selectedTags.filter((t: string) => t !== tag)
-      : [...selectedTags, tag];
+    const newSelectedTags = filters.selectedTags.includes(tag)
+      ? filters.selectedTags.filter((t: string) => t !== tag)
+      : [...filters.selectedTags, tag];
     
-    setSelectedTags(newSelectedTags);
+    dispatch(setFilters({ selectedTags: newSelectedTags }));
     setTagMenuAnchor(null);
   };
 
   const handleBookmarkFilter = (showBookmarkedValue: boolean) => {
-    setShowBookmarked(showBookmarkedValue);
+    dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
   };
 
@@ -265,10 +220,7 @@ const FlashcardDeckListPage: React.FC = () => {
 
   const handleToggleBookmark = (deckId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    setDeckBookmarks(prev => ({
-      ...prev,
-      [deckId]: !prev[deckId]
-    }));
+    dispatch(toggleDeckBookmark(deckId));
   };
 
   return (
@@ -277,9 +229,6 @@ const FlashcardDeckListPage: React.FC = () => {
         {/* 헤더 */}
         <HeaderBox>
           <Box display="flex" alignItems="center">
-            <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
-              <ArrowBackIcon />
-            </IconButton>
             <Typography variant="h5" fontWeight="bold">
               Flash Deck
             </Typography>
@@ -294,7 +243,7 @@ const FlashcardDeckListPage: React.FC = () => {
           <TextField
             fullWidth
             placeholder="Search flashcards"
-            value={searchQuery}
+            value={filters.searchQuery}
             onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
@@ -320,7 +269,7 @@ const FlashcardDeckListPage: React.FC = () => {
             endIcon={<FilterListIcon />}
             sx={{ borderRadius: 2 }}
           >
-            Tags {selectedTags.length > 0 && `(${selectedTags.length})`}
+            Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
           </Button>
           
           <Button
@@ -333,7 +282,7 @@ const FlashcardDeckListPage: React.FC = () => {
           </Button>
 
           {/* 선택된 태그들 표시 */}
-          {selectedTags.map((tag: string) => (
+          {filters.selectedTags.map((tag: string) => (
             <TagChip
               key={tag}
               label={tag}
@@ -354,7 +303,7 @@ const FlashcardDeckListPage: React.FC = () => {
             <MenuItem 
               key={tag} 
               onClick={() => handleTagSelect(tag)}
-              selected={selectedTags.includes(tag)}
+              selected={filters.selectedTags.includes(tag)}
             >
               {tag}
             </MenuItem>
@@ -376,7 +325,7 @@ const FlashcardDeckListPage: React.FC = () => {
         </Menu>
 
         {/* 덱 목록 (검색어가 없을 때) */}
-        {!searchQuery.trim() && filteredDecks.map((deck) => (
+        {!filters.searchQuery.trim() && filteredDecks.map((deck) => (
           <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
             <CardContent>
               {/* 태그와 북마크 */}
@@ -413,7 +362,7 @@ const FlashcardDeckListPage: React.FC = () => {
                   onClick={(e) => handleToggleBookmark(deck.id, e)}
                   sx={{ flexShrink: 0 }}
                 >
-                  {deckBookmarks[deck.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  {deckBookmarks[deck.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
                 </IconButton>
               </Box>
               
@@ -453,7 +402,7 @@ const FlashcardDeckListPage: React.FC = () => {
         ))}
 
         {/* 검색된 플래시카드 목록 */}
-        {searchQuery.trim() && searchedCards.map((card) => (
+        {filters.searchQuery.trim() && searchedCards.map((card) => (
           <DeckCard key={`${card.deckId}-${card.id}`} onClick={() => handleDeckClick(card.deckId)}>
             <CardContent>
               {/* 덱 정보 */}
@@ -465,7 +414,7 @@ const FlashcardDeckListPage: React.FC = () => {
                   size="small"
                   onClick={(e) => handleToggleBookmark(card.deckId, e)}
                 >
-                  {deckBookmarks[card.deckId] ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  {deckBookmarks[card.deckId] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
                 </IconButton>
               </Box>
 
@@ -513,7 +462,7 @@ const FlashcardDeckListPage: React.FC = () => {
         ))}
 
         {/* 빈 상태 */}
-        {!searchQuery.trim() && filteredDecks.length === 0 && (
+        {!filters.searchQuery.trim() && filteredDecks.length === 0 && (
           <Box 
             display="flex" 
             flexDirection="column" 
@@ -538,7 +487,7 @@ const FlashcardDeckListPage: React.FC = () => {
         )}
 
         {/* 검색 결과 없음 */}
-        {searchQuery.trim() && searchedCards.length === 0 && (
+        {filters.searchQuery.trim() && searchedCards.length === 0 && (
           <Box 
             display="flex" 
             flexDirection="column" 

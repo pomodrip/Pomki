@@ -5,6 +5,7 @@ import MainLayout from '../pages/_layout/MainLayout';
 import FlashcardDeckListPage from '../pages/Study/FlashcardDeckListPage';
 import FlashCardListPage from '../pages/Study/FlashCardListPage';
 import FlashcardPracticePage from '../pages/Study/FlashcardPracticePage';
+// import NoteListPage from '../pages/Note/NoteListPage';
 
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
@@ -34,6 +35,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<TestPage title="대시보드 페이지" />} />
         <Route path="timer" element={<TestPage title="타이머 페이지" />} />
         <Route path="note" element={<TestPage title="노트 페이지" />} />
+        {/* <Route path="note" element={<NoteListPage />} /> */}
         {/* <Route path="study" element={<TestPage title="학습 페이지" />} /> */}
         <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />

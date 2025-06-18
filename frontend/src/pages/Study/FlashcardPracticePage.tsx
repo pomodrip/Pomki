@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -9,62 +9,94 @@ import {
   Container,
   Stack,
   DialogContentText,
+  Paper,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  EditNote as EditNoteIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Tag from '../../components/ui/Tag';
 import Modal from '../../components/ui/Modal';
-
-// 예시 플래시카드 데이터
-const flashcards = [
-  {
-    id: 1,
-    question: 'React에서 사용자 인터페이스를 구성하는 기본 단위란 무엇인가요?',
-    answer: '컴포넌트',
-    tags: ['React', '컴포넌트', 'Frontend'],
-  },
-  {
-    id: 2,
-    question: 'JSX란 무엇인가요?',
-    answer: 'JavaScript XML의 줄임말로, React에서 UI를 작성하기 위한 문법 확장',
-    tags: ['React', 'JSX', 'Frontend'],
-  },
-  {
-    id: 3,
-    question: 'useState Hook의 용도는?',
-    answer: '함수형 컴포넌트에서 상태를 관리하기 위한 Hook',
-    tags: ['React', 'Hook', 'useState'],
-  },
-  {
-    id: 4,
-    question: 'useEffect Hook은 언제 사용하나요?',
-    answer: '컴포넌트의 생명주기와 관련된 작업을 수행할 때',
-    tags: ['React', 'Hook', 'useEffect'],
-  },
-  {
-    id: 5,
-    question: 'Props란 무엇인가요?',
-    answer: '부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법',
-    tags: ['React', 'Props', 'Frontend'],
-  },
-];
+import { useAppSelector } from '../../hooks/useRedux';
 
 type Difficulty = 'easy' | 'confusing' | 'hard' | null;
 
 const FlashcardPracticePage: React.FC = () => {
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
+  const { decks } = useAppSelector((state) => state.study);
   
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
+  const [globalFeedback, setGlobalFeedback] = useState('');
+
+  // 현재 덱 찾기
+  const currentDeck = useMemo(() => {
+    return decks.find(deck => deck.id === parseInt(deckId || '0'));
+  }, [decks, deckId]);
+
+  // 플래시카드 목록 (Redux에서 가져옴)
+  const flashcards = useMemo(() => {
+    if (!currentDeck) return [];
+    return currentDeck.flashcards.map(card => ({
+      ...card,
+      question: card.front, // front를 question으로 매핑
+      answer: card.back,    // back을 answer로 매핑
+      tags: currentDeck.tags, // 덱의 태그를 카드 태그로 사용
+    }));
+  }, [currentDeck]);
+
+  // 덱이나 카드가 없는 경우 처리
+  if (!currentDeck || flashcards.length === 0) {
+    return (
+      <Box sx={{ minHeight: '100vh', pb: 2 }}>
+        <Container maxWidth="md" sx={{ px: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              py: 2,
+            }}
+          >
+            <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h6" fontWeight={600}>
+              학습하기
+            </Typography>
+          </Box>
+          
+          <Box 
+            display="flex" 
+            flexDirection="column" 
+            alignItems="center" 
+            justifyContent="center"
+            py={8}
+          >
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              {!currentDeck ? '덱을 찾을 수 없습니다' : '학습할 카드가 없습니다'}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/study')}
+              sx={{ mt: 2 }}
+            >
+              덱 목록으로 이동
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   const currentCard = flashcards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
@@ -147,19 +179,17 @@ const FlashcardPracticePage: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', pb: 2 }}>
       <Container maxWidth="md" sx={{ px: 2 }}>
-        {/* 헤더 */}
+        {/* 헤더 - 화살표 제거 */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             py: 2,
           }}
         >
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
           <Typography variant="h6" fontWeight={600}>
-            React 이해도
+            {currentDeck.title}
           </Typography>
         </Box>
 
@@ -216,7 +246,13 @@ const FlashcardPracticePage: React.FC = () => {
           </Typography>
           <Stack direction="row" spacing={1}>
             {currentCard.tags.map((tag, index) => (
-              <Tag key={index} label={tag} size="small" />
+              <Chip 
+                key={index} 
+                label={`#${tag}`} 
+                size="small" 
+                color="primary"
+                variant="outlined"
+              />
             ))}
           </Stack>
         </Box>
@@ -270,10 +306,16 @@ const FlashcardPracticePage: React.FC = () => {
           <IconButton 
             onClick={handlePrevious}
             disabled={currentCardIndex === 0}
+            size="medium"
             sx={{ 
-              backgroundColor: '#f5f5f5',
-              '&:hover': { backgroundColor: '#e0e0e0' },
-              '&:disabled': { backgroundColor: '#fafafa' },
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': { bgcolor: 'primary.dark' },
+              '&:disabled': { 
+                bgcolor: 'grey.300',
+                color: 'grey.500',
+              },
+              boxShadow: 1,
             }}
           >
             <ChevronLeftIcon />
@@ -288,7 +330,9 @@ const FlashcardPracticePage: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: index === currentCardIndex ? '#1976d2' : '#e0e0e0',
+                  backgroundColor: index === currentCardIndex ? 'primary.main' : 'grey.300',
+                  boxShadow: index === currentCardIndex ? 1 : 0,
+                  transition: 'all 0.2s',
                 }}
               />
             ))}
@@ -296,53 +340,95 @@ const FlashcardPracticePage: React.FC = () => {
           
           <IconButton 
             onClick={handleNext}
+            size="medium"
             sx={{ 
-              backgroundColor: '#f5f5f5',
-              '&:hover': { backgroundColor: '#e0e0e0' },
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': { bgcolor: 'primary.dark' },
+              boxShadow: 1,
             }}
           >
             <ChevronRightIcon />
           </IconButton>
         </Box>
 
-        {/* 하단 입력창 */}
-        <TextField
-          fullWidth
-          placeholder="답을 입력하신 다음 카드를 클릭해보세요."
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-          variant="outlined"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-                     }}
-         />
+        {/* 피드백 섹션 */}
+        <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+            <EditNoteIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
+            <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
+              피드백 (선택사항)
+            </Typography>
+          </Box>
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                이 문제에 대한 피드백
+              </Typography>
+              <TextField
+                placeholder="예: 더 자세한 설명이 필요해요"
+                value={currentQuestionFeedback}
+                onChange={(e) => setCurrentQuestionFeedback(e.target.value)}
+                variant="outlined"
+                fullWidth
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: '0.85rem',
+                    bgcolor: 'grey.50',
+                    borderRadius: 2,
+                  }
+                }}
+              />
+            </Box>
 
-         {/* 학습 완료 다이얼로그 */}
-         <Modal
-           open={showCompletionDialog}
-           onClose={handleCompletionCancel}
-           title="학습 완료"
-           showCloseButton={false}
-           actions={
-             <>
-               <Button onClick={handleCompletionCancel} variant="outlined">
-                 아니오
-               </Button>
-               <Button onClick={handleCompletionConfirm} variant="contained">
-                 네
-               </Button>
-             </>
-           }
-         >
-           <DialogContentText sx={{ color: 'text.secondary' }}>
-             학습이 완료되었습니다. 덱 목록으로 이동하시겠습니까?
-           </DialogContentText>
-         </Modal>
-       </Container>
-     </Box>
-   );
- };
- 
- export default FlashcardPracticePage;
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                전체적인 피드백
+              </Typography>
+              <TextField
+                placeholder="예: 실무 예시를 더 포함해주세요"
+                value={globalFeedback}
+                onChange={(e) => setGlobalFeedback(e.target.value)}
+                variant="outlined"
+                fullWidth
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: '0.85rem',
+                    bgcolor: 'grey.50',
+                    borderRadius: 2,
+                  }
+                }}
+              />
+            </Box>
+          </Stack>
+        </Paper>
+
+        {/* 학습 완료 다이얼로그 */}
+        <Modal
+          open={showCompletionDialog}
+          onClose={handleCompletionCancel}
+          title="학습 완료"
+          showCloseButton={false}
+          actions={
+            <>
+              <Button onClick={handleCompletionCancel} variant="outlined">
+                아니오
+              </Button>
+              <Button onClick={handleCompletionConfirm} variant="contained">
+                네
+              </Button>
+            </>
+          }
+        >
+          <DialogContentText sx={{ color: 'text.secondary' }}>
+            학습이 완료되었습니다. 덱 목록으로 이동하시겠습니까?
+          </DialogContentText>
+        </Modal>
+      </Container>
+    </Box>
+  );
+};
+
+export default FlashcardPracticePage;

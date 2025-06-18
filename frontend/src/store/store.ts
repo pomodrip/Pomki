@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import dialogReducer from './slices/dialogSlice';
 import toastReducer from './slices/toastSlice';
+import studyReducer from './slices/studySlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     dialog: dialogReducer,
     toast: toastReducer,
+    study: studyReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

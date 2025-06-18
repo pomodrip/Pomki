@@ -76,7 +76,7 @@ const BottomNav: React.FC = () => {
     if (pathname.startsWith('/timer')) return 0;
     if (pathname.startsWith('/note')) return 1;
     if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
-    if (pathname.startsWith('/study')) return 3;
+    if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
     if (pathname.startsWith('/profile')) return 4;
     return 2; // default to home
   };
