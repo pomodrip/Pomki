@@ -46,3 +46,13 @@ export const verifyEmailCode = async (data: VerificationCodeRequest): Promise<Ve
   const response: AxiosResponse<VerificationCodeResponse> = await api.post('/api/email/code', data);
   return response.data;
 };
+
+// authApi 객체로 모든 함수들을 그룹화하여 export
+export const authApi = {
+  login,
+  logout,
+  refreshToken,
+  signup,
+  sendEmailVerification,
+  verifyEmailCode,
+};

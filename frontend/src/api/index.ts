@@ -1,15 +1,17 @@
 import axios from 'axios';
 
-// API 기본 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088';
-
+// API 기본 URL 설정 - 개발 환경에서는 프록시 사용
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? 'http://192.168.0.89:8088' : 'http://192.168.0.89:8088');
 // axios 인스턴스 생성
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: false, // CORS 관련 설정
 });
 
 // 요청 인터셉터
@@ -20,6 +22,11 @@ api.interceptors.request.use(
     
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    
+    // CORS preflight 요청 최소화를 위한 헤더 설정
+    if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
+      config.headers['Content-Type'] = 'application/json';
     }
     
     return config;
@@ -35,6 +42,12 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // CORS 에러 처리
+    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+      console.error('Network error - possibly CORS issue:', error);
+      return Promise.reject(new Error('서버에 연결할 수 없습니다. CORS 설정을 확인해주세요.'));
+    }
+
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
