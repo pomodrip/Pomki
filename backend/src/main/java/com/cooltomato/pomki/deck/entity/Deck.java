@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Builder
 @Entity
-@Table(name = "CARD_DECK")
+@Table(name = "card_deck")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,7 +26,7 @@ public class Deck {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(name = "deck_id", length = 50)
+    @Column(name = "deck_id", length = 50, nullable = false, unique = true)
     private String deckId;
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)

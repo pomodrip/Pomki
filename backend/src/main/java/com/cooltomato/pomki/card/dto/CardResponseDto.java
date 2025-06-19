@@ -13,7 +13,7 @@ public class CardResponseDto {
     private String answer;
     private String content;
     private String deckId;
-    private String cardId;
+    private Long cardId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isDeleted;

@@ -84,12 +84,13 @@ public class DeckService {
                 return List.of();
             }
             log.info("debug >>> 덱 안 카드 전체 조회 성공");
+            
             return cards.stream().map(card -> CardResponseDto.builder()
                     .cardId(card.getCardId())
                     .content(card.getContent())
                     .answer(card.getAnswer())
-                    .createdAt(card.getCreatedAt())
-                    .updatedAt(card.getUpdatedAt())
+                    .createdAt(card.getCreatedAt().toLocalDateTime())
+                    .updatedAt(card.getUpdatedAt().toLocalDateTime())
                     .build()).toList();
         }
 
