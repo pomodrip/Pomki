@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import dialogReducer from './slices/dialogSlice';
 import toastReducer from './slices/toastSlice';
+import timerReducer from './slices/timerSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     dialog: dialogReducer,
     toast: toastReducer,
+    timer: timerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
