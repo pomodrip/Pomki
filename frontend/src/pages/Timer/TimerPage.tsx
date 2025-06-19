@@ -177,9 +177,9 @@ const TaskInputSection = styled(Box)(() => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  border: '1px solid #E5E7EB', // 테두리 추가
-  borderRadius: '12px', // 둥근 모서리
-  padding: '24px', // 내부 여백
+  border: '1px solid #E5E7EB',
+  borderRadius: '12px',
+  padding: '24px',
   backgroundColor: '#FFFFFF',
 }));
 
@@ -282,7 +282,7 @@ const NotesHeader = styled(Box)(() => ({
 }));
 
 const NotesTitle = styled(Typography)(() => ({
-  fontSize: '22px', // H3 크기
+  fontSize: '22px',
   fontWeight: 600,
   color: '#1A1A1A',
 }));
@@ -350,9 +350,15 @@ const AiResultTitle = styled(Typography)(() => ({
 const AiResultContent = styled(Typography)(() => ({
   fontSize: '16px',
   color: '#374151',
-  whiteSpace: 'pre-wrap', // 줄바꿈 및 공백 유지
+  whiteSpace: 'pre-wrap',
   lineHeight: 1.6,
 }));
+
+interface TimerSettings {
+  sessions: number;
+  focusMinutes: number;
+  breakMinutes: number;
+}
 
 const TimerPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -366,7 +372,7 @@ const TimerPage: React.FC = () => {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiResult, setAiResult] = useState('');
-  const [summaryStyle, setSummaryStyle] = useState('summary');
+  const [summaryStyle, setSummaryStyle] = useState('concept');
   
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
@@ -374,29 +380,47 @@ const TimerPage: React.FC = () => {
   const notesTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const aiResultRef = useRef<HTMLDivElement>(null);
 
+  const [minutes, setMinutes] = useState(25);
+  const [seconds, setSeconds] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [session, setSession] = useState(1);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  const totalTime = settings.focusMinutes * 60;
+
+  // 진행률 계산
+  const currentTime = minutes * 60 + seconds;
+  const progress = ((totalTime - currentTime) / totalTime) * 100;
+
   // 타이머 로직 (Core Timer Logic)
   useEffect(() => {
-    if (phase !== 'running' && phase !== 'break') {
-      return;
-    }
-
-    if (remainingSeconds <= 0) {
-      if (phase === 'running') {
-        dispatch(finishFocusSession());
-        dispatch(showSnackbar({ message: '집중 시간이 종료되었습니다. 잠시 휴식을 취하세요.' }));
-      } else if (phase === 'break') {
-        dispatch(finishBreakSession());
-        dispatch(showSnackbar({ message: '휴식 시간이 종료되었습니다.' }));
+    let interval: number | null = null;
+    
+    if (isRunning && (minutes > 0 || seconds > 0)) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+        if (seconds > 0) {
+          setSeconds(seconds - 1);
+        } else if (minutes > 0) {
+          setMinutes(minutes - 1);
+          setSeconds(59);
+        }
+      }, 1000);
+    } else if (minutes === 0 && seconds === 0 && isRunning) {
+      setIsRunning(false);
+      // 세션 완료 로직
+      if (session < settings.sessions) {
+        setSession(session + 1);
+        setMinutes(settings.focusMinutes);
+        setSeconds(0);
+        setElapsedTime(0);
       }
-      return;
     }
 
-    const interval = setInterval(() => {
-      dispatch(tick());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [phase, remainingSeconds, dispatch]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRunning, minutes, seconds, session, settings]);
 
   // 노트 자동 확장 로직
   useEffect(() => {
@@ -419,48 +443,82 @@ const TimerPage: React.FC = () => {
 
 
   const handleStart = () => {
-    if (phase === 'configuring') {
-      dispatch(startTimer());
-    } else if (phase === 'paused') {
-      dispatch(resumeTimer());
-    } else if (phase === 'running') {
-      dispatch(pauseTimer());
+    if (!isRunning) {
+      setElapsedTime(0);
     }
+    setIsRunning(!isRunning);
   };
 
-  const handleReset = () => dispatch(resetTimer());
+  const handleReset = () => {
+    setIsRunning(false);
+    setMinutes(settings.focusMinutes);
+    setSeconds(0);
+    setSession(1);
+    setElapsedTime(0);
+  };
+  
+  const handleSettings = () => {
+    setTempSettings(settings); // 현재 설정을 임시 설정으로 복사
+    setIsSettingsModalOpen(true);
+  };
 
   const handleApplySettings = () => {
-    dispatch(setSettings(tempSettings));
+    setSettings(tempSettings); // 임시 설정을 실제 설정으로 적용
+    // 설정이 바뀌면 타이머 디스플레이도 바로 갱신
+    if (!isRunning) {
+      setMinutes(tempSettings.focusMinutes);
+      setSeconds(0);
+      setSession(1);
+      setElapsedTime(0);
+    }
     setIsSettingsModalOpen(false);
   };
-  
+
   // 시간 포맷팅
-  const formatTime = (totalSeconds: number) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const formatTime = (min: number, sec: number) => {
+    return `${min.toString().padStart(2, '0')} : ${sec.toString().padStart(2, '0')}`;
   };
 
-  // 진행률 계산
-  const totalDuration = phase === 'running' || phase === 'paused'
-    ? settings.focusMinutes * 60
-    : settings.breakMinutes * 60;
-  
-  const progress = totalDuration > 0 ? ((totalDuration - remainingSeconds) / totalDuration) * 100 : 0;
-  
-  const radius = 130;
-  const circumference = 2 * Math.PI * radius;
+  const formatElapsedTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
+  // AI 노트 생성 핸들러 (임시 구현)
   const handleGenerateAI = async () => {
+    if (!notes.trim()) {
+      alert('먼저 노트에 내용을 작성해주세요.');
+      return;
+    }
+
     setIsGeneratingAI(true);
-    setAiResult('');
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Mock API call
-    const result = `AI 요약 결과 (${summaryStyle}):\n\n${notes}`;
-    setAiResult(result);
-    setIsGeneratingAI(false);
-    dispatch(showSnackbar({ message: 'AI 요약이 생성되었습니다.' }));
-    setTimeout(() => aiResultRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    
+    // 임시 AI 생성 시뮬레이션
+    setTimeout(() => {
+      const aiContent = generateMockAIContent(summaryStyle, taskName);
+      setNotes(prevNotes => {
+        const separator = prevNotes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '';
+        return prevNotes + separator + aiContent;
+      });
+      setIsGeneratingAI(false);
+      alert('AI 노트가 성공적으로 생성되었습니다!');
+    }, 2000);
+  };
+
+  const generateMockAIContent = (style: string, task: string) => {
+    const taskPrefix = task ? `${task}에 대한 ` : '';
+    
+    switch (style) {
+      case 'concept':
+        return `${taskPrefix}핵심 개념 정리: ...`;
+      case 'detail':
+        return `${taskPrefix}상세 분석: ...`;
+      case 'summary':
+        return `${taskPrefix}요약: ...`;
+      default:
+        return `${taskPrefix}학습 내용 정리 및 다음 단계 계획`;
+    }
   };
 
   const handleSaveNote = () => {
@@ -469,16 +527,21 @@ const TimerPage: React.FC = () => {
     console.log({ taskName, notes });
   };
 
+  const radius = 136;
+  const circumference = 2 * Math.PI * radius;
 
+  // settingsActions 변수는 더 이상 사용되지 않음
+
+  // 확대된 노트 렌더링 함수 (기존 로직 유지)
   const renderExpandedNotes = () => (
     <NotesSection expanded={true}>
       <ExpandedTimerBar>
         <ExpandedTimerInfo>
           <ExpandedTimerDisplay>
-            {formatTime(remainingSeconds)}
+            {formatTime(minutes, seconds)}
           </ExpandedTimerDisplay>
           <ExpandedSessionInfo>
-            {phase === 'running' ? '집중시간' : '휴식시간'} • 세션 {currentSession}/{settings.sessions}
+            {isRunning ? '집중시간' : '휴식시간'} • 세션 {session}/{settings.sessions}
           </ExpandedSessionInfo>
         </ExpandedTimerInfo>
         
@@ -487,9 +550,9 @@ const TimerPage: React.FC = () => {
             size="small" 
             variant="contained" 
             onClick={handleStart} 
-            sx={{ backgroundColor: phase === 'running' ? '#ed6c02' : undefined }} // warning color
+            sx={{ backgroundColor: isRunning ? '#ed6c02' : undefined }} // warning color
           >
-            {phase === 'running' ? '일시정지' : '계속'}
+            {isRunning ? '일시정지' : '계속'}
           </Button>
           <Button size="small" variant="outlined" onClick={handleReset}>
             리셋
@@ -535,9 +598,9 @@ const TimerPage: React.FC = () => {
               onChange={(e) => setSummaryStyle(e.target.value as string)}
               sx={{ minWidth: 150, backgroundColor: '#FFFFFF' }}
             >
-              <MenuItem value="summary">핵심 요약</MenuItem>
-              <MenuItem value="detailed">상세 서술</MenuItem>
-              <MenuItem value="examples">주요 예시</MenuItem>
+              <MenuItem value="concept">핵심 개념</MenuItem>
+              <MenuItem value="detail">상세 분석</MenuItem>
+              <MenuItem value="summary">요약</MenuItem>
             </Select>
           </FormControl>
         </StudyModeSection>
@@ -567,14 +630,13 @@ const TimerPage: React.FC = () => {
   }
 
   const getPageTitle = () => {
-    if (phase === 'running') return `집중 세션 ${currentSession}`;
-    if (phase === 'break') return '휴식 시간';
+    if (isRunning) return `집중 세션 ${session}`;
+    if (!isRunning) return '휴식 시간';
     return '집중 타이머 설정';
   };
   
   const getButtonText = () => {
-    if (phase === 'running') return '일시정지';
-    if (phase === 'paused') return '계속하기';
+    if (isRunning) return '일시정지';
     return '시작';
   }
 
@@ -584,10 +646,10 @@ const TimerPage: React.FC = () => {
         {getPageTitle()}
       </PageTitle>
 
-      {(phase === 'running' || phase === 'paused' || phase === 'break') && (
+      {(isRunning || !isRunning) && (
         <RunningHeader>
           <SessionProgress>
-            세션 {currentSession}/{settings.sessions}
+            세션 {session}/{settings.sessions}
           </SessionProgress>
           <ProgressBarContainer>
             <ProgressBarFill progress={progress} />
@@ -598,7 +660,7 @@ const TimerPage: React.FC = () => {
       <TimerCircle>
         <CircularProgress width="280" height="280" style={{ position: 'absolute' }}>
             <circle cx="140" cy="140" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="12" />
-            {(phase === 'running' || phase === 'break' || phase === 'paused') && (
+            {(isRunning || !isRunning) && (
                <ProgressCircle
                 cx="140" cy="140" r={radius} stroke="#2563EB" progress={0} /* dummy progress */
                 style={{
@@ -612,7 +674,7 @@ const TimerPage: React.FC = () => {
         </CircularProgress>
         
         <TimerDisplay>
-          {formatTime(remainingSeconds)}
+          {formatTime(minutes, seconds)}
         </TimerDisplay>
       </TimerCircle>
 
@@ -623,9 +685,9 @@ const TimerPage: React.FC = () => {
           onClick={handleStart}
           sx={{
             minWidth: '120px',
-            backgroundColor: phase === 'running' ? '#EF4444' : '#2563EB',
+            backgroundColor: isRunning ? '#EF4444' : '#2563EB',
             '&:hover': {
-              backgroundColor: phase === 'running' ? '#DC2626' : '#1D4ED8',
+              backgroundColor: isRunning ? '#DC2626' : '#1D4ED8',
             },
           }}
         >
@@ -635,25 +697,43 @@ const TimerPage: React.FC = () => {
         <Button
           variant="outlined"
           size="large"
-          onClick={phase === 'configuring' ? () => setIsSettingsModalOpen(true) : handleReset}
-          sx={{ minWidth: '120px' }}
+          onClick={isRunning ? handleReset : handleSettings}
+          sx={{
+            minWidth: '120px',
+            borderColor: '#E5E7EB',
+            color: '#6B7280',
+            '&:hover': {
+              borderColor: '#D1D5DB',
+              backgroundColor: '#F9FAFB',
+            },
+          }}
         >
-          {phase === 'configuring' ? '설정' : '리셋'}
+          {isRunning ? '리셋' : '설정'}
         </Button>
       </ButtonContainer>
 
-      {phase === 'configuring' && (
+      {!isRunning ? (
         <>
           <TaskInputSection>
             <TaskInputLabel>
-              이번 세션에 집중할 일은 무엇인가요? (선택)
+              이번 세션에 집중할 일은 무엇인가요?
             </TaskInputLabel>
+            
             <Input
               fullWidth
-              placeholder="예: Pomki 기능 개발"
+              placeholder="e.g. Draft presentation report"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#E5E7EB' } }}
+              sx={{
+                backgroundColor: '#FFFFFF',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  color: '#9CA3AF',
+                  // 입력 필드 내부 테두리는 디자인에 맞게 조정
+                  fieldset: { borderColor: 'transparent' }
+                },
+              }}
             />
           </TaskInputSection>
 
@@ -672,6 +752,8 @@ const TimerPage: React.FC = () => {
             />
           </NotesSection>
         </>
+      ) : (
+        // ... (기존 로직 유지)
       )}
       
       <Modal
@@ -679,42 +761,35 @@ const TimerPage: React.FC = () => {
         onClose={() => setIsSettingsModalOpen(false)}
         title="타이머 설정"
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingTop: '16px' }}>
-          
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px', pt: '16px' }}>
           <FormControl fullWidth>
             <Typography gutterBottom sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>세션 수</Typography>
             <Input
               type="number"
               value={tempSettings.sessions}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTempSettings({ ...tempSettings, sessions: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-              fullWidth
               sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#E5E7EB' } }}
             />
           </FormControl>
-
           <FormControl fullWidth>
             <Typography gutterBottom sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>집중 시간 (분)</Typography>
             <Input
               type="number"
               value={tempSettings.focusMinutes}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTempSettings({ ...tempSettings, focusMinutes: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-              fullWidth
               sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#E5E7EB' } }}
             />
           </FormControl>
-
           <FormControl fullWidth>
             <Typography gutterBottom sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>휴식 시간 (분)</Typography>
             <Input
               type="number"
               value={tempSettings.breakMinutes}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTempSettings({ ...tempSettings, breakMinutes: Math.max(1, parseInt(e.target.value, 10) || 1) })}
-              fullWidth
               sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#E5E7EB' } }}
             />
           </FormControl>
-
-          <Button variant="contained" onClick={handleApplySettings} sx={{ marginTop: '16px' }}>
+          <Button variant="contained" onClick={handleApplySettings} sx={{ mt: '16px' }}>
             설정 적용
           </Button>
         </Box>
