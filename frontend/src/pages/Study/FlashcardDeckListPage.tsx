@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import {
   Container,
   Box,
   Typography,
+  TextField,
   InputAdornment,
   IconButton,
   Menu,
@@ -33,7 +34,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { setFilters, toggleDeckBookmark, addDeck, updateDeck } from '../../store/slices/studySlice';
+import { setFilters, toggleDeckBookmark, addDeck, updateDeck, deleteDeck } from '../../store/slices/studySlice';
 
 const TagChip = styled(Chip)(({ theme }) => ({
   fontSize: '0.75rem',
@@ -208,7 +209,12 @@ const FlashcardDeckListPage: React.FC = () => {
     const confirmed = window.confirm('이 덱을 정말 삭제하시겠습니까?');
 
     if (confirmed) {
-      console.log('Delete deck:', deckId);
+      // 실제로 덱을 삭제
+      dispatch(deleteDeck(deckId));
+      
+      // 원래는 휴지통으로 이동하는 로직이었음 (휴지통 페이지가 없어서 주석처리)
+      // console.log('Delete deck:', deckId);
+      // 휴지통 이동 로직이 여기에 있었을 예정
     }
   };
 
@@ -289,7 +295,7 @@ const FlashcardDeckListPage: React.FC = () => {
 
         {/* 검색창 */}
         <SearchBox>
-          <Input
+          <TextField
             fullWidth
             placeholder="Search flashcards"
             value={filters.searchQuery}
@@ -301,6 +307,12 @@ const FlashcardDeckListPage: React.FC = () => {
                 </InputAdornment>
               ),
             }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                borderRadius: 2,
+              },
+            }}
           />
         </SearchBox>
 
@@ -310,7 +322,14 @@ const FlashcardDeckListPage: React.FC = () => {
             variant="outlined"
             onClick={(e) => setTagMenuAnchor(e.currentTarget)}
             endIcon={<FilterListIcon />}
-            sx={{ borderRadius: 2 }}
+            sx={{
+              borderRadius: 2,
+              color: 'primary.main',
+              borderColor: 'primary.main',
+              '&:hover': {
+                backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
           >
             Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
           </Button>
@@ -319,7 +338,14 @@ const FlashcardDeckListPage: React.FC = () => {
             variant="outlined"
             onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
             endIcon={<FilterListIcon />}
-            sx={{ borderRadius: 2 }}
+            sx={{
+              borderRadius: 2,
+              color: 'primary.main',
+              borderColor: 'primary.main',
+              '&:hover': {
+                backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
           >
             Bookmarked
           </Button>
