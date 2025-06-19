@@ -1,13 +1,16 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import { Box, Checkbox, Typography } from "@mui/material";
+import { Box, Checkbox, Typography, Alert } from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Container from '@mui/material/Container';
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
+import { login } from "../../api/authApi";
+import type { AppDispatch } from "../../store/store";
 
 const SocialButton = styled(Button)(({ theme }) => ({
   height: '45px',
@@ -55,7 +58,10 @@ const LoginPage = () => {
   const [checked, setChecked] = React.useState(false);
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loginError, setLoginError] = React.useState<string | null>(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
@@ -77,18 +83,60 @@ const LoginPage = () => {
     setPasswordError(getPasswordValidationMessage(value));
   };
 
-  const handleLoginClick = () => {
+  const handleLoginClick = async () => {
     const emailValidationError = getEmailValidationMessage(id);
     const passwordValidationError = getPasswordValidationMessage(password);
     
     setEmailError(emailValidationError);
     setPasswordError(passwordValidationError);
+    setLoginError(null);
     
     if (!emailValidationError && !passwordValidationError) {
-      // 로그인 로직 실행
-      console.log('로그인 처리:', { email: id, password });
+      setIsLoading(true);
+      
+      try {
+        const response = await login({
+          email: id,
+          password: password
+        });
+
+        // 토큰 저장
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('refreshToken', response.refreshToken);
+        
+        // 사용자 정보 저장
+        localStorage.setItem('user', JSON.stringify(response.member));
+        
+        // Redux store에 사용자 정보 저장 (추후 authSlice 액션 추가 시 사용)
+        // dispatch(setUser(response.member));
+        
+        // 아이디 저장 기능
+        if (checked) {
+          localStorage.setItem('savedEmail', id);
+        } else {
+          localStorage.removeItem('savedEmail');
+        }
+        
+        // 대시보드로 이동
+        navigate('/dashboard');
+        
+      } catch (error: any) {
+        console.error('Login failed:', error);
+        setLoginError(error.response?.data?.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  // 컴포넌트 마운트 시 저장된 이메일 불러오기
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('savedEmail');
+    if (savedEmail) {
+      setId(savedEmail);
+      setChecked(true);
+    }
+  }, []);
 
   return (
     <Container
@@ -103,6 +151,13 @@ const LoginPage = () => {
     >
       <Typography variant="h1" sx={{ mb: 2, fontSize: '32px', fontWeight: 700, textAlign: 'center' }}>학습의 새로운 차원</Typography>
       <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>Pomki와 함께 생성하세요.</Typography>
+      
+      {loginError && (
+        <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+          {loginError}
+        </Alert>
+      )}
+      
       <Box sx={{ width: '100%', mb: 2 }}>
         <Input
           placeholder="이메일"
@@ -110,6 +165,7 @@ const LoginPage = () => {
           onChange={handleEmailChange}
           fullWidth
           error={!!emailError}
+          disabled={isLoading}
         />
         {emailError && (
           <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
@@ -125,6 +181,7 @@ const LoginPage = () => {
           onChange={handlePasswordChange}
           fullWidth
           error={!!passwordError}
+          disabled={isLoading}
         />
         {passwordError && (
           <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
@@ -134,7 +191,7 @@ const LoginPage = () => {
       </Box>
       <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
         <FormControlLabel
-          control={<Checkbox checked={checked} onChange={handleChange} />}
+          control={<Checkbox checked={checked} onChange={handleChange} disabled={isLoading} />}
           label="아이디 저장"
         />
       </Box>
@@ -144,19 +201,21 @@ const LoginPage = () => {
         fullWidth 
         sx={{ mb: 4 }}
         onClick={handleLoginClick}
+        disabled={isLoading}
       >
-        로그인
+        {isLoading ? '로그인 중...' : '로그인'}
       </Button>
 
       <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick}>회원가입</Button>
-        <Button variant="text" sx={{ color: 'text.secondary' }}>비밀번호 찾기</Button>
+        <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
+        <Button variant="text" sx={{ color: 'text.secondary' }} disabled={isLoading}>비밀번호 찾기</Button>
       </Box>
 
       <KakaoButton
         fullWidth
         variant="contained"
         startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
+        disabled={isLoading}
       >
         카카오 로그인
       </KakaoButton>
@@ -165,6 +224,7 @@ const LoginPage = () => {
         fullWidth
         variant="outlined"
         startIcon={<GoogleIcon />}
+        disabled={isLoading}
       >
         구글 로그인
       </GoogleButton>
