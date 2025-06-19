@@ -4,21 +4,18 @@ import {
   Container,
   Box,
   Typography,
-  TextField,
   InputAdornment,
   IconButton,
-  Chip,
-  Button,
-  Card,
-  CardContent,
   Menu,
   MenuItem,
   Stack,
   Fab,
+  Chip,
+  Button as MuiButton,
+  DialogContentText,
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -29,8 +26,20 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../../components/common/BottomNav';
+import Card from '../../components/ui/Card';
+import Tag from '../../components/ui/Tag';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Modal from '../../components/ui/Modal';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { setFilters, toggleDeckBookmark } from '../../store/slices/studySlice';
+import { setFilters, toggleDeckBookmark, addDeck, updateDeck } from '../../store/slices/studySlice';
+
+const TagChip = styled(Chip)(({ theme }) => ({
+  fontSize: '0.75rem',
+  height: 24,
+  marginRight: theme.spacing(0.5),
+}));
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -60,67 +69,50 @@ const DeckCard = styled(Card)(({ theme }) => ({
   transition: 'all 0.2s',
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
-
-const TagChip = styled(Chip)(({ theme }) => ({
-  fontSize: '0.75rem',
-  height: 24,
-  marginRight: theme.spacing(0.5),
-  // Z Fold 5와 같은 작은 화면에서 태그 크기 조정
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '0.65rem',
-    height: 20,
-    marginRight: theme.spacing(0.3),
-    '& .MuiChip-label': {
-      paddingLeft: theme.spacing(0.5),
-      paddingRight: theme.spacing(0.5),
-    },
+    boxShadow: theme.shadows[2],
   },
 }));
 
 const ActionBox = styled(Box)(({ theme }) => ({
   display: 'flex',
-  //액션버튼들 사이 간격
-  gap: theme.spacing(3),
+  gap: theme.spacing(1),
   marginTop: theme.spacing(1),
 }));
 
-const ActionButton = styled(Button)(({ theme }) => ({
+const ActionButton = styled(MuiButton)(({ theme }) => ({
   minWidth: 'auto',
-  padding: theme.spacing(0.3, 0.6),
-  fontSize: '0.7rem',
+  padding: theme.spacing(0.5, 1),
+  fontSize: '0.75rem',
   color: theme.palette.text.secondary,
   border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.spacing(0.8),
+  borderRadius: theme.spacing(1),
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
   },
-  '& .MuiButton-startIcon': {
-    marginRight: theme.spacing(0.3),
-    fontSize: '0.9rem',
-  },
-  // 작은 화면에서 더 컴팩트하게
-  [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(0.2, 0.4),
-    fontSize: '0.65rem',
-    '& .MuiButton-startIcon': {
-      marginRight: theme.spacing(0.2),
-      fontSize: '0.8rem',
+}));
+
+// 데스크탑(md 이상)에서만 maxWidth 조절
+const DesktopModal = styled(Modal)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    [theme.breakpoints.up('md')]: {
+      maxWidth: '500px',    // 데스크탑에서 원하는 너비
     },
   },
 }));
-
-
 
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { decks, filters, deckBookmarks } = useAppSelector((state) => state.study);
+  const { isDesktop } = useResponsive();
   
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newDeckTitle, setNewDeckTitle] = useState('');
+  const [newDeckTags, setNewDeckTags] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingDeckId, setEditingDeckId] = useState<number | null>(null);
 
   // 모든 태그 목록 추출
   const allTags = useMemo(() => {
@@ -174,8 +166,6 @@ const FlashcardDeckListPage: React.FC = () => {
     return cards;
   }, [filters.searchQuery, filters.selectedTags, filters.showBookmarked, deckBookmarks, decks]);
 
-
-
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilters({ searchQuery: event.target.value }));
   };
@@ -200,7 +190,16 @@ const FlashcardDeckListPage: React.FC = () => {
 
   const handleEditDeck = (deckId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/flashcards/${deckId}/edit`);
+    
+    // 수정할 덱 찾기
+    const deckToEdit = decks.find(deck => deck.id === deckId);
+    if (deckToEdit) {
+      setIsEditMode(true);
+      setEditingDeckId(deckId);
+      setNewDeckTitle(deckToEdit.title);
+      setNewDeckTags(deckToEdit.tags.join(', '));
+      setShowCreateDialog(true);
+    }
   };
 
   const handleDeleteDeck = async (deckId: number, event: React.MouseEvent) => {
@@ -223,24 +222,74 @@ const FlashcardDeckListPage: React.FC = () => {
     dispatch(toggleDeckBookmark(deckId));
   };
 
+  const handleCreateDeck = () => {
+    setIsEditMode(false);
+    setEditingDeckId(null);
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateDialogClose = () => {
+    setShowCreateDialog(false);
+    setNewDeckTitle('');
+    setNewDeckTags('');
+    setIsEditMode(false);
+    setEditingDeckId(null);
+  };
+
+  const handleCreateDialogConfirm = () => {
+    if (newDeckTitle.trim()) {
+      const tags = newDeckTags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      if (isEditMode && editingDeckId !== null) {
+        // 수정 모드
+        const existingDeck = decks.find(deck => deck.id === editingDeckId);
+        if (existingDeck) {
+          const updatedDeck = {
+            ...existingDeck,
+            category: tags.length > 0 ? tags[0] : '기타',
+            title: newDeckTitle.trim(),
+            tags: tags,
+          };
+          dispatch(updateDeck(updatedDeck));
+        }
+      } else {
+        // 생성 모드
+        const newDeck = {
+          id: Date.now(), // 임시 ID 생성
+          category: tags.length > 0 ? tags[0] : '기타', // 첫 번째 태그를 카테고리로 사용
+          title: newDeckTitle.trim(),
+          tags: tags,
+          flashcards: [], // 빈 카드 배열
+          isBookmarked: false, // 초기값은 북마크되지 않음
+        };
+        dispatch(addDeck(newDeck));
+      }
+
+      handleCreateDialogClose();
+    }
+  };
+
   return (
     <Box sx={{ pb: '64px', minHeight: '100vh' }}>
       <StyledContainer maxWidth="md">
         {/* 헤더 */}
         <HeaderBox>
           <Box display="flex" alignItems="center">
-            <Typography variant="h5" fontWeight="bold">
+            <Typography variant="h1" sx={{ fontWeight: 700 }}>
               Flash Deck
             </Typography>
           </Box>
-          <IconButton onClick={() => navigate('/flashcards/create')}>
+          <IconButton onClick={handleCreateDeck}>
             <AddIcon />
           </IconButton>
         </HeaderBox>
 
         {/* 검색창 */}
         <SearchBox>
-          <TextField
+          <Input
             fullWidth
             placeholder="Search flashcards"
             value={filters.searchQuery}
@@ -251,12 +300,6 @@ const FlashcardDeckListPage: React.FC = () => {
                   <SearchIcon color="action" />
                 </InputAdornment>
               ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                borderRadius: 2,
-              },
             }}
           />
         </SearchBox>
@@ -327,22 +370,28 @@ const FlashcardDeckListPage: React.FC = () => {
         {/* 덱 목록 (검색어가 없을 때) */}
         {!filters.searchQuery.trim() && filteredDecks.map((deck) => (
           <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
-            <CardContent>
-              {/* 태그와 북마크 */}
+            <Box sx={{ p: 2 }}>
+              {/* 제목과 북마크 */}
               <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    gap: 0.5,
-                    flex: 1,
-                    marginRight: 1,
-                    overflow: 'hidden'
-                  }}
+                <Typography variant="h2" sx={{ fontWeight: 700, flex: 1, mr: 1 }}>
+                  {deck.title}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleToggleBookmark(deck.id, e)}
+                  sx={{ flexShrink: 0 }}
                 >
+                  {deckBookmarks[deck.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
+                </IconButton>
+              </Box>
+              
+              {/* 태그들 */}
+              {deck.tags.length > 0 && (
+                <Box sx={{ mb: 1 }}>
                   {deck.tags.slice(0, 3).map((tag: string) => (
                     <TagChip
                       key={tag}
-                      label={`#${tag.length > 5 ? tag.substring(0, 5) + '...' : tag}`}
+                      label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
                       size="small"
                       color="primary"
                       variant="outlined"
@@ -357,19 +406,7 @@ const FlashcardDeckListPage: React.FC = () => {
                     />
                   )}
                 </Box>
-                <IconButton
-                  size="small"
-                  onClick={(e) => handleToggleBookmark(deck.id, e)}
-                  sx={{ flexShrink: 0 }}
-                >
-                  {deckBookmarks[deck.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
-                </IconButton>
-              </Box>
-              
-              {/* 제목 */}
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                {deck.title}
-              </Typography>
+              )}
 
               {/* 카드 개수 */}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -397,18 +434,18 @@ const FlashcardDeckListPage: React.FC = () => {
                   학습하기
                 </ActionButton>
               </ActionBox>
-            </CardContent>
+            </Box>
           </DeckCard>
         ))}
 
         {/* 검색된 플래시카드 목록 */}
         {filters.searchQuery.trim() && searchedCards.map((card) => (
           <DeckCard key={`${card.deckId}-${card.id}`} onClick={() => handleDeckClick(card.deckId)}>
-            <CardContent>
-              {/* 덱 정보 */}
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  from: {card.deckTitle}
+            <Box sx={{ p: 2 }}>
+              {/* 질문과 북마크 */}
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                <Typography variant="h3" sx={{ fontWeight: 600, flex: 1, mr: 1 }}>
+                  {card.front}
                 </Typography>
                 <IconButton
                   size="small"
@@ -418,30 +455,13 @@ const FlashcardDeckListPage: React.FC = () => {
                 </IconButton>
               </Box>
 
-              {/* 플래시카드 내용 */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  질문:
-                </Typography>
-                <Typography variant="body1" fontWeight="bold" sx={{ mb: 2 }}>
-                  {card.front}
-                </Typography>
-                
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  답변:
-                </Typography>
-                <Typography variant="body1">
-                  {card.back}
-                </Typography>
-              </Box>
-
               {/* 태그들 */}
-              <Box mt={2}>
-                <Box sx={{ display: 'flex', gap: 0.5, overflow: 'hidden' }}>
+              {card.deckTags.length > 0 && (
+                <Box sx={{ mb: 2 }}>
                   {card.deckTags.slice(0, 3).map((tag: string) => (
                     <TagChip
                       key={tag}
-                      label={`#${tag.length > 5 ? tag.substring(0, 5) + '...' : tag}`}
+                      label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
                       size="small"
                       color="primary"
                       variant="outlined"
@@ -456,8 +476,18 @@ const FlashcardDeckListPage: React.FC = () => {
                     />
                   )}
                 </Box>
-              </Box>
-            </CardContent>
+              )}
+
+              {/* 덱 정보 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                from: {card.deckTitle}
+              </Typography>
+
+              {/* 답변 내용 */}
+              {/* <Typography variant="body1" sx={{ mb: 1 }}>
+                {card.back}
+              </Typography> */}
+            </Box>
           </DeckCard>
         ))}
 
@@ -470,7 +500,7 @@ const FlashcardDeckListPage: React.FC = () => {
             justifyContent="center"
             py={8}
           >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h2" color="text.secondary" gutterBottom>
               플래시카드 덱이 없습니다
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
@@ -479,7 +509,7 @@ const FlashcardDeckListPage: React.FC = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => navigate('/flashcards/create')}
+              onClick={handleCreateDeck}
             >
               덱 만들기
             </Button>
@@ -495,7 +525,7 @@ const FlashcardDeckListPage: React.FC = () => {
             justifyContent="center"
             py={8}
           >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h2" color="text.secondary" gutterBottom>
               검색 결과가 없습니다
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -508,7 +538,7 @@ const FlashcardDeckListPage: React.FC = () => {
         <Fab
           color="primary"
           aria-label="add deck"
-          onClick={() => navigate('/flashcards/create')}
+          onClick={handleCreateDeck}
           sx={{
             position: 'fixed',
             bottom: 80,
@@ -517,6 +547,93 @@ const FlashcardDeckListPage: React.FC = () => {
         >
           <AddIcon />
         </Fab>
+
+        {/* 덱 생성 다이얼로그 */}
+        {isDesktop ? (
+          <DesktopModal
+            open={showCreateDialog}
+            onClose={handleCreateDialogClose}
+            title={isEditMode ? "덱 수정" : "새 덱 생성"}
+            showCloseButton={false}
+            actions={
+              <>
+                <Button onClick={handleCreateDialogClose} variant="outlined">취소</Button>
+                <Button onClick={handleCreateDialogConfirm} variant="contained" disabled={!newDeckTitle.trim()}>
+                  {isEditMode ? "수정" : "생성"}
+                </Button>
+              </>
+            }
+          >
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                덱 제목
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="덱 제목을 입력하세요"
+                value={newDeckTitle}
+                onChange={(e) => setNewDeckTitle(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                태그 (쉼표로 구분)
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="예: React, JavaScript, Frontend"
+                value={newDeckTags}
+                onChange={(e) => setNewDeckTags(e.target.value)}
+              />
+              
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                태그는 쉼표(,)로 구분하여 입력하세요
+              </Typography>
+            </Box>
+          </DesktopModal>
+        ) : (
+          <Modal
+            open={showCreateDialog}
+            onClose={handleCreateDialogClose}
+            title={isEditMode ? "덱 수정" : "새 덱 생성"}
+            showCloseButton={false}
+            actions={
+              <>
+                <Button onClick={handleCreateDialogClose} variant="outlined">취소</Button>
+                <Button onClick={handleCreateDialogConfirm} variant="contained" disabled={!newDeckTitle.trim()}>
+                  {isEditMode ? "수정" : "생성"}
+                </Button>
+              </>
+            }
+          >
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                덱 제목
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="덱 제목을 입력하세요"
+                value={newDeckTitle}
+                onChange={(e) => setNewDeckTitle(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                태그 (쉼표로 구분)
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="예: React, JavaScript, Frontend"
+                value={newDeckTags}
+                onChange={(e) => setNewDeckTags(e.target.value)}
+              />
+              
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                태그는 쉼표(,)로 구분하여 입력하세요
+              </Typography>
+            </Box>
+          </Modal>
+        )}
       </StyledContainer>
 
       {/* 하단 네비게이션 */}

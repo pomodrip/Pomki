@@ -1,23 +1,21 @@
 import React, { useState, useMemo } from 'react';
+import { styled } from '@mui/material/styles';
 import { 
   Box, 
   Typography, 
   IconButton, 
-  TextField, 
   InputAdornment,
-  Button,
   Stack,
   Container,
   Menu,
   MenuItem,
-  Chip,
   Checkbox,
+  Chip,
+  Button as MuiButton,
 } from '@mui/material';
 import {
-  ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Search as SearchIcon,
-  ExpandMore as ExpandMoreIcon,
   FilterList as FilterListIcon,
   BookmarkBorder,
   Bookmark,
@@ -27,9 +25,35 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Tag from '../../components/ui/Tag';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import BottomNav from '../../components/common/BottomNav';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { setFilters, toggleDeckBookmark } from '../../store/slices/studySlice';
+
+const TagChip = styled(Chip)(({ theme }) => ({
+  fontSize: '0.75rem',
+  height: 24,
+  marginRight: theme.spacing(0.5),
+}));
+
+const ActionBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(1),
+  marginTop: theme.spacing(1),
+}));
+
+const ActionButton = styled(MuiButton)(({ theme }) => ({
+  minWidth: 'auto',
+  padding: theme.spacing(0.5, 1),
+  fontSize: '0.75rem',
+  color: theme.palette.text.secondary,
+  border: `1px solid ${theme.palette.divider}`,
+  borderRadius: theme.spacing(1),
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
 
 const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -147,7 +171,7 @@ const FlashCardListPage: React.FC = () => {
             justifyContent="center"
             py={8}
           >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h3" color="text.secondary" gutterBottom>
               덱을 찾을 수 없습니다
             </Typography>
             <Button
@@ -166,7 +190,7 @@ const FlashCardListPage: React.FC = () => {
   return (
     <Box sx={{ pb: '64px', minHeight: '100vh' }}>
       <Container maxWidth="md" sx={{ px: 2 }}>
-        {/* 헤더 - 화살표 제거 */}
+        {/* 헤더 */}
         <Box
           sx={{
             display: 'flex',
@@ -176,7 +200,7 @@ const FlashCardListPage: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h2" sx={{ fontWeight: 700 }}>
               {currentDeck.title}
             </Typography>
           </Box>
@@ -187,7 +211,7 @@ const FlashCardListPage: React.FC = () => {
 
         {/* 검색창 */}
         <Box sx={{ mb: 2 }}>
-          <TextField
+          <Input
             fullWidth
             placeholder="Search cards"
             value={filters.searchQuery}
@@ -198,12 +222,6 @@ const FlashCardListPage: React.FC = () => {
                   <SearchIcon color="action" />
                 </InputAdornment>
               ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                borderRadius: 2,
-              },
             }}
           />
         </Box>
@@ -230,17 +248,12 @@ const FlashCardListPage: React.FC = () => {
 
           {/* 선택된 태그들 표시 */}
           {filters.selectedTags.map((tag: string) => (
-            <Chip
+            <TagChip
               key={tag}
               label={tag}
               onDelete={() => handleTagSelect(tag)}
               color="primary"
               variant="filled"
-              sx={{
-                fontSize: '0.75rem',
-                height: 24,
-                marginRight: 0.5,
-              }}
             />
           ))}
         </Box>
@@ -290,28 +303,11 @@ const FlashCardListPage: React.FC = () => {
                 
                 {/* 카드 내용 */}
                 <Box sx={{ flex: 1 }}>
-                  {/* 태그와 북마크 */}
+                  {/* 제목(질문)과 북마크 */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    {card.tags.length > 0 && (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        gap: 0.3, 
-                        flex: 1,
-                        marginRight: 1,
-                        overflow: 'hidden',
-                        // 작은 화면에서 태그 간격 더 줄이기
-                        '@media (max-width: 600px)': {
-                          gap: 0.2,
-                        },
-                      }}>
-                        {card.tags.slice(0, 3).map((tag: string, index: number) => (
-                          <Tag key={index} label={`#${tag.length > 5 ? tag.substring(0, 5) + '...' : tag}`} size="small" selected />
-                        ))}
-                        {card.tags.length > 3 && (
-                          <Tag label={`+${card.tags.length - 3}`} size="small" />
-                        )}
-                      </Box>
-                    )}
+                    <Typography variant="h3" sx={{ fontWeight: 600, flex: 1, mr: 1 }}>
+                      {card.front}
+                    </Typography>
                     <IconButton
                       size="small"
                       onClick={(event) => handleToggleBookmark(card.id, event)}
@@ -321,93 +317,53 @@ const FlashCardListPage: React.FC = () => {
                     </IconButton>
                   </Box>
                   
-                  {/* 제목 */}
-                  <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                    {card.front}
-                  </Typography>
+                  {/* 태그들 */}
+                  {card.tags.length > 0 && (
+                    <Box sx={{ mb: 1 }}>
+                      {card.tags.slice(0, 3).map((tag: string, index: number) => (
+                        <TagChip
+                          key={index}
+                          label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      ))}
+                      {card.tags.length > 3 && (
+                        <TagChip
+                          label={`+${card.tags.length - 3}`}
+                          size="small"
+                          color="default"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                  )}
                   
                   {/* 액션 버튼들 */}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <Box
-                      component="button"
+                  <ActionBox>
+                    <ActionButton
                       onClick={(event) => {
                         event.stopPropagation();
                         handleEditCard(card.id);
                       }}
-                      sx={(theme) => ({
-                        minWidth: 'auto',
-                        padding: '2px 6px',
-                        fontSize: '0.7rem',
-                        color: 'text.secondary',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 0.8,
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.3,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                        // 작은 화면에서 더 컴팩트하게
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '1px 4px',
-                          fontSize: '0.65rem',
-                          gap: 0.2,
-                        },
-                      })}
+                      startIcon={<EditIcon fontSize="small" />}
                     >
-                      <EditIcon sx={(theme) => ({ 
-                        fontSize: '0.9rem',
-                        [theme.breakpoints.down('sm')]: {
-                          fontSize: '0.8rem',
-                        },
-                      })} />
                       수정
-                    </Box>
-                    <Box
-                      component="button"
+                    </ActionButton>
+                    <ActionButton
                       onClick={(event) => {
                         event.stopPropagation();
                         handleDeleteCard(card.id);
                       }}
-                      sx={(theme) => ({
-                        minWidth: 'auto',
-                        padding: '2px 6px',
-                        fontSize: '0.7rem',
-                        color: 'text.secondary',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 0.8,
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.3,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                        // 작은 화면에서 더 컴팩트하게
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '1px 4px',
-                          fontSize: '0.65rem',
-                          gap: 0.2,
-                        },
-                      })}
+                      startIcon={<DeleteIcon fontSize="small" />}
                     >
-                      <DeleteIcon sx={(theme) => ({ 
-                        fontSize: '0.9rem',
-                        [theme.breakpoints.down('sm')]: {
-                          fontSize: '0.8rem',
-                        },
-                      })} />
                       삭제
-                    </Box>
-                  </Box>
+                    </ActionButton>
+                  </ActionBox>
                   
-                  {/* 내용 */}
-                  <Typography 
+                  {/* 내용 (답) */}
+                  {/* <Typography 
                     variant="body2" 
                     color="text.secondary"
                     sx={{
@@ -419,7 +375,7 @@ const FlashCardListPage: React.FC = () => {
                     }}
                   >
                     {card.back}
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Box>
             </Card>
@@ -435,7 +391,7 @@ const FlashCardListPage: React.FC = () => {
             justifyContent="center"
             py={8}
           >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h3" color="text.secondary" gutterBottom>
               카드가 없습니다
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>

@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { styled } from '@mui/material/styles';
 import {
   Box,
   Typography,
   IconButton,
-  LinearProgress,
-  Button,
-  TextField,
   Container,
   Stack,
   DialogContentText,
@@ -21,8 +19,17 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Tag from '../../components/ui/Tag';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import ProgressBar from '../../components/ui/ProgressBar';
 import { useAppSelector } from '../../hooks/useRedux';
+
+const TagChip = styled(Chip)(({ theme }) => ({
+  fontSize: '0.75rem',
+  height: 24,
+  marginRight: theme.spacing(0.5),
+}));
 
 type Difficulty = 'easy' | 'confusing' | 'hard' | null;
 
@@ -70,7 +77,7 @@ const FlashcardPracticePage: React.FC = () => {
             <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h2" sx={{ fontWeight: 600 }}>
               학습하기
             </Typography>
           </Box>
@@ -82,7 +89,7 @@ const FlashcardPracticePage: React.FC = () => {
             justifyContent="center"
             py={8}
           >
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h2" color="text.secondary" gutterBottom>
               {!currentDeck ? '덱을 찾을 수 없습니다' : '학습할 카드가 없습니다'}
             </Typography>
             <Button
@@ -179,7 +186,7 @@ const FlashcardPracticePage: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', pb: 2 }}>
       <Container maxWidth="md" sx={{ px: 2 }}>
-        {/* 헤더 - 화살표 제거 */}
+        {/* 헤더 */}
         <Box
           sx={{
             display: 'flex',
@@ -188,7 +195,7 @@ const FlashcardPracticePage: React.FC = () => {
             py: 2,
           }}
         >
-          <Typography variant="h6" fontWeight={600}>
+          <Typography variant="h2" sx={{ fontWeight: 600 }}>
             {currentDeck.title}
           </Typography>
         </Box>
@@ -198,18 +205,9 @@ const FlashcardPracticePage: React.FC = () => {
           <Typography variant="body2" sx={{ mb: 1 }}>
             {currentCardIndex + 1}/{flashcards.length}
           </Typography>
-          <LinearProgress
-            variant="determinate"
+          <ProgressBar
+            variant="quiz"
             value={progress}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: '#e0e0e0',
-              '& .MuiLinearProgress-bar': {
-                borderRadius: 4,
-                backgroundColor: '#1976d2',
-              },
-            }}
           />
         </Box>
 
@@ -227,11 +225,10 @@ const FlashcardPracticePage: React.FC = () => {
           onClick={handleCardClick}
         >
           <Typography 
-            variant="h6" 
+            variant={showAnswer ? "h2" : "h3"}
             textAlign="center"
             sx={{ 
               lineHeight: 1.6,
-              fontSize: showAnswer ? '1.5rem' : '1.25rem',
               fontWeight: showAnswer ? 700 : 500,
             }}
           >
@@ -241,15 +238,15 @@ const FlashcardPracticePage: React.FC = () => {
 
         {/* 태그들 */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {/* <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             Tags
-          </Typography>
+          </Typography> */}
           <Stack direction="row" spacing={1}>
             {currentCard.tags.map((tag, index) => (
-              <Chip 
-                key={index} 
-                label={`#${tag}`} 
-                size="small" 
+              <TagChip
+                key={index}
+                label={tag}
+                size="small"
                 color="primary"
                 variant="outlined"
               />
@@ -266,7 +263,6 @@ const FlashcardPracticePage: React.FC = () => {
                 onClick={() => handleDifficultySelect('easy')}
                 sx={{
                   ...getDifficultyButtonStyle('easy'),
-                  borderRadius: 2,
                   px: 3,
                   py: 1,
                 }}
@@ -278,7 +274,6 @@ const FlashcardPracticePage: React.FC = () => {
                 onClick={() => handleDifficultySelect('confusing')}
                 sx={{
                   ...getDifficultyButtonStyle('confusing'),
-                  borderRadius: 2,
                   px: 3,
                   py: 1,
                 }}
@@ -290,7 +285,6 @@ const FlashcardPracticePage: React.FC = () => {
                 onClick={() => handleDifficultySelect('hard')}
                 sx={{
                   ...getDifficultyButtonStyle('hard'),
-                  borderRadius: 2,
                   px: 3,
                   py: 1,
                 }}
@@ -365,18 +359,15 @@ const FlashcardPracticePage: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 이 문제에 대한 피드백
               </Typography>
-              <TextField
+              <Input
                 placeholder="예: 더 자세한 설명이 필요해요"
                 value={currentQuestionFeedback}
                 onChange={(e) => setCurrentQuestionFeedback(e.target.value)}
-                variant="outlined"
                 fullWidth
                 size="small"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     fontSize: '0.85rem',
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
                   }
                 }}
               />
@@ -386,18 +377,15 @@ const FlashcardPracticePage: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 전체적인 피드백
               </Typography>
-              <TextField
+              <Input
                 placeholder="예: 실무 예시를 더 포함해주세요"
                 value={globalFeedback}
                 onChange={(e) => setGlobalFeedback(e.target.value)}
-                variant="outlined"
                 fullWidth
                 size="small"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     fontSize: '0.85rem',
-                    bgcolor: 'grey.50',
-                    borderRadius: 2,
                   }
                 }}
               />
