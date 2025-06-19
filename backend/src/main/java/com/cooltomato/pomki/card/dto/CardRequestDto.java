@@ -13,7 +13,6 @@ import lombok.Setter;
 @Setter
 public class CardRequestDto {
     // 테스트를 위해 임시로 추가. 실제에서는 사용자로부터 입력받지 않음.
-    private String deckId;
     private String content;
     private String answer;
 }

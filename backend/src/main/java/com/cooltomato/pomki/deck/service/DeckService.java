@@ -43,13 +43,13 @@ public class DeckService {
                                         .cardCnt(0L)
                                         .build();
             
-            Deck savedDeck = deckRepository.save(deck);
+            Deck entity = deckRepository.save(deck);
     
             return DeckResponseDto.builder()
-                    .deckId(savedDeck.getDeckId())
-                    .deckName(savedDeck.getDeckName())
-                    .createdAt(savedDeck.getCreatedAt())
-                    .cardCnt(savedDeck.getCardCnt())
+                    .deckId(entity.getDeckId())
+                    .deckName(entity.getDeckName())
+                    .createdAt(entity.getCreatedAt())
+                    .cardCnt(entity.getCardCnt())
                     .build();
         }
 
@@ -89,8 +89,8 @@ public class DeckService {
                     .cardId(card.getCardId())
                     .content(card.getContent())
                     .answer(card.getAnswer())
-                    .createdAt(card.getCreatedAt().toLocalDateTime())
-                    .updatedAt(card.getUpdatedAt().toLocalDateTime())
+                    .createdAt(card.getCreatedAt())
+                    .updatedAt(card.getUpdatedAt())
                     .build()).toList();
         }
 
@@ -101,12 +101,12 @@ public class DeckService {
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
             deck.setDeckName(request.getDeckName());
             deck.setUpdatedAt(LocalDateTime.now());
-            Deck updatedDeck = deckRepository.save(deck);
+            Deck entity = deckRepository.save(deck);
             return DeckResponseDto.builder()
-                    .deckId(updatedDeck.getDeckId())
-                    .deckName(updatedDeck.getDeckName())
-                    .createdAt(updatedDeck.getCreatedAt())
-                    .cardCnt(updatedDeck.getCardCnt())
+                    .deckId(entity.getDeckId())
+                    .deckName(entity.getDeckName())
+                    .createdAt(entity.getCreatedAt())
+                    .cardCnt(entity.getCardCnt())
                     .build();
         }
 

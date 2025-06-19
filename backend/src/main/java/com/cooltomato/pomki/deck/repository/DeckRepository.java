@@ -14,4 +14,5 @@ public interface DeckRepository extends JpaRepository<Deck, String> {
     List<Deck> findAllDecksByMemberId(Long memberId);
     boolean existsByMemberIdAndDeckNameAndIsDeletedFalse(Long memberId, String deckName);
     Optional<Card> findAllCardsByDeckId(String deckId);
+    Optional<Deck> findByMemberIdAndIsDeletedFalse(Long memberId);
 }

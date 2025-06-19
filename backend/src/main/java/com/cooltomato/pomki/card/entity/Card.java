@@ -11,6 +11,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.cooltomato.pomki.deck.entity.Deck;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Builder
 @Entity
@@ -33,15 +35,16 @@ public class Card {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private Timestamp updatedAt;
+    private LocalDateTime updatedAt;
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
+    // 의존관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
         name = "deck_id",
@@ -52,8 +55,13 @@ public class Card {
     )
     private Deck deck;
 
-    // deck_id를 가져오는 편의 메서드
-    public String getDeckId() {
-        return deck != null ? deck.getDeckId() : null;
+    public Optional<Card> orElseThrow(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
+
+    // // deck_id를 가져오는 편의 메서드
+    // public String getDeckId() {
+    //     return deck != null ? deck.getDeckId() : null;
+    // }
 } 

@@ -30,50 +30,45 @@ public class DeckController {
     
     private final DeckService deckService;
 
-    // 덱 생성. 프론트에서 전달 필요
-    // 나중에 memberId만 @RequestAttribute로 받아오기
+    // 덱 생성
     @PostMapping
-    public ResponseEntity<DeckResponseDto> createDeck(
-        @RequestBody DeckRequestDto request) {
-        System.out.println("debug >>> DeckCtrl createDeck");
-        System.out.println("debug >>>> deckName:" + request.getDeckName());
+    public ResponseEntity<DeckResponseDto> createDeck(@RequestBody DeckRequestDto request) {
+        log.info("Creating deck with name: {}", request.getDeckName());
         DeckResponseDto response = deckService.createDeck(request);
         return ResponseEntity.ok(response);
     }
 
-    // 나중에 memberId만 @RequestAttribute로 받아오기
-    // 덱 전체 조회. 멤버별로 생성한 덱을 모두 볼 수 있다
-    @GetMapping
-    public ResponseEntity<List<DeckResponseDto>> readAllDecks(@PathVariable("memberId") Long memberId) {
-        System.out.println("debug >>> DeckCtrl searchAllDecks");
-        System.out.println("debug >>> memberId: " + memberId);
+    // 특정 멤버의 모든 덱 조회
+    @GetMapping("/members/{memberId}")
+    public ResponseEntity<List<DeckResponseDto>> getDecksByMember(@PathVariable("memberId") Long memberId) {
+        log.info("Fetching all decks for member: {}", memberId);
         List<DeckResponseDto> response = deckService.readAllDecks(memberId);
         if (response.isEmpty()) {
-            System.out.println("덱이 존재하지 않습니다.");
+            log.info("No decks found for member: {}", memberId);
         }
         return ResponseEntity.ok(response);
     }
     
-    // 작업 중
-    // 덱 안 카드 전체 조회
-    @GetMapping("/{deckId}")
-    public ResponseEntity<List<CardResponseDto>> readAllCardInAdeck(@PathVariable("deckId") String deckId) {
-        log.info("debug >>> DeckCtrl readAllCardInAdeck");
-        log.info("debug >>> deckId: " + deckId);
-        List<CardResponseDto> cardsInAdeck = deckService.readAllCards(deckId) ;
-        return ResponseEntity.ok(cardsInAdeck);
+    // 덱 내의 모든 카드 조회
+    @GetMapping("/{deckId}/cards")
+    public ResponseEntity<List<CardResponseDto>> getCardsInDeck(@PathVariable("deckId") String deckId) {
+        log.info("Fetching all cards in deck: {}", deckId);
+        List<CardResponseDto> cardsInDeck = deckService.readAllCards(deckId);
+        return ResponseEntity.ok(cardsInDeck);
     }
 
-    // 덱 이름 수정
+    // 덱 정보 수정
     @PutMapping("/{deckId}")
     public ResponseEntity<DeckResponseDto> updateDeck(@PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
+        log.info("Updating deck: {}", deckId);
         DeckResponseDto response = deckService.updateDeck(deckId, request);
         return ResponseEntity.ok(response);
     }
 
-    // 덱 삭제. 삭제할 시 덱 안 카드도 같이 삭제
+    // 덱 삭제 (덱 내의 모든 카드도 함께 삭제)
     @DeleteMapping("/{deckId}")
     public ResponseEntity<Void> deleteDeck(@PathVariable("deckId") String deckId) {
+        log.info("Deleting deck: {}", deckId);
         deckService.deleteDeck(deckId);
         return ResponseEntity.noContent().build();
     }
