@@ -16,7 +16,7 @@ const mockDecks: FlashcardDeck[] = [
     category: '코딩',
     title: 'React 이해도',
     isBookmarked: true,
-    tags: ['코딩', 'Frontend'],
+    tags: ['#코딩', '#Frontend'],
     flashcards: [
       { id: 1, front: 'React란 무엇인가?', back: 'Facebook에서 개발한 JavaScript 라이브러리' },
       { id: 2, front: 'JSX란?', back: 'JavaScript XML의 줄임말로 React에서 사용하는 문법' },
@@ -30,7 +30,7 @@ const mockDecks: FlashcardDeck[] = [
     category: '회계',
     title: '손익계산서',
     isBookmarked: false,
-    tags: ['회계', '재무'],
+    tags: ['#회계', '#재무'],
     flashcards: [
       { id: 6, front: '손익계산서란?', back: '일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표' },
       { id: 7, front: '매출액이란?', back: '기업이 상품이나 서비스를 판매하여 얻은 총 수입' }
@@ -41,7 +41,7 @@ const mockDecks: FlashcardDeck[] = [
     category: '정보처리기사',
     title: '1.시스템 개발 생명주기(SDLC)',
     isBookmarked: true,
-    tags: ['정보처리기사', '자격증'],
+    tags: ['#정보처리기사', '#자격증'],
     flashcards: [
       { id: 8, front: 'SDLC란?', back: '시스템 개발 생명주기(System Development Life Cycle)' },
       { id: 9, front: '요구사항 분석 단계에서 하는 일은?', back: '사용자의 요구사항을 수집하고 분석하는 단계' }
