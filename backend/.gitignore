@@ -46,3 +46,7 @@ application-*.yaml
 
 # cursor
 .cursor/
+
+# lh
+.lh/
+.history/
