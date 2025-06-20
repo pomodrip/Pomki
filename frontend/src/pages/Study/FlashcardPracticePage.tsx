@@ -232,6 +232,7 @@ const FlashcardPracticePage: React.FC = () => {
           <ProgressFill value={progress} />
         </ProgressBar>
       </Box>
+      
 
       {/* 플래시카드 */}
       <FlashcardCard onClick={handleCardClick}>
@@ -262,46 +263,7 @@ const FlashcardPracticePage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
-      {showAnswer && (
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() => handleDifficultySelect('easy')}
-              sx={{
-                ...getDifficultyButtonStyle('easy'),
-                px: 3,
-                py: 1,
-              }}
-            >
-              Easy
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleDifficultySelect('confusing')}
-              sx={{
-                ...getDifficultyButtonStyle('confusing'),
-                px: 3,
-                py: 1,
-              }}
-            >
-              Confusing
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleDifficultySelect('hard')}
-              sx={{
-                ...getDifficultyButtonStyle('hard'),
-                px: 3,
-                py: 1,
-              }}
-            >
-              Hard
-            </Button>
-          </Box>
-        </Box>
-      )}
+      
 
       {/* 네비게이션(이전/다음) */}
       <Box
@@ -380,7 +342,49 @@ const FlashcardPracticePage: React.FC = () => {
         >
           <ArrowForwardIcon />
         </IconButton>
+
       </Box>
+
+      {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
+      {showAnswer && (
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('easy')}
+              sx={{
+                ...getDifficultyButtonStyle('easy'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Easy
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('confusing')}
+              sx={{
+                ...getDifficultyButtonStyle('confusing'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Confusing
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('hard')}
+              sx={{
+                ...getDifficultyButtonStyle('hard'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Hard
+            </Button>
+          </Box>
+        </Box>
+      )}
 
       {/* 피드백 섹션 (아코디언 드롭다운) */}
       <Accordion
