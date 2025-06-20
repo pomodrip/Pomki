@@ -5,7 +5,7 @@ import MainLayout from '../pages/_layout/MainLayout';
 import LoginPage from '../pages/Auth/LoginPage';
 import SignupPage from '../pages/Auth/SignupPage';
 import SetGoalPage from '../pages/Auth/SetGoalPage';
-
+import DashboardPage from '../pages/Dashboard/DashboardPage';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
   console.log(`${title} page rendering...`);
