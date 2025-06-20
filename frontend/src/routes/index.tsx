@@ -2,8 +2,10 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import MainLayout from '../pages/_layout/MainLayout';
+import LoginPage from '../pages/Auth/LoginPage';
+import SignupPage from '../pages/Auth/SignupPage';
+import SetGoalPage from '../pages/Auth/SetGoalPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
-
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
   console.log(`${title} page rendering...`);
@@ -24,7 +26,9 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* 인증 관련 페이지 (레이아웃 없음) */}
-      <Route path="/login" element={<TestPage title="로그인 페이지 (레이아웃 없음)" />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/set-goal" element={<SetGoalPage />} />
       
       {/* 메인 애플리케이션 (MainLayout 적용) */}
       <Route path="/" element={<MainLayout />}>
