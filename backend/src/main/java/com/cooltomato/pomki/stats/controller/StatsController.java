@@ -68,6 +68,16 @@ public class StatsController {
         return ResponseEntity.ok(dashboardStats.getRecentActivities());
     }
 
+    @GetMapping("/weekly-stats")
+    public ResponseEntity<?> getWeeklyStats(
+            @AuthenticationPrincipal PrincipalMember principalMember) {
+        
+        log.info("Weekly stats requested by member: {}", principalMember.getMemberId());
+        
+        DashboardStatsDto dashboardStats = statsService.getDashboardStats(principalMember.getMemberId());
+        return ResponseEntity.ok(dashboardStats.getWeeklyStats());
+    }
+
     // Request DTO
     public static class StudySessionRequest {
         private StudySession.ActivityType activityType;

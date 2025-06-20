@@ -11,6 +11,7 @@ import java.util.Map;
 public class DashboardStatsDto {
     
     private TodayStudyDto todayStudy;
+    private WeeklyStatsDto weeklyStats;
     private List<RecentActivityDto> recentActivities;
     private List<TodayActivityDto> todayActivities;
     private TrashDto trashInfo;
@@ -28,6 +29,18 @@ public class DashboardStatsDto {
         private Long totalStudyNotes;
         private Long totalFlashcards;
         private Long totalActiveDays;
+    }
+
+    @Data
+    @Builder
+    public static class WeeklyStatsDto {
+        private Integer studyStreak;          // 연속 학습 일수
+        private Long studyDaysThisWeek;       // 이번 주 학습 일수
+        private Integer totalStudyMinutes;    // 이번 주 총 학습 시간
+        private Integer avgDailyMinutes;      // 일평균 학습 시간
+        private Integer pomodoroCompletionRate; // 포모도로 완성률 (%)
+        private String mostActiveType;        // 가장 활발한 학습 유형
+        private Integer weeklyGoalProgress;   // 주간 목표 달성률 (%)
     }
 
     @Data

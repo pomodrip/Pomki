@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -29,6 +32,7 @@ public class StatsService {
 
         return DashboardStatsDto.builder()
                 .todayStudy(getTodayStudyStats(memberId))
+                .weeklyStats(getWeeklyStats(memberId))
                 .recentActivities(getRecentActivities(memberId))
                 .todayActivities(getTodayActivities(memberId))
                 .trashInfo(getTrashInfo())
@@ -58,6 +62,84 @@ public class StatsService {
                 .totalFlashcards(0L) // TODO: 실제 카드 수 조회
                 .totalActiveDays(totalActivities != null ? totalActivities : 0L)
                 .build();
+    }
+
+    private DashboardStatsDto.WeeklyStatsDto getWeeklyStats(Long memberId) {
+        // 이번 주 시작과 끝 계산 (월요일 시작)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfWeek = startOfWeek.plusDays(7);
+
+        // 주간 기본 통계
+        Integer weeklyStudyMinutes = studySessionRepository.getWeeklyStudyMinutes(memberId, startOfWeek, endOfWeek);
+        Long studyDaysThisWeek = studySessionRepository.getWeeklyStudyDays(memberId, startOfWeek, endOfWeek);
+        Integer pomodoroCompleted = studySessionRepository.getWeeklyPomodoroCompleted(memberId, startOfWeek, endOfWeek);
+        Integer pomodoroTotal = studySessionRepository.getWeeklyPomodoroTotal(memberId, startOfWeek, endOfWeek);
+
+        // 연속 학습 일수 계산
+        Integer studyStreak = calculateStudyStreak(memberId);
+
+        // 일평균 학습 시간
+        Integer avgDailyMinutes = studyDaysThisWeek > 0 ? weeklyStudyMinutes / studyDaysThisWeek.intValue() : 0;
+
+        // 포모도로 완성률
+        Integer pomodoroCompletionRate = pomodoroTotal > 0 ? (pomodoroCompleted * 100) / pomodoroTotal : 0;
+
+        // 가장 활발한 학습 유형
+        String mostActiveType = getMostActiveStudyType(memberId, startOfWeek, endOfWeek);
+
+        // 주간 목표 달성률 (주 7일 * 4시간 = 1680분 기준)
+        Integer weeklyGoal = 1680; // 28시간
+        Integer weeklyGoalProgress = Math.min((weeklyStudyMinutes * 100) / weeklyGoal, 100);
+
+        return DashboardStatsDto.WeeklyStatsDto.builder()
+                .studyStreak(studyStreak)
+                .studyDaysThisWeek(studyDaysThisWeek)
+                .totalStudyMinutes(weeklyStudyMinutes)
+                .avgDailyMinutes(avgDailyMinutes)
+                .pomodoroCompletionRate(pomodoroCompletionRate)
+                .mostActiveType(mostActiveType)
+                .weeklyGoalProgress(weeklyGoalProgress)
+                .build();
+    }
+
+    private Integer calculateStudyStreak(Long memberId) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        List<Date> studyDates = studySessionRepository.getStudyDatesLast30Days(memberId, thirtyDaysAgo);
+        
+        if (studyDates.isEmpty()) {
+            return 0;
+        }
+
+        // 오늘부터 역순으로 연속 일수 계산
+        LocalDate today = LocalDate.now();
+        LocalDate currentDate = today;
+        int streak = 0;
+
+        for (Date sqlDate : studyDates) {
+            LocalDate studyDate = sqlDate.toLocalDate();
+            
+            if (studyDate.equals(currentDate)) {
+                streak++;
+                currentDate = currentDate.minusDays(1);
+            } else if (studyDate.isBefore(currentDate)) {
+                // 연속성이 깨짐
+                break;
+            }
+        }
+
+        return streak;
+    }
+
+    private String getMostActiveStudyType(Long memberId, LocalDateTime startOfWeek, LocalDateTime endOfWeek) {
+        List<Object[]> activityStats = studySessionRepository.getWeeklyActivityTypeStats(memberId, startOfWeek, endOfWeek);
+        
+        if (activityStats.isEmpty()) {
+            return "학습 활동 없음";
+        }
+
+        StudySession.ActivityType mostActiveType = (StudySession.ActivityType) activityStats.get(0)[0];
+        return mostActiveType.getDescription();
     }
 
     private List<DashboardStatsDto.RecentActivityDto> getRecentActivities(Long memberId) {
