@@ -30,17 +30,26 @@ public class CardService {
     public CardResponseDto createCardService(String deckId, CardRequestDto request) {
         log.info("debug >>> CardService createCardService 카드 한 장 생성");
         
-        Deck deck = deckRepository.findById(deckId)
-            .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
+        Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
             
         Card entity = Card.builder()
-                                    .deck(deck)
+                                    .deck(deck.get())
                                     .content(request.getContent())
                                     .answer(request.getAnswer())
                                     .isDeleted(false)
+                                    .createdAt(LocalDateTime.now())
                                     .build();
         cardRepository.save(entity);
         log.info("debug >>> CardService createCardService 카드 생성 성공");
+
+        deck.get().setCardCnt(deck.get().getCardCnt() + 1);
+        deck.get().setUpdatedAt(LocalDateTime.now());
+        // 덱에 카드 한 장 추가하는 것도 업데이트인가?
+        // 성능 부분에서 토론하기
+
+        deckRepository.save(deck.get());
+        log.info("debug >>> CardService createCardService 덱별 카드 카운트 업데이트 성공");
+
         return CardResponseDto.builder()
                                 .cardId(entity.getCardId())
                                 .content(entity.getContent())
@@ -51,12 +60,6 @@ public class CardService {
                             .build();
     }
 
-    /*
-     // 모든 카드 조회
-    public void readAllcardsService(Long memberId) {
-        deckRepository.findByMemberIdAndIsDeletedFalse(memberId);
-    }
-     */
     
 
     // 카드 한 장 조회
@@ -73,22 +76,17 @@ public class CardService {
                                 .answer(aCard.getAnswer())  
                                 .createdAt(aCard.getCreatedAt())
                                 .updatedAt(aCard.getUpdatedAt())
+                                .isDeleted(aCard.getIsDeleted())
                                 .build() ;
             }
-            // return CardResponseDto.builder()
-            //         .cardId(aCard.getCardId())
-            //         .content(aCard.getContent())
-            //         .answer(aCard.getAnswer())
-            //         .createdAt(aCard.getCreatedAt())
-            //         .updatedAt(aCard.getUpdatedAt())
-            //         .build();}
+            
         else{
             throw new IllegalArgumentException("카드를 찾을 수 없습니다.") ;
         }
     }
 
     
-
+    // 카드 한 장 수정
     public CardResponseDto updateAcardService(Long cardId, CardRequestDto request) {
         log.info("debug >>> CardService updateAcardService 카드 한 장 내용 수정");
         log.info("debug >>> cardId: " + cardId);
@@ -127,6 +125,14 @@ public class CardService {
             aCardOp.get().setUpdatedAt(LocalDateTime.now());
             cardRepository.save(aCardOp.get());
             log.info("debug >>> CardService deleteAcardService 카드 삭제 성공");
+
+            // 덱 카드 개수 감소
+            deckRepository.findByDeckIdAndIsDeletedFalse(aCardOp.get().getDeck().getDeckId())
+                .ifPresent(deck -> {
+                    deck.setCardCnt(deck.getCardCnt() - 1);
+                    deck.setUpdatedAt(LocalDateTime.now());
+                    deckRepository.save(deck);
+            });
 
             return CardResponseDto.builder()
                                     .cardId(aCardOp.get().getCardId())

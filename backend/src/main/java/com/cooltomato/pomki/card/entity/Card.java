@@ -50,7 +50,6 @@ public class Card {
         name = "deck_id",
         referencedColumnName = "deck_id",
         nullable = false,
-        columnDefinition = "VARCHAR(50)",
         foreignKey = @ForeignKey(name = "FK_card_deck")
     )
     private Deck deck;

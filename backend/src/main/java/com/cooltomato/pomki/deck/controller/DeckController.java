@@ -19,6 +19,8 @@ import com.cooltomato.pomki.card.dto.CardResponseDto;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
 
 
 
@@ -31,16 +33,17 @@ public class DeckController {
     private final DeckService deckService;
 
     // 덱 생성
+    // 0620 추가 ) 이제 더미데이터 멤버 777말고 로그인 정보에 따라 member_id별로 덱 생성 가능하도록 수정
     @PostMapping
-    public ResponseEntity<DeckResponseDto> createDeck(@RequestBody DeckRequestDto request) {
-        log.info("Creating deck with name: {}", request.getDeckName());
-        DeckResponseDto response = deckService.createDeck(request);
+    public ResponseEntity<DeckResponseDto> createDeck(@AuthenticationPrincipal PrincipalMember principal, @RequestBody DeckRequestDto request) {
+        log.info("debug >>> DeckController createDeck");
+        DeckResponseDto response = deckService.createDeck(principal.getMemberId(), request);
         return ResponseEntity.ok(response);
     }
 
     // 특정 멤버의 모든 덱 조회
     @GetMapping("/members/{memberId}")
-    public ResponseEntity<List<DeckResponseDto>> getDecksByMember(@PathVariable("memberId") Long memberId) {
+    public ResponseEntity<List<DeckResponseDto>> readDecksByMember(@PathVariable("memberId") Long memberId) {
         log.info("Fetching all decks for member: {}", memberId);
         List<DeckResponseDto> response = deckService.readAllDecks(memberId);
         if (response.isEmpty()) {
@@ -51,8 +54,8 @@ public class DeckController {
     
     // 덱 내의 모든 카드 조회
     @GetMapping("/{deckId}/cards")
-    public ResponseEntity<List<CardResponseDto>> getCardsInDeck(@PathVariable("deckId") String deckId) {
-        log.info("Fetching all cards in deck: {}", deckId);
+    public ResponseEntity<List<CardResponseDto>>  readCardsInAdeck(@PathVariable("deckId") String deckId) {
+        log.info("debug >>> DeckController readCardsInAdeck");
         List<CardResponseDto> cardsInDeck = deckService.readAllCards(deckId);
         return ResponseEntity.ok(cardsInDeck);
     }

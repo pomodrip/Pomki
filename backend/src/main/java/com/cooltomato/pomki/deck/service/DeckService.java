@@ -26,16 +26,16 @@ public class DeckService {
         private final CardRepository cardRepository;
     
         @Transactional
-        public DeckResponseDto createDeck(DeckRequestDto request) {
+        public DeckResponseDto createDeck(Long memberId, DeckRequestDto request) {
             // 동일한 이름의 덱 존재할 때 예외처리
             log.info("debug >>> DeckService createDeck");
-            if (deckRepository.existsByMemberIdAndDeckNameAndIsDeletedFalse(777L, request.getDeckName())) {
+            if (deckRepository.existsByMemberIdAndDeckNameAndIsDeletedFalse(memberId, request.getDeckName())) {
                 throw new IllegalArgumentException("동일한 이름의 덱이 존재합니다.");
             }
     
             // 덱 생성
             Deck deck = Deck.builder()
-                                        .memberId(777L)
+                                        .memberId(memberId)
                                         .deckName(request.getDeckName())
                                         .createdAt(LocalDateTime.now())
                                         .updatedAt(LocalDateTime.now())
@@ -57,31 +57,38 @@ public class DeckService {
         // 덱 전체조회
         public List<DeckResponseDto> readAllDecks(Long memberId) {
             log.info("debug >>> DeckService searchAllDecks");
-            List<Deck> decks = deckRepository.findAllDecksByMemberId(memberId);
-            
+            List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(memberId);
+
             if (decks.isEmpty()) {
-                log.info("debug >>> 멤버의 덱이 존재하지 않습니다.");
-                return List.of();
+                throw new IllegalArgumentException("멤버의 덱이 존재하지 않습니다.");
             }
-            
+
             log.info("debug >>> 멤버별 덱 전체 조회 성공");
-            return decks.stream()
-                    .map(deck -> DeckResponseDto.builder()
-                            .deckId(deck.getDeckId())
-                            .deckName(deck.getDeckName())
-                            .createdAt(deck.getCreatedAt())
-                            .cardCnt(deck.getCardCnt())
-                            .build())
+
+            // 삭제되지 않은 덱만 조회
+            return decks.stream().map(deck -> DeckResponseDto.builder()
+                    .deckId(deck.getDeckId())
+                    .deckName(deck.getDeckName())
+                    .createdAt(deck.getCreatedAt())
+                    .cardCnt(deck.getCardCnt())
+                    .build())
                     .toList();
         }
 
         // 덱 안 카드 전체 조회
+        // 삭제되지 않은 덱에 소속된 삭제되지 않은 카드만 조회되어야 함
         public List<CardResponseDto> readAllCards(String deckId) {
             log.info("debug >>> DeckService readAllCards");
+            // 덱 생존/삭제 여부 조회
+            Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
+            if (deck.get().getIsDeleted()) {
+                throw new IllegalArgumentException("삭제된 덱입니다.");
+            }
+
             List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
+
             if (cards.isEmpty()) {
-                log.info("debug >>> 덱 안에 카드가 존재하지 않습니다.");
-                return List.of();
+                throw new IllegalArgumentException("덱 안에 카드가 존재하지 않습니다.");
             }
             log.info("debug >>> 덱 안 카드 전체 조회 성공");
             
@@ -97,7 +104,7 @@ public class DeckService {
 
         public DeckResponseDto updateDeck(String deckId, DeckRequestDto request) {
             log.info("debug >>> DeckService updateDeck");
-            Deck deck = deckRepository.findById(deckId)
+            Deck deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId)
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
             deck.setDeckName(request.getDeckName());
             deck.setUpdatedAt(LocalDateTime.now());
@@ -107,24 +114,32 @@ public class DeckService {
                     .deckName(entity.getDeckName())
                     .createdAt(entity.getCreatedAt())
                     .cardCnt(entity.getCardCnt())
+                    .isDeleted(entity.getIsDeleted())
+                    .updatedAt(entity.getUpdatedAt())
+                    .memberId(entity.getMemberId())
                     .build();
         }
 
 
+        @Transactional
         public void deleteDeck(String deckId) {
             log.info("debug >>> DeckService deleteDeck");
-            Deck deck = deckRepository.findById(deckId)
-                    .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
-            // 덱이 존재할 경우 덱이 삭제됐음을 표시
-            deck.setIsDeleted(true);
-            deck.setUpdatedAt(LocalDateTime.now());
-            deckRepository.save(deck);
+            Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
+ 
+            /*
+             2025-06-20T12:18:04.266+09:00  WARN 18664 --- [nio-8088-exec-2] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [java.util.NoSuchElementException: No value present]
+            옵셔널이 비어있을 때 자동으로 예외처리
+             */
+            deck.get().setIsDeleted(true);
+            deck.get().setUpdatedAt(LocalDateTime.now());
+            deckRepository.save(deck.get());
             log.info("debug >>> 덱 삭제 성공, deckId:" + deckId);
+            log.info("debug >>> 덱에 소속된 카드 전체 삭제");
 
-            // 덱 안에 카드가 존재할 경우 카드도 삭제됐음을 표시
             List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
             if (!cards.isEmpty()) {
                 cards.forEach(card -> card.setIsDeleted(true));
+                cardRepository.saveAll(cards);
             }
 
             log.info("debug >>> 덱 안 카드 삭제 성공");

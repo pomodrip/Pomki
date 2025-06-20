@@ -74,10 +74,10 @@ public class SecurityConfig {
                                         .userService(customOAuth2UserService)
                         )
                 )
-                .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
+                // .exceptionHandling((exceptions) -> exceptions
+                //         .authenticationEntryPoint(customAuthenticationEntryPoint)
+                //         .accessDeniedHandler(customAccessDeniedHandler)
+                // )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 
         return http.build();

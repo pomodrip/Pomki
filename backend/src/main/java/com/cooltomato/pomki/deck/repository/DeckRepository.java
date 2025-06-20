@@ -5,7 +5,6 @@ import com.cooltomato.pomki.deck.entity.Deck;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.lang.StackWalker.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,5 +13,6 @@ public interface DeckRepository extends JpaRepository<Deck, String> {
     List<Deck> findAllDecksByMemberId(Long memberId);
     boolean existsByMemberIdAndDeckNameAndIsDeletedFalse(Long memberId, String deckName);
     Optional<Card> findAllCardsByDeckId(String deckId);
-    Optional<Deck> findByMemberIdAndIsDeletedFalse(Long memberId);
+    List<Deck> findAllDecksByMemberIdAndIsDeletedFalse(Long memberId);
+    Optional<Deck> findByDeckIdAndIsDeletedFalse(String deckId);
 }
