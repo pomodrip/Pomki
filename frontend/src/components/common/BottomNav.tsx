@@ -3,7 +3,7 @@ import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import HomeIcon  from '../../assets/icons/home.svg?react';
 import TimerIcon  from '../../assets/icons/timer.svg?react';
 import NoteIcon  from '../../assets/icons/note.svg?react';
-import DocumentIcon  from '../../assets/icons/documents.svg?react';
+import StudyIcon  from '../../assets/icons/study.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -63,7 +63,7 @@ const BottomNav: React.FC = () => {
     { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
     { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.text.secondary}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
     { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.text.secondary}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
-    { label: '학습', inactiveIcon: <DocumentIcon fill={theme.palette.text.secondary}/>, activeIcon: <DocumentIcon fill={theme.palette.primary.main}/> },
+    { label: '학습', inactiveIcon: <StudyIcon stroke={theme.palette.text.secondary}/>, activeIcon: <StudyIcon stroke={theme.palette.primary.main}/> },
     { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.text.secondary}/>, activeIcon: <ProfileIcon fill={theme.palette.primary.main}/> }
   ];
 
