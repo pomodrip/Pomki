@@ -41,7 +41,7 @@ const AppRoutes = () => {
       </Route>
       
       {/* 404 페이지 */}
-      <Route path="*" element={<TestPage title="404 - 페이지를 찾을 수 없습니다" />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
