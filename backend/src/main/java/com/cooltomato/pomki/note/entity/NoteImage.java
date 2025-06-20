@@ -1,5 +1,7 @@
 package com.cooltomato.pomki.note.entity;
 
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 public class NoteImage {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id")
     private Long imageId;
 

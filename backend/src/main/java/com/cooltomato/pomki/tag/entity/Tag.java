@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.Data;
 
 @Entity
@@ -15,6 +17,7 @@ import lombok.Data;
 @Data
 public class Tag {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
     private Long tagId;
 

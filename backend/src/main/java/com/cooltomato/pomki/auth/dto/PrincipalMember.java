@@ -91,8 +91,4 @@ public class PrincipalMember implements UserDetails, OAuth2User {
         return memberInfo.isSocialLogin();
     }
 
-    public MemberInfoDto toMemberInfoDto() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toMemberInfoDto'");
-    }
 } 
