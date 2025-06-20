@@ -184,7 +184,7 @@ const Header: React.FC<HeaderProps> = ({
     if (path.startsWith('/note/')) return 'Note Detail';
     if (path === '/note') return 'My Notes';
     if (path === '/timer') return 'Focus Timer';
-    if (path === '/study') return 'Study';
+    if (path === '/study' || path.startsWith('/flashcards')) return 'Study';
     if (path === '/profile') return 'Profile';
     return 'Pomki';
   };
