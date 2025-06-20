@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.cooltomato.pomki.auth.dto.MemberInfoDto;
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
@@ -24,8 +25,8 @@ public class NoteService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Note createNote(NoteRequestDto noteRequestDto, MemberInfoDto memberInfoDto) {
-        Member member = memberRepository.findById(memberInfoDto.getId())
+    public Note createNote(NoteRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
+        Member member = memberRepository.findById(memberInfoDto.toMemberInfoDto().getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
         Note note = new Note();
@@ -41,14 +42,14 @@ public class NoteService {
         return noteRepository.save(note);
     }
 
-    public List<Note> readNote(MemberInfoDto memberInfoDto) {
-        Member member = memberRepository.findById(memberInfoDto.getId())
+    public List<Note> readNote(PrincipalMember memberInfoDto) {
+        Member member = memberRepository.findById(memberInfoDto.toMemberInfoDto().getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         return noteRepository.findAllByMemberAndIsDeletedIsFalse(member);
     }
 
-    public Note readNoteById(String id, MemberInfoDto memberInfoDto) {
-        Member member = memberRepository.findById(memberInfoDto.getId())
+    public Note readNoteById(String id, PrincipalMember memberInfoDto) {
+        Member member = memberRepository.findById(memberInfoDto.toMemberInfoDto().getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         return noteRepository.findByNoteIdAndMemberAndIsDeletedIsFalse(id, member)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
@@ -56,8 +57,8 @@ public class NoteService {
 
 
     @Transactional
-    public void deleteNote(String id, MemberInfoDto memberInfoDto) {
-        Member member = memberRepository.findById(memberInfoDto.getId())
+    public void deleteNote(String id, PrincipalMember memberInfoDto) {
+        Member member = memberRepository.findById(memberInfoDto.toMemberInfoDto().getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         Note note = noteRepository.findByNoteIdAndMemberAndIsDeletedIsFalse(id, member)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
@@ -66,8 +67,8 @@ public class NoteService {
         noteRepository.save(note);
     }
     @Transactional
-    public void updateNote(String id, NoteRequestDto noteRequestDto, MemberInfoDto memberInfoDto) {
-        Member member = memberRepository.findById(memberInfoDto.getId())
+    public void updateNote(String id, NoteRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
+        Member member = memberRepository.findById(memberInfoDto.toMemberInfoDto().getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         Note entity = noteRepository.findByNoteIdAndMemberAndIsDeletedIsFalse(id, member)
                 .orElseThrow(() -> new NotFoundException("Note not found"));
