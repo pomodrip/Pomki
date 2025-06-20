@@ -1,7 +1,7 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -9,8 +9,9 @@ import { Box, Checkbox, Typography, Alert, Paper } from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Container from '@mui/material/Container';
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
-import { login } from "../../api/authApi";
-import type { AppDispatch } from "../../store/store";
+import { loginUser } from "../../store/slices/authSlice";
+import type { AppDispatch, RootState } from "../../store/store";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 const SocialButton = styled(Button)(({ theme }) => ({
   height: '45px',
@@ -55,17 +56,13 @@ const GoogleIcon = () => (
 const LoginPage = () => {
   const [id, setId] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [checked, setChecked] = React.useState(false);
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [loginError, setLoginError] = React.useState<string | null>(null);
+  
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
-  };
+  const { status, error: loginError } = useSelector((state: RootState) => state.auth);
+  const isLoading = status === 'loading';
 
   const handleSignupClick = () => {
     navigate('/signup');
@@ -89,54 +86,21 @@ const LoginPage = () => {
     
     setEmailError(emailValidationError);
     setPasswordError(passwordValidationError);
-    setLoginError(null);
     
     if (!emailValidationError && !passwordValidationError) {
-      setIsLoading(true);
-      
       try {
-        const response = await login({
-          email: id,
-          password: password
-        });
-
-        // 토큰 저장
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
+        const resultAction = await dispatch(loginUser({ email: id, password }));
+        unwrapResult(resultAction);
         
-        // 사용자 정보 저장
-        localStorage.setItem('user', JSON.stringify(response.member));
-        
-        // Redux store에 사용자 정보 저장 (추후 authSlice 액션 추가 시 사용)
-        // dispatch(setUser(response.member));
-        
-        // 아이디 저장 기능
-        if (checked) {
-          localStorage.setItem('savedEmail', id);
-        } else {
-          localStorage.removeItem('savedEmail');
-        }
-        
-        // 대시보드로 이동
         navigate('/dashboard');
         
-      } catch (error: any) {
-        console.error('Login failed:', error);
-        setLoginError(error.response?.data?.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
-      } finally {
-        setIsLoading(false);
+      } catch (err: any) {
+        // unwrapResult가 에러를 throw하므로 여기서 별도 처리가 필요 없습니다.
+        // 에러 메시지는 authSlice의 state.error에서 자동으로 처리됩니다.
+        console.error('Login failed:', err);
       }
     }
   };
-
-  // 컴포넌트 마운트 시 저장된 이메일 불러오기
-  React.useEffect(() => {
-    const savedEmail = localStorage.getItem('savedEmail');
-    if (savedEmail) {
-      setId(savedEmail);
-      setChecked(true);
-    }
-  }, []);
 
   return (
     
@@ -197,17 +161,11 @@ const LoginPage = () => {
             </Typography>
           )}
         </Box>
-        <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
-          <FormControlLabel
-            control={<Checkbox checked={checked} onChange={handleChange} disabled={isLoading} />}
-            label="아이디 저장"
-          />
-        </Box>
         <Button 
           variant="contained" 
           color="primary" 
           fullWidth 
-          sx={{ mb: 4 }}
+          sx={{ mb: 4, mt: 3 }}
           onClick={handleLoginClick}
           disabled={isLoading}
         >
