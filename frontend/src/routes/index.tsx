@@ -5,7 +5,7 @@ import MainLayout from '../pages/_layout/MainLayout';
 import LoginPage from '../pages/Auth/LoginPage';
 import SignupPage from '../pages/Auth/SignupPage';
 import SetGoalPage from '../pages/Auth/SetGoalPage';
-
+import DashboardPage from '../pages/Dashboard/DashboardPage';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 const TestPage = ({ title }: { title: string }) => {
   console.log(`${title} page rendering...`);
@@ -33,7 +33,7 @@ const AppRoutes = () => {
       {/* 메인 애플리케이션 (MainLayout 적용) */}
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Navigate replace to="/dashboard" />} />
-        <Route path="dashboard" element={<TestPage title="대시보드 페이지" />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="timer" element={<TestPage title="타이머 페이지" />} />
         <Route path="note" element={<TestPage title="노트 페이지" />} />
         <Route path="study" element={<TestPage title="학습 페이지" />} />
