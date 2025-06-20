@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import { Box, Checkbox, Typography, Alert } from "@mui/material";
+import { Box, Checkbox, Typography, Alert, Paper } from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Container from '@mui/material/Container';
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
@@ -139,95 +139,104 @@ const LoginPage = () => {
   }, []);
 
   return (
+    
     <Container
-      maxWidth="xs"
+      maxWidth="sm"
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: { xs: '24px 8px', sm: '32px 16px' },
+        mt: 8,
       }}
     >
-      <Typography variant="h1" sx={{ mb: 2, fontSize: '32px', fontWeight: 700, textAlign: 'center' }}>학습의 새로운 차원</Typography>
-      <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>Pomki와 함께 생성하세요.</Typography>
-      
-      {loginError && (
-        <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-          {loginError}
-        </Alert>
-      )}
-      
-      <Box sx={{ width: '100%', mb: 2 }}>
-        <Input
-          placeholder="이메일"
-          value={id}
-          onChange={handleEmailChange}
-          fullWidth
-          error={!!emailError}
-          disabled={isLoading}
-        />
-        {emailError && (
-          <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
-            {emailError}
-          </Typography>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          padding: { xs: 3, sm: 4 }, 
+          borderRadius: 2 
+        }}
+      >
+        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomki</Typography>
+        <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
+        
+        
+        {loginError && (
+          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            {loginError}
+          </Alert>
         )}
-      </Box>
-      <Box sx={{ width: '100%', mb: 3 }}>
-        <Input
-          placeholder="비밀번호"
-          type="password"
-          value={password}
-          onChange={handlePasswordChange}
-          fullWidth
-          error={!!passwordError}
+        
+        <Box sx={{ width: '100%', mb: 2 }}>
+          <Input
+            placeholder="이메일"
+            value={id}
+            onChange={handleEmailChange}
+            fullWidth
+            error={!!emailError}
+            disabled={isLoading}
+          />
+          {emailError && (
+            <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+              {emailError}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ width: '100%', mb: 3 }}>
+          <Input
+            placeholder="비밀번호"
+            type="password"
+            value={password}
+            onChange={handlePasswordChange}
+            fullWidth
+            error={!!passwordError}
+            disabled={isLoading}
+          />
+          {passwordError && (
+            <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+              {passwordError}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
+          <FormControlLabel
+            control={<Checkbox checked={checked} onChange={handleChange} disabled={isLoading} />}
+            label="아이디 저장"
+          />
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          fullWidth 
+          sx={{ mb: 4 }}
+          onClick={handleLoginClick}
           disabled={isLoading}
-        />
-        {passwordError && (
-          <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
-            {passwordError}
-          </Typography>
-        )}
-      </Box>
-      <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
-        <FormControlLabel
-          control={<Checkbox checked={checked} onChange={handleChange} disabled={isLoading} />}
-          label="아이디 저장"
-        />
-      </Box>
-      <Button 
-        variant="contained" 
-        color="primary" 
-        fullWidth 
-        sx={{ mb: 4 }}
-        onClick={handleLoginClick}
-        disabled={isLoading}
-      >
-        {isLoading ? '로그인 중...' : '로그인'}
-      </Button>
+        >
+          {isLoading ? '로그인 중...' : '로그인'}
+        </Button>
 
-      <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
-        <Button variant="text" sx={{ color: 'text.secondary' }} disabled={isLoading}>비밀번호 찾기</Button>
-      </Box>
+        <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
+          <Button variant="text" sx={{ color: 'text.secondary' }} disabled={isLoading}>비밀번호 찾기</Button>
+        </Box>
 
-      <KakaoButton
-        fullWidth
-        variant="contained"
-        startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
-        disabled={isLoading}
-      >
-        카카오 로그인
-      </KakaoButton>
-      
-      <GoogleButton
-        fullWidth
-        variant="outlined"
-        startIcon={<GoogleIcon />}
-        disabled={isLoading}
-      >
-        구글 로그인
-      </GoogleButton>
+        <KakaoButton
+          fullWidth
+          variant="contained"
+          startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
+          disabled={isLoading}
+        >
+          카카오 로그인
+        </KakaoButton>
+        
+        <GoogleButton
+          fullWidth
+          variant="outlined"
+          startIcon={<GoogleIcon />}
+          disabled={isLoading}
+        >
+          구글 로그인
+        </GoogleButton>
+        </Paper>
     </Container>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import { Box, Checkbox, Container, Typography, Alert } from "@mui/material";
+import { Box, Checkbox, Container, Typography, Alert, Paper } from "@mui/material";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { sendEmailVerification, verifyEmailCode, signup } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
@@ -101,13 +101,21 @@ const SignupPage = () => {
 
   return (
     <Container
-    maxWidth="xs"
+    maxWidth="sm"
     sx={{
       display: 'flex',
       flexDirection: 'column',
       padding: { xs: '24px 8px', sm: '32px 16px' },
+      mt: 8,
     }}>
-        <Typography variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'left' }}>회원가입</Typography>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          padding: { xs: 3, sm: 4 }, 
+          borderRadius: 2 
+        }}
+      >
+        <Typography variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'center' }}>회원가입</Typography>
         
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -186,6 +194,7 @@ const SignupPage = () => {
         >
           {isSigningUp ? '가입중...' : '회원가입'}
         </Button>
+      </Paper>
     </Container>
   );
 };
