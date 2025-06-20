@@ -42,6 +42,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/set-goal" element={<SetGoalPage />} />
+      <Route path="/study/:noteId/flashcard-generation" element={<FlashcardGenerationPage />} />
       
       {/* 메인 애플리케이션 (MainLayout 적용) */}
       <Route path="/" element={<MainLayout />}>
@@ -52,7 +53,6 @@ const AppRoutes = () => {
         <Route path="note/create" element={<NoteCreatePage />} />
         <Route path="note/:noteId" element={<NoteDetailPage />} />
         <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
-        <Route path="study/:noteId/flashcard-generation" element={<FlashcardGenerationPage />} />
         {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />
         <Route path="profile" element={<ProfilePage title="프로필 페이지" />} /> */}
       </Route>

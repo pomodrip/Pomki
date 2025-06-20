@@ -34,6 +34,7 @@ const MainLayout: React.FC = () => {
           flexGrow: 1,
           overflowY: 'auto',
           width: '100%',
+          pb: isMobile ? '64px' : 0,
         }}
       >
         <Outlet />
