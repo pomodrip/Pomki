@@ -2,6 +2,7 @@ export interface Flashcard {
   id: number;
   front: string;
   back: string;
+  tags?: string[]; // 카드별 태그 (덱 태그와 분리)
 }
 
 export interface FlashcardDeck {
@@ -9,7 +10,7 @@ export interface FlashcardDeck {
   category: string;
   title: string;
   isBookmarked: boolean;
-  tags: string[];
+  tags: string[]; // 덱 태그
   flashcards: Flashcard[];
 }
 
@@ -33,4 +34,4 @@ export interface UpdateDeckRequest {
   tags?: string[];
   isBookmarked?: boolean;
   flashcards?: Flashcard[];
-} 
+}

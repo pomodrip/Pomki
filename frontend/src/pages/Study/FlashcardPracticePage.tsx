@@ -5,30 +5,75 @@ import {
   Typography,
   IconButton,
   Container,
-  Stack,
-  DialogContentText,
-  Paper,
   Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Card,
+  CardContent,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
+  ArrowForward as ArrowForwardIcon,
   EditNote as EditNoteIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Tag from '../../components/ui/Tag';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import Modal from '../../components/ui/Modal';
-import ProgressBar from '../../components/ui/ProgressBar';
 import { useAppSelector } from '../../hooks/useRedux';
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(2),
+  paddingBottom: theme.spacing(10),
+}));
+
+const HeaderBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: theme.spacing(3),
+}));
+
+const FlashcardCard = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+  minHeight: 200,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  padding: theme.spacing(3),
+  transition: 'all 0.2s',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[4],
+  },
+}));
 
 const TagChip = styled(Chip)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
+}));
+
+const ProgressBar = styled(Box)(({ theme }) => ({
+  width: '100%',
+  height: 8,
+  backgroundColor: theme.palette.grey[200],
+  borderRadius: 4,
+  overflow: 'hidden',
+  marginBottom: theme.spacing(1),
+}));
+
+const ProgressFill = styled(Box)<{ value: number }>(({ theme, value }) => ({
+  height: '100%',
+  backgroundColor: theme.palette.primary.main,
+  width: `${value}%`,
+  transition: 'width 0.3s ease',
 }));
 
 type Difficulty = 'easy' | 'confusing' | 'hard' | null;
@@ -37,14 +82,14 @@ const FlashcardPracticePage: React.FC = () => {
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
   const { decks } = useAppSelector((state) => state.study);
-  
+
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(null);
-  const [userAnswer, setUserAnswer] = useState('');
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
   const [globalFeedback, setGlobalFeedback] = useState('');
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // 현재 덱 찾기
   const currentDeck = useMemo(() => {
@@ -56,52 +101,43 @@ const FlashcardPracticePage: React.FC = () => {
     if (!currentDeck) return [];
     return currentDeck.flashcards.map(card => ({
       ...card,
-      question: card.front, // front를 question으로 매핑
-      answer: card.back,    // back을 answer로 매핑
-      tags: currentDeck.tags, // 덱의 태그를 카드 태그로 사용
+      question: card.front,
+      answer: card.back,
+      tags: card.tags ?? [],
     }));
   }, [currentDeck]);
 
   // 덱이나 카드가 없는 경우 처리
   if (!currentDeck || flashcards.length === 0) {
     return (
-      <Box sx={{ minHeight: '100vh', pb: 2 }}>
-        <Container maxWidth="md" sx={{ px: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              py: 2,
-            }}
+      <StyledContainer maxWidth="md">
+        <HeaderBox>
+          <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h5" fontWeight="bold">
+            학습하기
+          </Typography>
+        </HeaderBox>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          py={8}
+        >
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            {!currentDeck ? '덱을 찾을 수 없습니다' : '학습할 카드가 없습니다'}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/study')}
+            sx={{ mt: 2 }}
           >
-            <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h2" sx={{ fontWeight: 600 }}>
-              학습하기
-            </Typography>
-          </Box>
-          
-          <Box 
-            display="flex" 
-            flexDirection="column" 
-            alignItems="center" 
-            justifyContent="center"
-            py={8}
-          >
-            <Typography variant="h2" color="text.secondary" gutterBottom>
-              {!currentDeck ? '덱을 찾을 수 없습니다' : '학습할 카드가 없습니다'}
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => navigate('/study')}
-              sx={{ mt: 2 }}
-            >
-              덱 목록으로 이동
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+            덱 목록으로 이동
+          </Button>
+        </Box>
+      </StyledContainer>
     );
   }
 
@@ -121,7 +157,6 @@ const FlashcardPracticePage: React.FC = () => {
       setCurrentCardIndex(currentCardIndex - 1);
       setShowAnswer(false);
       setSelectedDifficulty(null);
-      setUserAnswer('');
     }
   };
 
@@ -130,26 +165,22 @@ const FlashcardPracticePage: React.FC = () => {
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
       setSelectedDifficulty(null);
-      setUserAnswer('');
     } else {
-      // 마지막 카드면 완료 다이얼로그 표시
       setShowCompletionDialog(true);
     }
   };
 
   const handleCompletionConfirm = () => {
     setShowCompletionDialog(false);
-    navigate('/study'); // 덱 목록으로 이동
+    navigate('/study');
   };
 
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
-    // 그대로 현재 페이지에 남음
   };
 
   const getDifficultyButtonStyle = (difficulty: Difficulty) => {
     const isSelected = selectedDifficulty === difficulty;
-    
     switch (difficulty) {
       case 'easy':
         return {
@@ -184,182 +215,198 @@ const FlashcardPracticePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', pb: 2 }}>
-      <Container maxWidth="md" sx={{ px: 2 }}>
-        {/* 헤더 */}
-        <Box
+    <StyledContainer maxWidth="md">
+      {/* 헤더 */}
+      <HeaderBox>
+        <Typography variant="h5" fontWeight="bold">
+          {currentDeck.title}
+        </Typography>
+      </HeaderBox>
+
+      {/* 진행률 */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          {currentCardIndex + 1}/{flashcards.length}
+        </Typography>
+        <ProgressBar>
+          <ProgressFill value={progress} />
+        </ProgressBar>
+      </Box>
+
+      {/* 플래시카드 */}
+      <FlashcardCard onClick={handleCardClick}>
+        <Typography
+          variant={showAnswer ? "h4" : "h5"}
+          textAlign="center"
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 2,
+            lineHeight: 1.6,
+            fontWeight: showAnswer ? 700 : 500,
           }}
         >
-          <Typography variant="h2" sx={{ fontWeight: 600 }}>
-            {currentDeck.title}
-          </Typography>
-        </Box>
+          {showAnswer ? currentCard.answer : currentCard.question}
+        </Typography>
+      </FlashcardCard>
 
-        {/* 진행률 */}
+      {/* 태그들 */}
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {currentCard.tags.map((tag, index) => (
+            <TagChip
+              key={index}
+              label={tag}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          ))}
+        </Box>
+      </Box>
+
+      {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
+      {showAnswer && (
         <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('easy')}
+              sx={{
+                ...getDifficultyButtonStyle('easy'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Easy
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('confusing')}
+              sx={{
+                ...getDifficultyButtonStyle('confusing'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Confusing
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleDifficultySelect('hard')}
+              sx={{
+                ...getDifficultyButtonStyle('hard'),
+                px: 3,
+                py: 1,
+              }}
+            >
+              Hard
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* 네비게이션(이전/다음) */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+          borderRadius: 3,
+          mb: 4,
+        }}
+      >
+        {/* 이전 버튼 */}
+        <IconButton
+          onClick={handlePrevious}
+          disabled={currentCardIndex === 0}
+          sx={{
+            width: 44,
+            height: 44,
+            bgcolor: 'primary.main',
+            color: 'white',
+            '&:hover': { bgcolor: 'primary.dark' },
+            '&:disabled': {
+              bgcolor: 'grey.300',
+              color: 'grey.500',
+            },
+            boxShadow: 1,
+          }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+
+        {/* 중앙: 인디케이터 */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="body1"
+            color="primary.main"
+            fontWeight={600}
+            sx={{ minWidth: 40, textAlign: 'center', mr: 1 }}
+          >
             {currentCardIndex + 1}/{flashcards.length}
           </Typography>
-          <ProgressBar
-            variant="quiz"
-            value={progress}
-          />
-        </Box>
-
-        {/* 플래시카드 */}
-        <Card 
-          sx={{ 
-            mb: 3, 
-            minHeight: 200, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer',
-            p: 3,
-          }}
-          onClick={handleCardClick}
-        >
-          <Typography 
-            variant={showAnswer ? "h2" : "h3"}
-            textAlign="center"
-            sx={{ 
-              lineHeight: 1.6,
-              fontWeight: showAnswer ? 700 : 500,
-            }}
-          >
-            {showAnswer ? currentCard.answer : currentCard.question}
-          </Typography>
-        </Card>
-
-        {/* 태그들 */}
-        <Box sx={{ mb: 3 }}>
-          {/* <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Tags
-          </Typography> */}
-          <Stack direction="row" spacing={1}>
-            {currentCard.tags.map((tag, index) => (
-              <TagChip
-                key={index}
-                label={tag}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
-            ))}
-          </Stack>
-        </Box>
-
-        {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
-        {showAnswer && (
-          <Box sx={{ mb: 3 }}>
-            <Stack direction="row" spacing={2} justifyContent="center">
-              <Button
-                variant="outlined"
-                onClick={() => handleDifficultySelect('easy')}
-                sx={{
-                  ...getDifficultyButtonStyle('easy'),
-                  px: 3,
-                  py: 1,
-                }}
-              >
-                Easy
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handleDifficultySelect('confusing')}
-                sx={{
-                  ...getDifficultyButtonStyle('confusing'),
-                  px: 3,
-                  py: 1,
-                }}
-              >
-                Confusing
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handleDifficultySelect('hard')}
-                sx={{
-                  ...getDifficultyButtonStyle('hard'),
-                  px: 3,
-                  py: 1,
-                }}
-              >
-                Hard
-              </Button>
-            </Stack>
-          </Box>
-        )}
-
-        {/* 네비게이션 버튼들 */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 3 }}>
-          <IconButton 
-            onClick={handlePrevious}
-            disabled={currentCardIndex === 0}
-            size="medium"
-            sx={{ 
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              '&:disabled': { 
-                bgcolor: 'grey.300',
-                color: 'grey.500',
-              },
-              boxShadow: 1,
-            }}
-          >
-            <ChevronLeftIcon />
-          </IconButton>
-          
-          {/* 페이지 인디케이터 */}
-          <Stack direction="row" spacing={1}>
-            {flashcards.map((_, index) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {flashcards.map((_, idx) => (
               <Box
-                key={index}
+                key={idx}
                 sx={{
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: index === currentCardIndex ? 'primary.main' : 'grey.300',
-                  boxShadow: index === currentCardIndex ? 1 : 0,
+                  bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
+                  boxShadow: idx === currentCardIndex ? 1 : 0,
                   transition: 'all 0.2s',
                 }}
               />
             ))}
-          </Stack>
-          
-          <IconButton 
-            onClick={handleNext}
-            size="medium"
-            sx={{ 
-              bgcolor: 'primary.main',
-              color: 'white',
-              '&:hover': { bgcolor: 'primary.dark' },
-              boxShadow: 1,
-            }}
-          >
-            <ChevronRightIcon />
-          </IconButton>
+          </Box>
         </Box>
 
-        {/* 피드백 섹션 */}
-        <Paper elevation={1} sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+        {/* 다음 버튼 */}
+        <IconButton
+          onClick={handleNext}
+          sx={{
+            width: 44,
+            height: 44,
+            bgcolor: 'primary.main',
+            color: 'white',
+            '&:hover': { bgcolor: 'primary.dark' },
+            '&:disabled': {
+              bgcolor: 'grey.300',
+              color: 'grey.500',
+            },
+            boxShadow: 1,
+          }}
+        >
+          <ArrowForwardIcon />
+        </IconButton>
+      </Box>
+
+      {/* 피드백 섹션 (아코디언 드롭다운) */}
+      <Accordion
+        expanded={isFeedbackOpen}
+        onChange={() => setIsFeedbackOpen(prev => !prev)}
+        elevation={1}
+        sx={{ borderRadius: 2, mb: 2, boxShadow: 1, '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          sx={{ minHeight: 0, '& .MuiAccordionSummary-content': { my: 0.5 } }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <EditNoteIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
             <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
               피드백 (선택사항)
             </Typography>
           </Box>
-          <Stack spacing={2}>
+        </AccordionSummary>
+        <AccordionDetails sx={{ pt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 이 문제에 대한 피드백
               </Typography>
-              <Input
+              <TextField
                 placeholder="예: 더 자세한 설명이 필요해요"
                 value={currentQuestionFeedback}
                 onChange={(e) => setCurrentQuestionFeedback(e.target.value)}
@@ -372,12 +419,11 @@ const FlashcardPracticePage: React.FC = () => {
                 }}
               />
             </Box>
-
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 전체적인 피드백
               </Typography>
-              <Input
+              <TextField
                 placeholder="예: 실무 예시를 더 포함해주세요"
                 value={globalFeedback}
                 onChange={(e) => setGlobalFeedback(e.target.value)}
@@ -390,32 +436,35 @@ const FlashcardPracticePage: React.FC = () => {
                 }}
               />
             </Box>
-          </Stack>
-        </Paper>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
-        {/* 학습 완료 다이얼로그 */}
-        <Modal
-          open={showCompletionDialog}
-          onClose={handleCompletionCancel}
-          title="학습 완료"
-          showCloseButton={false}
-          actions={
-            <>
-              <Button onClick={handleCompletionCancel} variant="outlined">
-                아니오
-              </Button>
-              <Button onClick={handleCompletionConfirm} variant="contained">
-                네
-              </Button>
-            </>
-          }
-        >
-          <DialogContentText sx={{ color: 'text.secondary' }}>
+      {/* 학습 완료 다이얼로그 */}
+      <Dialog
+        open={showCompletionDialog}
+        onClose={handleCompletionCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          학습 완료
+        </DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
             학습이 완료되었습니다. 덱 목록으로 이동하시겠습니까?
-          </DialogContentText>
-        </Modal>
-      </Container>
-    </Box>
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCompletionCancel} variant="outlined">
+            아니오
+          </Button>
+          <Button onClick={handleCompletionConfirm} variant="contained">
+            네
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </StyledContainer>
   );
 };
 
