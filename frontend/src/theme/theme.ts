@@ -108,10 +108,10 @@ let theme = createTheme({
           backgroundColor: '#F5F5F5', // 41. Input Field Background
           borderRadius: 12, // 28. Global Border Radius
           '&.MuiOutlinedInput-notchedOutline': {
-            border: '1px solid transparent', // 42. Input Field Border
+            border: '1px solid black', // 42. Input Field Border
           },
           '&:hover.MuiOutlinedInput-notchedOutline': {
-            border: '1px solid transparent',
+            border: '1px solid black',
           },
           '&.Mui-focused.MuiOutlinedInput-notchedOutline': {
             border: '1px solid #2979FF', // 43. Input Field Border (Focus)
