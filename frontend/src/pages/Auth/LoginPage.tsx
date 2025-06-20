@@ -156,7 +156,7 @@ const LoginPage = () => {
           borderRadius: 2 
         }}
       >
-        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomki</Typography>
+        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomkist</Typography>
         <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
         
         
