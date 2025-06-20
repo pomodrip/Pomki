@@ -12,6 +12,15 @@ const UnselectedTag = styled(Chip)(({ theme }) => ({
   '&:hover': {
     backgroundColor: theme.palette.grey[300],
   },
+  // Z Fold 5와 같은 작은 화면에서 태그 크기 조정
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.65rem',
+    height: 18,
+    '& .MuiChip-label': {
+      paddingLeft: theme.spacing(0.4),
+      paddingRight: theme.spacing(0.4),
+    },
+  },
 }));
 
 // 선택된 태그 스타일
@@ -24,6 +33,15 @@ const SelectedTag = styled(Chip)(({ theme }) => ({
   fontWeight: 400,
   '&:hover': {
     backgroundColor: theme.palette.primary.light,
+  },
+  // Z Fold 5와 같은 작은 화면에서 태그 크기 조정
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.65rem',
+    height: 18,
+    '& .MuiChip-label': {
+      paddingLeft: theme.spacing(0.4),
+      paddingRight: theme.spacing(0.4),
+    },
   },
 }));
 

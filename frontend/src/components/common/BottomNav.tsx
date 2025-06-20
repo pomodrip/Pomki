@@ -6,6 +6,7 @@ import NoteIcon  from '../../assets/icons/note.svg?react';
 import StudyIcon  from '../../assets/icons/study.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
+
 import { useNavigate, useLocation } from 'react-router-dom';
 // import { useResponsive } from '../../hooks/useResponsive';
 
@@ -13,28 +14,29 @@ const MOBILE_BREAKPOINT = 1024;
 
 const BottomNav: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
-    
     // 초기 설정
     handleResize();
-    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
 
   const getActiveTab = () => {
     const pathname = location.pathname;
     if (pathname.startsWith('/timer')) return 0;
     if (pathname.startsWith('/note')) return 1;
     if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
-    if (pathname.startsWith('/study')) return 3;
+    if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
     if (pathname.startsWith('/profile')) return 4;
     return 2; // default to home
   };

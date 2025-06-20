@@ -29,6 +29,7 @@ const MainLayout: React.FC = () => {
       </Box>
       
       <Box
+    
         component="main"
         sx={{
           flexGrow: 1,
@@ -39,6 +40,7 @@ const MainLayout: React.FC = () => {
       >
         <Outlet />
       </Box>
+      
       
       {/* BottomNav는 모바일에서만 렌더링됨 */}
       <BottomNav />

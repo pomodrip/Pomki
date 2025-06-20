@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../pages/_layout/MainLayout';
 import LoginPage from '../pages/Auth/LoginPage';
@@ -11,6 +11,10 @@ import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import NoteDetailPage from '../pages/Note/NoteDetailPage';
 import FlashcardGenerationPage from '../pages/Study/FlashcardGenerationPage';
+import FlashcardDeckListPage from '../pages/Study/FlashcardDeckListPage';
+import FlashCardListPage from '../pages/Study/FlashCardListPage';
+import FlashcardPracticePage from '../pages/Study/FlashcardPracticePage';
+// import NoteListPage from '../pages/Note/NoteListPage';
 // import StudyPage from '../pages/Study/StudyPage';
 // import ProfilePage from '../pages/Profile/ProfilePage';
 
@@ -53,6 +57,9 @@ const AppRoutes = () => {
         <Route path="note/create" element={<NoteCreatePage />} />
         <Route path="note/:noteId" element={<NoteDetailPage />} />
         <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
+        <Route path="study" element={<FlashcardDeckListPage />} />
+        <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />
+        <Route path="flashcards/:deckId/practice" element={<FlashcardPracticePage />} />
         {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />
         <Route path="profile" element={<ProfilePage title="프로필 페이지" />} /> */}
       </Route>

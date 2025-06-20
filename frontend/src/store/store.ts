@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import dialogReducer from './slices/dialogSlice';
 import toastReducer from './slices/toastSlice';
 import noteReducer from './slices/noteSlice';
+import studyReducer from './slices/studySlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     dialog: dialogReducer,
     toast: toastReducer,
     note: noteReducer,
+    study: studyReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
