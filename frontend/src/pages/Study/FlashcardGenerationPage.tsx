@@ -25,7 +25,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { QuizQuestion, FlashcardGenerationSession } from '../../types/card';
 import { useAppSelector } from '../../hooks/useRedux';
-import { studyApi } from '../../api/studyApi';
+import * as studyApi from '../../api/studyApi';
 
 // 품질 개선된 퀴즈 데이터
 const sampleQuestions: QuizQuestion[] = [
@@ -96,9 +96,9 @@ const FlashcardGenerationPage: React.FC = () => {
   
   useEffect(() => {
     if (noteId) {
-      const currentNote = notes.find(note => note.id === noteId);
+      const currentNote = notes.find(note => note.noteId === noteId);
       if (currentNote) {
-        setNoteTitle(currentNote.title);
+        setNoteTitle(currentNote.noteTitle);
       }
     }
   }, [noteId, notes]);
@@ -212,20 +212,15 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const generateFlashcards = async () => {
-    try {
-      const result = await studyApi.createFlashcardsFromQuiz({
-        sessionId: session.id,
-        answers: session.userAnswers,
-        globalFeedback: session.feedback,
-        questionFeedbacks: session.questionFeedbacks
-      });
-      
-      if (result.success) {
-    navigate('/study/flashcard-decks');
-      }
-    } catch (error) {
-      console.error('플래시카드 생성 중 오류:', error);
-    }
+    // TODO: API 스펙 확인 및 수정 필요. 현재는 studyApi에 createFlashcardsFromQuiz가 없음.
+    console.log("플래시카드 생성 기능은 현재 비활성화되어 있습니다.", {
+      sessionId: session.id,
+      answers: session.userAnswers,
+      globalFeedback: session.feedback,
+      questionFeedbacks: session.questionFeedbacks,
+    });
+    alert("플래시카드 생성 기능은 현재 개발 중입니다.");
+    // navigate('/study/flashcard-decks'); // 임시로 비활성화
   };
 
   const handleGlobalFeedbackChange = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -8,6 +8,9 @@ import DashboardPage from '../pages/Dashboard/DashboardPage';
 import NotFoundPage from '../pages/Etc/NotFoundPage';
 import TimerPage from '../pages/Timer/TimerPage';
 import NoteListPage from '../pages/Note/NoteListPage';
+import NoteCreatePage from '../pages/Note/NoteCreatePage';
+import NoteDetailPage from '../pages/Note/NoteDetailPage';
+import FlashcardGenerationPage from '../pages/Study/FlashcardGenerationPage';
 // import StudyPage from '../pages/Study/StudyPage';
 // import ProfilePage from '../pages/Profile/ProfilePage';
 
@@ -46,6 +49,10 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="timer" element={<TimerPage />} />
         <Route path="note" element={<NoteListPage  />} />
+        <Route path="note/create" element={<NoteCreatePage />} />
+        <Route path="note/:noteId" element={<NoteDetailPage />} />
+        <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
+        <Route path="study/:noteId/flashcard-generation" element={<FlashcardGenerationPage />} />
         {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />
         <Route path="profile" element={<ProfilePage title="프로필 페이지" />} /> */}
       </Route>

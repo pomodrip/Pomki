@@ -48,8 +48,8 @@ const NoteCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
 
@@ -65,23 +65,24 @@ const NoteCreatePage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!title.trim()) {
+    if (!noteTitle.trim()) {
       alert('제목을 입력해주세요.');
       return;
     }
 
-    if (!content.trim()) {
+    if (!noteContent.trim()) {
       alert('내용을 입력해주세요.');
       return;
     }
 
     try {
+      
       await dispatch(createNote({
-        title: title.trim(),
-        content: content.trim(),
-        tags,
+        noteTitle: noteTitle.trim(),
+        noteContent: noteContent.trim(),
+        // tags: tags, // TODO: tag string[]을 tagId: number[]로 변환 필요
       }));
-      navigate('/notes');
+      navigate('/note');
     } catch {
       alert('노트 저장에 실패했습니다.');
     }
@@ -114,8 +115,8 @@ const NoteCreatePage: React.FC = () => {
         <TextField
           fullWidth
           label="제목"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={noteTitle}
+          onChange={(e) => setNoteTitle(e.target.value)}
           variant="outlined"
           placeholder="노트 제목을 입력하세요"
         />
@@ -156,8 +157,8 @@ const NoteCreatePage: React.FC = () => {
         <TextField
           fullWidth
           label="내용"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          value={noteContent}
+          onChange={(e) => setNoteContent(e.target.value)}
           variant="outlined"
           multiline
           rows={12}

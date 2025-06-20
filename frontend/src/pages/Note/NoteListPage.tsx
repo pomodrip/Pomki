@@ -27,8 +27,10 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { fetchNotes, deleteNote, setFilters, toggleBookmark } from '../../store/slices/noteSlice';
+// import { fetchNotes, deleteNote, setFilters, toggleBookmark } from '../../store/slices/noteSlice';
+import { deleteNote, setFilters, toggleBookmark } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
+// import type { Note, Tag } from '../../types/note';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -99,7 +101,7 @@ const NoteListPage: React.FC = () => {
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     notes.forEach((note) => {
-      note.tags.forEach((tag: string) => tagSet.add(tag));
+      note.tags?.forEach((tag) => tagSet.add(tag.tagName));
     });
     return Array.from(tagSet);
   }, [notes]);
@@ -107,11 +109,11 @@ const NoteListPage: React.FC = () => {
   // 필터링된 노트 목록
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
-      const matchesSearch = note.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                           note.content.toLowerCase().includes(filters.searchQuery.toLowerCase());
+      const matchesSearch = note.noteTitle.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+                           note.noteContent.toLowerCase().includes(filters.searchQuery.toLowerCase());
       
       const matchesTags = filters.selectedTags.length === 0 || 
-                         filters.selectedTags.some((tag: string) => note.tags.includes(tag));
+                         filters.selectedTags.some((tag: string) => note.tags?.some(t => t.tagName === tag));
       
       const matchesBookmark = !filters.showBookmarked || note.isBookmarked;
 
@@ -120,7 +122,7 @@ const NoteListPage: React.FC = () => {
   }, [notes, filters]);
 
   useEffect(() => {
-    dispatch(fetchNotes());
+    // dispatch(fetchNotes()); // 주석 처리: 현재는 mock 데이터 사용
   }, [dispatch]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,12 +144,12 @@ const NoteListPage: React.FC = () => {
   };
 
   const handleNoteClick = (noteId: string) => {
-    navigate(`/notes/${noteId}`);
+    navigate(`/note/${noteId}`);
   };
 
   const handleEditNote = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/notes/${noteId}/edit`);
+    navigate(`/note/${noteId}/edit`);
   };
 
   const handleDeleteNote = async (noteId: string, event: React.MouseEvent) => {
@@ -167,7 +169,6 @@ const NoteListPage: React.FC = () => {
 
   const handleCreateQuiz = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // navigate(`/notes/${noteId}/quiz`);
     navigate(`/study/${noteId}/flashcard-generation`);
   };
 
@@ -183,7 +184,7 @@ const NoteListPage: React.FC = () => {
         <Typography variant="h5" fontWeight="bold">
           My Notes
         </Typography>
-        <IconButton onClick={() => navigate('/notes/create')}>
+        <IconButton onClick={() => navigate('/note/create')}>
           <AddIcon />
         </IconButton>
       </HeaderBox>
@@ -249,139 +250,98 @@ const NoteListPage: React.FC = () => {
         open={Boolean(tagMenuAnchor)}
         onClose={() => setTagMenuAnchor(null)}
       >
-        {allTags.map((tag: string) => (
-          <MenuItem 
-            key={tag} 
-            onClick={() => handleTagSelect(tag)}
+        {allTags.map((tag) => (
+          <MenuItem
+            key={tag}
             selected={filters.selectedTags.includes(tag)}
+            onClick={() => handleTagSelect(tag)}
           >
             {tag}
           </MenuItem>
         ))}
       </Menu>
 
-      {/* 북마크 메뉴 */}
+      {/* 북마크 필터 메뉴 */}
       <Menu
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
         onClose={() => setBookmarkMenuAnchor(null)}
       >
-        <MenuItem onClick={() => handleBookmarkFilter(false)}>
-          모든 노트
-        </MenuItem>
-        <MenuItem onClick={() => handleBookmarkFilter(true)}>
-          북마크된 노트만
-        </MenuItem>
+        <MenuItem onClick={() => handleBookmarkFilter(true)}>Bookmarked Only</MenuItem>
+        <MenuItem onClick={() => handleBookmarkFilter(false)}>Show All</MenuItem>
       </Menu>
 
       {/* 노트 목록 */}
-      {filteredNotes.map((note) => (
-        <NoteCard key={note.id} onClick={() => handleNoteClick(note.id)}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  flexGrow: 1, 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis',
-                  minWidth: 0, // flex item이 넘칠 때 줄어들 수 있도록 보장
-                }}
-              >
-                {note.title}
-              </Typography>
-              <IconButton onClick={(e) => handleToggleBookmark(note.id, e)} size="small" sx={{ flexShrink: 0 }}>
-                {note.isBookmarked ? <Bookmark color="warning" /> : <BookmarkBorder />}
-              </IconButton>
-            </Box>
+      <Box mt={4}>
+        {loading ? (
+          <Typography>Loading...</Typography>
+        ) : filteredNotes.length > 0 ? (
+          filteredNotes.map((note) => (
+            <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="start">
+                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                    {note.noteTitle}
+                  </Typography>
+                  <IconButton onClick={(e) => handleToggleBookmark(note.noteId, e)} size="small">
+                    {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  </IconButton>
+                </Box>
+                
+                <Typography variant="body2" color="textSecondary" noWrap>
+                  {note.noteContent}
+                </Typography>
+                <Box mt={1.5} display="flex" flexWrap="wrap">
+                  {note.tags?.map((tag) => (
+                    <TagChip key={tag.tagId} label={tag.tagName} />
+                  ))}
+                </Box>
 
-            <Box sx={{ mb: 1.5 }}>
-              {note.tags.map((tag) => (
-                <TagChip
-                  key={tag}
-                  label={tag}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-            </Box>
+                <ActionBox>
+                  <ActionButton startIcon={<EditIcon />} onClick={(e) => handleEditNote(note.noteId, e)}>
+                    Edit
+                  </ActionButton>
+                  <ActionButton startIcon={<DeleteIcon />} onClick={(e) => handleDeleteNote(note.noteId, e)}>
+                    Delete
+                  </ActionButton>
+                  <ActionButton startIcon={<QuizIcon />} onClick={(e) => handleCreateQuiz(note.noteId, e)}>
+                    Create Quiz
+                  </ActionButton>
+                </ActionBox>
 
-            {/* 내용 미리보기 */}
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              sx={{ 
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                mb: 2
-              }}
-            >
-              {note.content}
+                <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                  Updated: {new Date(note.updatedAt).toLocaleDateString()}
+                </Typography>
+              </CardContent>
+            </NoteCard>
+          ))
+        ) : (
+          <Box textAlign="center" py={5}>
+            <Typography variant="h6" color="textSecondary">
+              No notes found
             </Typography>
+            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+              Create your first note!
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/note/create')}
+            >
+              노트 작성
+            </Button>
+          </Box>
+        )}
+      </Box>
 
-            {/* 액션 버튼들 */}
-            <ActionBox>
-              <ActionButton
-                onClick={(e) => handleEditNote(note.id, e)}
-                startIcon={<EditIcon fontSize="small" />}
-              >
-                수정
-              </ActionButton>
-              <ActionButton
-                onClick={(e) => handleDeleteNote(note.id, e)}
-                startIcon={<DeleteIcon fontSize="small" />}
-              >
-                삭제
-              </ActionButton>
-              <ActionButton
-                onClick={(e) => handleCreateQuiz(note.id, e)}
-                startIcon={<QuizIcon fontSize="small" />}
-              >
-                문제 생성
-              </ActionButton>
-            </ActionBox>
-          </CardContent>
-        </NoteCard>
-      ))}
-
-      {/* 빈 상태 */}
-      {filteredNotes.length === 0 && !loading && (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
-          py={8}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            노트가 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            첫 번째 노트를 작성해보세요!
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/notes/create')}
-          >
-            노트 작성
-          </Button>
-        </Box>
-      )}
-
-      {/* 플로팅 액션 버튼 */}
       <Fab
         color="primary"
         aria-label="add note"
-        onClick={() => navigate('/notes/create')}
+        onClick={() => navigate('/note/create')}
         sx={{
           position: 'fixed',
-          bottom: 80,
-          right: 16,
+          bottom: (theme) => theme.spacing(10), // BottomNav height + margin
+          right: (theme) => theme.spacing(2),
         }}
       >
         <AddIcon />

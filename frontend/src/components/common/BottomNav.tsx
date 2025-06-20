@@ -7,9 +7,9 @@ import StudyIcon  from '../../assets/icons/study.svg?react';
 import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useResponsive } from '../../hooks/useResponsive';
+// import { useResponsive } from '../../hooks/useResponsive';
 
-const MOBILE_BREAKPOINT = 768;
+const MOBILE_BREAKPOINT = 1024;
 
 const BottomNav: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
