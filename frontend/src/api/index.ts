@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // API 기본 URL 설정 - 개발 환경에서는 프록시 사용
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? 'http://192.168.0.89:8088' : 'http://192.168.0.89:8088');
+  (import.meta.env.DEV ? 'http://192.168.100.152:8088' : 'http://192.168.100.152:8088');
 // axios 인스턴스 생성
 export const api = axios.create({
   baseURL: API_BASE_URL,
