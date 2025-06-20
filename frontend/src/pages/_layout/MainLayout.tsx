@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, Container } from '@mui/material';
+import { Box } from '@mui/material';
 import Header from '../../components/common/Header';
 import BottomNav from '../../components/common/BottomNav';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -28,21 +28,16 @@ const MainLayout: React.FC = () => {
         MainLayout Active - {isMobile ? 'Mobile' : 'Desktop'}
       </Box>
       
-      <Container
+      <Box
         component="main"
-        maxWidth={isMobile ? 'sm' : 'md'}
         sx={{
           flexGrow: 1,
-          paddingTop: (theme) => `${theme.spacing(2)}`, // 25. Page Content Padding (상하)
-          paddingBottom: (theme) => isMobile 
-            ? `calc(64px + ${theme.spacing(2)})` // 54. BottomNav 높이만큼 패딩 (모바일)
-            : `${theme.spacing(2)}`, // 데스크톱에서는 하단 패딩만
-          paddingX: (theme) => isMobile ? `${theme.spacing(3)}` : `${theme.spacing(4)}`, // 24. Page Content Padding (좌우)
           overflowY: 'auto',
+          width: '100%',
         }}
       >
         <Outlet />
-      </Container>
+      </Box>
       
       {/* BottomNav는 모바일에서만 렌더링됨 */}
       <BottomNav />

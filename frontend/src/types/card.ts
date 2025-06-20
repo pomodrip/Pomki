@@ -105,3 +105,34 @@ interface Tag {
   memberId: number;
   tagName: string;
 }
+
+// 플래시카드 생성을 위한 퀴즈 타입
+export interface QuizQuestion {
+  id: string;
+  title: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface QuestionFeedback {
+  questionId: string;
+  feedback: string;
+}
+
+export interface FlashcardGenerationSession {
+  id: string;
+  questions: QuizQuestion[];
+  currentQuestionIndex: number;
+  userAnswers: Record<string, number>;
+  selectedQuestions: Set<string>; // 플래시카드로 생성할 문제들
+  feedback: string; // 전체 피드백
+  questionFeedbacks: QuestionFeedback[]; // 문제별 피드백
+  isCompleted: boolean;
+}
+
+export interface GenerationResult {
+  success: boolean;
+  deckId?: string;
+  error?: string;
+}

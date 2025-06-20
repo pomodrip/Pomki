@@ -7,7 +7,7 @@ import SetGoalPage from '../pages/Auth/SetGoalPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
 import NotFoundPage from '../pages/Etc/NotFoundPage';
 import TimerPage from '../pages/Timer/TimerPage';
-// import NoteListPage from '../pages/Note/NoteListPage';
+import NoteListPage from '../pages/Note/NoteListPage';
 // import StudyPage from '../pages/Study/StudyPage';
 // import ProfilePage from '../pages/Profile/ProfilePage';
 
@@ -45,8 +45,8 @@ const AppRoutes = () => {
         <Route index element={<Navigate replace to="/dashboard" />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="timer" element={<TimerPage />} />
-        {/* <Route path="note" element={<NoteListPage title="노트 페이지" />} />
-        <Route path="study" element={<StudyPage title="학습 페이지" />} />
+        <Route path="note" element={<NoteListPage  />} />
+        {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />
         <Route path="profile" element={<ProfilePage title="프로필 페이지" />} /> */}
       </Route>
       
