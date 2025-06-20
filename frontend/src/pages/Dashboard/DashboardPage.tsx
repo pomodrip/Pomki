@@ -22,9 +22,10 @@ const DashboardPage: React.FC = () => {
         대시보드
       </Typography>
 
+      {/* 오늘의 학습, 최근 활동 - 세로 배치 */}
       <Box sx={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+        gridTemplateColumns: '1fr',
         gap: 3,
         mb: 4
       }}>
@@ -119,7 +120,15 @@ const DashboardPage: React.FC = () => {
             </AccordionDetails>
           </Accordion>
         </Card>
+      </Box>
 
+      {/* 통계, 캘린더 - 가로 배치 */}
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+        gap: 3,
+        mb: 4
+      }}>
         <Card cardVariant="default">
           <Typography variant="h3" gutterBottom>
             통계
