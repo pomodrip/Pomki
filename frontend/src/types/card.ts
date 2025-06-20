@@ -10,6 +10,29 @@ export interface CardDeck {
   cards?: Card[];
 }
 
+// Flashcard (기존 Card 인터페이스와 호환성을 위해 추가)
+export interface Flashcard {
+  cardId: number;
+  deckId: string;
+  content: string;
+  answer: string;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  tags?: Tag[];
+  isBookmarked?: boolean;
+  stats?: CardStat;
+  // SM-2 알고리즘용 속성들
+  repetitions?: number;
+  efactor?: number;
+  interval?: number;
+  dueDate?: string;
+  nextReviewDate?: Date;
+}
+
+// 연습 성적 평가 - 숫자로 변경
+export type PracticeGrade = 0 | 1 | 2 | 3 | 4 | 5;
+
 // 카드
 export interface Card {
   cardId: number;

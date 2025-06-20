@@ -1,17 +1,16 @@
-import { useCallback } from 'react';
-import { useAppDispatch } from './useRedux';
-import { showDialog } from '../store/slices/dialogSlice';
-import { ShowDialogPayload } from '../types/dialog';
+import { useAppDispatch, useAppSelector } from './useRedux';
+import { openDialog } from '../store/slices/dialogSlice';
 
 export const useDialog = () => {
   const dispatch = useAppDispatch();
+  const dialog = useAppSelector((state) => state.dialog);
 
-  const openDialog = useCallback(
-    (payload: ShowDialogPayload) => {
-      dispatch(showDialog(payload));
-    },
-    [dispatch]
-  );
+  const showDialog = (title: string, content: string, onConfirm?: () => void) => {
+    dispatch(openDialog({ title, content, onConfirm }));
+  };
 
-  return { openDialog };
+  return {
+    dialog,
+    showDialog,
+  };
 };

@@ -1,8 +1,18 @@
 import axios from 'axios';
+import { cookies } from '../utils/cookies';
 
 // API 기본 URL 설정 - 개발 환경에서는 프록시 사용
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? 'http://192.168.100.152:8088' : 'http://192.168.100.152:8088');
+  (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
+
+// Store 참조를 위한 변수 (순환 참조 방지)
+let store: any = null;
+
+// Store 설정 함수 (store에서 호출)
+export const setStoreReference = (storeInstance: any) => {
+  store = storeInstance;
+};
+
 // axios 인스턴스 생성
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,17 +21,22 @@ export const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: false, // CORS 관련 설정
+  withCredentials: true, // 🔥 쿠키 전송을 위해 필수
 });
 
-// 요청 인터셉터
+// 🔥 요청 인터셉터 - store에서 토큰 가져오기
 api.interceptors.request.use(
   (config) => {
-    // 로컬 스토리지에서 토큰 가져오기
-    const accessToken = localStorage.getItem('accessToken');
-    
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    // Redux store에서 토큰 가져오기
+    if (store) {
+              const state = store.getState();
+        const accessToken = state.auth?.accessToken;
+        
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+    } else {
+      console.error('❌ Store reference not found in API interceptor');
     }
     
     // CORS preflight 요청 최소화를 위한 헤더 설정
@@ -36,7 +51,7 @@ api.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터
+// 🔥 응답 인터셉터 - 쿠키 기반 토큰 갱신
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -54,24 +69,36 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-            refreshToken,
+        // refreshToken 쿠키 확인
+        if (cookies.hasRefreshToken()) {
+          // 서버에 토큰 갱신 요청 (refreshToken은 쿠키로 자동 전송됨)
+          const refreshUrl = import.meta.env.DEV ? '/api/auth/refresh' : `${API_BASE_URL}/api/auth/refresh`;
+          const response = await axios.post(refreshUrl, {}, {
+            withCredentials: true, // 쿠키 전송
           });
           
           const { accessToken } = response.data;
           
-          // 토큰 업데이트
-          localStorage.setItem('accessToken', accessToken);
+          // 🔥 Redux store에 새 토큰 설정
+          if (store) {
+            const { setAccessToken } = await import('../store/slices/authSlice');
+            store.dispatch(setAccessToken(accessToken));
+          }
+          
+          // 원래 요청에 새 토큰 적용
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // 토큰 제거 및 로그인 페이지로 이동
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        // 🔥 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
+        cookies.clearAuthCookies();
+        
+        // Redux store도 클리어
+        if (store) {
+          const { clearAuth } = await import('../store/slices/authSlice');
+          store.dispatch(clearAuth());
+        }
+        
         window.location.href = '/login';
       }
     }

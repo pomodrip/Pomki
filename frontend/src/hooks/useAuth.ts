@@ -5,9 +5,10 @@ export const useAuth = () => {
   
   return {
     user: auth.user,
-    token: auth.token,
-    isLoggedIn: !!auth.token,
-    isLoading: auth.isLoading,
+    token: auth.accessToken,
+    isLoggedIn: !!auth.accessToken,
+    isLoading: auth.status === 'loading',
     error: auth.error,
+    isAuthenticated: auth.isAuthenticated,
   };
 };

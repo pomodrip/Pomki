@@ -47,8 +47,16 @@ export const verifyEmailCode = async (data: VerificationCodeRequest): Promise<Ve
   return response.data;
 };
 
+// 구글 로그인 - 브라우저 리다이렉트
+export const redirectToGoogleLogin = (): void => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 
+    (import.meta.env.DEV ? '' : 'http://localhost:8088');
+  window.location.href = `${baseUrl}/oauth2/authorization/google`;
+};
+
 // authApi 객체로 모든 함수들을 그룹화하여 export
 export const authApi = {
+  redirectToGoogleLogin,
   login,
   logout,
   refreshToken,
