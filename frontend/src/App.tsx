@@ -1,11 +1,17 @@
 import React from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import theme from './theme/theme';
+import GlobalStyles from './theme/GlobalStyles';
+import AppRoutes from './routes';
 
 function App() {
   return (
-    <div>
-      <h1>Pomki Project</h1>
-      <p>애플리케이션이 정상적으로 실행되었습니다.</p>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <GlobalStyles />
+      <AppRoutes />
+    </ThemeProvider>
   );
 }
 
