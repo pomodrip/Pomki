@@ -1,4 +1,4 @@
-package com.cooltomato.pomki.note.entity;
+package com.cooltomato.pomki.card.entity;
 
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -12,33 +12,25 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "NOTE")
+@Table(name = "CARD_DECK")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Note {
+public class CardDeck {
 
     @Id
     @UuidGenerator
-    @Column(name = "note_id", length = 50)
-    private String noteId;
+    @Column(name = "deck_id", length = 50)
+    private String deckId;
 
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "note_title", nullable = false)
-    private String noteTitle;
+    @Column(name = "deck_name", nullable = false, length = 255)
+    private String deckName;
 
-    @Lob
-    @Column(name = "note_content", nullable = false, columnDefinition = "LONGTEXT")
-    private String noteContent;
-
-    @Lob
-    @Column(name = "original_content", columnDefinition = "LONGTEXT")
-    private String originalContent;
-
-    @Column(name = "ai_enhanced")
-    private Boolean aiEnhanced = false;
+    @Column(name = "description", length = 1000)
+    private String description;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
@@ -55,13 +47,10 @@ public class Note {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Note(Long memberId, String noteTitle, String noteContent, String originalContent, 
-                Boolean aiEnhanced, boolean isDeleted) {
+    public CardDeck(Long memberId, String deckName, String description, boolean isDeleted) {
         this.memberId = memberId;
-        this.noteTitle = noteTitle;
-        this.noteContent = noteContent;
-        this.originalContent = originalContent;
-        this.aiEnhanced = aiEnhanced != null ? aiEnhanced : false;
+        this.deckName = deckName;
+        this.description = description;
         this.isDeleted = isDeleted;
     }
 } 
