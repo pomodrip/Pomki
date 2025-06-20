@@ -37,24 +37,27 @@ public class AuthService {
         memberService.signUp(request);
     }
 
-    @Transactional
+    // @Transactional(readOnly = true) //내부망에서 트랜잭션에러발생 외부는 문제없음 어째서?
     public TokenResponseDto login(LoginRequestDto request) {
+        MemberInfoDto memberInfo = loginAuthenticate(request);
+        return tokenProvider.createAndSaveTokens(memberInfo);
+    }
+    
+    private MemberInfoDto loginAuthenticate(LoginRequestDto request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Member member = memberRepository.findByMemberEmail(request.getEmail()).orElseThrow();
-        MemberInfoDto memberInfo = MemberInfoDto.builder()
-                .id(member.getMemberId())
+        return MemberInfoDto.builder()
+                .memberId(member.getMemberId())
                 .email(member.getMemberEmail())
                 .roles(member.getMemberRoles())
                 .isSocialLogin(member.isSocialLogin())
                 .provider(member.getProvider())
                 .build();
-        return tokenProvider.createAndSaveTokens(memberInfo);
     }
 
-    @Transactional
     public AccessTokenResponseDto refresh(String refreshToken) {
         tokenProvider.validateToken(refreshToken);
 
@@ -64,15 +67,15 @@ public class AuthService {
         Authentication authentication = tokenProvider.getAuthentication(refreshToken);
         String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
 
-        return new AccessTokenResponseDto(newAccessToken);
+        return AccessTokenResponseDto.builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 
-    @Transactional
     public void logout(String refreshToken) {
         refreshTokenRepository.deleteById(refreshToken);
     }
 
-    @Transactional
     public AccessTokenResponseDto reissue(String refreshToken) {
         tokenProvider.validateToken(refreshToken);
 
@@ -82,6 +85,8 @@ public class AuthService {
         Authentication authentication = tokenProvider.getAuthentication(refreshToken);
         String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
 
-        return new AccessTokenResponseDto(newAccessToken);
+        return AccessTokenResponseDto.builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 }

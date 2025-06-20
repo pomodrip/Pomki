@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.time.Duration;
 
@@ -32,17 +33,19 @@ public class AuthController {
 
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new AccessTokenResponseDto(tokenDto.getAccessToken()));
+        return ResponseEntity.ok(AccessTokenResponseDto.builder()
+                .accessToken(tokenDto.getAccessToken())
+                .build());
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AccessTokenResponseDto> refresh(@CookieValue(name = "refresh_token") String refreshToken) {
+    public ResponseEntity<AccessTokenResponseDto> refresh(@Parameter(hidden = true) @CookieValue(name = "refresh_token") String refreshToken) {
         AccessTokenResponseDto newAccessToken = authService.refresh(refreshToken);
         return ResponseEntity.ok(newAccessToken);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@CookieValue(name = "refresh_token") String refreshToken, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(@Parameter(hidden = true) @CookieValue(name = "refresh_token") String refreshToken, HttpServletResponse response) {
         authService.logout(refreshToken);
 
         Cookie cookie = new Cookie("refresh_token", null);

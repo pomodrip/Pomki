@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtProvider tokenProvider;
-    private static final List<String> allowUrlList=List.of("/h2-console","/api/auth/refresh","/api/members/register","/v3/api-docs","/api/auth/login","/api/members/check","/login","/favicon.ico","/api/auth/oauth2/login");
+    private static final List<String> allowUrlList=List.of("/h2-console","/api/auth/refresh","/api/members/register","/v3/api-docs","/api/auth/login","/api/members/check","/login","/favicon.ico","/api/auth/oauth2/login","/api/email/verification","/api/email/code");
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         if(allowUrlList.contains(request.getRequestURI())){
@@ -35,26 +35,33 @@ public class JwtFilter extends OncePerRequestFilter {
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String accessToken = JwtUtil.resolveToken(request);
+        try {
+            String accessToken = JwtUtil.resolveToken(request);
 
-        if (StringUtils.hasText(accessToken)) {
-            if (tokenProvider.validateToken(accessToken)) {
-                Authentication authentication = tokenProvider.getAuthentication(accessToken);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                String refreshToken = JwtUtil.extractRefreshToken(request);
-                if (StringUtils.hasText(refreshToken)) {
-                    try {
-                        String newAccessToken = tokenProvider.createAccessTokenFromRefreshToken(accessToken, refreshToken);
-                        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, JwtUtil.BEARER_PREFIX + newAccessToken);
-                        Authentication authentication = tokenProvider.getAuthentication(newAccessToken);
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    } catch (Exception e) {
-                        log.debug("리프레시 토큰 재발급 실패", e);
+            if (StringUtils.hasText(accessToken)) {
+                if (tokenProvider.validateToken(accessToken)) {
+                    Authentication authentication = tokenProvider.getAuthentication(accessToken);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    String refreshToken = JwtUtil.extractRefreshToken(request);
+                    if (StringUtils.hasText(refreshToken)) {
+                        try {
+                            String newAccessToken = tokenProvider.createAccessTokenFromRefreshToken(accessToken, refreshToken);
+                            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, JwtUtil.BEARER_PREFIX + newAccessToken);
+                            Authentication authentication = tokenProvider.getAuthentication(newAccessToken);
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        } catch (Exception e) {
+                            log.debug("리프레시 토큰 재발급 실패", e);
+                            SecurityContextHolder.clearContext();
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            log.error("JWT 처리 중 오류 발생", e);
+            SecurityContextHolder.clearContext();
         }
+        
         filterChain.doFilter(request, response);
     }
 } 
