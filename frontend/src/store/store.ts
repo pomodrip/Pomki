@@ -5,6 +5,7 @@ import toastReducer from './slices/toastSlice';
 import { setStoreReference } from '../api/index';
 import noteReducer from './slices/noteSlice';
 import studyReducer from './slices/studySlice';
+import deckReducer from './slices/deckSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     toast: toastReducer,
     note: noteReducer,
     study: studyReducer,
+    deck: deckReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
