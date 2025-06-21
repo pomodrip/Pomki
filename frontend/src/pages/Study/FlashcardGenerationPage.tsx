@@ -36,6 +36,7 @@ const sampleQuestions: QuizQuestion[] = [
     options: ['컴포넌트', '자식', '프롭스', '스테이트'],
     correctAnswer: 0,
   },
+  
   {
     id: '2', 
     title: 'React 이해도',
