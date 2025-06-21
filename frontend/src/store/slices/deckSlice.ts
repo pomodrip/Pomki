@@ -5,7 +5,6 @@ import type {
   CardDeck,
   CreateDeckRequest,
   UpdateDeckRequest,
-  GetDecksRequest,
 } from '../../types/card';
 
 /**
@@ -84,19 +83,15 @@ const handleAsyncError = (error: unknown): string => {
 // 4. Async Thunk 액션들
 // ==========================================
 
-// 덱 목록 조회
+// 덱 목록 조회 (백엔드 API에 맞게 수정)
 export const fetchDecks = createAsyncThunk<
-  { decks: CardDeck[]; totalElements: number; totalPages: number },
-  GetDecksRequest,
+  CardDeck[],
+  void,
   { state: RootState; rejectValue: string }
->('deck/fetchDecks', async (params, { rejectWithValue }) => {
+>('deck/fetchDecks', async (_, { rejectWithValue }) => {
   try {
-    const response = await studyApi.getDecks(params);
-    return {
-      decks: response.content,
-      totalElements: response.totalElements,
-      totalPages: response.totalPages,
-    };
+    const decks = await studyApi.getDecks();
+    return decks;
   } catch (error) {
     return rejectWithValue(handleAsyncError(error));
   }
@@ -227,9 +222,9 @@ const deckSlice = createSlice({
       })
       .addCase(fetchDecks.fulfilled, (state, action) => {
         state.loading = false;
-        state.decks = action.payload.decks;
-        state.totalElements = action.payload.totalElements;
-        state.totalPages = action.payload.totalPages;
+        state.decks = action.payload;
+        state.totalElements = action.payload.length;
+        state.totalPages = Math.ceil(action.payload.length / state.pageSize);
         state.error = null;
       })
       .addCase(fetchDecks.rejected, (state, action) => {
