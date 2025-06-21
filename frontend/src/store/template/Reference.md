@@ -12,7 +12,7 @@ SIMPLE_GUIDE.md - 3단계로 간단하게 구현할 수 있는 가이드
 기존 공통 훅들은 그대로 활용 - 이미 잘 작성되어 있음
 
 
-🚀 팀원들이 할 일:
+🚀 팀원들이 할 일: 
 cleanSlice.template.ts 복사
 이름만 바꾸기 (Example → 실제 엔티티명)
 API 호출 교체
