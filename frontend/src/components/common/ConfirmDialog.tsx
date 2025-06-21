@@ -1,7 +1,7 @@
 import React from 'react';
-import { DialogContentText } from '@mui/material';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import { Text } from '../ui';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { closeDialog, selectDialog } from '../../store/slices/dialogSlice';
 
@@ -38,9 +38,9 @@ const ConfirmDialog: React.FC = () => {
       title={title}
       actions={actions}
     >
-      <DialogContentText sx={{ color: 'text.secondary' }}>
+      <Text sx={{ color: 'text.secondary' }}>
         {content}
-      </DialogContentText>
+      </Text>
     </Modal>
   );
 };

@@ -3,18 +3,13 @@ import { styled } from '@mui/material/styles';
 import {
   Container,
   Box,
-  Typography,
   TextField,
   InputAdornment,
-  IconButton,
-  Chip,
-  Button,
-  Card,
-  CardContent,
   Menu,
   MenuItem,
   Fab,
 } from '@mui/material';
+import { Text, IconButton, Tag, Button, Card } from '../../components/ui';
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -64,7 +59,7 @@ const NoteCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const TagChip = styled(Chip)(({ theme }) => ({
+const TagTag = styled(Tag)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
@@ -97,7 +92,7 @@ const NoteListPage: React.FC = () => {
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
-  // 모든 태그 목록 추출
+  // 모든 ?�그 목록 추출
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     notes.forEach((note) => {
@@ -106,7 +101,7 @@ const NoteListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [notes]);
 
-  // 필터링된 노트 목록
+  // ?�터링된 ?�트 목록
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
       const matchesSearch = note.noteTitle.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
@@ -122,7 +117,7 @@ const NoteListPage: React.FC = () => {
   }, [notes, filters]);
 
   useEffect(() => {
-    // dispatch(fetchNotes()); // 주석 처리: 현재는 mock 데이터 사용
+    // dispatch(fetchNotes()); // 주석 처리: ?�재??mock ?�이???�용
   }, [dispatch]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,9 +151,9 @@ const NoteListPage: React.FC = () => {
     event.stopPropagation();
     
     const confirmed = await showConfirmDialog({
-      title: '노트 삭제',
-      message: '이 노트를 정말 삭제하시겠습니까?',
-      confirmText: '삭제',
+      title: '?�트 ??��',
+      message: '???�트�??�말 ??��?�시겠습?�까?',
+      confirmText: '??��',
       cancelText: '취소',
     });
 
@@ -179,17 +174,17 @@ const NoteListPage: React.FC = () => {
 
   return (
     <StyledContainer maxWidth="md">
-      {/* 헤더 */}
+      {/* ?�더 */}
       <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
+        <Text variant="h5" fontWeight="bold">
           My Notes
-        </Typography>
+        </Text>
         <IconButton onClick={() => navigate('/note/create')}>
           <AddIcon />
         </IconButton>
       </HeaderBox>
 
-      {/* 검색창 */}
+      {/* 검?�창 */}
       <SearchBox>
         <TextField
           fullWidth
@@ -212,7 +207,7 @@ const NoteListPage: React.FC = () => {
         />
       </SearchBox>
 
-      {/* 필터 버튼들 */}
+      {/* ?�터 버튼??*/}
       <FilterBox>
         <Button
           variant="outlined"
@@ -232,9 +227,9 @@ const NoteListPage: React.FC = () => {
           Bookmarked
         </Button>
 
-        {/* 선택된 태그들 표시 */}
+        {/* ?�택???�그???�시 */}
         {filters.selectedTags.map((tag: string) => (
-          <TagChip
+          <TagTag
             key={tag}
             label={tag}
             onDelete={() => handleTagSelect(tag)}
@@ -244,7 +239,7 @@ const NoteListPage: React.FC = () => {
         ))}
       </FilterBox>
 
-      {/* 태그 메뉴 */}
+      {/* ?�그 메뉴 */}
       <Menu
         anchorEl={tagMenuAnchor}
         open={Boolean(tagMenuAnchor)}
@@ -261,7 +256,7 @@ const NoteListPage: React.FC = () => {
         ))}
       </Menu>
 
-      {/* 북마크 필터 메뉴 */}
+      {/* 북마???�터 메뉴 */}
       <Menu
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
@@ -271,29 +266,29 @@ const NoteListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(false)}>Show All</MenuItem>
       </Menu>
 
-      {/* 노트 목록 */}
+      {/* ?�트 목록 */}
       <Box mt={4}>
         {loading ? (
-          <Typography>Loading...</Typography>
+          <Text>Loading...</Text>
         ) : filteredNotes.length > 0 ? (
           filteredNotes.map((note) => (
             <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
-              <CardContent>
+              <div style={{ padding: '16px' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="start">
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  <Text variant="h6" fontWeight="bold" gutterBottom>
                     {note.noteTitle}
-                  </Typography>
+                  </Text>
                   <IconButton onClick={(e) => handleToggleBookmark(note.noteId, e)} size="small">
                     {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
                   </IconButton>
                 </Box>
                 
-                <Typography variant="body2" color="textSecondary" noWrap>
+                <Text variant="body2" color="textSecondary">
                   {note.noteContent}
-                </Typography>
+                </Text>
                 <Box mt={1.5} display="flex" flexWrap="wrap">
                   {note.tags?.map((tag) => (
-                    <TagChip key={tag.tagId} label={tag.tagName} />
+                    <TagTag key={tag.tagId} label={tag.tagName} />
                   ))}
                 </Box>
 
@@ -309,26 +304,26 @@ const NoteListPage: React.FC = () => {
                   </ActionButton>
                 </ActionBox>
 
-                <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                <Text variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
                   Updated: {new Date(note.updatedAt).toLocaleDateString()}
-                </Typography>
-              </CardContent>
+                </Text>
+                              </div>
             </NoteCard>
           ))
         ) : (
           <Box textAlign="center" py={5}>
-            <Typography variant="h6" color="textSecondary">
+            <Text variant="h6" color="textSecondary">
               No notes found
-            </Typography>
-            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+            </Text>
+            <Text variant="body1" color="textSecondary" sx={{ mb: 3 }}>
               Create your first note!
-            </Typography>
+            </Text>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate('/note/create')}
             >
-              노트 작성
+              ?�트 ?�성
             </Button>
           </Box>
         )}

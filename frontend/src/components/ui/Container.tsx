@@ -11,7 +11,7 @@ export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 const StyledContainer = styled('div')<ContainerProps>(({ 
   theme, 
   maxWidth = 'lg',
-  fixed,
+  // fixed,
   disableGutters,
   sx
 }) => {

@@ -3,13 +3,11 @@ import { styled } from '@mui/material/styles';
 import {
   Container,
   Box,
-  Typography,
   TextField,
   Button,
-  IconButton,
-  Chip,
   Stack,
 } from '@mui/material';
+import { Text, IconButton, Tag } from '../../components/ui';
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
@@ -96,9 +94,9 @@ const NoteCreatePage: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold">
+          <Text variant="h5" fontWeight="bold">
             새 노트 작성
-          </Typography>
+          </Text>
         </Box>
         <Button
           variant="contained"
@@ -123,9 +121,9 @@ const NoteCreatePage: React.FC = () => {
 
         {/* 태그 입력 */}
         <Box>
-          <Typography variant="subtitle1" gutterBottom>
+          <Text variant="subtitle1" gutterBottom>
             태그
-          </Typography>
+          </Text>
           <TagInputBox>
             <TextField
               size="small"
@@ -142,7 +140,7 @@ const NoteCreatePage: React.FC = () => {
           </TagInputBox>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             {tags.map((tag: string) => (
-              <Chip
+              <Tag
                 key={tag}
                 label={tag}
                 onDelete={() => handleRemoveTag(tag)}

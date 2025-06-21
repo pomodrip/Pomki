@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Typography, IconButton, Paper, styled } from '@mui/material';
+import { Paper, styled } from '@mui/material';
+import { Flex, Text, IconButton } from '../ui';
 import { Close } from '@mui/icons-material';
 
 const BannerContainer = styled(Paper)(({ theme }) => ({
@@ -14,7 +15,7 @@ const BannerContainer = styled(Paper)(({ theme }) => ({
   position: 'relative',
 }));
 
-const ContentContainer = styled(Box)({
+const ContentContainer = styled(Flex)({
   flex: 1,
   display: 'flex',
   alignItems: 'center',
@@ -42,7 +43,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
   title,
   description,
   imageUrl,
-  actionText = '자세히 보기',
+  actionText = '?�세??보기',
   onAction,
   onClose,
   closeable = true,
@@ -54,19 +55,19 @@ const AdBanner: React.FC<AdBannerProps> = ({
           <AdImage src={imageUrl} alt="Advertisement" />
         )}
         
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" fontWeight={600}>
+        <Flex sx={{ flex: 1 }}>
+          <Text variant="subtitle1" fontWeight={600}>
             {title}
-          </Typography>
+          </Text>
           {description && (
-            <Typography variant="body2" color="text.secondary">
+            <Text variant="body2" color="text.secondary">
               {description}
-            </Typography>
+            </Text>
           )}
-        </Box>
+        </Flex>
         
         {onAction && (
-          <Typography
+          <Text
             variant="body2"
             color="primary"
             sx={{
@@ -79,7 +80,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
             onClick={onAction}
           >
             {actionText}
-          </Typography>
+          </Text>
         )}
       </ContentContainer>
       

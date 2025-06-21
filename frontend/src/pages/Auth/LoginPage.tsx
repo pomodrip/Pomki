@@ -1,16 +1,17 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+// import { useDispatch } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import { Box, Checkbox, Typography, Alert, Paper } from "@mui/material";
+import { Box, Checkbox, Alert, Paper } from "@mui/material";
+import { Text } from "../../components/ui";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Container from '@mui/material/Container';
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
 import { login } from "../../api/authApi";
-import type { AppDispatch } from "../../store/store";
+// import type { AppDispatch } from "../../store/store";
 
 const SocialButton = styled(Button)(({ theme }) => ({
   height: '45px',
@@ -30,7 +31,7 @@ const KakaoButton = styled(SocialButton)({
   },
 });
 
-const GoogleButton = styled(SocialButton)(({ theme }) => ({
+const GoogleButton = styled(SocialButton)(() => ({
   background: '#ffffff',
   color: '#3c4043',
   border: '1px solid #dadce0',
@@ -61,7 +62,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [loginError, setLoginError] = React.useState<string | null>(null);
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+  // const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
@@ -139,7 +140,6 @@ const LoginPage = () => {
   }, []);
 
   return (
-    
     <Container
       maxWidth="sm"
       sx={{
@@ -156,9 +156,8 @@ const LoginPage = () => {
           borderRadius: 2 
         }}
       >
-        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomkist</Typography>
-        <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
-        
+        <Text variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }}>🍅 Pomkist</Text>
+        <Text variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Text>
         
         {loginError && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
@@ -176,9 +175,9 @@ const LoginPage = () => {
             disabled={isLoading}
           />
           {emailError && (
-            <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+            <Text variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
               {emailError}
-            </Typography>
+            </Text>
           )}
         </Box>
         <Box sx={{ width: '100%', mb: 3 }}>
@@ -192,9 +191,9 @@ const LoginPage = () => {
             disabled={isLoading}
           />
           {passwordError && (
-            <Typography variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
+            <Text variant="body2" sx={{ color: 'error.main', mt: 0.5 }}>
               {passwordError}
-            </Typography>
+            </Text>
           )}
         </Box>
         <Box sx={{ alignSelf: 'flex-start', mb: 2 }}>
@@ -236,7 +235,7 @@ const LoginPage = () => {
         >
           구글 로그인
         </GoogleButton>
-        </Paper>
+      </Paper>
     </Container>
   );
 };

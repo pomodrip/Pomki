@@ -1,37 +1,39 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import Input from "../../components/ui/Input";
-import Button from "../../components/ui/Button";
-import { Box, Checkbox, Container, Typography, Alert, Paper } from "@mui/material";
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { sendEmailVerification, verifyEmailCode, signup } from "../../api/authApi";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+// import { styled } from '@mui/material/styles';
+import { Box, Paper, Alert, Checkbox, FormControlLabel } from '@mui/material';
+import Container from '@mui/material/Container';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import { Text } from '../../components/ui';
+import { sendEmailVerification, verifyEmailCode, signup } from '../../api/authApi';
 
 const SignupPage = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
-  const [error, setError] = useState('');
+  
+  const navigate = useNavigate();
 
   const handleRequestCode = async () => {
-    if (!email) return;
-    
+    if (!email) {
+      setError('이메일을 입력해주세요.');
+      return;
+    }
+
     setIsRequestingCode(true);
-    setError('');
+    setError(null);
     
     try {
-      await sendEmailVerification({
-        email,
-        type: 'SIGNUP'
-      });
+      await sendEmailVerification({ email, type: 'SIGNUP' });
       
       setIsCodeSent(true);
       // 선택적: 성공 메시지 표시
@@ -44,10 +46,13 @@ const SignupPage = () => {
   };
 
   const handleVerifyCode = async () => {
-    if (!verificationCode) return;
-    
+    if (!verificationCode) {
+      setError('인증번호를 입력해주세요.');
+      return;
+    }
+
     setIsVerifyingCode(true);
-    setError('');
+    setError(null);
     
     try {
       const response = await verifyEmailCode({
@@ -77,8 +82,8 @@ const SignupPage = () => {
     }
 
     setIsSigningUp(true);
-    setError('');
-
+    setError(null);
+    
     try {
       await signup({
         email,
@@ -101,13 +106,14 @@ const SignupPage = () => {
 
   return (
     <Container
-    maxWidth="sm"
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      padding: { xs: '24px 8px', sm: '32px 16px' },
-      mt: 8,
-    }}>
+      maxWidth="sm"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: { xs: '24px 8px', sm: '32px 16px' },
+        mt: 8,
+      }}
+    >
       <Paper 
         elevation={3} 
         sx={{ 
@@ -115,15 +121,15 @@ const SignupPage = () => {
           borderRadius: 2 
         }}
       >
-        <Typography variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'center' }}>회원가입</Typography>
+        <Text variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'center' }}>회원가입</Text>
         
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
             {error}
           </Alert>
         )}
         
-        <Typography variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>이름</Typography>
+        <Text variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>이름</Text>
         <Input 
           placeholder="홍길동" 
           fullWidth 
@@ -131,24 +137,24 @@ const SignupPage = () => {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <Typography variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>이메일</Typography>
+        <Text variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>이메일</Text>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%', mb: isCodeSent && !isVerified ? 2 : 4 }}>
           <Input  
-            fullWidth
-            placeholder="example@email.com"
+            placeholder="example@email.com" 
+            fullWidth 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isCodeSent}
+            disabled={isVerified}
           />
 
           {isVerified ? (
-            <Typography variant="body1" color="primary" sx={{ mt: 1, ml: 1, flexShrink: 0}}>
+            <Text variant="body1" color="primary" sx={{ mt: 1, ml: 1, flexShrink: 0}}>
               인증완료
-            </Typography>
+            </Text>
           ):<Button 
             variant="outlined"
             onClick={handleRequestCode}
-            disabled={!email || isCodeSent || isRequestingCode}
+            disabled={isRequestingCode || isVerified}
             sx={{ flexShrink: 0 }}
           >
             {isRequestingCode ? '전송중...' : '인증번호 요청'}
@@ -163,10 +169,10 @@ const SignupPage = () => {
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
             />
-            <Button 
+            <Button
               variant="outlined"
               onClick={handleVerifyCode}
-              disabled={!verificationCode || isVerifyingCode}
+              disabled={isVerifyingCode}
               sx={{ flexShrink: 0 }}
             >
               {isVerifyingCode ? '확인중...' : '확인'}
@@ -174,7 +180,7 @@ const SignupPage = () => {
           </Box>
         )}
 
-        <Typography variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>비밀번호</Typography>
+        <Text variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>비밀번호</Text>
         <Input 
           type="password" 
           fullWidth 
@@ -188,8 +194,7 @@ const SignupPage = () => {
           variant="contained" 
           color="primary" 
           fullWidth 
-          style={{ marginBottom: 32 }} 
-          disabled={!isVerified || !name || !password || isSigningUp}
+          disabled={!isVerified || isSigningUp}
           onClick={handleSignup}
         >
           {isSigningUp ? '가입중...' : '회원가입'}
