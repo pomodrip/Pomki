@@ -111,7 +111,7 @@ const FlashcardGenerationPage: React.FC = () => {
     selectedQuestions: new Set<string>(),
     feedback: '',
     questionFeedbacks: [],
-    isCompleted: false,
+    isCompleted: false, 
   });
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
