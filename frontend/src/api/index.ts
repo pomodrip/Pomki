@@ -2,8 +2,7 @@ import axios from 'axios';
 import { cookies } from '../utils/cookies';
 
 // API 기본 URL 설정 - 개발 환경에서는 프록시 사용
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
 
 // Store 참조를 위한 변수 (순환 참조 방지)
 let store: any = null;
