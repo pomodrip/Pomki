@@ -1,5 +1,6 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, styled, Button } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Box, styled } from '@mui/material';
+import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';

@@ -1,19 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import { 
-  Box, 
-  Typography, 
-  IconButton, 
   InputAdornment,
-  Container,
-  Menu,
-  MenuItem,
-  Checkbox,
-  Chip,
-  Button,
   TextField,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -31,46 +20,58 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { setFilters, updateCard, deleteCard } from '../../store/slices/studySlice';
 
+// 새로운 커스텀 컴포넌트들 import
+import { 
+  Flex, 
+  Text, 
+  IconButton, 
+  Menu,
+  MenuItem,
+  Checkbox,
+  Button,
+  Input,
+  Card,
+  Tag,
+  FilterButton
+} from '../../components/ui';
+import Container from '../../components/ui/Container';
+
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
 }));
 
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+const HeaderBox = styled(Flex)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const SearchBox = styled(Box)(({ theme }) => ({
+const SearchBox = styled(Flex)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-const FilterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
+const FilterBox = styled(Flex)(({ theme }) => ({
   gap: theme.spacing(1),
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(1),
+}));
+
+const SelectedTagsBox = styled(Flex)(({ theme }) => ({
+  gap: theme.spacing(1),
+  marginBottom: theme.spacing(2),
+  minHeight: theme.spacing(4), // 최소 높이 설정으로 레이아웃 안정화
+  flexWrap: 'wrap',
 }));
 
 const FlashCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  cursor: 'pointer',
-  transition: 'all 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
+  marginBottom: theme.spacing(1.5),
 }));
 
-const TagChip = styled(Chip)(({ theme }) => ({
+const TagChip = styled(Tag)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
+const ActionBox = styled(Flex)(({ theme }) => ({
   gap: theme.spacing(1),
   marginTop: theme.spacing(1),
 }));
@@ -234,27 +235,28 @@ const FlashCardListPage: React.FC = () => {
     }
   };
 
+
+
   // 덱이 없는 경우
   if (!currentDeck) {
     return (
       <StyledContainer maxWidth="md">
-        <Box
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
+        <Flex
+          direction="column" 
+          align="center" 
+          justify="center"
           py={8}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Text variant="h6" color="text.secondary" gutterBottom>
             덱을 찾을 수 없습니다
-          </Typography>
+          </Text>
           <Button
             variant="contained"
             onClick={() => navigate('/flashcards')}
           >
             덱 목록으로 이동
           </Button>
-        </Box>
+        </Flex>
       </StyledContainer>
     );
   }
@@ -262,10 +264,10 @@ const FlashCardListPage: React.FC = () => {
   return (
     <StyledContainer maxWidth="md">
       {/* 헤더 */}
-      <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
+      <HeaderBox align="center" justify="space-between">
+        <Text variant="h5" fontWeight="bold">
           {currentDeck.title}
-        </Typography>
+        </Text>
       </HeaderBox>
 
       {/* 검색창 */}
@@ -293,49 +295,40 @@ const FlashCardListPage: React.FC = () => {
 
       {/* 필터 버튼들 */}
       <FilterBox>
-        <Button
-          variant="outlined"
+        <FilterButton
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
           endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
+          minWidth="100px"
         >
           Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
-        </Button>
+        </FilterButton>
         
-        <Button
-          variant="outlined"
+        <FilterButton
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
           endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
+          minWidth="130px"
         >
           Bookmarked
-        </Button>
+        </FilterButton>
+      </FilterBox>
 
-        {/* 선택된 태그들 표시 */}
+      {/* 선택된 태그들 표시 */}
+      <SelectedTagsBox>
         {filters.selectedTags.map((tag: string) => (
-          <TagChip
+          <Tag
             key={tag}
             label={tag}
             onDelete={() => handleTagSelect(tag)}
-            color="primary"
-            variant="filled"
+            selected={true}
+            size="medium"
+            sx={{
+              fontSize: '0.875rem', // 14px
+              height: '32px', // 기본보다 조금 더 큰 높이
+              padding: '2px 0px', // 좌우 패딩 줄임
+            }}
           />
         ))}
-      </FilterBox>
+      </SelectedTagsBox>
 
       {/* 태그 메뉴 */}
       <Menu
@@ -371,103 +364,103 @@ const FlashCardListPage: React.FC = () => {
       {/* 카드 리스트 */}
       {filteredCards.map((card) => (
         <FlashCard key={card.id}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-              {/* 체크박스 */}
-              <Checkbox
-                checked={selectedCards.includes(card.id)}
-                onChange={(event) => handleCardSelect(card.id, event.target.checked)}
-                sx={{ mt: -1 }}
-              />
+          <Flex align="flex-start" gap={2} p={1.5}>
+            {/* 체크박스 */}
+            <Checkbox
+              checked={selectedCards.includes(card.id)}
+              onChange={(event) => handleCardSelect(card.id, event.target.checked)}
+              sx={{ mt: -1 }}
+            />
+            
+            {/* 카드 내용 */}
+            <Flex direction="column" flex={1}>
+              {/* 제목(질문)과 북마크 */}
+              <Flex align="center" sx={{ mb: 1 }} gap={1}>
+                <Text 
+                  variant="h6" 
+                  sx={{ 
+                    flexGrow: 1, 
+                    whiteSpace: 'nowrap', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis',
+                    minWidth: 0,
+                  }}
+                >
+                  {card.front}
+                </Text>
+                <IconButton
+                  onClick={(event) => handleToggleBookmark(card.id, event)}
+                  size="small"
+                  sx={{ 
+                    flexShrink: 0,
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  {cardBookmarks[card.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
+                </IconButton>
+              </Flex>
               
-              {/* 카드 내용 */}
-              <Box sx={{ flex: 1 }}>
-                {/* 제목(질문)과 북마크 */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      flexGrow: 1, 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis',
-                      minWidth: 0,
-                    }}
-                  >
-                    {card.front}
-                  </Typography>
-                  <IconButton
-                    onClick={(event) => handleToggleBookmark(card.id, event)}
-                    size="small"
-                    sx={{ flexShrink: 0 }}
-                  >
-                    {cardBookmarks[card.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
-                  </IconButton>
-                </Box>
-                
-                {/* 태그들 */}
-                {card.tags.length > 0 && (
-                  <Box sx={{ mb: 1.5 }}>
-                    {card.tags.slice(0, 3).map((tag: string, index: number) => (
-                      <TagChip
-                        key={index}
-                        label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ))}
-                    {card.tags.length > 3 && (
-                      <TagChip
-                        label={`+${card.tags.length - 3}`}
-                        size="small"
-                        color="default"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                )}
-                
-                {/* 액션 버튼들 */}
-                <ActionBox>
-                  <ActionButton
-                    onClick={(event) => handleEditCard(card.id, event)}
-                    startIcon={<EditIcon fontSize="small" />}
-                  >
-                    수정
-                  </ActionButton>
-                  <ActionButton
-                    onClick={(event) => handleDeleteCard(card.id, event)}
-                    startIcon={<DeleteIcon fontSize="small" />}
-                  >
-                    삭제
-                  </ActionButton>
-                </ActionBox>
-              </Box>
-            </Box>
-          </CardContent>
+              {/* 태그들 */}
+              {card.tags.length > 0 && (
+                <Flex sx={{ mb: 1.5 }}>
+                  {card.tags.slice(0, 3).map((tag: string, index: number) => (
+                    <TagChip
+                      key={index}
+                      label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                  {card.tags.length > 3 && (
+                    <TagChip
+                      label={`+${card.tags.length - 3}`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Flex>
+              )}
+              
+              {/* 액션 버튼들 */}
+              <ActionBox>
+                <ActionButton
+                  onClick={(event) => handleEditCard(card.id, event)}
+                  startIcon={<EditIcon fontSize="small" />}
+                >
+                  수정
+                </ActionButton>
+                <ActionButton
+                  onClick={(event) => handleDeleteCard(card.id, event)}
+                  startIcon={<DeleteIcon fontSize="small" />}
+                >
+                  삭제
+                </ActionButton>
+              </ActionBox>
+            </Flex>
+          </Flex>
         </FlashCard>
       ))}
 
       {/* 빈 상태 */}
       {filteredCards.length === 0 && (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
+        <Flex 
+          direction="column" 
+          align="center" 
+          justify="center"
           py={8}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Text variant="h6" color="text.secondary" gutterBottom>
             카드가 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
+          </Text>
+          <Text variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             {filters.searchQuery.trim() || filters.selectedTags.length > 0 || filters.showBookmarked
               ? '검색 조건을 변경해보세요.'
               : '첫 번째 카드를 만들어보세요!'
             }
-          </Typography>
-        </Box>
+          </Text>
+        </Flex>
       )}
 
       {/* 플래시카드 수정 다이얼로그 */}
@@ -481,11 +474,11 @@ const FlashCardListPage: React.FC = () => {
           플래시카드 수정
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Flex direction="column" sx={{ pt: 2 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               질문 (앞면)
-            </Typography>
-            <TextField
+            </Text>
+            <Input
               fullWidth
               placeholder="질문을 입력하세요"
               value={editCardFront}
@@ -493,10 +486,10 @@ const FlashCardListPage: React.FC = () => {
               sx={{ mb: 2 }}
             />
             
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               답변 (뒷면)
-            </Typography>
-            <TextField
+            </Text>
+            <Input
               fullWidth
               multiline
               rows={4}
@@ -506,10 +499,10 @@ const FlashCardListPage: React.FC = () => {
               sx={{ mb: 2 }}
             />
             
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               태그 (쉼표로 구분)
-            </Typography>
-            <TextField
+            </Text>
+            <Input
               fullWidth
               placeholder="예: #React, #JavaScript, #Frontend"
               value={editCardTags}
@@ -517,10 +510,10 @@ const FlashCardListPage: React.FC = () => {
               sx={{ mb: 1 }}
             />
             
-            <Typography variant="caption" color="text.secondary">
+            <Text variant="caption" color="text.secondary">
               태그는 쉼표(,)로 구분하여 입력하세요
-            </Typography>
-          </Box>
+            </Text>
+          </Flex>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleEditDialogClose} variant="outlined">

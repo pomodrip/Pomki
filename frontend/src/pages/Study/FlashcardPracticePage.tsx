@@ -2,10 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Box,
-  Typography,
-  IconButton,
   Container,
-  Chip,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -14,10 +11,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Card,
-  CardContent,
-  Button,
 } from '@mui/material';
+import { Tag, Button, IconButton, Card, Text } from '../../components/ui';
 import {
   ArrowBack as ArrowBackIcon,
   ArrowForward as ArrowForwardIcon,
@@ -47,14 +42,9 @@ const FlashcardCard = styled(Card)(({ theme }) => ({
   justifyContent: 'center',
   cursor: 'pointer',
   padding: theme.spacing(3),
-  transition: 'all 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
 }));
 
-const TagChip = styled(Chip)(({ theme }) => ({
+const TagChip = styled(Tag)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
@@ -115,9 +105,9 @@ const FlashcardPracticePage: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold">
+          <Text variant="h5" fontWeight="bold">
             학습하기
-          </Typography>
+          </Text>
         </HeaderBox>
         <Box
           display="flex"
@@ -126,9 +116,9 @@ const FlashcardPracticePage: React.FC = () => {
           justifyContent="center"
           py={8}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Text variant="h6" color="text.secondary" gutterBottom>
             {!currentDeck ? '덱을 찾을 수 없습니다' : '학습할 카드가 없습니다'}
-          </Typography>
+          </Text>
           <Button
             variant="contained"
             onClick={() => navigate('/study')}
@@ -218,16 +208,16 @@ const FlashcardPracticePage: React.FC = () => {
     <StyledContainer maxWidth="md">
       {/* 헤더 */}
       <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
+        <Text variant="h5" fontWeight="bold">
           {currentDeck.title}
-        </Typography>
+        </Text>
       </HeaderBox>
 
       {/* 진행률 */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Text variant="body2" sx={{ mb: 1 }}>
           {currentCardIndex + 1}/{flashcards.length}
-        </Typography>
+        </Text>
         <ProgressBar>
           <ProgressFill value={progress} />
         </ProgressBar>
@@ -236,16 +226,16 @@ const FlashcardPracticePage: React.FC = () => {
 
       {/* 플래시카드 */}
       <FlashcardCard onClick={handleCardClick}>
-        <Typography
+        <Text
           variant={showAnswer ? "h4" : "h5"}
-          textAlign="center"
           sx={{
+            textAlign: 'center',
             lineHeight: 1.6,
             fontWeight: showAnswer ? 700 : 500,
           }}
         >
           {showAnswer ? currentCard.answer : currentCard.question}
-        </Typography>
+        </Text>
       </FlashcardCard>
 
       {/* 태그들 */}
@@ -255,8 +245,6 @@ const FlashcardPracticePage: React.FC = () => {
             <TagChip
               key={index}
               label={tag}
-              size="small"
-              color="primary"
               variant="outlined"
             />
           ))}
@@ -299,14 +287,14 @@ const FlashcardPracticePage: React.FC = () => {
 
         {/* 중앙: 인디케이터 */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography
+          <Text
             variant="body1"
             color="primary.main"
             fontWeight={600}
             sx={{ minWidth: 40, textAlign: 'center', mr: 1 }}
           >
             {currentCardIndex + 1}/{flashcards.length}
-          </Typography>
+          </Text>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             {flashcards.map((_, idx) => (
               <Box
@@ -399,17 +387,17 @@ const FlashcardPracticePage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <EditNoteIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
-            <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
+            <Text variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
               피드백 (선택사항)
-            </Typography>
+            </Text>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ pt: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Text variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 이 문제에 대한 피드백
-              </Typography>
+              </Text>
               <TextField
                 placeholder="예: 더 자세한 설명이 필요해요"
                 value={currentQuestionFeedback}
@@ -424,9 +412,9 @@ const FlashcardPracticePage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+              <Text variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
                 전체적인 피드백
-              </Typography>
+              </Text>
               <TextField
                 placeholder="예: 실무 예시를 더 포함해주세요"
                 value={globalFeedback}
@@ -455,9 +443,9 @@ const FlashcardPracticePage: React.FC = () => {
           학습 완료
         </DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
+          <Text color="text.secondary">
             학습이 완료되었습니다. 덱 목록으로 이동하시겠습니까?
-          </Typography>
+          </Text>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCompletionCancel} variant="outlined">

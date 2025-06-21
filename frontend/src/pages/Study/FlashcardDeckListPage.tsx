@@ -1,23 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import {
-  Container,
+  Container as MuiContainer,
   Box,
   Typography,
   TextField,
   InputAdornment,
-  IconButton,
-  Menu,
-  MenuItem,
   Fab,
-  Chip,
-  Button,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  CardContent,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,46 +27,45 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { setFilters, toggleDeckBookmark, addDeck, updateDeck, deleteDeck } from '../../store/slices/studySlice';
 
-const StyledContainer = styled(Container)(({ theme }) => ({
+// 커스텀 컴포넌트들 import
+import { Flex, Text, Button, Card, IconButton, Tag, FilterButton } from '../../components/ui';
+import { Menu, MenuItem } from '../../components/ui/Menu';
+
+const StyledContainer = styled(MuiContainer)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
 }));
 
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
+const HeaderBox = styled(Flex)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'space-between',
   marginBottom: theme.spacing(3),
 }));
 
-const SearchBox = styled(Box)(({ theme }) => ({
+const SearchBox = styled(Flex)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
-const FilterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
+const FilterBox = styled(Flex)(({ theme }) => ({
   gap: theme.spacing(1),
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(1),
+}));
+
+const SelectedTagsBox = styled(Flex)(({ theme }) => ({
+  gap: theme.spacing(1),
+  marginBottom: theme.spacing(2),
+  minHeight: theme.spacing(4), // 최소 높이 설정으로 레이아웃 안정화
+  flexWrap: 'wrap',
 }));
 
 const DeckCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   cursor: 'pointer',
-  transition: 'all 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
 }));
 
-const TagChip = styled(Chip)(({ theme }) => ({
-  fontSize: '0.75rem',
-  height: 24,
-  marginRight: theme.spacing(0.5),
-}));
 
-const ActionBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
+
+const ActionBox = styled(Flex)(({ theme }) => ({
   gap: theme.spacing(1),
   marginTop: theme.spacing(1),
 }));
@@ -84,9 +77,6 @@ const ActionButton = styled(Button)(({ theme }) => ({
   color: theme.palette.text.secondary,
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.spacing(1),
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
 }));
 
 const FlashcardDeckListPage: React.FC = () => {
@@ -264,9 +254,9 @@ const FlashcardDeckListPage: React.FC = () => {
     <StyledContainer maxWidth="md">
       {/* 헤더 */}
       <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
+        <Text variant="h5" sx={{ fontWeight: 'bold' }}>
           Flash Deck
-        </Typography>
+        </Text>
         <IconButton onClick={handleCreateDeck}>
           <AddIcon />
         </IconButton>
@@ -297,49 +287,40 @@ const FlashcardDeckListPage: React.FC = () => {
 
       {/* 필터 버튼들 */}
       <FilterBox>
-        <Button
-          variant="outlined"
+        <FilterButton
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
           endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
+          minWidth="100px"
         >
           Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
-        </Button>
+        </FilterButton>
         
-        <Button
-          variant="outlined"
+        <FilterButton
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
           endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
+          minWidth="130px"
         >
           Bookmarked
-        </Button>
+        </FilterButton>
+      </FilterBox>
 
-        {/* 선택된 태그들 표시 */}
+      {/* 선택된 태그들 표시 */}
+      <SelectedTagsBox>
         {filters.selectedTags.map((tag: string) => (
-          <TagChip
+          <Tag
             key={tag}
             label={tag}
             onDelete={() => handleTagSelect(tag)}
-            color="primary"
-            variant="filled"
+            selected={true}
+            size="medium"
+            sx={{
+              fontSize: '0.875rem', // 14px
+              height: '32px', // 기본보다 조금 더 큰 높이
+              padding: '6px 8px', // 좌우 패딩 줄임
+            }}
           />
         ))}
-      </FilterBox>
+      </SelectedTagsBox>
 
       {/* 태그 메뉴 */}
       <Menu
@@ -375,9 +356,9 @@ const FlashcardDeckListPage: React.FC = () => {
       {/* 덱 목록 (검색어가 없을 때) */}
       {!filters.searchQuery.trim() && filteredDecks.map((deck) => (
         <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <Typography 
+          <Flex direction="column" p={2}>
+            <Flex align="center" sx={{ mb: 1 }} gap={1}>
+              <Text 
                 variant="h6" 
                 sx={{ 
                   flexGrow: 1, 
@@ -388,35 +369,42 @@ const FlashcardDeckListPage: React.FC = () => {
                 }}
               >
                 {deck.title}
-              </Typography>
-              <IconButton onClick={(e) => handleToggleBookmark(deck.id, e)} size="small" sx={{ flexShrink: 0 }}>
+              </Text>
+              <IconButton 
+                onClick={(e) => handleToggleBookmark(deck.id, e)} 
+                size="small" 
+                sx={{ 
+                  flexShrink: 0,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                }}
+              >
                 {deckBookmarks[deck.id] || false ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
               </IconButton>
-            </Box>
+            </Flex>
 
-            <Box sx={{ mb: 1.5 }}>
+            <Flex sx={{ mb: 1.5 }}>
               {deck.tags.slice(0, 3).map((tag: string) => (
-                <TagChip
+                <Tag
                   key={tag}
                   label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
                   size="small"
-                  color="primary"
                   variant="outlined"
                 />
               ))}
               {deck.tags.length > 3 && (
-                <TagChip
+                <Tag
                   label={`+${deck.tags.length - 3}`}
                   size="small"
-                  color="default"
                   variant="outlined"
                 />
               )}
-            </Box>
+            </Flex>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {deck.flashcards.length} cards
-            </Typography>
+            </Text>
 
             {/* 액션 버튼들 */}
             <ActionBox>
@@ -439,16 +427,16 @@ const FlashcardDeckListPage: React.FC = () => {
                 학습하기
               </ActionButton>
             </ActionBox>
-          </CardContent>
+          </Flex>
         </DeckCard>
       ))}
 
       {/* 검색된 플래시카드 목록 */}
       {filters.searchQuery.trim() && searchedCards.map((card) => (
         <DeckCard key={`${card.deckId}-${card.id}`} onClick={() => handleDeckClick(card.deckId)}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <Typography 
+          <Flex direction="column" p={2}>
+            <Flex align="center" sx={{ mb: 1 }} gap={1}>
+              <Text 
                 variant="h6" 
                 sx={{ 
                   flexGrow: 1, 
@@ -459,54 +447,60 @@ const FlashcardDeckListPage: React.FC = () => {
                 }}
               >
                 {card.front}
-              </Typography>
-              <IconButton onClick={(e) => handleToggleBookmark(card.deckId, e)} size="small" sx={{ flexShrink: 0 }}>
+              </Text>
+              <IconButton 
+                onClick={(e) => handleToggleBookmark(card.deckId, e)} 
+                size="small" 
+                sx={{ 
+                  flexShrink: 0,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                }}
+              >
                 {deckBookmarks[card.deckId] || false ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
               </IconButton>
-            </Box>
+            </Flex>
 
-            <Box sx={{ mb: 1.5 }}>
+            <Flex sx={{ mb: 1.5 }}>
               {card.deckTags.slice(0, 3).map((tag: string) => (
-                <TagChip
+                <Tag
                   key={tag}
                   label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
                   size="small"
-                  color="primary"
                   variant="outlined"
                 />
               ))}
               {card.deckTags.length > 3 && (
-                <TagChip
+                <Tag
                   label={`+${card.deckTags.length - 3}`}
                   size="small"
-                  color="default"
                   variant="outlined"
                 />
               )}
-            </Box>
+            </Flex>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               from: {card.deckTitle}
-            </Typography>
-          </CardContent>
+            </Text>
+          </Flex>
         </DeckCard>
       ))}
 
       {/* 빈 상태 */}
       {!filters.searchQuery.trim() && filteredDecks.length === 0 && (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
+        <Flex 
+          direction="column" 
+          align="center" 
+          justify="center"
           py={8}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Text variant="h6" color="text.secondary" gutterBottom>
             플래시카드 덱이 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
+          </Text>
+          <Text variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             첫 번째 덱을 만들어보세요!
-          </Typography>
+          </Text>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -514,25 +508,24 @@ const FlashcardDeckListPage: React.FC = () => {
           >
             덱 만들기
           </Button>
-        </Box>
+        </Flex>
       )}
 
       {/* 검색 결과 없음 */}
       {filters.searchQuery.trim() && searchedCards.length === 0 && (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
+        <Flex 
+          direction="column" 
+          align="center" 
+          justify="center"
           py={8}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Text variant="h6" color="text.secondary" gutterBottom>
             검색 결과가 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </Text>
+          <Text variant="body2" color="text.secondary">
             다른 키워드로 검색해보세요.
-          </Typography>
-        </Box>
+          </Text>
+        </Flex>
       )}
 
       {/* 플로팅 액션 버튼 */}
@@ -560,10 +553,10 @@ const FlashcardDeckListPage: React.FC = () => {
           {isEditMode ? "덱 수정" : "새 덱 생성"}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Flex direction="column" sx={{ pt: 2 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               덱 제목
-            </Typography>
+            </Text>
             <TextField
               fullWidth
               placeholder="덱 제목을 입력하세요"
@@ -572,9 +565,9 @@ const FlashcardDeckListPage: React.FC = () => {
               sx={{ mb: 2 }}
             />
             
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Text variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               태그 (쉼표로 구분)
-            </Typography>
+            </Text>
             <TextField
               fullWidth
               placeholder="예: React, JavaScript, Frontend"
@@ -583,10 +576,10 @@ const FlashcardDeckListPage: React.FC = () => {
               sx={{ mb: 1 }}
             />
             
-            <Typography variant="caption" color="text.secondary">
+            <Text variant="caption" color="text.secondary">
               태그는 쉼표(,)로 구분하여 입력하세요
-            </Typography>
-          </Box>
+            </Text>
+          </Flex>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCreateDialogClose} variant="outlined">
