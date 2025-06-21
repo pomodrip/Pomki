@@ -29,17 +29,20 @@ export interface LoginRequest {
   password: string;
 }
 
+// 사용자 정보
+export interface User {
+  memberId: number;
+  email: string;
+  nickname: string;
+  isEmailVerified: boolean;
+  socialLogin: boolean;
+}
+
 // 로그인 응답
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  member: {
-    memberId: number;
-    email: string;
-    nickname: string;
-    isEmailVerified: boolean;
-    socialLogin: boolean;
-  };
+  member: User;
 }
 
 // 회원가입 요청

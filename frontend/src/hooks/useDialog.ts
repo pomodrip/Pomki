@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import { useAppDispatch } from './useRedux';
+import { useAppDispatch, useAppSelector } from './useRedux';
 import { openDialog } from '../store/slices/dialogSlice';
+import { useCallback } from 'react';
 import { DialogPayload } from '../store/slices/dialogSlice';
 
 interface ConfirmDialogOptions {
@@ -12,6 +12,11 @@ interface ConfirmDialogOptions {
 
 export const useDialog = () => {
   const dispatch = useAppDispatch();
+  const dialog = useAppSelector((state) => state.dialog);
+
+  const showDialog = (title: string, content: string, onConfirm?: () => void) => {
+    dispatch(openDialog({ title, content, onConfirm }));
+  };
 
   const openDialogAction = useCallback(
     (payload: DialogPayload) => {
@@ -33,5 +38,9 @@ export const useDialog = () => {
     [dispatch]
   );
 
+  return {
+    dialog,
+    showDialog,
+  };
   return { openDialog: openDialogAction, showConfirmDialog };
 };

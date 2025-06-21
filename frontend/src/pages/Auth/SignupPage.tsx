@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import styled from "styled-components";
+import { useState } from "react";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { Box, Checkbox, Container, Typography, Alert, Paper } from "@mui/material";
@@ -149,7 +148,7 @@ const SignupPage = () => {
             variant="outlined"
             onClick={handleRequestCode}
             disabled={!email || isCodeSent || isRequestingCode}
-            sx={{ flexShrink: 0 }}
+            sx={{ flexShrink: 0, height: '47px' }}
           >
             {isRequestingCode ? '전송중...' : '인증번호 요청'}
           </Button>}

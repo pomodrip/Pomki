@@ -1,9 +1,6 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import Input from "../../components/ui/Input";
+import { useState } from "react";
 import Button from "../../components/ui/Button";
-import { Box, Checkbox, Chip, Container, Typography } from "@mui/material";
-import FormControlLabel from '@mui/material/FormControlLabel';
+import { Box, Chip, Container, Typography } from "@mui/material";
 
 const goalOptions = [
   "자격증 준비",

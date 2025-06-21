@@ -5,7 +5,10 @@ export const sm2 = (card: Flashcard, grade: PracticeGrade): Flashcard => {
     throw new Error('Grade must be between 0 and 5.');
   }
 
-  let { repetitions, efactor, interval } = card;
+  // 기본값 설정
+  let repetitions = card.repetitions ?? 0;
+  let efactor = card.efactor ?? 2.5;
+  let interval = card.interval ?? 1;
 
   if (grade < 3) {
     repetitions = 0;

@@ -22,10 +22,10 @@ import {
   CheckBox as CheckBoxIcon,
   EditNote as EditNoteIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { QuizQuestion, FlashcardGenerationSession } from '../../types/card';
 import { useAppSelector } from '../../hooks/useRedux';
-import * as studyApi from '../../api/studyApi';
+// import * as studyApi from '../../api/studyApi';
 
 // 품질 개선된 퀴즈 데이터
 const sampleQuestions: QuizQuestion[] = [
@@ -87,7 +87,7 @@ const sampleQuestions: QuizQuestion[] = [
 ];
 
 const FlashcardGenerationPage: React.FC = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { noteId } = useParams<{ noteId: string }>();
