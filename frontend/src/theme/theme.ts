@@ -2,7 +2,7 @@ import { createTheme, responsiveFontSizes, darken } from '@mui/material/styles';
 
 // design.md를 기반으로 한 디자인 토큰 정의
 let theme = createTheme({
-  // I.A. 색상 (Palette)
+  // I.A. 색상 (Palette) 
   palette: {
     primary: {
       main: '#2979FF', // 1. Primary Main
