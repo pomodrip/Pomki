@@ -1,0 +1,100 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ "dev-fe", "fe/ci-test" ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-cicd.yml'
+
+env:
+  FE_DIR: frontend
+  DIST_DIR: dist
+  DEPLOY_BUCKET_NAME: ${{ secrets.FE_DEPLOY_BUCKET_NAME }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          ${{ env.FE_DIR }}
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'yarn'
+        cache-dependency-path: ${{ env.FE_DIR }}/yarn.lock
+
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: node-modules-cache
+      with:
+        path: ${{ env.FE_DIR }}/node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('frontend/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Install dependencies
+      if: steps.node-modules-cache.outputs.cache-hit != 'true'
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn install --frozen-lockfile
+
+    - name: Frontend environment
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        cat << 'EOF' > .env
+        ${{ secrets.FE_ENV_DEV }}
+        EOF
+
+    - name: Build application
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn build
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOY_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+        aws-region: ap-northeast-2
+
+    - name: Deploy to S3
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        aws s3 sync ./${{ env.DIST_DIR }}/ s3://${{ env.DEPLOY_BUCKET_NAME }}/frontend/ --delete
+
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/frontend/*"
+
+    - name: Notify Discord on Success
+      if: success()
+      uses: tsickert/discord-webhook@v7.0.0
+      with:
+        webhook-url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
+        embed-title: "✅ Frontend Deploy Success!"
+        embed-description: |
+          **Commit:** `${{ github.event.head_commit.message }}`
+          **Branch:** `${{ github.ref_name }}`
+          **Commit Author:** `${{ github.event.head_commit.author.name }}`
+          **Link:** <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}>
+        embed-color: 3066993
+
+    - name: Notify Discord on Failure
+      if: failure()
+      uses: tsickert/discord-webhook@v7.0.0
+      with:
+        webhook-url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
+        embed-title: "❌ Frontend Deploy Failed!"
+        embed-description: |
+          **Commit:** `${{ github.event.head_commit.message }}`
+          **Branch:** `${{ github.ref_name }}`
+          **Commit Author:** `${{ github.event.head_commit.author.name }}`
+          **Link:** <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}>
+        embed-color: 15158332 
