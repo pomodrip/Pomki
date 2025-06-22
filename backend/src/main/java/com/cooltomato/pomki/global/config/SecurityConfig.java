@@ -20,7 +20,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,6 +63,7 @@ public class SecurityConfig {
                                         "/api/email/verification",
                                         "/api/email/code"
                                 ).permitAll()
+                                .requestMatchers("/api/images/**").hasAnyRole("ADMIN", "USER")
                                 .requestMatchers("/api/**").hasAnyRole("ADMIN", "USER")
                 .anyRequest().authenticated()
                 )
