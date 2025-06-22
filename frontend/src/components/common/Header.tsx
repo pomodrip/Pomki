@@ -268,12 +268,12 @@ const Header: React.FC<HeaderProps> = ({
         {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {shouldShowBackButton && isMobile ? (
-            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }}>
+            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }} disableRipple>
               <ArrowBackIosNewIcon />
             </IconButton>
           ) : (
             <>
-              <MenuButton onClick={handleMenuClick}>
+              <MenuButton onClick={handleMenuClick} disableRipple>
                 <MenuIcon />
               </MenuButton>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
@@ -322,37 +322,46 @@ const Header: React.FC<HeaderProps> = ({
             <NavButton 
               className={isActiveRoute('/dashboard') ? 'active' : ''}
               onClick={() => navigate('/dashboard')}
+              disableRipple
             >
               홈
             </NavButton>
             <NavButton 
               className={isActiveRoute('/timer') ? 'active' : ''}
               onClick={() => navigate('/timer')}
+              disableRipple
             >
               타이머
             </NavButton>
             <NavButton 
               className={isActiveRoute('/note') ? 'active' : ''}
               onClick={() => navigate('/note')}
+              disableRipple
             >
               노트
             </NavButton>
             <NavButton 
               className={isActiveRoute('/study') ? 'active' : ''}
               onClick={() => navigate('/study')}
+              disableRipple
             >
               학습
             </NavButton>
             <NavButton 
               className={isActiveRoute('/profile') ? 'active' : ''}
               onClick={() => navigate('/profile')}
+              disableRipple
             >
               프로필
             </NavButton>
           </DesktopNav>
           
           {/* 알림 아이콘 (항상 표시) */}
-          {rightContent || getDefaultRightContent()}
+          {rightContent || (
+            <NotificationButton disableRipple>
+              <NotificationsNoneIcon />
+            </NotificationButton>
+          )}
         </Box>
       </StyledToolbar>
     </StyledAppBar>
