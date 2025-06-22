@@ -4,14 +4,14 @@ import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.note.dto.NoteDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.ai.service.AIService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.cooltomato.pomki.ai.service.AIService;
-import org.springframework.stereotype.Service;
 import java.util.Map;
 
 import java.time.LocalDateTime;
@@ -119,31 +119,18 @@ public class NoteService {
 
 
     @Transactional
-    public String polishNote(String noteId, String style, PrincipalMember memberInfoDto) {
-        //... 사용자 및 노트 조회 로직...
+    public String polishNote(String noteId, String style, PrincipalMember principalMember) {
+        // 사용자 및 노트 조회 로직
+        Long memberId = principalMember.getMemberId();
         Note note = noteRepository.findByNoteIdAndMemberIdAndIsDeletedFalse(noteId, memberId)
                 .orElseThrow(() -> new NotFoundException("노트를 찾을 수 없습니다."));
 
-        // 프롬프트 이름 결정 (style 파라미터에 따라)
-        String promptName;
-        switch (style) {
-            case "concept":
-                promptName = "NOTE_POLISH_CONCEPT_V1";
-                break;
-            case "detailed":
-                promptName = "NOTE_POLISH_DETAILED_V1";
-                break;
-            default:
-                promptName = "NOTE_POLISH_SIMPLE_V1";
-        }
-
         // AI 서비스 실행
-        Map<String, String> variables = Map.of("note_content", note.getNoteContent());
-        String polishedContent = aiService.execute(promptName, variables).block(); // 비동기 결과를 기다림
+        String polishedContent = aiService.polishNote(note.getNoteContent(), style);
 
-        //... 노트 업데이트 및 저장 로직...
+        // 노트 업데이트 및 저장 로직
         note.setNoteContent(polishedContent);
-        //...
+        note.setAiEnhanced(true);
         noteRepository.save(note);
 
         return polishedContent;

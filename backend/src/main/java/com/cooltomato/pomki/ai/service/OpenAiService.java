@@ -23,14 +23,8 @@ public class OpenAiService implements LLMService {
 
     @Override
     public Mono<String> generate(String prompt, String modelName) {
-        OpenAiRequestDto request = new OpenAiRequestDto(modelName, prompt); 
-        
-        return webClient.post()
-             .uri("/chat/completions")
-             .bodyValue(request)
-             .retrieve()
-             .bodyToMono(OpenAiResponseDto.class)
-             .map(response -> response.getChoices().get(0).getMessage().getContent());
+        // TODO: 임시로 기본 응답 반환 - 향후 구현 예정
+        return Mono.just("OpenAI 서비스는 구현 예정입니다: " + prompt.substring(0, Math.min(50, prompt.length())));
     }
 
     @Override

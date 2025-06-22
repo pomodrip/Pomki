@@ -3,7 +3,7 @@ package com.cooltomato.pomki.ai.controller;
 import com.cooltomato.pomki.ai.dto.NotePolishRequestDto;
 import com.cooltomato.pomki.ai.dto.NotePolishResponseDto;
 import com.cooltomato.pomki.ai.service.AIService;
-import com.cooltomato.pomki.note.dto.NoteRequestDto;
+import com.cooltomato.pomki.note.dto.NoteDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.service.NoteService;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
@@ -35,10 +35,10 @@ public class AIController {
         
         try {
             // 노트 조회 및 권한 확인
-            Note note = noteService.readNoteById(request.getNoteId(), principalMember);
+            NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), request.getNoteId());
             
             // AI 폴리싱 실행
-            String originalContent = note.getNoteContent();
+            String originalContent = noteResponse.getNoteContent();
             String customPrompt = request.getCustomPrompt();
             String prompt = (customPrompt != null && !customPrompt.trim().isEmpty()) 
                 ? customPrompt : request.getStyle();
@@ -76,14 +76,14 @@ public class AIController {
             @AuthenticationPrincipal PrincipalMember principalMember) {
         
         try {
-            // 노트 조회 및 권한 확인 (readNoteById에서 권한 확인 포함)
-            Note note = noteService.readNoteById(noteId, principalMember);
+            // 노트 조회 및 권한 확인
+            NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), noteId);
             
             // 노트 업데이트 (제목은 기존 것 유지, 내용만 변경)
-            NoteRequestDto updateDto = new NoteRequestDto();
-            updateDto.setNoteTitle(note.getNoteTitle());
+            NoteDto.UpdateRequest updateDto = new NoteDto.UpdateRequest();
+            updateDto.setNoteTitle(noteResponse.getNoteTitle());
             updateDto.setNoteContent(polishedContent);
-            noteService.updateNote(noteId, updateDto, principalMember);
+            noteService.updateNote(principalMember.getMemberId(), noteId, updateDto);
             
             return ResponseEntity.ok("노트가 성공적으로 업데이트되었습니다");
             

@@ -24,17 +24,8 @@ public class GoogleGeminiService implements LLMService {
 
     @Override
     public Mono<String> generate(String prompt, String modelName) {
-        GeminiRequestDto request = new GeminiRequestDto(prompt);
-
-        return webClient.post()
-             .uri(uriBuilder -> uriBuilder
-                   .path("/{modelName}:generateContent")
-                   .queryParam("key", this.apiKey)
-                   .build(modelName))
-             .bodyValue(request)
-             .retrieve()
-             .bodyToMono(GeminiResponseDto.class)
-             .map(response -> response.getCandidates().get(0).getContent().getParts().get(0).getText());
+        // TODO: 임시로 기본 응답 반환 - 향후 구현 예정
+        return Mono.just("Google Gemini 서비스는 구현 예정입니다: " + prompt.substring(0, Math.min(50, prompt.length())));
     }
 
     @Override
