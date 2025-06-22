@@ -2,12 +2,12 @@ name: Frontend Accessibility Test
 
 on:
   push:
-    branches: [ "dev-fe","release", "main", "fe/ci-test2" ]
+    branches: [ "dev-fe","release", "main" ]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-accessibility.yml'
   pull_request:
-    branches: [ "dev-fe", "release","main", "fe/ci-test2" ]
+    branches: [ "dev-fe", "release","main" ]
     paths:
       - 'frontend/**'
   workflow_dispatch:
