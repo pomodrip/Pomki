@@ -198,7 +198,7 @@ const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
   }),
 }));
 
-// ?��????�트???�?�머 �?
+// 확장된 노트의 타이머 바
 const ExpandedTimerBar = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
@@ -289,7 +289,7 @@ const NotesTextArea = styled('textarea')<{ expanded: boolean }>(({ expanded }) =
   },
 }));
 
-// ?�장???�트 기능??
+// 확장된 노트 기능들
 const ExpandedNotesFeatures = styled(Box)(() => ({
   marginTop: '16px',
   display: 'flex',
@@ -313,7 +313,7 @@ const StudyModeLabel = styled(Text)(() => ({
   color: '#6B7280',
 }));
 
-// ?�정 ?�이?�로�??��???
+// 설정 다이얼로그 스타일
 const SettingsContainer = styled(Box)(() => ({
   display: 'flex',
   flexDirection: 'column',
@@ -389,11 +389,11 @@ const TimerPage: React.FC = () => {
 
   const totalTime = settings.focusMinutes * 60;
 
-  // 진행�?계산
+  // 진행률 계산
   const currentTime = minutes * 60 + seconds;
   const progress = ((totalTime - currentTime) / totalTime) * 100;
 
-  // ?�?�머 로직
+  // 타이머 로직
   useEffect(() => {
     let interval: number | null = null;
     
@@ -409,7 +409,7 @@ const TimerPage: React.FC = () => {
       }, 1000);
     } else if (minutes === 0 && seconds === 0 && isRunning) {
       setIsRunning(false);
-      // ?�션 ?�료 로직
+      // 세션 완료 로직
       if (session < settings.sessions) {
         setSession(session + 1);
         setMinutes(settings.focusMinutes);
@@ -493,7 +493,7 @@ const TimerPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // AI ?�트 ?�성 ?�들??(?�시 구현)
+  // AI 노트 생성 핸들러 (임시 구현)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
               alert('먼저 노트에 내용을 작성해주세요.');
@@ -502,7 +502,7 @@ const TimerPage: React.FC = () => {
 
     setIsGeneratingAI(true);
     
-    // ?�시 AI ?�성 ?��??�이??
+    // 임시 AI 생성 시뮬레이션
     setTimeout(() => {
       const aiContent = generateMockAIContent(summaryStyle, taskName);
       setNotes(prevNotes => {
@@ -514,7 +514,7 @@ const TimerPage: React.FC = () => {
     }, 2000);
   };
 
-  // ?�시 AI 컨텐�??�성 ?�수
+  // 임시 AI 컨텐츠 생성 함수
   const generateMockAIContent = (style: string, task: string) => {
     const taskPrefix = task ? `${task}에 대한 ` : '';
     
@@ -581,10 +581,10 @@ const TimerPage: React.FC = () => {
     </Box>
   );
 
-  // ?��????�트 ?�더�??�수
+  // 확장된 노트 렌더링 함수
   const renderExpandedNotes = () => (
     <NotesSection expanded={true}>
-      {/* ?�?�머 �?*/}
+      {/* 타이머 바 */}
       <ExpandedTimerBar>
         <ExpandedTimerInfo>
           <ExpandedTimerDisplay>
