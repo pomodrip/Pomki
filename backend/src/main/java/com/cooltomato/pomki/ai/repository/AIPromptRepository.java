@@ -10,18 +10,19 @@ import java.util.Optional;
 
 public interface AIPromptRepository extends JpaRepository<AIPrompt, Long> {
     
-    // 활성화된 프롬프트 중 특정 이름으로 조회
-    Optional<AIPrompt> findByPromptNameAndIsActiveTrue(String promptName);
+    // 프롬프트 이름으로 조회
+    Optional<AIPrompt> findByPromptName(String promptName);
     
-    // 특정 타입의 활성화된 프롬프트들 조회
-    List<AIPrompt> findByPromptTypeAndIsActiveTrueOrderByVersionDesc(String promptType);
+    // 프롬프트 이름과 버전으로 조회
+    Optional<AIPrompt> findByPromptNameAndVersion(String promptName, String version);
     
-    // 최신 버전의 활성화된 프롬프트 조회
-    @Query("SELECT p FROM AIPrompt p WHERE p.promptName = :promptName AND p.isActive = true " +
-           "ORDER BY p.version DESC LIMIT 1")
-    Optional<AIPrompt> findLatestActivePrompt(@Param("promptName") String promptName);
+    // 특정 프롬프트 이름의 모든 버전 조회 (최신순)
+    List<AIPrompt> findByPromptNameOrderByVersionDesc(String promptName);
     
     // 모든 프롬프트 이름 목록 조회 (중복 제거)
-    @Query("SELECT DISTINCT p.promptName FROM AIPrompt p WHERE p.isActive = true")
-    List<String> findDistinctActivePromptNames();
+    @Query("SELECT DISTINCT p.promptName FROM AIPrompt p")
+    List<String> findDistinctPromptNames();
+    
+    // 프롬프트 ID로 조회
+    Optional<AIPrompt> findByPromptId(Long promptId);
 } 
