@@ -168,13 +168,7 @@ const TaskInputSection = styled(Box)(() => ({
   alignItems: 'center',
 }));
 
-const TaskInputLabel = styled(Text)(() => ({
-  fontSize: '16px', // Body Regular
-  fontWeight: 500, // Medium
-  color: '#6B7280', // Text Secondary
-  marginBottom: '16px', // Medium Spacing
-  textAlign: 'center',
-}));
+
 
 // 노트 섹션
 const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
@@ -320,6 +314,32 @@ const StudyModeLabel = styled(Text)(() => ({
   fontSize: '14px',
   fontWeight: 500,
   color: '#6B7280',
+}));
+
+// 통합된 작업 입력
+
+const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled }) => ({
+  width: '100%',
+  padding: '12px 16px',
+  border: '1px solid #E5E7EB',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontFamily: "'Pretendard', sans-serif",
+  color: disabled ? '#9CA3AF' : '#1F2937',
+  backgroundColor: '#FFFFFF',
+  outline: 'none',
+  transition: 'all 0.2s ease',
+  cursor: disabled ? 'not-allowed' : 'text',
+  
+  '&:focus': {
+    borderColor: disabled ? '#E5E7EB' : '#2563EB',
+    boxShadow: disabled ? 'none' : '0 0 0 3px rgba(37, 99, 235, 0.1)',
+  },
+  
+  '&::placeholder': {
+    color: '#9CA3AF',
+    fontSize: '14px',
+  },
 }));
 
 // 설정 다이얼로그 스타일
@@ -645,20 +665,22 @@ const TimerPage: React.FC = () => {
           <NotesTitle>
             📝 집중 노트
           </NotesTitle>
-          {taskName && (
-            <Text 
-              sx={{ 
-                fontSize: '16px', 
-                color: '#6B7280', 
-                marginTop: '4px',
-                fontWeight: 500,
-              }}
-            >
-              현재 작업: {taskName}
-            </Text>
-          )}
         </Box>
       </NotesHeader>
+
+      {/* 통합된 작업 입력 영역 */}
+      <TaskInput
+        type="text"
+        value={taskName}
+        onChange={(e) => setTaskName(e.target.value)}
+        placeholder={
+          isRunning
+            ? "현재 집중 중인 작업을 수정할 수 있습니다"
+            : "이번 세션에 집중할 일은 무엇인가요?"
+        }
+        aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
+        style={{ marginBottom: '12px' }}
+      />
       
       {/* 노트 텍스트 영역 */}
       <NotesTextArea
@@ -853,49 +875,15 @@ const TimerPage: React.FC = () => {
         </Button>
       </ButtonContainer>
 
-      <TaskInputSection>
-        <TaskInputLabel>
-          {isRunning ? "현재 집중 중인 작업" : "이번 세션에 집중할 일은 무엇인가요?"}
-        </TaskInputLabel>
-        
-        <Input
-          fullWidth
-          placeholder={isRunning 
-            ? "집중 중인 작업을 수정할 수 있습니다"
-            : "e.g. Draft presentation report"
-          }
-          value={taskName}
-          onChange={(e) => setTaskName(e.target.value)}
-          sx={{
-            backgroundColor: '#FFFFFF',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#9CA3AF',
-            },
-          }}
-        />
-      </TaskInputSection>
 
-      <NotesSection expanded={false}>
-        <NotesHeader>
-          <Box>
-            <NotesTitle>
-              📝 집중 노트
-            </NotesTitle>
-            {taskName && (
-              <Text 
-                sx={{ 
-                  fontSize: '14px', 
-                  color: '#6B7280', 
-                  marginTop: '4px',
-                  fontWeight: 500,
-                }}
-              >
-                현재 작업: {taskName}
-              </Text>
-            )}
-          </Box>
+
+              <NotesSection expanded={false}>
+          <NotesHeader>
+            <Box>
+              <NotesTitle>
+                📝 집중 노트
+              </NotesTitle>
+            </Box>
           <IconButton 
             size="small" 
             sx={{ 
@@ -910,19 +898,22 @@ const TimerPage: React.FC = () => {
             <ExpandIcon fontSize="small" />
           </IconButton>
         </NotesHeader>
-        
-        {/* <NotesTextArea
-          expanded={false}
-          placeholder={isRunning
-            ? "집중 중 떠오른 내용을 바로 기록해보세요..."
-            : "이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
-          }
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-      </NotesSection> */}
 
-             <NotesTextArea
+        {/* 통합된 작업 입력 영역 */}
+        <TaskInput
+          type="text"
+          value={taskName}
+          onChange={(e) => setTaskName(e.target.value)}
+          placeholder={
+            isRunning
+              ? "🍅포모도로 타임! 집중할 목표를 수정하세요"
+              : "🍅이번 포모도로의 목표를 입력하세요"
+          }
+          aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
+          style={{ marginBottom: '12px' }}
+        />
+        
+        <NotesTextArea
            expanded={false}
            disabled={!isRunning}
            animate={noteImpact}
