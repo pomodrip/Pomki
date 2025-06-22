@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, styled, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress } from '@mui/material';
-import { Text, IconButton } from '../../components/ui';
+import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import Button from '../../components/ui/Button';
@@ -328,39 +328,7 @@ const SettingsRow = styled(Box)(() => ({
   gap: '16px',
 }));
 
-const SettingItem = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  flex: 1,
-}));
 
-const SettingValue = styled(Box)(() => ({
-  width: '80px',
-  height: '80px',
-  borderRadius: '12px',
-  backgroundColor: '#F3F4F6',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '32px',
-  fontWeight: 700,
-  color: '#1A1A1A',
-  marginBottom: '8px',
-  cursor: 'pointer',
-  userSelect: 'none',
-  
-  '&:hover': {
-    backgroundColor: '#E5E7EB',
-  },
-}));
-
-const SettingLabel = styled(Text)(() => ({
-  fontSize: '14px',
-  fontWeight: 500,
-  color: '#6B7280',
-  textAlign: 'center',
-}));
 
 const PresetsSection = styled(Box)(() => ({
   display: 'flex',
@@ -407,6 +375,13 @@ const TimerPage: React.FC = () => {
   const [summaryStyle, setSummaryStyle] = useState('concept');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [settings, setSettings] = useState<TimerSettings>({
+    sessions: 3,
+    focusMinutes: 25,
+    breakMinutes: 5,
+  });
+  
+  // 임시 설정값 (모달에서 편집용)
+  const [tempSettings, setTempSettings] = useState<TimerSettings>({
     sessions: 3,
     focusMinutes: 25,
     breakMinutes: 5,
@@ -467,30 +442,45 @@ const TimerPage: React.FC = () => {
     if (isRunning) {
       handleReset();
     } else {
+      // 설정 모달을 열 때 현재 설정값을 임시 설정값에 복사
+      setTempSettings({ ...settings });
       setShowSettings(true);
     }
   };
 
   const handleApplySettings = () => {
-    setMinutes(settings.focusMinutes);
+    // 임시 설정값을 실제 설정값에 적용
+    setSettings({ ...tempSettings });
+    setMinutes(tempSettings.focusMinutes);
     setSeconds(0);
     setSession(1);
     setElapsedTime(0);
     setShowSettings(false);
   };
 
+  const handleCancelSettings = () => {
+    // 설정 취소 시 임시 설정값 초기화
+    setTempSettings({ ...settings });
+    setShowSettings(false);
+  };
+
   const handlePreset = (preset: string) => {
+    let newSettings: TimerSettings;
     switch (preset) {
       case 'deep':
-        setSettings({ sessions: 3, focusMinutes: 50, breakMinutes: 10 });
+        newSettings = { sessions: 3, focusMinutes: 50, breakMinutes: 10 };
         break;
       case 'pomodoro':
-        setSettings({ sessions: 4, focusMinutes: 25, breakMinutes: 5 });
+        newSettings = { sessions: 4, focusMinutes: 25, breakMinutes: 5 };
         break;
       case 'quick':
-        setSettings({ sessions: 6, focusMinutes: 15, breakMinutes: 3 });
+        newSettings = { sessions: 6, focusMinutes: 15, breakMinutes: 3 };
         break;
+      default:
+        return;
     }
+    // 프리셋 적용 시 임시 설정값 업데이트
+    setTempSettings(newSettings);
   };
 
   const formatTime = (min: number, sec: number) => {
@@ -559,13 +549,36 @@ const TimerPage: React.FC = () => {
   const circumference = 2 * Math.PI * radius;
 
   const settingsActions = (
-    <Button
-      variant="contained"
-      onClick={handleApplySettings}
-      sx={{ width: '100%', marginTop: '16px' }}
-    >
-      Start
-    </Button>
+    <Box sx={{ display: 'flex', gap: '12px', width: '100%', marginTop: '16px' }}>
+      <Button
+        variant="outlined"
+        onClick={handleCancelSettings}
+        sx={{ 
+          flex: 1,
+          borderColor: '#E5E7EB',
+          color: '#6B7280',
+          '&:hover': {
+            borderColor: '#D1D5DB',
+            backgroundColor: '#F9FAFB',
+          },
+        }}
+      >
+        취소
+      </Button>
+      <Button
+        variant="contained"
+        onClick={handleApplySettings}
+        sx={{ 
+          flex: 1,
+          backgroundColor: '#2563EB',
+          '&:hover': {
+            backgroundColor: '#1D4ED8',
+          },
+        }}
+      >
+        적용
+      </Button>
+    </Box>
   );
 
   // ?��????�트 ?�더�??�수
@@ -928,30 +941,36 @@ const TimerPage: React.FC = () => {
       {/* 설정 다이얼로그 */}
       <Modal
         open={showSettings}
-        onClose={() => setShowSettings(false)}
-        title="설정"
+        onClose={handleCancelSettings}
+        title="타이머 설정"
         actions={settingsActions}
       >
         <SettingsContainer>
           <SettingsRow>
-            <SettingItem>
-              <SettingValue>
-                {settings.sessions}
-              </SettingValue>
-              <SettingLabel>세션</SettingLabel>
-            </SettingItem>
-            <SettingItem>
-              <SettingValue>
-                {settings.focusMinutes}
-              </SettingValue>
-              <SettingLabel>집중 시간</SettingLabel>
-            </SettingItem>
-            <SettingItem>
-              <SettingValue>
-                {settings.breakMinutes}
-              </SettingValue>
-              <SettingLabel>휴식 시간</SettingLabel>
-            </SettingItem>
+            <WheelTimeAdjuster
+              value={tempSettings.sessions}
+              onChange={(value) => setTempSettings(prev => ({ ...prev, sessions: value }))}
+              label="세션"
+              min={1}
+              max={10}
+              step={1}
+            />
+            <WheelTimeAdjuster
+              value={tempSettings.focusMinutes}
+              onChange={(value) => setTempSettings(prev => ({ ...prev, focusMinutes: value }))}
+              label="집중 시간"
+              min={5}
+              max={120}
+              step={5}
+            />
+            <WheelTimeAdjuster
+              value={tempSettings.breakMinutes}
+              onChange={(value) => setTempSettings(prev => ({ ...prev, breakMinutes: value }))}
+              label="휴식 시간"
+              min={1}
+              max={60}
+              step={1}
+            />
           </SettingsRow>
 
           <PresetsSection>

@@ -7,6 +7,7 @@ export { default as ProgressBar } from './ProgressBar';
 export { default as Spinner } from './Spinner';
 export { default as Tag } from './Tag';
 export { default as Timer } from './Timer';
+export { default as WheelTimeAdjuster } from './WheelTimeAdjuster';
 
 // 새로 추가된 UI 컴포넌트들 (MUI 대체)
 export { default as Text } from './Text';
