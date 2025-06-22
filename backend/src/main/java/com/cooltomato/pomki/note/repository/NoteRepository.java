@@ -1,6 +1,12 @@
 package com.cooltomato.pomki.note.repository;
 
+import com.cooltomato.pomki.note.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-// public interface NoteRepository extends JpaRepository<Object, Long> {
-// } 
+import java.util.List;
+
+@Repository
+public interface NoteRepository extends JpaRepository<Note, String> {
+    List<Note> findByMemberMemberIdOrderByCreatedAtDesc(Long memberId);
+} 
