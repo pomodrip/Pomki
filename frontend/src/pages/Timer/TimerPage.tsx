@@ -733,9 +733,6 @@ const TimerPage: React.FC = () => {
           <ElapsedTime>
             {formatElapsedTime(elapsedTime)}
           </ElapsedTime>
-          <ProgressBarContainer>
-            <ProgressBarFill progress={progress} />
-          </ProgressBarContainer>
         </RunningHeader>
       ) : (
         <FocusTimeSection>
