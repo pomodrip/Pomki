@@ -1,8 +1,8 @@
 package com.cooltomato.pomki.stats.service;
 
 import com.cooltomato.pomki.stats.dto.DashboardStatsDto;
-import com.cooltomato.pomki.stats.entity.StudySession;
-import com.cooltomato.pomki.stats.repository.StudySessionRepository;
+import com.cooltomato.pomki.stats.entity.StudyLog;
+import com.cooltomato.pomki.stats.repository.StudyLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class StatsService {
 
-    private final StudySessionRepository studySessionRepository;
+    private final StudyLogRepository studySessionRepository;
 
     public DashboardStatsDto getDashboardStats(Long memberId) {
         log.info("Getting dashboard stats for member: {}", memberId);
@@ -138,13 +138,13 @@ public class StatsService {
             return "학습 활동 없음";
         }
 
-        StudySession.ActivityType mostActiveType = (StudySession.ActivityType) activityStats.get(0)[0];
+        StudyLog.ActivityType mostActiveType = (StudyLog.ActivityType) activityStats.get(0)[0];
         return mostActiveType.getDescription();
     }
 
     private List<DashboardStatsDto.RecentActivityDto> getRecentActivities(Long memberId) {
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<StudySession> recentSessions = studySessionRepository.getRecentActivities(memberId, sevenDaysAgo);
+        List<StudyLog> recentSessions = studySessionRepository.getRecentActivities(memberId, sevenDaysAgo);
 
         return recentSessions.stream()
                 .limit(10)
@@ -161,7 +161,7 @@ public class StatsService {
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         LocalDateTime endOfDay = startOfDay.plusDays(1);
         
-        List<StudySession> todaySessions = studySessionRepository.getTodayActivities(memberId, startOfDay, endOfDay);
+        List<StudyLog> todaySessions = studySessionRepository.getTodayActivities(memberId, startOfDay, endOfDay);
 
         return todaySessions.stream()
                 .map(session -> DashboardStatsDto.TodayActivityDto.builder()
@@ -213,10 +213,10 @@ public class StatsService {
     }
 
     @Transactional
-    public void recordStudySession(Long memberId, StudySession.ActivityType activityType,
+    public void recordStudySession(Long memberId, StudyLog.ActivityType activityType,
                                  String activityTitle, Integer studyMinutes, Integer goalMinutes,
                                  Integer pomodoroCompleted, Integer pomodoroTotal) {
-        StudySession session = StudySession.builder()
+        StudyLog session = StudyLog.builder()
                 .memberId(memberId)
                 .activityType(activityType)
                 .activityTitle(activityTitle)
