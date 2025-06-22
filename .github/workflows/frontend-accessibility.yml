@@ -252,7 +252,6 @@ jobs:
       run: |
         echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI (local only)..."
         
-        # 로컬 전용 설정 주입
         if [ "${{ matrix.device }}" == "desktop" ]; then
           echo "$LIGHTHOUSERC_DESKTOP_LOCAL_JSON" > .lighthouserc.desktop.local.json
           yarn lhci autorun --config=.lighthouserc.desktop.local.json
@@ -275,17 +274,30 @@ jobs:
         echo "🚀 Uploading ${{ matrix.device }} Lighthouse reports to S3..."
         echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
         
-        # LHCI 서버 업로드된 리포트
+        UPLOAD_SOURCE=""
         if [ -d ".lighthouseci" ]; then
-          aws s3 cp ./.lighthouseci/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/lighthouse-${{ matrix.device }}/ --recursive
-          aws s3 cp ./.lighthouseci/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}/ --recursive
+          UPLOAD_SOURCE=".lighthouseci"
+          echo "📁 LHCI 서버 보고서 (.lighthouseci) 업로드"
+        elif [ -d "lighthouse-reports-${{ matrix.device }}" ]; then
+          UPLOAD_SOURCE="lighthouse-reports-${{ matrix.device }}"
+          echo "📁 로컬 보고서 (lighthouse-reports-${{ matrix.device }}) 업로드"
+        else
+          echo "⚠️ Lighthouse 보고서 폴더를 찾을 수 없습니다."
         fi
         
-        # 로컬 전용 리포트
-        if [ -d "lighthouse-reports-${{ matrix.device }}" ]; then
-          aws s3 cp ./lighthouse-reports-${{ matrix.device }}/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/lighthouse-${{ matrix.device }}-local/ --recursive
-          aws s3 cp ./lighthouse-reports-${{ matrix.device }}/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}-local/ --recursive
+        if [ -n "$UPLOAD_SOURCE" ]; then
+          aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/lighthouse-${{ matrix.device }}/ --recursive
+          aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}/ --recursive
+          echo "✅ ${{ matrix.device }} 보고서 업로드 완료"
         fi
+
+    - name: Cache lighthouse reports
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-${{ matrix.device }}/
+        key: lighthouse-reports-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   generate-combined-report:
     needs: [axe-accessibility-testing, lighthouse-ci-testing]
@@ -295,6 +307,57 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Restore desktop lighthouse reports
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-desktop/
+        key: lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}
+      continue-on-error: true
+
+    - name: Restore mobile lighthouse reports
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-mobile/
+        key: lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}
+      continue-on-error: true
+
+    - name: Organize lighthouse reports
+      run: |
+        echo "🔧 Organizing lighthouse reports..."
+        mkdir -p ./lighthouse-desktop ./lighthouse-mobile
+        
+        # Desktop reports
+        if [ -d "${{ env.FE_DIR }}/.lighthouseci" ]; then
+          echo "📁 Found .lighthouseci folder"
+          find ${{ env.FE_DIR }}/.lighthouseci -name "*.html" | head -6 | while read -r file; do
+            cp "$file" ./lighthouse-desktop/
+          done
+        fi
+        
+        if [ -d "${{ env.FE_DIR }}/lighthouse-reports-desktop" ]; then
+          echo "📁 Found lighthouse-reports-desktop folder"
+          find ${{ env.FE_DIR }}/lighthouse-reports-desktop -name "*.html" | while read -r file; do
+            cp "$file" ./lighthouse-desktop/
+          done
+        fi
+        
+        # Mobile reports
+        if [ -d "${{ env.FE_DIR }}/lighthouse-reports-mobile" ]; then
+          echo "📁 Found lighthouse-reports-mobile folder"
+          find ${{ env.FE_DIR }}/lighthouse-reports-mobile -name "*.html" | while read -r file; do
+            cp "$file" ./lighthouse-mobile/
+          done
+        fi
+        
+        echo "📋 Desktop files:"
+        ls -la ./lighthouse-desktop/ || echo "No desktop files"
+        echo "📋 Mobile files:"
+        ls -la ./lighthouse-mobile/ || echo "No mobile files"
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -315,7 +378,7 @@ jobs:
         
 
         cat << 'GENERATE_REPORT_EOF' > generate-combined-report.js
-        ${{ vars.GENERATE_COMBINED_REPORT_JS }}
+        ${{ secrets.GENERATE_COMBINED_REPORT_JS }}
         GENERATE_REPORT_EOF
 
         node ./generate-combined-report.js
@@ -331,6 +394,19 @@ jobs:
         echo "✅ 보고서 업로드 완료!"
         echo "📋 최신 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/index.html"
         echo "🕐 타임스탬프 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/index.html"
+
+    - name: Clean up lighthouse caches
+      run: |
+        echo "🧹 사용된 캐시 정리 중..."
+        
+        # GitHub CLI를 사용해서 캐시 삭제
+        gh cache delete "lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Desktop 캐시 삭제 실패 또는 존재하지 않음"
+        gh cache delete "lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Mobile 캐시 삭제 실패 또는 존재하지 않음"
+        
+        echo "✅ 캐시 정리 완료"
+      env:
+        GH_TOKEN: ${{ github.token }}
+      continue-on-error: true
 
     - name: Notify Discord on Success
       if: success()
