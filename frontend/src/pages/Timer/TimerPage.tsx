@@ -592,7 +592,7 @@ const TimerPage: React.FC = () => {
           </ExpandedTimerDisplay>
           {isRunning ? (
             <ExpandedSessionInfo>
-              세션 {session}/{settings.sessions} • {formatElapsedTime(elapsedTime)}
+              세션 {session}/{settings.sessions}
             </ExpandedSessionInfo>
           ) : (
             <ExpandedSessionInfo>
