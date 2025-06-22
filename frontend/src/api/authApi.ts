@@ -54,9 +54,17 @@ export const redirectToGoogleLogin = (): void => {
   window.location.href = `${baseUrl}/oauth2/authorization/google`;
 };
 
+// 카카오 로그인 - 브라우저 리다이렉트
+export const redirectToKakaoLogin = (): void => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 
+    (import.meta.env.DEV ? '' : 'http://localhost:8088');
+  window.location.href = `${baseUrl}/oauth2/authorization/kakao`;
+};
+
 // authApi 객체로 모든 함수들을 그룹화하여 export
 export const authApi = {
   redirectToGoogleLogin,
+  redirectToKakaoLogin,
   login,
   logout,
   refreshToken,
