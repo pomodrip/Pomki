@@ -183,7 +183,7 @@ public class StatsService {
     }
 
     private DashboardStatsDto.ReviewScheduleDto getReviewSchedule() {
-        // TODO: 실제 복습 스케줄 구현
+        // TODO: ReviewService와 연동하여 실제 복습 스케줄 구현
         return DashboardStatsDto.ReviewScheduleDto.builder()
                 .todayCards(0)
                 .within3DaysCards(0)

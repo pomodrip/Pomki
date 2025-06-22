@@ -7,11 +7,13 @@ import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.note.dto.NoteRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.stats.service.StudyLogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class NoteService {
     
     private final NoteRepository noteRepository;
     private final MemberRepository memberRepository;
+    private final StudyLogService studyLogService;
     
     @Transactional
     public Note createNote(NoteRequestDto noteRequestDto, PrincipalMember principal) {
@@ -32,7 +35,21 @@ public class NoteService {
                 .noteContent(noteRequestDto.getNoteContent())
                 .build();
                 
-        return noteRepository.save(note);
+        Note savedNote = noteRepository.save(note);
+        
+        // 학습 활동 기록 (출석 캘린더용)
+        Map<String, Object> details = Map.of(
+                "note_title", savedNote.getNoteTitle(),
+                "note_length", savedNote.getNoteContent().length(),
+                "duration_minutes", 0 // 기본값, 프론트엔드에서 제공 가능
+        );
+        studyLogService.recordActivity(
+                member.getMemberId(),
+                "NOTE_CREATED",
+                details
+        );
+        
+        return savedNote;
     }
     
     public List<Note> readNote(PrincipalMember principal) {
