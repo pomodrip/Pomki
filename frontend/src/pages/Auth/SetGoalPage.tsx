@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Button from "../../components/ui/Button";
-import { Box, Chip, Container, Typography } from "@mui/material";
+import { Box, Chip, Container, Typography, Paper } from "@mui/material";
 
 const goalOptions = [
   "자격증 준비",
@@ -23,24 +23,32 @@ const SetGoalPage = () => {
 
   return (
     <Container
-      maxWidth="xs"
+      maxWidth="sm"
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'left',
-        justifyContent: 'center',
-        marginTop: '10vh',
-        marginBottom: '20vh',
-        minHeight: '60vh',
         padding: { xs: '24px 8px', sm: '32px 16px' },
+        mt: 2,
       }}>
-        <Typography variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'left' }}>학습 목표 설정</Typography>
+      <Paper
+        elevation={3}
+        sx={{
+          padding: { xs: 3, sm: 4 },
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="h1" sx={{ mb: 8, textAlign: 'center' }}>학습 목표 설정</Typography>
         <Box sx={{ display: 'flex',
                    flexDirection: 'row',
                    flexWrap: 'wrap', gap: 2,
                    alignItems: 'flex-start',
                    width: '80%',
                    margin: '0 auto',
+                   marginBottom: 4
+
                 }}>
             {goalOptions.map((label) => (
               <Chip
@@ -53,8 +61,9 @@ const SetGoalPage = () => {
               />
             ))}
         </Box>
-        <Button variant="contained" color="primary" fullWidth style={{ marginBottom: 32, marginTop: 'auto' }}>설정 완료</Button>
+        <Button variant="contained" color="primary" fullWidth style={{ marginBottom: 32, marginTop: 32 }}>설정 완료</Button>
         <Button variant="text" color="secondary" fullWidth style={{ marginBottom: 32 }}>나중에</Button>
+      </Paper>
     </Container>
   );
 };

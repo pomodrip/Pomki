@@ -105,7 +105,7 @@ const SignupPage = () => {
       display: 'flex',
       flexDirection: 'column',
       padding: { xs: '24px 8px', sm: '32px 16px' },
-      mt: 8,
+      mt: 2,
     }}>
       <Paper 
         elevation={3} 
@@ -114,7 +114,12 @@ const SignupPage = () => {
           borderRadius: 2 
         }}
       >
-        <Typography variant="h1" sx={{ mb: 8 }} style={{ textAlign: 'center' }}>회원가입</Typography>
+        <Typography
+          variant="h1"
+          sx={{ mb: 8, textAlign: 'center' }}
+        >
+          회원가입
+        </Typography>
         
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -131,42 +136,57 @@ const SignupPage = () => {
           onChange={(e) => setName(e.target.value)}
         />
         <Typography variant="body1" sx={{ mb: 2, ml: 1 }} style={{ textAlign: 'left' }}>이메일</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%', mb: isCodeSent && !isVerified ? 2 : 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'flex-start', 
+          gap: 1, 
+          width: '100%', 
+          mb: isCodeSent && !isVerified ? 2 : 4, 
+          flexWrap: 'wrap' 
+        }}>
           <Input  
-            fullWidth
             placeholder="example@email.com"
+            sx={{ width: '100%', flex: 1, minWidth: '300px' }}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isCodeSent}
           />
 
           {isVerified ? (
-            <Typography variant="body1" color="primary" sx={{ mt: 1, ml: 1, flexShrink: 0}}>
+            <Typography variant="body1" color="primary" sx={{ mt: 1, ml: 1, flexShrink: 0, minWidth: 'fit-content'}}>
               인증완료
             </Typography>
           ):<Button 
             variant="outlined"
             onClick={handleRequestCode}
             disabled={!email || isCodeSent || isRequestingCode}
-            sx={{ flexShrink: 0, height: '47px' }}
+            sx={{ flexShrink: 0, height: '47px', minWidth: 'fit-content' }}
           >
             {isRequestingCode ? '전송중...' : '인증번호 요청'}
           </Button>}
         </Box>
 
         {isCodeSent && !isVerified && (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%', mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            gap: 1, 
+            width: '100%', 
+            mb: 4,
+            flexWrap: 'wrap'
+          }}>
             <Input
               fullWidth
               placeholder="인증번호를 입력해주세요"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
+              sx={{ flex: 1, minWidth: '200px' }}
             />
             <Button 
               variant="outlined"
               onClick={handleVerifyCode}
               disabled={!verificationCode || isVerifyingCode}
-              sx={{ flexShrink: 0 }}
+              sx={{ flexShrink: 0, minWidth: 'fit-content' }}
             >
               {isVerifyingCode ? '확인중...' : '확인'}
             </Button>

@@ -161,7 +161,7 @@ const LoginPage = () => {
         display: 'flex',
         flexDirection: 'column',
         padding: { xs: '24px 8px', sm: '32px 16px' },
-        mt: 8,
+        mt: 2,
       }}
     >
       <Paper 
@@ -223,9 +223,16 @@ const LoginPage = () => {
           {isLoading ? '로그인 중...' : '로그인'}
         </Button>
 
-        <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
-          <Button variant="text" sx={{ color: 'text.secondary' }} disabled={isLoading}>비밀번호 찾기</Button>
+        <Box sx={{
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+          mb: 2 
+        }}>
+          <Button variant="text" sx={{ color: 'text.secondary', minWidth: 'fit-content' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
+          <Button variant="text" sx={{ color: 'text.secondary', minWidth: 'fit-content' }} disabled={isLoading}>비밀번호 찾기</Button>
         </Box>
 
         <KakaoButton
