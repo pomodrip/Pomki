@@ -55,6 +55,11 @@ dependencies {
 	// implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	// Scheduling for SRS
 	implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
+
+
+	//	 WebClient 사용을 위해 추가
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {

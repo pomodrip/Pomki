@@ -10,6 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.cooltomato.pomki.ai.service.AIService;
+import org.springframework.stereotype.Service;
+import java.util.Map;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +26,7 @@ public class NoteService {
     private final NoteRepository noteRepository;
     // TODO: 향후 메시지 브로커 추가 예정
     // private final MessagePublisher messagePublisher;
-
+    private final AIService aiService; // 통합된 AIService 주입
     /**
      * 노트 생성
      * 원본 내용을 original_content에 저장하고, note_content에는 동일한 내용을 저장
@@ -113,6 +116,39 @@ public class NoteService {
         
         log.info("AI 노트 향상 요청: noteId={}, memberId={}, promptName={}", noteId, memberId, promptName);
     }
+
+
+    @Transactional
+    public String polishNote(String noteId, String style, PrincipalMember memberInfoDto) {
+        //... 사용자 및 노트 조회 로직...
+        Note note = noteRepository.findByNoteIdAndMemberIdAndIsDeletedFalse(noteId, memberId)
+                .orElseThrow(() -> new NotFoundException("노트를 찾을 수 없습니다."));
+
+        // 프롬프트 이름 결정 (style 파라미터에 따라)
+        String promptName;
+        switch (style) {
+            case "concept":
+                promptName = "NOTE_POLISH_CONCEPT_V1";
+                break;
+            case "detailed":
+                promptName = "NOTE_POLISH_DETAILED_V1";
+                break;
+            default:
+                promptName = "NOTE_POLISH_SIMPLE_V1";
+        }
+
+        // AI 서비스 실행
+        Map<String, String> variables = Map.of("note_content", note.getNoteContent());
+        String polishedContent = aiService.execute(promptName, variables).block(); // 비동기 결과를 기다림
+
+        //... 노트 업데이트 및 저장 로직...
+        note.setNoteContent(polishedContent);
+        //...
+        noteRepository.save(note);
+
+        return polishedContent;
+    }
+
 
     /**
      * 휴지통의 노트 목록 조회
