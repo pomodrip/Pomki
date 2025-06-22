@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByMemberMemberIdOrderByCreatedAtDesc(Long memberId);
+    Long countByMemberMemberId(Long memberId);
 } 

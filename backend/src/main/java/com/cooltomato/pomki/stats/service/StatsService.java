@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.stats.service;
 
-import com.cooltomato.pomki.stats.dto.DashboardStatsDto;
+// 임시로 주석 처리 - SimpleDashboardStatsService 사용
+// import com.cooltomato.pomki.stats.dto.DashboardStatsDto;
 import com.cooltomato.pomki.stats.entity.StudyLog;
 import com.cooltomato.pomki.stats.repository.StudyLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// 임시로 전체 주석 처리 - SimpleDashboardStatsService 사용
+/*
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -229,4 +232,5 @@ public class StatsService {
         studySessionRepository.save(session);
         log.info("Study session recorded for member: {} - {}", memberId, activityType);
     }
-} 
+}
+*/ 

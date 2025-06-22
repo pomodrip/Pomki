@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface NoteRepository extends JpaRepository<Note, String> {
     List<Note> findByMemberMemberIdOrderByCreatedAtDesc(Long memberId);
+    Long countByMemberMemberId(Long memberId);
 } 
