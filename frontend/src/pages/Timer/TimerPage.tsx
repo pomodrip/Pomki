@@ -265,27 +265,36 @@ const NotesTitle = styled(Text)(() => ({
   color: '#1A1A1A',
 }));
 
-const NotesTextArea = styled('textarea')<{ expanded: boolean }>(({ expanded }) => ({
+const NotesTextArea = styled('textarea')<{ 
+  expanded: boolean; 
+  disabled?: boolean; 
+  animate?: boolean 
+}>(({ expanded, disabled, animate }) => ({
   width: '100%',
   minHeight: expanded ? '60vh' : '120px',
   padding: '16px',
-  border: '1px solid #E5E7EB',
+  border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
   borderRadius: '8px',
   fontSize: '14px',
   fontFamily: "'Pretendard', sans-serif",
-  color: '#1A1A1A',
-  backgroundColor: '#FFFFFF',
+  color: disabled ? '#9CA3AF' : '#1A1A1A',
+  backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
   resize: 'vertical',
   outline: 'none',
-  transition: 'min-height 0.3s ease',
+  transition: 'all 0.3s ease, box-shadow 0.6s ease',
   flex: expanded ? 1 : 'none',
+  cursor: disabled ? 'not-allowed' : 'text',
+  boxShadow: animate ? '0 0 0 4px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
+  transform: animate ? 'translateY(-2px)' : 'translateY(0)',
   
   '&:focus': {
-    borderColor: '#2563EB',
+    borderColor: disabled ? '#E5E7EB' : '#2563EB',
+    boxShadow: disabled ? 'none' : '0 0 0 3px rgba(37, 99, 235, 0.1)',
   },
   
   '&::placeholder': {
-    color: '#9CA3AF',
+    color: disabled ? '#D1D5DB' : '#9CA3AF',
+    fontStyle: disabled ? 'italic' : 'normal',
   },
 }));
 
@@ -374,6 +383,7 @@ const TimerPage: React.FC = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [summaryStyle, setSummaryStyle] = useState('concept');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [noteImpact, setNoteImpact] = useState(false);
   const [settings, setSettings] = useState<TimerSettings>({
     sessions: 3,
     focusMinutes: 25,
@@ -392,6 +402,15 @@ const TimerPage: React.FC = () => {
   // 진행률 계산
   const currentTime = minutes * 60 + seconds;
   const progress = ((totalTime - currentTime) / totalTime) * 100;
+
+  // 노트 임팩트 효과
+  useEffect(() => {
+    if (isRunning) {
+      setNoteImpact(true);
+      const timer = setTimeout(() => setNoteImpact(false), 600); // 0.6초 임팩트
+      return () => clearTimeout(timer);
+    }
+  }, [isRunning]);
 
   // 타이머 로직
   useEffect(() => {
@@ -644,9 +663,17 @@ const TimerPage: React.FC = () => {
       {/* 노트 텍스트 영역 */}
       <NotesTextArea
         expanded={true}
-        placeholder="이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+        disabled={!isRunning}
+        animate={noteImpact}
+        placeholder={
+          isRunning
+            ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+            : "타이머를 시작하면 입력할 수 있습니다"
+        }
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
+        aria-disabled={!isRunning}
+        aria-label={isRunning ? "확장된 집중 노트 입력" : "타이머 시작 후 사용 가능한 확장된 노트 입력"}
       />
 
       {/* 확장된 기능들 */}
@@ -826,114 +853,90 @@ const TimerPage: React.FC = () => {
         </Button>
       </ButtonContainer>
 
-      {!isRunning ? (
-        <>
-          <TaskInputSection>
-            <TaskInputLabel>
-              이번 세션에 집중할 일은 무엇인가요?
-            </TaskInputLabel>
-            
-            <Input
-              fullWidth
-              placeholder="e.g. Draft presentation report"
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              sx={{
-                backgroundColor: '#FFFFFF',
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  color: '#9CA3AF',
-                },
-              }}
-            />
-          </TaskInputSection>
+      <TaskInputSection>
+        <TaskInputLabel>
+          {isRunning ? "현재 집중 중인 작업" : "이번 세션에 집중할 일은 무엇인가요?"}
+        </TaskInputLabel>
+        
+        <Input
+          fullWidth
+          placeholder={isRunning 
+            ? "집중 중인 작업을 수정할 수 있습니다"
+            : "e.g. Draft presentation report"
+          }
+          value={taskName}
+          onChange={(e) => setTaskName(e.target.value)}
+          sx={{
+            backgroundColor: '#FFFFFF',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              fontSize: '16px',
+              color: '#9CA3AF',
+            },
+          }}
+        />
+      </TaskInputSection>
 
-          <NotesSection expanded={false}>
-            <NotesHeader>
-              <Box>
-                <NotesTitle>
-                  📝 집중 노트
-                </NotesTitle>
-                {taskName && (
-                  <Text 
-                    sx={{ 
-                      fontSize: '14px', 
-                      color: '#6B7280', 
-                      marginTop: '4px',
-                      fontWeight: 500,
-                    }}
-                  >
-                    현재 작업: {taskName}
-                  </Text>
-                )}
-              </Box>
-              <IconButton 
-                size="small" 
+      <NotesSection expanded={false}>
+        <NotesHeader>
+          <Box>
+            <NotesTitle>
+              📝 집중 노트
+            </NotesTitle>
+            {taskName && (
+              <Text 
                 sx={{ 
-                  color: '#6B7280',
-                  backgroundColor: '#F3F4F6',
-                  '&:hover': {
-                    backgroundColor: '#E5E7EB',
-                  },
+                  fontSize: '14px', 
+                  color: '#6B7280', 
+                  marginTop: '4px',
+                  fontWeight: 500,
                 }}
-                onClick={() => setNotesExpanded(true)}
               >
-                <ExpandIcon fontSize="small" />
-              </IconButton>
-            </NotesHeader>
-            
-            <NotesTextArea
-              expanded={false}
-              placeholder="이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </NotesSection>
-        </>
-      ) : (
-        <NotesSection expanded={false}>
-          <NotesHeader>
-            <Box>
-              <NotesTitle>
-                📝 집중 노트
-              </NotesTitle>
-              {taskName && (
-                <Text 
-                  sx={{ 
-                    fontSize: '14px', 
-                    color: '#6B7280', 
-                    marginTop: '4px',
-                    fontWeight: 500,
-                  }}
-                >
-                  현재 작업: {taskName}
-                </Text>
-              )}
-            </Box>
-            <IconButton 
-              size="small" 
-              sx={{ 
-                color: '#6B7280',
-                backgroundColor: '#F3F4F6',
-                '&:hover': {
-                  backgroundColor: '#E5E7EB',
-                },
-              }}
-              onClick={() => setNotesExpanded(true)}
-            >
-              <ExpandIcon fontSize="small" />
-            </IconButton>
-          </NotesHeader>
-          
-          <NotesTextArea
-            expanded={false}
-            placeholder="이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </NotesSection>
-      )}
+                현재 작업: {taskName}
+              </Text>
+            )}
+          </Box>
+          <IconButton 
+            size="small" 
+            sx={{ 
+              color: '#6B7280',
+              backgroundColor: '#F3F4F6',
+              '&:hover': {
+                backgroundColor: '#E5E7EB',
+              },
+            }}
+            onClick={() => setNotesExpanded(true)}
+          >
+            <ExpandIcon fontSize="small" />
+          </IconButton>
+        </NotesHeader>
+        
+        {/* <NotesTextArea
+          expanded={false}
+          placeholder={isRunning
+            ? "집중 중 떠오른 내용을 바로 기록해보세요..."
+            : "이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
+          }
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </NotesSection> */}
+
+             <NotesTextArea
+           expanded={false}
+           disabled={!isRunning}
+           animate={noteImpact}
+           placeholder={
+             isRunning
+               ? "이번 세션에서 떠오른 아이디어, 배운 내용을 기록해보세요..."
+               : "타이머를 시작하면 입력할 수 있습니다"
+           }
+           value={notes}
+           onChange={(e) => setNotes(e.target.value)}
+           aria-disabled={!isRunning}
+           aria-label={isRunning ? "집중 노트 입력" : "타이머 시작 후 사용 가능한 노트 입력"}
+         />
+      </NotesSection>
 
       {/* 설정 다이얼로그 */}
       <Modal
