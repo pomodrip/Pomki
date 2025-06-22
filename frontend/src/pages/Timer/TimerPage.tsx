@@ -6,6 +6,7 @@ import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
 const PageContainer = styled(Box)(() => ({
@@ -21,16 +22,16 @@ const PageContainer = styled(Box)(() => ({
   },
 }));
 
-// 페이지 제목 - design.md 타이포그래피 가이드
-const PageTitle = styled(Text)(() => ({
-      fontSize: '24px', // H2 크기
+// 페이지 제목 - theme 활용
+const PageTitle = styled(Text)(({ theme }) => ({
+  fontSize: '24px', // H2 크기
   fontWeight: 700, // Bold
-  color: '#1A1A1A', // Text Primary
+  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
   marginBottom: '48px', // Extra Large Spacing
   textAlign: 'center',
   
   '@media (min-width: 600px)': {
-          fontSize: '28px', // H1 크기 (태블릿 이상)
+    fontSize: '28px', // H1 크기 (태블릿 이상)
   },
 }));
 
@@ -42,10 +43,10 @@ const FocusTimeSection = styled(Box)(() => ({
   marginBottom: '32px',
 }));
 
-const FocusTimeLabel = styled(Text)(() => ({
+const FocusTimeLabel = styled(Text)(({ theme }) => ({
   fontSize: '20px', // H3 크기
   fontWeight: 600, // Semibold
-  color: '#1A1A1A', // Text Primary
+  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
   marginBottom: '8px', // Small Spacing
   textAlign: 'center',
 }));
@@ -59,17 +60,17 @@ const RunningHeader = styled(Box)(() => ({
   width: '100%',
 }));
 
-const SessionProgress = styled(Text)(() => ({
+const SessionProgress = styled(Text)(({ theme }) => ({
   fontSize: '18px',
   fontWeight: 600,
-  color: '#1A1A1A',
+  color: theme.palette.text.primary,
   marginBottom: '8px',
 }));
 
-const ElapsedTime = styled(Text)(() => ({
+const ElapsedTime = styled(Text)(({ theme }) => ({
   fontSize: '16px',
   fontWeight: 500,
-  color: '#2563EB', // Primary color
+  color: theme.palette.primary.main, // theme에서 가져온 Primary 색상
   marginBottom: '16px',
 }));
 
@@ -83,10 +84,10 @@ const ProgressBarContainer = styled(Box)(() => ({
   marginBottom: '32px',
 }));
 
-const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress }) => ({
+const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress, theme }) => ({
   width: `${progress}%`,
   height: '100%',
-  backgroundColor: '#2563EB',
+  backgroundColor: theme.palette.primary.main, // theme에서 가져온 Primary 색상
   transition: 'width 0.3s ease',
 }));
 
@@ -111,11 +112,11 @@ const TimerCircle = styled(Box)(() => ({
 // SVG 원형 프로그레스
 const CircularProgress = styled('svg')(() => ({
   position: 'absolute',
-  top: 0,
-  left: 0,
+  top: '50%',
+  left: '50%',
   width: '100%',
   height: '100%',
-      transform: 'rotate(-90deg)', // 12시 방향부터 시작
+  transform: 'translate(-50%, -50%) rotate(-90deg)', // 중앙 정렬 후 12시 방향부터 시작
 }));
 
 const ProgressCircle = styled('circle')<{ progress: number }>(({ progress }) => ({
@@ -131,13 +132,13 @@ const ProgressCircle = styled('circle')<{ progress: number }>(({ progress }) => 
   },
 }));
 
-// 타이머 시간 표시
-const TimerDisplay = styled(Text)(() => ({
-      fontSize: '48px', // 큰 디스플레이 크기
+// 타이머 시간 표시 - theme 활용
+const TimerDisplay = styled(Text)(({ theme }) => ({
+  fontSize: '48px', // 큰 디스플레이 크기
   fontWeight: 700, // Bold
-  color: '#1A1A1A', // Text Primary
+  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
   lineHeight: 1,
-      fontFamily: "'Pretendard', monospace", // 숫자용 폰트
+  // fontFamily는 theme에서 자동으로 적용됨 (KoddiUD 폰트)
   zIndex: 1,
   
   '@media (min-width: 600px)': {
@@ -553,8 +554,8 @@ const TimerPage: React.FC = () => {
     }
   };
 
-  // SVG ?�의 ?�레 계산 (반�?�?기�?)
-  const radius = 136; // 280px ?�의 반�?름에??stroke-width 고려
+  // SVG 원의 중심과 반지름 계산 (반지름 기준)
+  const radius = 130; // 280px 원의 반지름에서 stroke-width 고려하여 조정
   const circumference = 2 * Math.PI * radius;
 
   const settingsActions = (
@@ -733,7 +734,7 @@ const TimerPage: React.FC = () => {
 
       <TimerCircle>
         {isRunning && (
-          <CircularProgress width="280" height="280">
+          <CircularProgress width="280" height="280" viewBox="0 0 280 280">
             {/* 배경 원 */}
             <circle
               cx="140"
@@ -748,7 +749,7 @@ const TimerPage: React.FC = () => {
               cx="140"
               cy="140"
               r={radius}
-              stroke="#2563EB"
+              stroke="#2979FF" // theme의 primary.main 색상
               progress={progress}
               style={{
                 strokeDasharray: `${circumference}, ${circumference}`,
@@ -762,6 +763,9 @@ const TimerPage: React.FC = () => {
           <Box
             sx={{
               position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               width: '100%',
               height: '100%',
               border: '8px solid #E5E7EB',
