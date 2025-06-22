@@ -55,7 +55,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({
     if (isRunning && seconds > 0) {
       interval = setInterval(() => {
         setSeconds(prev => prev - 1);
-      }, 1000);
+      }, 1000) as unknown as number;
     } else if (seconds === 0) {
       setIsRunning(false);
     }

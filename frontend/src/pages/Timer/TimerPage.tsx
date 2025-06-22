@@ -429,7 +429,7 @@ const TimerPage: React.FC = () => {
           setMinutes(minutes - 1);
           setSeconds(59);
         }
-      }, 1000);
+      }, 1000) as unknown as number;
     } else if (minutes === 0 && seconds === 0 && isRunning) {
       setIsRunning(false);
       // 세션 완료 로직
