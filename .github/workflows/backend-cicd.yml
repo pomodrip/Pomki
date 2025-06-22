@@ -2,7 +2,12 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ "dev-be","be/ci-test" ]
+    branches: [ "dev-be","release","main" ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-cicd.yml'
+  pull_request:
+    branches: [ "dev-be","release","main" ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-cicd.yml'
@@ -14,6 +19,7 @@ env:
   S3_BUCKET_NAME: ${{ secrets.DEPLOY_BUCKET_NAME }}
   CODE_DEPLOY_APP_NAME: ${{ secrets.CODE_DEPLOY_APP_NAME }}
   CODE_DEPLOY_GROUP_NAME: ${{ secrets.CODE_DEPLOY_GROUP_NAME }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
   build-and-deploy:
@@ -115,7 +121,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_DEPLOY_KEY }}
         aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
-        aws-region: ap-northeast-2
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Create deployment package
       run: |
