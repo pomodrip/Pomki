@@ -30,14 +30,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.Duration;
 
-import static org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP;
+import static org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents.OFF;
 
 @Configuration
 @EnableConfigurationProperties({RedisProperties.class})
 @RequiredArgsConstructor
 @Slf4j
 @EnableCaching
-@EnableRedisRepositories(enableKeyspaceEvents = ON_STARTUP)
+@EnableRedisRepositories(enableKeyspaceEvents = OFF) //비활성화
 public class RedisConfig {
 
     private final RedisProperties redisProperties;
