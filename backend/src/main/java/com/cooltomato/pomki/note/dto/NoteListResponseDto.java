@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class NoteListResponseDto {
     private String noteId;
     private String noteTitle;
+    private Boolean aiEnhanced;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -18,6 +19,7 @@ public class NoteListResponseDto {
         return NoteListResponseDto.builder()
                 .noteId(note.getNoteId())
                 .noteTitle(note.getNoteTitle())
+                .aiEnhanced(note.getAiEnhanced())
                 .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .build();
