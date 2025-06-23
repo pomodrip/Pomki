@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.note.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,4 +15,9 @@ public class NoteUpdateRequestDto {
 
     @NotBlank(message = "노트 내용은 비워둘 수 없습니다.")
     private String noteContent;
+
+    @NotNull(message = "AI 향상 여부는 비워둘 수 없습니다.")
+    private Boolean aiEnhanced;
+    @NotBlank(message = "원본 내용은 비워둘 수 없습니다.")
+    private String originalContent;
 } 
