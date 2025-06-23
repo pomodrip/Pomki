@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { styled, alpha } from '@mui/material/styles';
+import React, { useState, useMemo, useEffect } from 'react';
+import { styled } from '@mui/material/styles';
 import {
   Container,
   Box,
@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
+  CardActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,7 +33,23 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { setFilters, toggleDeckBookmark, addDeck, updateDeck, deleteDeck } from '../../store/slices/studySlice';
+import { setFilters } from '../../store/slices/studySlice';
+import {
+  fetchDecks,
+  createDeck,
+  updateDeck,
+  deleteDeck,
+} from '../../store/slices/deckSlice';
+import type { CardDeck } from '../../types/card';
+
+// 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
+interface ClientSideDeckInfo {
+  isBookmarked: boolean;
+  tags: string[];
+}
+
+// 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입
+type EnrichedDeck = CardDeck & ClientSideDeckInfo;
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -56,7 +74,10 @@ const FilterBox = styled(Box)(({ theme }) => ({
 }));
 
 const DeckCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
   cursor: 'pointer',
   transition: 'all 0.2s',
   '&:hover': {
@@ -71,88 +92,83 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginTop: theme.spacing(1),
-}));
-
-const ActionButton = styled(Button)(({ theme }) => ({
-  minWidth: 'auto',
-  padding: theme.spacing(0.5, 1),
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.spacing(1),
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
-
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { decks, filters, deckBookmarks } = useAppSelector((state) => state.study);
-  
-  const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
-  const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+
+  // 🎯 Redux 상태 선택
+  const { decks, loading, error } = useAppSelector((state) => state.deck);
+  const { filters } = useAppSelector((state) => state.study);
+  const { user } = useAppSelector((state) => state.auth);
+
+  // 🎯 클라이언트 측 상태 (북마크, 태그)
+  const [clientSideInfo, setClientSideInfo] = useState<{ [deckId: string]: ClientSideDeckInfo }>({});
+
+  // 🎯 다이얼로그 상태
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckTags, setNewDeckTags] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingDeckId, setEditingDeckId] = useState<number | null>(null);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  
+  // 🎯 메뉴 상태
+  const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
+  const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
-  // 모든 태그 목록 추출
+  // 🎯 컴포넌트 마운트 시 덱 목록 로드
+  useEffect(() => {
+    // memberId가 1인 사용자로 가정하여 테스트
+    const memberIdToTest = user?.memberId ?? 1;
+    dispatch(fetchDecks(memberIdToTest));
+  }, [dispatch, user?.memberId]);
+
+  // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
+  useEffect(() => {
+    if (decks.length > 0) {
+      setClientSideInfo(prevInfo => {
+        const newInfo = { ...prevInfo };
+        decks.forEach(deck => {
+          if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
+            newInfo[deck.deckId] = {
+              isBookmarked: Math.random() > 0.5, // Mock 데이터
+              tags: [`#${deck.deckName.split(' ')[0]}`, '#임시태그'], // Mock 데이터
+            };
+          }
+        });
+        return newInfo;
+      });
+    }
+  }, [decks]);
+
+  // 🎯 필터링 및 UI 렌더링을 위한 데이터 합치기
+  const enrichedDecks: EnrichedDeck[] = useMemo(() => {
+    return decks.map(deck => ({
+      ...deck,
+      ...(clientSideInfo[deck.deckId] || { isBookmarked: false, tags: [] }),
+    }));
+  }, [decks, clientSideInfo]);
+  
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
-    decks.forEach((deck) => {
+    enrichedDecks.forEach((deck) => {
       deck.tags.forEach((tag: string) => tagSet.add(tag));
     });
     return Array.from(tagSet);
-  }, [decks]);
+  }, [enrichedDecks]);
 
-  // 필터링된 덱 목록 (검색어가 없을 때만 사용)
   const filteredDecks = useMemo(() => {
-    if (filters.searchQuery.trim()) return []; // 검색 중일 때는 덱 목록 숨김
-    
-    return decks.filter((deck) => {
+    return enrichedDecks.filter((deck) => {
       const matchesTags = filters.selectedTags.length === 0 || 
                          filters.selectedTags.some((tag: string) => deck.tags.includes(tag));
       
-      const matchesBookmark = !filters.showBookmarked || (deckBookmarks[deck.id] || false);
+      const matchesBookmark = !filters.showBookmarked || deck.isBookmarked;
 
-      return matchesTags && matchesBookmark;
-    });
-  }, [filters.searchQuery, filters.selectedTags, filters.showBookmarked, deckBookmarks, decks]);
+      const matchesSearch = filters.searchQuery.trim() === '' || 
+                            deck.deckName.toLowerCase().includes(filters.searchQuery.toLowerCase());
 
-  // 검색된 플래시카드 목록
-  const searchedCards = useMemo(() => {
-    if (!filters.searchQuery.trim()) return [];
-    
-    const cards: any[] = [];
-    decks.forEach((deck) => {
-      // 태그 및 북마크 필터링도 적용
-      const matchesTags = filters.selectedTags.length === 0 || 
-                         filters.selectedTags.some((tag: string) => deck.tags.includes(tag));
-      const matchesBookmark = !filters.showBookmarked || (deckBookmarks[deck.id] || false);
-      
-      if (matchesTags && matchesBookmark) {
-        deck.flashcards.forEach((card: any) => {
-          if (card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-              card.back.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
-            cards.push({
-              ...card,
-              deckId: deck.id,
-              deckTitle: deck.title,
-              deckTags: deck.tags
-            });
-          }
-        });
-      }
+      return matchesTags && matchesBookmark && matchesSearch;
     });
-    
-    return cards;
-  }, [filters.searchQuery, filters.selectedTags, filters.showBookmarked, deckBookmarks, decks]);
+  }, [filters, enrichedDecks]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilters({ searchQuery: event.target.value }));
@@ -171,433 +187,222 @@ const FlashcardDeckListPage: React.FC = () => {
     dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
   };
-
-  const handleDeckClick = (deckId: number) => {
+  
+  const handleDeckClick = (deckId: string) => {
     navigate(`/flashcards/${deckId}/cards`);
   };
 
-  const handleEditDeck = (deckId: number, event: React.MouseEvent) => {
+  const handleEditDeck = (deck: EnrichedDeck, event: React.MouseEvent) => {
     event.stopPropagation();
-    
-    // 수정할 덱 찾기
-    const deckToEdit = decks.find(deck => deck.id === deckId);
-    if (deckToEdit) {
-      setIsEditMode(true);
-      setEditingDeckId(deckId);
-      setNewDeckTitle(deckToEdit.title);
-      setNewDeckTags(deckToEdit.tags.join(', '));
-      setShowCreateDialog(true);
-    }
-  };
-
-  const handleDeleteDeck = async (deckId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    const confirmed = window.confirm('이 덱을 정말 삭제하시겠습니까?');
-
-    if (confirmed) {
-      dispatch(deleteDeck(deckId));
-    }
-  };
-
-  const handleCreateQuiz = (deckId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    navigate(`/flashcards/${deckId}/practice`);
-  };
-
-  const handleToggleBookmark = (deckId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    dispatch(toggleDeckBookmark(deckId));
-  };
-
-  const handleCreateDeck = () => {
-    setIsEditMode(false);
-    setEditingDeckId(null);
+    setIsEditMode(true);
+    setEditingDeckId(deck.deckId);
+    setNewDeckTitle(deck.deckName);
+    setNewDeckTags(deck.tags.join(', '));
     setShowCreateDialog(true);
+  };
+
+  const handleDeleteDeck = async (deck: EnrichedDeck, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
+      await dispatch(deleteDeck(deck.deckId));
+      // 클라이언트 측 정보도 삭제
+      setClientSideInfo(prev => {
+        const newInfo = { ...prev };
+        delete newInfo[deck.deckId];
+        return newInfo;
+      });
+    }
+  };
+  
+  const handleToggleBookmark = (deckId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setClientSideInfo(prev => ({
+      ...prev,
+      [deckId]: {
+        ...(prev[deckId] || { tags: [] }), // 기존 태그 정보 유지
+        isBookmarked: !prev[deckId]?.isBookmarked,
+      }
+    }));
   };
 
   const handleCreateDialogClose = () => {
     setShowCreateDialog(false);
-    setNewDeckTitle('');
-    setNewDeckTags('');
     setIsEditMode(false);
     setEditingDeckId(null);
+    setNewDeckTitle('');
+    setNewDeckTags('');
   };
 
-  const handleCreateDialogConfirm = () => {
-    if (newDeckTitle.trim()) {
-      const tags = newDeckTags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+  const handleCreateDialogConfirm = async () => {
+    if (!newDeckTitle.trim()) return;
 
-      if (isEditMode && editingDeckId !== null) {
-        // 수정 모드
-        const existingDeck = decks.find(deck => deck.id === editingDeckId);
-        if (existingDeck) {
-          const updatedDeck = {
-            ...existingDeck,
-            category: tags.length > 0 ? tags[0] : '기타',
-            title: newDeckTitle.trim(),
-            tags: tags,
-          };
-          dispatch(updateDeck(updatedDeck));
+    if (isEditMode && editingDeckId) {
+      // 덱 이름 수정
+      await dispatch(updateDeck({ deckId: editingDeckId, data: { deckName: newDeckTitle.trim() } }));
+      // 클라이언트 측 태그 수정
+      setClientSideInfo(prev => ({
+        ...prev,
+        [editingDeckId]: {
+          ...(prev[editingDeckId] || { isBookmarked: false }), // 기존 북마크 정보 유지
+          tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
         }
-      } else {
-        // 생성 모드
-        const newDeck = {
-          id: Date.now(),
-          category: tags.length > 0 ? tags[0] : '기타',
-          title: newDeckTitle.trim(),
-          tags: tags,
-          flashcards: [],
-          isBookmarked: false,
-        };
-        dispatch(addDeck(newDeck));
+      }));
+    } else {
+      // 덱 생성
+      const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
+      if (createDeck.fulfilled.match(result)) {
+        const newDeck = result.payload;
+        // 새 덱에 대한 클라이언트 측 정보 추가
+        setClientSideInfo(prev => ({
+          ...prev,
+          [newDeck.deckId]: {
+            isBookmarked: false,
+            tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
+          }
+        }));
       }
-
-      handleCreateDialogClose();
     }
+    handleCreateDialogClose();
   };
 
   return (
-    <StyledContainer maxWidth="md">
-      {/* 헤더 */}
+    <StyledContainer>
       <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
-          Flash Deck
-        </Typography>
-        <IconButton onClick={handleCreateDeck}>
+        <Typography variant="h4" component="h1">플래시카드 덱</Typography>
+        <Fab color="primary" aria-label="add" onClick={() => setShowCreateDialog(true)} size="medium">
           <AddIcon />
-        </IconButton>
+        </Fab>
       </HeaderBox>
-
-      {/* 검색창 */}
       <SearchBox>
         <TextField
           fullWidth
-          placeholder="Search flashcards"
+          variant="outlined"
+          placeholder="덱 이름으로 검색..."
           value={filters.searchQuery}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon />
               </InputAdornment>
             ),
           }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              borderRadius: 2,
-            },
-          }}
         />
       </SearchBox>
-
-      {/* 필터 버튼들 */}
       <FilterBox>
         <Button
-          variant="outlined"
+          startIcon={<FilterListIcon />}
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
-          endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
         >
-          Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
+          태그 필터 ({filters.selectedTags.length})
         </Button>
-        
+        <Menu
+          anchorEl={tagMenuAnchor}
+          open={Boolean(tagMenuAnchor)}
+          onClose={() => setTagMenuAnchor(null)}
+        >
+          {allTags.map(tag => (
+            <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
+              {tag}
+            </MenuItem>
+          ))}
+        </Menu>
         <Button
-          variant="outlined"
+          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
-          endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
         >
-          Bookmarked
+          북마크
         </Button>
-
-        {/* 선택된 태그들 표시 */}
-        {filters.selectedTags.map((tag: string) => (
-          <TagChip
-            key={tag}
-            label={tag}
-            onDelete={() => handleTagSelect(tag)}
-            color="primary"
-            variant="filled"
-          />
-        ))}
+        <Menu
+          anchorEl={bookmarkMenuAnchor}
+          open={Boolean(bookmarkMenuAnchor)}
+          onClose={() => setBookmarkMenuAnchor(null)}
+        >
+          <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
+          <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
+        </Menu>
       </FilterBox>
 
-      {/* 태그 메뉴 */}
-      <Menu
-        anchorEl={tagMenuAnchor}
-        open={Boolean(tagMenuAnchor)}
-        onClose={() => setTagMenuAnchor(null)}
-      >
-        {allTags.map((tag: string) => (
-          <MenuItem 
-            key={tag} 
-            onClick={() => handleTagSelect(tag)}
-            selected={filters.selectedTags.includes(tag)}
-          >
-            {tag}
-          </MenuItem>
-        ))}
-      </Menu>
+      {loading && <Box display="flex" justifyContent="center" my={5}><CircularProgress /></Box>}
 
-      {/* 북마크 메뉴 */}
-      <Menu
-        anchorEl={bookmarkMenuAnchor}
-        open={Boolean(bookmarkMenuAnchor)}
-        onClose={() => setBookmarkMenuAnchor(null)}
-      >
-        <MenuItem onClick={() => handleBookmarkFilter(false)}>
-          모든 덱
-        </MenuItem>
-        <MenuItem onClick={() => handleBookmarkFilter(true)}>
-          북마크된 덱만
-        </MenuItem>
-      </Menu>
-
-      {/* 덱 목록 (검색어가 없을 때) */}
-      {!filters.searchQuery.trim() && filteredDecks.map((deck) => (
-        <DeckCard key={deck.id} onClick={() => handleDeckClick(deck.id)}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  flexGrow: 1, 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis',
-                  minWidth: 0,
-                }}
-              >
-                {deck.title}
-              </Typography>
-              <IconButton onClick={(e) => handleToggleBookmark(deck.id, e)} size="small" sx={{ flexShrink: 0 }}>
-                {deckBookmarks[deck.id] || false ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
-              </IconButton>
-            </Box>
-
-            <Box sx={{ mb: 1.5 }}>
-              {deck.tags.slice(0, 3).map((tag: string) => (
-                <TagChip
-                  key={tag}
-                  label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-              {deck.tags.length > 3 && (
-                <TagChip
-                  label={`+${deck.tags.length - 3}`}
-                  size="small"
-                  color="default"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {deck.flashcards.length} cards
-            </Typography>
-
-            {/* 액션 버튼들 */}
-            <ActionBox>
-              <ActionButton
-                onClick={(e) => handleEditDeck(deck.id, e)}
-                startIcon={<EditIcon fontSize="small" />}
-              >
-                수정
-              </ActionButton>
-              <ActionButton
-                onClick={(e) => handleDeleteDeck(deck.id, e)}
-                startIcon={<DeleteIcon fontSize="small" />}
-              >
-                삭제
-              </ActionButton>
-              <ActionButton
-                onClick={(e) => handleCreateQuiz(deck.id, e)}
-                startIcon={<QuizIcon fontSize="small" />}
-              >
-                학습하기
-              </ActionButton>
-            </ActionBox>
-          </CardContent>
-        </DeckCard>
-      ))}
-
-      {/* 검색된 플래시카드 목록 */}
-      {filters.searchQuery.trim() && searchedCards.map((card) => (
-        <DeckCard key={`${card.deckId}-${card.id}`} onClick={() => handleDeckClick(card.deckId)}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  flexGrow: 1, 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis',
-                  minWidth: 0,
-                }}
-              >
-                {card.front}
-              </Typography>
-              <IconButton onClick={(e) => handleToggleBookmark(card.deckId, e)} size="small" sx={{ flexShrink: 0 }}>
-                {deckBookmarks[card.deckId] || false ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
-              </IconButton>
-            </Box>
-
-            <Box sx={{ mb: 1.5 }}>
-              {card.deckTags.slice(0, 3).map((tag: string) => (
-                <TagChip
-                  key={tag}
-                  label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-              {card.deckTags.length > 3 && (
-                <TagChip
-                  label={`+${card.deckTags.length - 3}`}
-                  size="small"
-                  color="default"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              from: {card.deckTitle}
-            </Typography>
-          </CardContent>
-        </DeckCard>
-      ))}
-
-      {/* 빈 상태 */}
-      {!filters.searchQuery.trim() && filteredDecks.length === 0 && (
+      {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
+      
+      {!loading && !error && (
         <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
-          py={8}
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(2, 1fr)', 
+              md: 'repeat(3, 1fr)' 
+            }, 
+            gap: 2 
+          }}
         >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            플래시카드 덱이 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            첫 번째 덱을 만들어보세요!
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateDeck}
-          >
-            덱 만들기
-          </Button>
+          {filteredDecks.map((deck) => (
+            <DeckCard key={deck.deckId} onClick={() => handleDeckClick(deck.deckId)}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
+                  <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
+                    {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  </IconButton>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  카드 {deck.cardCnt}개
+                </Typography>
+                <Box mt={1.5} sx={{ minHeight: 24 }}>
+                  {deck.tags.slice(0, 3).map(tag => (
+                    <TagChip key={tag} label={tag} size="small" />
+                  ))}
+                  {deck.tags.length > 3 && (
+                    <TagChip label={`+${deck.tags.length - 3}`} size="small" />
+                  )}
+                </Box>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'flex-end' }}>
+                <Button size="small" startIcon={<QuizIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+                  연습
+                </Button>
+                <Button size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
+                  수정
+                </Button>
+                <Button size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
+                  삭제
+                </Button>
+              </CardActions>
+            </DeckCard>
+          ))}
         </Box>
       )}
-
-      {/* 검색 결과 없음 */}
-      {filters.searchQuery.trim() && searchedCards.length === 0 && (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
-          py={8}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            검색 결과가 없습니다
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            다른 키워드로 검색해보세요.
-          </Typography>
-        </Box>
-      )}
-
-      {/* 플로팅 액션 버튼 */}
-      <Fab
-        color="primary"
-        aria-label="add deck"
-        onClick={handleCreateDeck}
-        sx={{
-          position: 'fixed',
-          bottom: 80,
-          right: 16,
-        }}
-      >
-        <AddIcon />
-      </Fab>
 
       {/* 덱 생성/수정 다이얼로그 */}
-      <Dialog
-        open={showCreateDialog}
-        onClose={handleCreateDialogClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {isEditMode ? "덱 수정" : "새 덱 생성"}
-        </DialogTitle>
+      <Dialog open={showCreateDialog} onClose={handleCreateDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>{isEditMode ? '덱 수정' : '새 덱 만들기'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              덱 제목
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="덱 제목을 입력하세요"
-              value={newDeckTitle}
-              onChange={(e) => setNewDeckTitle(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              태그 (쉼표로 구분)
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="예: React, JavaScript, Frontend"
-              value={newDeckTags}
-              onChange={(e) => setNewDeckTags(e.target.value)}
-              sx={{ mb: 1 }}
-            />
-            
-            <Typography variant="caption" color="text.secondary">
-              태그는 쉼표(,)로 구분하여 입력하세요
-            </Typography>
-          </Box>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="덱 이름"
+            fullWidth
+            variant="outlined"
+            value={newDeckTitle}
+            onChange={(e) => setNewDeckTitle(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="태그 (쉼표로 구분)"
+            fullWidth
+            variant="outlined"
+            value={newDeckTags}
+            onChange={(e) => setNewDeckTags(e.target.value)}
+            placeholder="예: #React, #자바스크립트"
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCreateDialogClose} variant="outlined">
-            취소
-          </Button>
-          <Button 
-            onClick={handleCreateDialogConfirm} 
-            variant="contained" 
-            disabled={!newDeckTitle.trim()}
-          >
-            {isEditMode ? "수정" : "생성"}
+          <Button onClick={handleCreateDialogClose}>취소</Button>
+          <Button onClick={handleCreateDialogConfirm} variant="contained" disabled={!newDeckTitle.trim()}>
+            {isEditMode ? '수정' : '생성'}
           </Button>
         </DialogActions>
       </Dialog>
