@@ -368,7 +368,7 @@ const FlashcardDeckListPage: React.FC = () => {
           모든 덱
         </MenuItem>
         <MenuItem onClick={() => handleBookmarkFilter(true)}>
-          북마크된 덱만
+          북마크된 덱만 
         </MenuItem>
       </Menu>
 
