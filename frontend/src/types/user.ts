@@ -20,7 +20,18 @@ export interface UpdateMemberRequest {
   currentEmail: string;
   nickname: string;
   currentPassword: string;
-  emailChanger: boolean;
+  newPassword?: string;
+  emailChanged: boolean;
+}
+
+// 멤버 프로필 업데이트 응답
+export interface UpdateMemberResponse {
+  memberId: number;
+  memberEmail: string;
+  currentEmail: string;
+  memberNickname: string;
+  updatedAt: string;
+  socialLogin: boolean;
 }
 
 // 이메일 변경 요청

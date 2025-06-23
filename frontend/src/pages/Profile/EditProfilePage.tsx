@@ -6,6 +6,10 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { useResponsive } from '../../hooks/useResponsive';
 import { RootState, AppDispatch } from '../../store/store';
+import { updateMember } from '../../api/userApi';
+import { updateUser } from '../../store/slices/authSlice';
+import { showSnackbar } from '../../store/slices/snackbarSlice';
+import type { UpdateMemberRequest } from '../../types/user';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -53,13 +57,82 @@ const EditProfilePage: React.FC = () => {
   const handleUpdateProfile = async () => {
     setIsLoading(true);
     try {
-      // TODO: API 호출로 프로필 업데이트 로직 구현
-      console.log('프로필 업데이트:', formData);
+      // 유효성 검사
+      if (!formData.nickname.trim()) {
+        dispatch(showSnackbar({
+          message: '닉네임을 입력해주세요.',
+          severity: 'error'
+        }));
+        setIsLoading(false);
+        return;
+      }
+
+      if (!formData.email.trim()) {
+        dispatch(showSnackbar({
+          message: '이메일을 입력해주세요.',
+          severity: 'error'
+        }));
+        setIsLoading(false);
+        return;
+      }
+
+      if (!formData.currentPassword.trim()) {
+        dispatch(showSnackbar({
+          message: '현재 비밀번호를 입력해주세요.',
+          severity: 'error'
+        }));
+        setIsLoading(false);
+        return;
+      }
+
+      // 새 비밀번호가 있는 경우 확인 비밀번호 체크
+      if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+        dispatch(showSnackbar({
+          message: '새 비밀번호가 일치하지 않습니다.',
+          severity: 'error'
+        }));
+        setIsLoading(false);
+        return;
+      }
+
+      // 이메일 변경 여부 확인
+      const emailChanged = user?.email !== formData.email;
+
+      // API 요청 데이터 구성
+      const updateData: UpdateMemberRequest = {
+        currentEmail: user?.email || '',
+        nickname: formData.nickname,
+        currentPassword: formData.currentPassword,
+        emailChanged,
+        ...(formData.newPassword && { newPassword: formData.newPassword })
+      };
+
+      // API 호출
+      const response = await updateMember(updateData);
+      
+      // Redux 스토어 업데이트
+      dispatch(updateUser({
+        nickname: response.memberNickname,
+        email: response.memberEmail
+      }));
+
+      // 성공 메시지
+      dispatch(showSnackbar({
+        message: '프로필이 성공적으로 업데이트되었습니다.',
+        severity: 'success'
+      }));
       
       // 성공 시 프로필 페이지로 이동
       navigate('/profile');
-    } catch (error) {
+    } catch (error: any) {
       console.error('프로필 업데이트 실패:', error);
+      
+      // 에러 메시지 표시
+      const errorMessage = error.response?.data?.message || '프로필 업데이트에 실패했습니다.';
+      dispatch(showSnackbar({
+        message: errorMessage,
+        severity: 'error'
+      }));
     } finally {
       setIsLoading(false);
     }
