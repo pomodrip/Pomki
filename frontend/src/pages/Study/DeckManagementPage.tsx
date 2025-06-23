@@ -70,7 +70,7 @@ const DeckManagementPage: React.FC = () => {
   // 스낵바 상태
   const [showSnackbar, setShowSnackbar] = useState(false);
 
-  // 🎯 컴포넌트 마운트 시 덱 목록 로드
+  // 🎯 컴포넌트 마운트 시 덱 목록 로드 
   useEffect(() => {
     if (user?.memberId) {
       dispatch(fetchDecks());
