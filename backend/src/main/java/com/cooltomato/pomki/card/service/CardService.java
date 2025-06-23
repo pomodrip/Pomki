@@ -1,7 +1,6 @@
 package com.cooltomato.pomki.card.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
@@ -37,7 +36,6 @@ public class CardService {
                                     .content(request.getContent())
                                     .answer(request.getAnswer())
                                     .isDeleted(false)
-                                    .createdAt(LocalDateTime.now())
                                     .build();
         cardRepository.save(entity);
         log.info("debug >>> CardService createCardService 카드 생성 성공");

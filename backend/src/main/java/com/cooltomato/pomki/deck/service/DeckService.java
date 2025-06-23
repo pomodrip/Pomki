@@ -11,7 +11,6 @@ import com.cooltomato.pomki.card.repository.CardRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,8 +38,6 @@ public class DeckService {
             Deck deck = Deck.builder()
                                         .memberId(memberId)
                                         .deckName(request.getDeckName())
-                                        .createdAt(LocalDateTime.now())
-                                        .updatedAt(LocalDateTime.now())
                                         .isDeleted(false)
                                         .cardCnt(0L)
                                         .build();
@@ -109,7 +106,6 @@ public class DeckService {
             Deck deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId)
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
             deck.setDeckName(request.getDeckName());
-            deck.setUpdatedAt(LocalDateTime.now());
             Deck entity = deckRepository.save(deck);
             return DeckResponseDto.builder()
                     .deckId(entity.getDeckId())
@@ -129,7 +125,6 @@ public class DeckService {
             Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
  
             deck.get().setIsDeleted(true);
-            deck.get().setUpdatedAt(LocalDateTime.now());
             deckRepository.save(deck.get());
             log.info("debug >>> 덱 삭제 성공, deckId:" + deckId);
             log.info("debug >>> 덱에 소속된 카드 전체 삭제");
