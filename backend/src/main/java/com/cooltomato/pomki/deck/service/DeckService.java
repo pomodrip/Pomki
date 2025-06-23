@@ -28,7 +28,7 @@ public class DeckService {
         private final CardRepository cardRepository;
     
         @Transactional
-        public DeckResponseDto createDeck(Long memberId, DeckRequestDto request) {
+        public DeckResponseDto createOneDeckService(Long memberId, DeckRequestDto request) {
             // 동일한 이름의 덱 존재할 때 예외처리
             log.info("debug >>> DeckService createDeck");
             if (deckRepository.existsByMemberIdAndDeckNameAndIsDeletedFalse(memberId, request.getDeckName())) {
@@ -57,7 +57,7 @@ public class DeckService {
 
         
         // 덱 전체조회
-        public List<DeckResponseDto> readAllDecks(@AuthenticationPrincipal PrincipalMember principal) {
+        public List<DeckResponseDto> readAllDecksService(@AuthenticationPrincipal PrincipalMember principal) {
             log.info("debug >>> DeckService searchAllDecks");
             List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(principal.getMemberId());
 
@@ -79,7 +79,7 @@ public class DeckService {
 
         // 덱 안 카드 전체 조회
         // 삭제되지 않은 덱에 소속된 삭제되지 않은 카드만 조회되어야 함
-        public List<CardResponseDto> readAllCards(PrincipalMember principal, String deckId) {
+        public List<CardResponseDto> readAllCardsService(PrincipalMember principal, String deckId) {
             log.info("debug >>> DeckService readAllCards");
             // 덱 생존/삭제 여부 조회
             Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
@@ -103,8 +103,8 @@ public class DeckService {
                     .build()).toList();
         }
 
-
-        public DeckResponseDto updateDeck(PrincipalMember principal, String deckId, DeckRequestDto request) {
+        @Transactional
+        public DeckResponseDto updateOneDeckSerivce(PrincipalMember principal, String deckId, DeckRequestDto request) {
             log.info("debug >>> DeckService updateDeck");
             Deck deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId)
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
@@ -124,7 +124,7 @@ public class DeckService {
 
 
         @Transactional
-        public void deleteDeck(PrincipalMember principal, String deckId) {
+        public void deleteOneDeckService(PrincipalMember principal, String deckId) {
             log.info("debug >>> DeckService deleteDeck");
             Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
  

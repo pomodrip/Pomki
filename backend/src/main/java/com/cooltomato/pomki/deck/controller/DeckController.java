@@ -32,9 +32,9 @@ public class DeckController {
     // 덱 생성
     // 0620 추가 ) 이제 더미데이터 멤버 777말고 로그인 정보에 따라 member_id별로 덱 생성 가능하도록 수정
     @PostMapping
-    public ResponseEntity<DeckResponseDto> createDeck(@AuthenticationPrincipal PrincipalMember principal, @RequestBody DeckRequestDto request) {
+    public ResponseEntity<DeckResponseDto> createOneDeck(@AuthenticationPrincipal PrincipalMember principal, @RequestBody DeckRequestDto request) {
         log.info("debug >>> DeckController createDeck");
-        DeckResponseDto response = deckService.createDeck(principal.getMemberId(), request);
+        DeckResponseDto response = deckService.createOneDeckService(principal.getMemberId(), request);
         return ResponseEntity.ok(response);
     }
 
@@ -42,7 +42,7 @@ public class DeckController {
     @GetMapping("/members/my-decks")
     public ResponseEntity<List<DeckResponseDto>> readDecksByMember(@AuthenticationPrincipal PrincipalMember principal) {
         log.info("debug >>> DeckController readDecksByMember");
-        List<DeckResponseDto> response = deckService.readAllDecks(principal);
+        List<DeckResponseDto> response = deckService.readAllDecksService(principal);
         if (response.isEmpty()) {
             log.info("No decks found for member: {}", principal.getMemberId());
         }
@@ -53,15 +53,15 @@ public class DeckController {
     @GetMapping("/{deckId}/cards")
     public ResponseEntity<List<CardResponseDto>>  readCardsInAdeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
         log.info("debug >>> DeckController readCardsInAdeck");
-        List<CardResponseDto> cardsInDeck = deckService.readAllCards(principal, deckId);
+        List<CardResponseDto> cardsInDeck = deckService.readAllCardsService(principal, deckId);
         return ResponseEntity.ok(cardsInDeck);
     }
 
     // 덱 정보 수정
     @PutMapping("/{deckId}")
-    public ResponseEntity<DeckResponseDto> updateDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
+    public ResponseEntity<DeckResponseDto> updateOneDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
         log.info("Updating deck: {}", deckId);
-        DeckResponseDto response = deckService.updateDeck(principal, deckId, request);
+        DeckResponseDto response = deckService.updateOneDeckSerivce(principal, deckId, request);
         return ResponseEntity.ok(response);
     }
 
@@ -69,7 +69,7 @@ public class DeckController {
     @DeleteMapping("/{deckId}")
     public ResponseEntity<Void> deleteDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
         log.info("Deleting deck: {}", deckId);
-        deckService.deleteDeck(principal, deckId);
+        deckService.deleteOneDeckService(principal, deckId);
         return ResponseEntity.noContent().build();
     }
     

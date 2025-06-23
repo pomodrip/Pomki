@@ -32,33 +32,33 @@ public class CardController {
 
     // 카드 한 장 생성
     @PostMapping
-    public ResponseEntity<CardResponseDto> createCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("deckId") String deckId, @RequestBody CardRequestDto request) {
+    public ResponseEntity<CardResponseDto> createOneCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("deckId") String deckId, @RequestBody CardRequestDto request) {
         System.out.println("debug >>> CardCtrl createCard");
-        CardResponseDto createdCard = service.createCardService(principal, deckId, request);
+        CardResponseDto createdCard = service.createOneCardService(principal, deckId, request);
         return ResponseEntity.ok(createdCard);
     }
 
 
     // 카드 한 장 내용 전체 조회
     @GetMapping("/{cardId}")
-    public ResponseEntity<CardResponseDto> readAsingleCard(@PathVariable("cardId") Long cardId) {
+    public ResponseEntity<CardResponseDto> readOneCard(@PathVariable("cardId") Long cardId) {
         log.info("debug >>> CardCtrl readAsingleCard 카드 한 장 내용 조회");
-        CardResponseDto aCard = service.readAcardService(cardId);
+        CardResponseDto aCard = service.readOnecardService(cardId);
         return ResponseEntity.ok(aCard);
     }
 
     // 카드 한 장 내용 수정
     @PutMapping("/{cardId}")
-    public ResponseEntity<CardResponseDto> updateAsingleCard(
+    public ResponseEntity<CardResponseDto> updateOneCard(
         @PathVariable("cardId") Long cardId, @RequestBody CardRequestDto request) {
-        CardResponseDto aCard = service.updateAcardService(cardId, request);
+        CardResponseDto aCard = service.updateOneCardService(cardId, request);
         return ResponseEntity.ok(aCard);
     }
     
     // 카드 한 장 삭제
     @DeleteMapping("/{cardId}")
-    public ResponseEntity<Void> deleteAsingleCard(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("cardId") Long cardId) {
-        service.deleteAcardService(principal, cardId);
+    public ResponseEntity<Void> deleteOneCard(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("cardId") Long cardId) {
+        service.deleteOnecardService(principal, cardId);
         return ResponseEntity.noContent().build() ;
     }
     

@@ -28,7 +28,7 @@ public class CardService {
     private final DeckRepository deckRepository;
     
     @Transactional
-    public CardResponseDto createCardService(PrincipalMember principal, String deckId, CardRequestDto request) {
+    public CardResponseDto createOneCardService(PrincipalMember principal, String deckId, CardRequestDto request) {
         log.info("debug >>> CardService createCardService 카드 한 장 생성");
         Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
             
@@ -63,7 +63,7 @@ public class CardService {
 
     // 카드 한 장 조회
     @Transactional(readOnly = true)
-    public CardResponseDto readAcardService(Long cardId) {
+    public CardResponseDto readOnecardService(Long cardId) {
         log.info("debug >>> CardService readAllCardsService");
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId);
         if (aCardOp.isPresent()) {
@@ -86,7 +86,8 @@ public class CardService {
 
     
     // 카드 한 장 수정
-    public CardResponseDto updateAcardService(Long cardId, CardRequestDto request) {
+    @Transactional
+    public CardResponseDto updateOneCardService(Long cardId, CardRequestDto request) {
         log.info("debug >>> CardService updateAcardService 카드 한 장 내용 수정");
         log.info("debug >>> cardId: " + cardId);
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId) ;
@@ -114,7 +115,8 @@ public class CardService {
         }
     }
 
-    public CardResponseDto deleteAcardService(PrincipalMember principal, Long cardId) {
+    @Transactional
+    public CardResponseDto deleteOnecardService(PrincipalMember principal, Long cardId) {
         log.info("debug >>> CardService deleteAcardService 카드 한 장 삭제");
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId) ;
 
