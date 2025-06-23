@@ -1,9 +1,7 @@
 package com.cooltomato.pomki.deck.controller;
 
-import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.deck.dto.DeckRequestDto;
 import com.cooltomato.pomki.deck.dto.DeckResponseDto;
-import com.cooltomato.pomki.deck.entity.Deck;
 import com.cooltomato.pomki.deck.service.DeckService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +11,6 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -42,37 +39,37 @@ public class DeckController {
     }
 
     // 특정 멤버의 모든 덱 조회
-    @GetMapping("/members/{memberId}")
-    public ResponseEntity<List<DeckResponseDto>> readDecksByMember(@PathVariable("memberId") Long memberId) {
-        log.info("Fetching all decks for member: {}", memberId);
-        List<DeckResponseDto> response = deckService.readAllDecks(memberId);
+    @GetMapping("/members/my-decks")
+    public ResponseEntity<List<DeckResponseDto>> readDecksByMember(@AuthenticationPrincipal PrincipalMember principal) {
+        log.info("debug >>> DeckController readDecksByMember");
+        List<DeckResponseDto> response = deckService.readAllDecks(principal);
         if (response.isEmpty()) {
-            log.info("No decks found for member: {}", memberId);
+            log.info("No decks found for member: {}", principal.getMemberId());
         }
         return ResponseEntity.ok(response);
     }
     
     // 덱 내의 모든 카드 조회
     @GetMapping("/{deckId}/cards")
-    public ResponseEntity<List<CardResponseDto>>  readCardsInAdeck(@PathVariable("deckId") String deckId) {
+    public ResponseEntity<List<CardResponseDto>>  readCardsInAdeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
         log.info("debug >>> DeckController readCardsInAdeck");
-        List<CardResponseDto> cardsInDeck = deckService.readAllCards(deckId);
+        List<CardResponseDto> cardsInDeck = deckService.readAllCards(principal, deckId);
         return ResponseEntity.ok(cardsInDeck);
     }
 
     // 덱 정보 수정
     @PutMapping("/{deckId}")
-    public ResponseEntity<DeckResponseDto> updateDeck(@PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
+    public ResponseEntity<DeckResponseDto> updateDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
         log.info("Updating deck: {}", deckId);
-        DeckResponseDto response = deckService.updateDeck(deckId, request);
+        DeckResponseDto response = deckService.updateDeck(principal, deckId, request);
         return ResponseEntity.ok(response);
     }
 
     // 덱 삭제 (덱 내의 모든 카드도 함께 삭제)
     @DeleteMapping("/{deckId}")
-    public ResponseEntity<Void> deleteDeck(@PathVariable("deckId") String deckId) {
+    public ResponseEntity<Void> deleteDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
         log.info("Deleting deck: {}", deckId);
-        deckService.deleteDeck(deckId);
+        deckService.deleteDeck(principal, deckId);
         return ResponseEntity.noContent().build();
     }
     

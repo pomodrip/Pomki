@@ -1,17 +1,17 @@
 package com.cooltomato.pomki.card.controller;
 
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.service.CardService;
 
-import jakarta.annotation.Generated;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,23 +32,12 @@ public class CardController {
 
     // 카드 한 장 생성
     @PostMapping
-    public ResponseEntity<CardResponseDto> createCard(@RequestParam("deckId") String deckId, @RequestBody CardRequestDto request) {
+    public ResponseEntity<CardResponseDto> createCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("deckId") String deckId, @RequestBody CardRequestDto request) {
         System.out.println("debug >>> CardCtrl createCard");
-        CardResponseDto createdCard = service.createCardService(deckId, request);
+        CardResponseDto createdCard = service.createCardService(principal, deckId, request);
         return ResponseEntity.ok(createdCard);
     }
 
-    /*
-
-    // 생성된 카드 전체 조회
-    @GetMapping
-    public ResponseEntity<CardResponseDto> readAllcard(@RequestParam Long memberId) {
-        log.info("debug >>> CardCtrl readAllCards 모든 카드 조회");
-        service.readAllcardsService(memberId);
-        return null;
-    }
-
-    */
 
     // 카드 한 장 내용 전체 조회
     @GetMapping("/{cardId}")
@@ -68,8 +57,8 @@ public class CardController {
     
     // 카드 한 장 삭제
     @DeleteMapping("/{cardId}")
-    public ResponseEntity<Void> deleteAsingleCard(@PathVariable("cardId") Long cardId) {
-        service.deleteAcardService(cardId);
+    public ResponseEntity<Void> deleteAsingleCard(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("cardId") Long cardId) {
+        service.deleteAcardService(principal, cardId);
         return ResponseEntity.noContent().build() ;
     }
     

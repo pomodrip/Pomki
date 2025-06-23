@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
@@ -27,10 +28,9 @@ public class CardService {
     private final DeckRepository deckRepository;
     
     @Transactional
-    public CardResponseDto createCardService(String deckId, CardRequestDto request) {
+    public CardResponseDto createCardService(PrincipalMember principal, String deckId, CardRequestDto request) {
         log.info("debug >>> CardService createCardService 카드 한 장 생성");
-        
-        Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
+        Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
             
         Card entity = Card.builder()
                                     .deck(deck.get())
@@ -44,8 +44,7 @@ public class CardService {
 
         deck.get().setCardCnt(deck.get().getCardCnt() + 1);
         deck.get().setUpdatedAt(LocalDateTime.now());
-        // 덱에 카드 한 장 추가하는 것도 업데이트인가?
-        // 성능 부분에서 토론하기
+        
 
         deckRepository.save(deck.get());
         log.info("debug >>> CardService createCardService 덱별 카드 카운트 업데이트 성공");
@@ -115,7 +114,7 @@ public class CardService {
         }
     }
 
-    public CardResponseDto deleteAcardService(Long cardId) {
+    public CardResponseDto deleteAcardService(PrincipalMember principal, Long cardId) {
         log.info("debug >>> CardService deleteAcardService 카드 한 장 삭제");
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId) ;
 
@@ -127,7 +126,7 @@ public class CardService {
             log.info("debug >>> CardService deleteAcardService 카드 삭제 성공");
 
             // 덱 카드 개수 감소
-            deckRepository.findByDeckIdAndIsDeletedFalse(aCardOp.get().getDeck().getDeckId())
+            deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), aCardOp.get().getDeck().getDeckId())
                 .ifPresent(deck -> {
                     deck.setCardCnt(deck.getCardCnt() - 1);
                     deck.setUpdatedAt(LocalDateTime.now());

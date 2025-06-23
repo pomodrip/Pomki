@@ -1,5 +1,6 @@
 package com.cooltomato.pomki.deck.service;
 
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.deck.dto.DeckRequestDto;
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Service
 @RequiredArgsConstructor
@@ -55,9 +57,9 @@ public class DeckService {
 
         
         // 덱 전체조회
-        public List<DeckResponseDto> readAllDecks(Long memberId) {
+        public List<DeckResponseDto> readAllDecks(@AuthenticationPrincipal PrincipalMember principal) {
             log.info("debug >>> DeckService searchAllDecks");
-            List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(memberId);
+            List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(principal.getMemberId());
 
             if (decks.isEmpty()) {
                 throw new IllegalArgumentException("멤버의 덱이 존재하지 않습니다.");
@@ -77,10 +79,10 @@ public class DeckService {
 
         // 덱 안 카드 전체 조회
         // 삭제되지 않은 덱에 소속된 삭제되지 않은 카드만 조회되어야 함
-        public List<CardResponseDto> readAllCards(String deckId) {
+        public List<CardResponseDto> readAllCards(PrincipalMember principal, String deckId) {
             log.info("debug >>> DeckService readAllCards");
             // 덱 생존/삭제 여부 조회
-            Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
+            Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
             if (deck.get().getIsDeleted()) {
                 throw new IllegalArgumentException("삭제된 덱입니다.");
             }
@@ -102,9 +104,9 @@ public class DeckService {
         }
 
 
-        public DeckResponseDto updateDeck(String deckId, DeckRequestDto request) {
+        public DeckResponseDto updateDeck(PrincipalMember principal, String deckId, DeckRequestDto request) {
             log.info("debug >>> DeckService updateDeck");
-            Deck deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId)
+            Deck deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId)
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
             deck.setDeckName(request.getDeckName());
             deck.setUpdatedAt(LocalDateTime.now());
@@ -122,14 +124,10 @@ public class DeckService {
 
 
         @Transactional
-        public void deleteDeck(String deckId) {
+        public void deleteDeck(PrincipalMember principal, String deckId) {
             log.info("debug >>> DeckService deleteDeck");
-            Optional<Deck> deck = deckRepository.findByDeckIdAndIsDeletedFalse(deckId) ;
+            Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
  
-            /*
-             2025-06-20T12:18:04.266+09:00  WARN 18664 --- [nio-8088-exec-2] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [java.util.NoSuchElementException: No value present]
-            옵셔널이 비어있을 때 자동으로 예외처리
-             */
             deck.get().setIsDeleted(true);
             deck.get().setUpdatedAt(LocalDateTime.now());
             deckRepository.save(deck.get());
