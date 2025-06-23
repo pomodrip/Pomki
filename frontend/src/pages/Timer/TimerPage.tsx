@@ -14,9 +14,8 @@ const PageContainer = styled(Box)(() => ({
   flexDirection: 'column',
   alignItems: 'center',
   padding: '32px 24px', // Large Spacing
-      minHeight: 'calc(100vh - 128px)', // 헤더/푸터 제외
-  backgroundColor: '#F8F9FA', // Background Secondary
-  
+  minHeight: 'calc(100vh - 128px)', // 헤더/푸터 제외
+
   '@media (min-width: 600px)': {
     padding: '48px 32px',
   },
@@ -100,7 +99,6 @@ const TimerCircle = styled(Box)(() => ({
   alignItems: 'center',
   justifyContent: 'center',
   marginBottom: '32px', // Large Spacing
-  backgroundColor: '#FFFFFF', // Background Primary
   position: 'relative',
   
   '@media (min-width: 600px)': {
