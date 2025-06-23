@@ -59,7 +59,7 @@ const LoginPage = () => {
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { status, error: loginError } = useSelector((state: RootState) => state.auth);
@@ -129,17 +129,17 @@ const LoginPage = () => {
   const handleLoginClick = async () => {
     const emailValidationError = getEmailValidationMessage(id);
     const passwordValidationError = getPasswordValidationMessage(password);
-    
+
     setEmailError(emailValidationError);
     setPasswordError(passwordValidationError);
-    
+
     if (!emailValidationError && !passwordValidationError) {
       try {
         const resultAction = await dispatch(loginUser({ email: id, password }));
         unwrapResult(resultAction);
-        
+
         navigate('/dashboard');
-        
+
       } catch (err: any) {
         // unwrapResult가 에러를 throw하므로 여기서 별도 처리가 필요 없습니다.
         // 에러 메시지는 authSlice의 state.error에서 자동으로 처리됩니다.
@@ -153,34 +153,39 @@ const LoginPage = () => {
     authApi.redirectToGoogleLogin();
   }
 
+  const handleKakaoLogin = () => {
+    console.log('Kakao Login - Redirecting to OAuth2 endpoint');
+    authApi.redirectToKakaoLogin();
+  }
+
   return (
-    
+
     <Container
       maxWidth="sm"
       sx={{
         display: 'flex',
         flexDirection: 'column',
         padding: { xs: '24px 8px', sm: '32px 16px' },
-        mt: 8,
+        mt: 2,
       }}
     >
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          padding: { xs: 3, sm: 4 }, 
-          borderRadius: 2 
+      <Paper
+        elevation={3}
+        sx={{
+          padding: { xs: 3, sm: 4 },
+          borderRadius: 2
         }}
       >
         <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomkist</Typography>
         <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
-        
-        
+
+
         {loginError && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
             {loginError}
           </Alert>
         )}
-        
+
         <Box sx={{ width: '100%', mb: 2 }}>
           <Input
             placeholder="이메일"
@@ -212,10 +217,10 @@ const LoginPage = () => {
             </Typography>
           )}
         </Box>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          fullWidth 
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
           sx={{ mb: 4, mt: 3 }}
           onClick={handleLoginClick}
           disabled={isLoading}
@@ -223,9 +228,16 @@ const LoginPage = () => {
           {isLoading ? '로그인 중...' : '로그인'}
         </Button>
 
-        <Box sx={{width: '100%', display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Button variant="text" sx={{ color: 'text.secondary' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
-          <Button variant="text" sx={{ color: 'text.secondary' }} disabled={isLoading}>비밀번호 찾기</Button>
+        <Box sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+          mb: 2
+        }}>
+          <Button variant="text" sx={{ color: 'text.secondary', minWidth: 'fit-content' }} onClick={handleSignupClick} disabled={isLoading}>회원가입</Button>
+          <Button variant="text" sx={{ color: 'text.secondary', minWidth: 'fit-content' }} disabled={isLoading}>비밀번호 찾기</Button>
         </Box>
 
         <KakaoButton
@@ -233,10 +245,11 @@ const LoginPage = () => {
           variant="contained"
           startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
           disabled={isLoading}
+          onClick={handleKakaoLogin}
         >
           카카오 로그인
         </KakaoButton>
-        
+
         <GoogleButton
           fullWidth
           variant="outlined"
@@ -246,7 +259,7 @@ const LoginPage = () => {
         >
           구글 로그인
         </GoogleButton>
-        </Paper>
+      </Paper>
     </Container>
   );
 };
