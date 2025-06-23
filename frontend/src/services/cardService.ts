@@ -110,12 +110,21 @@ class RealCardService implements ICardService {
 
 // 🏭 Factory 함수
 export const createCardService = (): ICardService => {
-  const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+  // 🎯 강제로 Mock 데이터 사용 (개발 중)
+  const useMockData = true; // import.meta.env.VITE_USE_MOCK_DATA !== 'false';
   
   console.log(`🃏 Card Service Mode: ${useMockData ? 'MOCK' : 'REAL'}`);
+  console.log(`🃏 환경 변수 VITE_USE_MOCK_DATA:`, import.meta.env.VITE_USE_MOCK_DATA);
   
   return useMockData ? new MockCardService() : new RealCardService();
 };
 
 // 🎯 싱글톤 인스턴스
-export const cardService = createCardService(); 
+export const cardService = createCardService();
+
+// 🔄 개발 중 Hot Reload를 위한 강제 재생성
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    console.log('🔄 CardService Hot Reload');
+  });
+} 

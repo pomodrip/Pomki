@@ -41,6 +41,7 @@ import {
   deleteDeck,
 } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
+import { useResponsive } from '../../hooks/useResponsive';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideDeckInfo {
@@ -92,9 +93,14 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
+const ActionButton = styled(Button)({
+  whiteSpace: 'nowrap',
+});
+
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { isMobile } = useResponsive();
 
   // 🎯 Redux 상태 선택
   const { decks, loading, error } = useAppSelector((state) => state.deck);
@@ -189,7 +195,9 @@ const FlashcardDeckListPage: React.FC = () => {
   };
   
   const handleDeckClick = (deckId: string) => {
-    navigate(`/flashcards/${deckId}/cards`);
+    // 덱 ID를 숫자 형식으로 변환하여 라우팅 (deck-uuid-1 -> 1)
+    const numericId = deckId.replace('deck-uuid-', '');
+    navigate(`/flashcards/${numericId}/cards`);
   };
 
   const handleEditDeck = (deck: EnrichedDeck, event: React.MouseEvent) => {
@@ -351,25 +359,33 @@ const FlashcardDeckListPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   카드 {deck.cardCnt}개
                 </Typography>
-                <Box mt={1.5} sx={{ minHeight: 24 }}>
-                  {deck.tags.slice(0, 3).map(tag => (
+                <Box 
+                  mt={1.5} 
+                  sx={{ 
+                    minHeight: 24,
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                  }}
+                >
+                  {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
                     <TagChip key={tag} label={tag} size="small" />
                   ))}
-                  {deck.tags.length > 3 && (
-                    <TagChip label={`+${deck.tags.length - 3}`} size="small" />
+                  {isMobile && deck.tags.length > 5 && (
+                    <TagChip label={`+${deck.tags.length - 5}`} size="small" />
                   )}
                 </Box>
               </CardContent>
               <CardActions sx={{ justifyContent: 'flex-end' }}>
-                <Button size="small" startIcon={<QuizIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+                <ActionButton size="small" startIcon={<QuizIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
                   연습
-                </Button>
-                <Button size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
+                </ActionButton>
+                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
                   수정
-                </Button>
-                <Button size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
+                </ActionButton>
+                <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
                   삭제
-                </Button>
+                </ActionButton>
               </CardActions>
             </DeckCard>
           ))}
