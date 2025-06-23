@@ -45,8 +45,8 @@ public class JwtProvider {
 
     private SecretKey key;
 
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000L * 60 * 5; // 30분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000L * 60 * 60 * 24 * 1; // 2주
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 60 * 10; // 10분
+    private static final long REFRESH_TOKEN_EXPIRE_TIME = 60 * 60 * 24 * 3; // 3일
 
     @PostConstruct
     public void init() {
@@ -62,7 +62,7 @@ public class JwtProvider {
                 .refreshToken(refreshToken)
                 .memberId(memberInfo.getMemberId())
                 .createdAt(LocalDateTime.now())
-                .expiresAt(REFRESH_TOKEN_EXPIRE_TIME / 1000)
+                .expiresAt(REFRESH_TOKEN_EXPIRE_TIME)
                 .build();
         refreshTokenRepository.save(tokenEntity);
 
@@ -74,7 +74,7 @@ public class JwtProvider {
 
     public String createAccessToken(MemberInfoDto memberInfo) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusMillis(ACCESS_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
@@ -106,7 +106,7 @@ public class JwtProvider {
         }
 
         Instant now = Instant.now();
-        Instant expires_time = now.plusMillis(ACCESS_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
 
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
@@ -122,7 +122,7 @@ public class JwtProvider {
 
     public String createRefreshToken(MemberInfoDto memberInfo) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusMillis(REFRESH_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(REFRESH_TOKEN_EXPIRE_TIME);
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
@@ -237,8 +237,7 @@ public class JwtProvider {
 
     public String createEmailVerificationToken(String email) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusMillis(1000L * 60 * 30); // 30분 만료
-        
+        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
         return Jwts.builder()
                 .subject(email)
                 .claim("type", "EMAIL_VERIFICATION")
