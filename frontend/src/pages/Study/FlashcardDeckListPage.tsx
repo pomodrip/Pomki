@@ -49,7 +49,7 @@ interface ClientSideDeckInfo {
   tags: string[];
 }
 
-// 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입
+// 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입 
 type EnrichedDeck = CardDeck & ClientSideDeckInfo;
 
 const StyledContainer = styled(Container)(({ theme }) => ({
