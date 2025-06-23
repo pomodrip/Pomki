@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled } from '@mui/material';
 import Card from '../../components/ui/Card';
 // import Button from '../../components/ui/Button';
 import ProgressBar from '../../components/ui/ProgressBar';
@@ -10,6 +10,11 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(2),
+  paddingBottom: theme.spacing(4),
+}));
+
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
   const location = useLocation();
@@ -17,7 +22,7 @@ const DashboardPage: React.FC = () => {
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
 
   return (
-    <Box>
+    <StyledContainer maxWidth="md">
       <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
         대시보드
       </Typography>
@@ -143,7 +148,7 @@ const DashboardPage: React.FC = () => {
           </LocalizationProvider>
         </Card>
       </Box>
-    </Box>
+    </StyledContainer>
   );
 };
 

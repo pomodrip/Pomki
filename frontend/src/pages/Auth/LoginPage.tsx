@@ -140,7 +140,7 @@ const LoginPage = () => {
 
         navigate('/dashboard');
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         // unwrapResult가 에러를 throw하므로 여기서 별도 처리가 필요 없습니다.
         // 에러 메시지는 authSlice의 state.error에서 자동으로 처리됩니다.
         console.error('Login failed:', err);
