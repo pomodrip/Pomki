@@ -6,6 +6,7 @@ import { setStoreReference } from '../api/index';
 import noteReducer from './slices/noteSlice';
 import studyReducer from './slices/studySlice';
 import deckReducer from './slices/deckSlice';
+import membershipReducer from './slices/membershipSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     note: noteReducer,
     study: studyReducer,
     deck: deckReducer, // 🎯 새로운 덱 슬라이스 추가
+    membership: membershipReducer, // 🎯 새로운 멤버십 슬라이스 추가
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
