@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface NoteImageRepository extends JpaRepository<NoteImage, Long> {
     
-    List<NoteImage> findByNoteId(String noteId);
+    List<NoteImage> findByNote_NoteId(String noteId);
     
-    void deleteByNoteId(String noteId);
+    void deleteByNote_NoteId(String noteId);
     
 } 

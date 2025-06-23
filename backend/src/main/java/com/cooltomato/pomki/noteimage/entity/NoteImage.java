@@ -1,5 +1,6 @@
 package com.cooltomato.pomki.noteimage.entity;
 
+import com.cooltomato.pomki.note.entity.Note;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,8 +23,9 @@ public class NoteImage {
     @Column(name = "image_id")
     private Long imageId;
 
-    @Column(name = "note_id", nullable = false, length = 50)
-    private String noteId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "note_id")
+    private Note note;
 
     @Column(name = "image_url", nullable = false, length = 512)
     private String imageUrl;
@@ -48,9 +50,9 @@ public class NoteImage {
     private String resizeImageUrl;
 
     @Builder
-    public NoteImage(String noteId, String imageUrl, String imageName, Long fileSize, 
+    public NoteImage(Note note, String imageUrl, String imageName, Long fileSize, 
                      String mimeType, String oriFileName, String resizeImageUrl) {
-        this.noteId = noteId;
+        this.note = note;
         this.imageUrl = imageUrl;
         this.imageName = imageName;
         this.fileSize = fileSize;

@@ -2,6 +2,7 @@ package com.cooltomato.pomki.noteimage.service;
 
 import com.cooltomato.pomki.global.exception.BadRequestException;
 import com.cooltomato.pomki.global.exception.EmptyFileException;
+import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.global.exception.UnsupportedFormatException;
 import com.cooltomato.pomki.global.exception.UploadFailedException;
 import com.cooltomato.pomki.global.exception.ProcessingFailedException;
@@ -10,6 +11,8 @@ import com.cooltomato.pomki.noteimage.dto.NoteImageRequestDto;
 import com.cooltomato.pomki.noteimage.dto.NoteImageResponseDto;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
 import com.cooltomato.pomki.noteimage.repository.NoteImageRepository;
+import com.cooltomato.pomki.note.entity.Note;
+import com.cooltomato.pomki.note.repository.NoteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -39,6 +42,7 @@ public class NoteImageService {
 
     private final S3Client s3Client;
     private final NoteImageRepository noteImageRepository;
+    private final NoteRepository noteRepository;
 
     @Value("${pomki.s3.bucket-name}")
     private String bucketName;
@@ -56,6 +60,9 @@ public class NoteImageService {
     public NoteImageResponseDto uploadImage(NoteImageRequestDto requestDto) {
         MultipartFile file = requestDto.getImageFile();
         String noteId = requestDto.getNoteId();
+
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new NotFoundException("해당 ID의 노트를 찾을 수 없습니다: " + noteId));
 
         if (file.isEmpty()) {
             throw new EmptyFileException("이미지 파일이 비어있습니다.");
@@ -99,7 +106,7 @@ public class NoteImageService {
             String resizeImageUrl = uploadToS3(resizeS3Key, resizedImageBytes, mimeType);
 
             NoteImage noteImage = NoteImage.builder()
-                    .noteId(noteId)
+                    .note(note)
                     .imageUrl(imageUrl)
                     .imageName(uniqueFileName)
                     .fileSize(fileSize)
@@ -113,7 +120,7 @@ public class NoteImageService {
 
             return NoteImageResponseDto.builder()
                     .imageId(savedNoteImage.getImageId())
-                    .noteId(savedNoteImage.getNoteId())
+                    .noteId(savedNoteImage.getNote().getNoteId())
                     .imageUrl(savedNoteImage.getImageUrl())
                     .imageName(savedNoteImage.getImageName())
                     .fileSize(savedNoteImage.getFileSize())
@@ -153,11 +160,11 @@ public class NoteImageService {
 
     @Transactional(readOnly = true)
     public List<NoteImageResponseDto> readImagesByNoteId(String noteId) {
-        List<NoteImage> images = noteImageRepository.findByNoteId(noteId);
+        List<NoteImage> images = noteImageRepository.findByNote_NoteId(noteId);
         return images.stream()
                 .map(image -> NoteImageResponseDto.builder()
                         .imageId(image.getImageId())
-                        .noteId(image.getNoteId())
+                        .noteId(image.getNote().getNoteId())
                         .imageUrl(image.getImageUrl())
                         .imageName(image.getImageName())
                         .fileSize(image.getFileSize())
@@ -171,7 +178,7 @@ public class NoteImageService {
 
     @Transactional
     public void deleteImagesByNoteId(String noteId) {
-        List<NoteImage> images = noteImageRepository.findByNoteId(noteId);
+        List<NoteImage> images = noteImageRepository.findByNote_NoteId(noteId);
         
         for (NoteImage image : images) {
             deleteFromS3(extractS3KeyFromUrl(image.getImageUrl()));
@@ -180,7 +187,7 @@ public class NoteImageService {
             }
         }
 
-        noteImageRepository.deleteByNoteId(noteId);
+        noteImageRepository.deleteByNote_NoteId(noteId);
         log.info("노트 이미지 삭제 완료: noteId={}, 삭제된 이미지 수={}", noteId, images.size());
     }
 

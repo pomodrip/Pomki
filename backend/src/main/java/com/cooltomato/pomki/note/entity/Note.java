@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.noteimage.entity.NoteImage;
 import com.cooltomato.pomki.tag.entity.NoteTag;
 
 @Entity
