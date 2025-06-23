@@ -78,7 +78,7 @@ const DeckManagementPage: React.FC = () => {
   }, [dispatch, user?.memberId]);
 
   // 에러가 발생하면 스낵바 표시
-  useEffect(() => {
+  useEffect(() => { 
     if (error) {
       setShowSnackbar(true);
     }
