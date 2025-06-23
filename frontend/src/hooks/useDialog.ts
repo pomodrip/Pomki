@@ -41,6 +41,7 @@ export const useDialog = () => {
   return {
     dialog,
     showDialog,
+    openDialog: openDialogAction,
+    showConfirmDialog
   };
-  return { openDialog: openDialogAction, showConfirmDialog };
 };

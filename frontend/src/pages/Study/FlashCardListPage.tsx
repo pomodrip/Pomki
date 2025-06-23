@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import { 
   Box, 
@@ -29,7 +29,31 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { setFilters, updateCard, deleteCard } from '../../store/slices/studySlice';
+import { setFilters } from '../../store/slices/studySlice';
+import { 
+  fetchCardsInDeck, 
+  updateCard, 
+  deleteCard, 
+  setCurrentDeck 
+} from '../../store/slices/deckSlice';
+
+// 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
+interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+  tags?: string[];
+}
+
+// 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
+interface FlashcardDeck {
+  id: number;
+  category: string;
+  title: string;
+  isBookmarked: boolean;
+  tags: string[];
+  flashcards: Flashcard[];
+}
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -91,7 +115,12 @@ const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
   const dispatch = useAppDispatch();
-  const { decks, filters } = useAppSelector((state) => state.study);
+  
+  // 🎯 기존 구조 유지: studySlice에서 필터만 가져오기
+  const { filters } = useAppSelector((state) => state.study);
+  
+  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
+  const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
   
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
@@ -102,6 +131,10 @@ const FlashCardListPage: React.FC = () => {
     3: false,
     4: true,
     5: false,
+    6: true,
+    7: false,
+    8: true,
+    9: false,
   });
   
   // 수정 다이얼로그 상태
@@ -111,12 +144,42 @@ const FlashCardListPage: React.FC = () => {
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
 
-  // 현재 덱 찾기
-  const currentDeck = useMemo(() => {
-    return decks.find(deck => deck.id === parseInt(deckId || '0'));
-  }, [decks, deckId]);
+  // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
+  const mockDecks: FlashcardDeck[] = useMemo(() => {
+    // 새로운 API에서 가져온 덱 정보를 기존 구조로 변환
+    return decks.map(deck => ({
+      id: parseInt(deck.deckId.replace('deck-uuid-', '')), // deckId를 숫자로 변환
+      category: '학습',
+      title: deck.deckName,
+      isBookmarked: Math.random() > 0.5, // Mock 데이터
+      tags: [`#${deck.deckName.split(' ')[0]}`, '#학습'], // Mock 태그
+      flashcards: currentDeckCards
+        .filter(card => card.deckId === deck.deckId)
+        .map(card => ({
+          id: card.cardId,
+          front: card.content, // content -> front 변환
+          back: card.answer,   // answer -> back 변환
+          tags: [`#카드${card.cardId}`, '#학습'], // Mock 태그
+        }))
+    }));
+  }, [decks, currentDeckCards]);
 
-  // 플래시카드 목록 (Redux에서 가져옴)
+  // 🎯 현재 덱 찾기 (기존 로직 유지)
+  const currentDeck = useMemo(() => {
+    return mockDecks.find(deck => deck.id === parseInt(deckId || '0'));
+  }, [mockDecks, deckId]);
+
+  // 🎯 컴포넌트 마운트 시 카드 데이터 로드
+  useEffect(() => {
+    if (deckId) {
+      // 실제 덱 ID 형식으로 변환 (숫자 -> UUID 형식)
+      const realDeckId = `deck-uuid-${deckId}`;
+      dispatch(setCurrentDeck(realDeckId));
+      dispatch(fetchCardsInDeck(realDeckId));
+    }
+  }, [dispatch, deckId]);
+
+  // 🎯 플래시카드 목록 (기존 로직 유지)
   const flashCards = useMemo(() => {
     if (!currentDeck) return [];
     return currentDeck.flashcards.map(card => ({
@@ -125,7 +188,7 @@ const FlashCardListPage: React.FC = () => {
     }));
   }, [currentDeck]);
 
-  // 모든 태그 목록 추출
+  // 모든 태그 목록 추출 (기존 로직 유지)
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     flashCards.forEach((card) => {
@@ -134,7 +197,7 @@ const FlashCardListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [flashCards]);
 
-  // 필터링된 카드 목록
+  // 필터링된 카드 목록 (기존 로직 유지)
   const filteredCards = useMemo(() => {
     return flashCards.filter((card) => {
       const matchesSearch = card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
@@ -193,8 +256,9 @@ const FlashCardListPage: React.FC = () => {
     event.stopPropagation();
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
-    if (confirmed && currentDeck) {
-      dispatch(deleteCard({ deckId: currentDeck.id, cardId: id }));
+    if (confirmed) {
+      // 🎯 새로운 API 호출 (실제 cardId 사용)
+      dispatch(deleteCard(id));
     }
   };
 
@@ -216,25 +280,21 @@ const FlashCardListPage: React.FC = () => {
 
   const handleEditDialogConfirm = () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
-    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null && currentDeck) {
-      const tags = editCardTags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null) {
+      // 🎯 새로운 API 형식으로 업데이트
+      dispatch(updateCard({ 
+        cardId: editingCardId, 
+        data: { 
+          content: editCardFront.trim(), 
+          answer: editCardBack.trim() 
+        } 
+      }));
       
-      const updatedCard = {
-        id: editingCardId,
-        front: editCardFront.trim(),
-        back: editCardBack.trim(),
-        tags: tags
-      };
-      
-      dispatch(updateCard({ deckId: currentDeck.id, card: updatedCard }));
       handleEditDialogClose();
     }
   };
 
-  // 덱이 없는 경우
+  // 덱이 없는 경우 (기존 로직 유지)
   if (!currentDeck) {
     return (
       <StyledContainer maxWidth="md">
@@ -248,8 +308,8 @@ const FlashCardListPage: React.FC = () => {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             덱을 찾을 수 없습니다
           </Typography>
-          <Button
-            variant="contained"
+          <Button 
+            variant="contained" 
             onClick={() => navigate('/flashcards')}
           >
             덱 목록으로 이동
@@ -368,8 +428,15 @@ const FlashCardListPage: React.FC = () => {
         </MenuItem>
       </Menu>
 
+      {/* 로딩 상태 */}
+      {loading && (
+        <Box display="flex" justifyContent="center" py={4}>
+          <Typography>카드를 불러오는 중...</Typography>
+        </Box>
+      )}
+
       {/* 카드 리스트 */}
-      {filteredCards.map((card) => (
+      {!loading && filteredCards.map((card) => (
         <FlashCard key={card.id}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -450,7 +517,7 @@ const FlashCardListPage: React.FC = () => {
       ))}
 
       {/* 빈 상태 */}
-      {filteredCards.length === 0 && (
+      {!loading && filteredCards.length === 0 && (
         <Box 
           display="flex" 
           flexDirection="column" 
