@@ -1,11 +1,13 @@
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, styled } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useTheme } from '../../hooks/useUI';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -258,6 +260,7 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useResponsive();
+  const { toggleTheme, isDark } = useTheme();
 
   const handleBack = () => {
     navigate(-1);
@@ -285,13 +288,7 @@ const Header: React.FC<HeaderProps> = ({
   const shouldShowBackButton = showBackButton ?? (location.pathname !== '/' && location.pathname !== '/dashboard');
   const isHomePage = location.pathname === '/' || location.pathname === '/dashboard';
 
-  const getDefaultRightContent = () => {
-    return (
-      <NotificationButton>
-        <NotificationsNoneIcon />
-      </NotificationButton>
-    );
-  };
+
 
   const isActiveRoute = (path: string) => {
     return location.pathname.startsWith(path) || (path === '/' && isHomePage);
@@ -390,6 +387,11 @@ const Header: React.FC<HeaderProps> = ({
               프로필
             </NavButton>
           </DesktopNav>
+          
+          {/* 테마 토글 버튼 */}
+          <NotificationButton onClick={toggleTheme} disableRipple title={`${isDark ? 'Light' : 'Dark'} 모드로 변경`}>
+            {isDark ? <Brightness7 /> : <Brightness4 />}
+          </NotificationButton>
           
           {/* 알림 아이콘 (항상 표시) */}
           {rightContent || (

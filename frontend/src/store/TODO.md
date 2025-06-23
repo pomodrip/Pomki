@@ -11,8 +11,9 @@
 | dialogSlice | ✅ 완료 | 48줄 | 모달/다이얼로그 관리 |
 | snackbarSlice | ✅ 완료 | 57줄 | 알림 메시지 |
 | toastSlice | ✅ 완료 | 41줄 | 토스트 메시지 |
+| uiSlice | ✅ 완료 | 420줄 | 전역 UI 상태 (테마, 네비게이션, 알림) |
 
-## 🚧 미구현된 Slice들 (0줄)
+## 🚧 미구현된 Slice들
 
 ### 1. timerSlice.ts ❌
 ```typescript
@@ -37,19 +38,31 @@ interface TimerState {
 - `/src/pages/Timer/TimerSettingsPage.tsx`
 - `/src/pages/Timer/PomodoroStatsPage.tsx`
 
-### 2. uiSlice.ts ❌
+### 2. uiSlice.ts ✅
 ```typescript
-// 전역 UI 상태 관리
+// 전역 UI 상태 관리 - 구현 완료
 interface UIState {
-  theme: 'light' | 'dark';
+  theme: ThemeMode; // 'light' | 'dark' | 'system'
   sidebarOpen: boolean;
   bottomNavVisible: boolean;
-  loading: boolean;
-  notifications: Notification[];
+  globalLoading: boolean;
+  notifications: NotificationItem[];
+  isMobile: boolean;
+  screenSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  settings: UISettings;
 }
 ```
 
-**우선순위**: 🟡 중간 (UI 일관성을 위해 필요)
+**우선순위**: ✅ 완료
+**구현 내용**:
+- 테마 관리 (light/dark/system 모드)
+- 네비게이션 상태 (사이드바, 바텀 네비게이션)
+- 전역 로딩 상태
+- 알림 시스템 (notification queue)
+- 반응형 상태 (모바일/데스크톱 감지)
+- 로컬 스토리지 연동
+- 커스텀 훅 (useUI, useTheme, useNotifications, useResponsiveUI)
+- 사용 예제 (UIUsageExample.tsx)
 
 ### 3. adSlice.ts ❌
 ```typescript
@@ -96,7 +109,7 @@ interface MembershipState {
 3. **studySlice.ts** 확장 구현
 
 ### Phase 2: UI 개선 (다음 주)  
-1. **uiSlice.ts** 구현
+1. ~~**uiSlice.ts** 구현~~ ✅ 완료
 2. **membershipSlice.ts** 구현
 
 ### Phase 3: 부가 기능 (추후)
@@ -165,11 +178,15 @@ interface UIState {
 - [ ] 통계 데이터 관리
 - [ ] 알림 기능 연동
 
-### uiSlice.ts  
-- [ ] 테마 토글 기능
-- [ ] 사이드바 상태 관리
-- [ ] 전역 로딩 상태
-- [ ] 알림 큐 관리
+### uiSlice.ts ✅ 완료 
+- [x] 테마 토글 기능 (light/dark/system 모드)
+- [x] 사이드바 상태 관리
+- [x] 전역 로딩 상태
+- [x] 알림 큐 관리
+- [x] 반응형 상태 관리
+- [x] 로컬 스토리지 연동
+- [x] 커스텀 훅 구현
+- [x] 사용 예제 작성
 
 ### membershipSlice.ts
 - [ ] 현재 플랜 조회

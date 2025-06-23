@@ -93,7 +93,7 @@ const ElapsedTime = styled(Text)(({ theme }) => ({
 //   transition: 'width 0.3s ease',
 // }));
 
-// 타이머 원형 컨테이너 
+// 타이머 원형 컨테이너  
 const TimerCircle = styled(Box)(() => ({
   width: '280px',
   height: '280px',

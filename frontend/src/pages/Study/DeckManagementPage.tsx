@@ -67,8 +67,8 @@ const DeckManagementPage: React.FC = () => {
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [deckName, setDeckName] = useState('');
   
-  // 스낵바 상태
-  const [showSnackbar, setShowSnackbar] = useState(false);
+  // 🔔 Redux 기반 알림 시스템
+  const { error: notifyError, success: notifySuccess } = useNotifications();
 
   // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
@@ -77,12 +77,13 @@ const DeckManagementPage: React.FC = () => {
     }
   }, [dispatch, user?.memberId]);
 
-  // 에러가 발생하면 스낵바 표시
+  // 에러가 발생하면 알림 표시
   useEffect(() => {
     if (error) {
-      setShowSnackbar(true);
+      notifyError('오류 발생', error);
+      dispatch(clearError());
     }
-  }, [error]);
+  }, [error, notifyError, dispatch]);
 
   // 🎨 환경 모드 표시 (개발용)
   const mockMode = import.meta.env.VITE_USE_MOCK_DATA === 'true';
@@ -105,26 +106,40 @@ const DeckManagementPage: React.FC = () => {
   // 덱 삭제
   const handleDeleteDeck = async (deckId: string, deckName: string) => {
     if (window.confirm(`"${deckName}" 덱을 정말 삭제하시겠습니까?`)) {
-      dispatch(deleteDeck(deckId));
+      try {
+        await dispatch(deleteDeck(deckId)).unwrap();
+        notifySuccess('삭제 완료', `"${deckName}" 덱이 삭제되었습니다.`);
+      } catch {
+        // 에러는 useEffect에서 처리됨
+      }
     }
   };
 
   // 다이얼로그 확인
   const handleDialogConfirm = async () => {
-    if (!deckName.trim()) return;
-
-    if (isEditing && editingDeckId) {
-      await dispatch(updateDeck({
-        deckId: editingDeckId,
-        data: { deckName: deckName.trim() }
-      }));
-    } else {
-      await dispatch(createDeck({ deckName: deckName.trim() }));
+    if (!deckName.trim()) {
+      notifyError('입력 오류', '덱 이름을 입력해주세요.');
+      return;
     }
 
-    setOpenDialog(false);
-    setDeckName('');
-    setEditingDeckId(null);
+    try {
+      if (isEditing && editingDeckId) {
+        await dispatch(updateDeck({
+          deckId: editingDeckId,
+          data: { deckName: deckName.trim() }
+        })).unwrap();
+        notifySuccess('수정 완료', `"${deckName.trim()}" 덱이 수정되었습니다.`);
+      } else {
+        await dispatch(createDeck({ deckName: deckName.trim() })).unwrap();
+        notifySuccess('생성 완료', `"${deckName.trim()}" 덱이 생성되었습니다.`);
+      }
+
+      setOpenDialog(false);
+      setDeckName('');
+      setEditingDeckId(null);
+    } catch {
+      // 에러는 useEffect에서 처리됨
+    }
   };
 
   // 다이얼로그 취소
@@ -132,12 +147,6 @@ const DeckManagementPage: React.FC = () => {
     setOpenDialog(false);
     setDeckName('');
     setEditingDeckId(null);
-  };
-
-  // 스낵바 닫기
-  const handleCloseSnackbar = () => {
-    setShowSnackbar(false);
-    dispatch(clearError());
   };
 
   return (
@@ -279,17 +288,7 @@ const DeckManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 에러 스낵바 */}
-      <Snackbar
-        open={showSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
+
     </StyledContainer>
   );
 };
