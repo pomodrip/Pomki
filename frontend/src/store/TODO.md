@@ -5,88 +5,113 @@
 | Slice | 상태 | 파일 크기 | 설명 |
 |-------|------|-----------|------|
 | authSlice | ✅ 완료 | 254줄 | 로그인, 회원가입, 인증 |
-| deckSlice | ⚠️ 충돌 | 265줄 | 카드 덱 관리 (merge conflict 해결 필요) |
+| deckSlice | ✅ 완료 | 498줄 | 카드 덱 관리 (카드 CRUD 추가) |
 | noteSlice | ✅ 완료 | 155줄 | 노트 작성, 수정, 삭제 |
 | studySlice | ⚠️ 최소 구현 | 43줄 | 학습 관련 상태 (확장 필요) |
 | dialogSlice | ✅ 완료 | 48줄 | 모달/다이얼로그 관리 |
 | snackbarSlice | ✅ 완료 | 57줄 | 알림 메시지 |
 | toastSlice | ✅ 완료 | 41줄 | 토스트 메시지 |
+| timerSlice | ✅ 완료 | 580줄 | 포모도로 타이머 (Redux Toolkit 기반) |
 
-## 🚧 미구현된 Slice들 (0줄)
+## 🚧 미구현된 Slice들
 
-### 1. timerSlice.ts ❌
+### 1. uiSlice.ts ⚠️
 ```typescript
-// 포모도로 타이머, 집중 세션 관리
-interface TimerState {
-  currentSession: PomodoroSession | null;
-  isRunning: boolean;
-  timeRemaining: number;
-  sessionType: 'work' | 'break' | 'longBreak';
-  completedSessions: number;
-  settings: TimerSettings;
-  stats: TimerStats;
-}
-```
-
-**우선순위**: 🔴 높음 (Timer 페이지들에서 필요)
-
-**관련 페이지들**:
-- `/src/pages/Timer/PomodoroPage.tsx`
-- `/src/pages/Timer/FocusSessionPage.tsx` 
-- `/src/pages/Timer/TimerPage.tsx`
-- `/src/pages/Timer/TimerSettingsPage.tsx`
-- `/src/pages/Timer/PomodoroStatsPage.tsx`
-
-### 2. uiSlice.ts ❌
-```typescript
-// 전역 UI 상태 관리
-interface UIState {
-  theme: 'light' | 'dark';
+// 전역 UI 상태 관리 (사이드바, 테마, 레이아웃 등)
+interface UiState {
   sidebarOpen: boolean;
-  bottomNavVisible: boolean;
-  loading: boolean;
-  notifications: Notification[];
+  theme: 'light' | 'dark';
+  layout: 'compact' | 'comfortable';
+  notifications: boolean;
+  language: 'ko' | 'en';
 }
 ```
 
 **우선순위**: 🟡 중간 (UI 일관성을 위해 필요)
 
-### 3. adSlice.ts ❌
+**관련 컴포넌트들**:
+- `src/components/common/Header.tsx`
+- `src/components/common/BottomNav.tsx`
+- `src/theme/theme.ts`
+
+### 2. membershipSlice.ts ⚠️
 ```typescript
-// 광고 관리
-interface AdState {
-  banners: AdBanner[];
-  preferences: AdPreferences;
-  blockedAds: string[];
-  loading: boolean;
-  error: string | null;
-}
-```
-
-**우선순위**: 🟢 낮음 (광고 기능용)
-
-**관련 페이지들**:
-- `/src/pages/Ad/AdManagementPage.tsx`
-- `/src/pages/Ad/AdPreferencePage.tsx`
-
-### 4. membershipSlice.ts ❌
-```typescript
-// 멤버십 관리
+// 멤버십 및 결제 상태 관리
 interface MembershipState {
-  currentPlan: MembershipPlan | null;
-  plans: MembershipPlan[];
+  currentPlan: 'free' | 'premium';
+  expiryDate: string | null;
+  features: string[];
   paymentHistory: Payment[];
-  loading: boolean;
-  error: string | null;
+  upgradeModalOpen: boolean;
 }
 ```
 
-**우선순위**: 🟡 중간 (결제 기능)
+**우선순위**: 🟡 중간 (수익화 기능)
 
 **관련 페이지들**:
-- `/src/pages/Membership/PremiumPlanPage.tsx`
-- `/src/pages/Membership/PaymentPage.tsx`
-- `/src/pages/Membership/CancelMembershipPage.tsx`
+- `/src/pages/Membership/`
+- `src/components/common/MembershipBadge.tsx`
+
+### 3. adSlice.ts ⚠️
+```typescript
+// 광고 시스템 상태 관리
+interface AdState {
+  adsEnabled: boolean;
+  currentAds: Ad[];
+  adPreferences: AdPreference;
+  viewHistory: AdView[];
+}
+```
+
+**우선순위**: 🟢 낮음 (나중에 구현)
+
+**관련 페이지들**:
+- `/src/pages/Ad/`
+- `src/components/common/AdBanner.tsx`
+
+## 📊 구현 진행률
+
+- ✅ **완료**: 8/11 (72.7%)
+- 🚧 **미구현**: 3/11 (27.3%)
+
+## 🔧 최근 업데이트
+
+### 2024년 - timerSlice.ts 구현 완료 ✅
+
+**구현된 기능들**:
+- ✅ 포모도로 타이머 (25분 집중 + 5분 휴식)
+- ✅ Time Entry 패턴 (일시정지/재개 지원)
+- ✅ 자동 세션 전환
+- ✅ Redux Toolkit 기반 상태관리
+- ✅ TypeScript 타입 안전성
+- ✅ 브라우저 알림 지원
+- ✅ useTimer Hook (컴포넌트 연동)
+- ✅ TimerWidget 컴포넌트 Redux 연동
+
+**참고한 가이드**:
+- [Medium: React Timer with Redux](https://medium.com/@machadogj/timers-in-react-with-redux-apps-9a5a722162e8)
+- [Diego Castillo: React Timer Component](https://diegocasmo.github.io/2020-10-18-create-a-simple-react-timer-component/)
+
+**파일 변경 내역**:
+- `src/store/slices/timerSlice.ts` (신규, 580줄)
+- `src/hooks/useTimer.ts` (신규, 200+줄)
+- `src/api/timerApi.ts` (saveTimerSettings 함수 추가)
+- `src/components/common/TimerWidget.tsx` (Redux 연동)
+- `src/store/store.ts` (timer reducer 추가)
+
+## 🎯 다음 단계 권장사항
+
+1. **studySlice 확장** - 학습 통계, 진행률 추가
+2. **uiSlice 구현** - 전역 UI 상태 통합
+3. **membershipSlice 구현** - 유료 기능 관리
+4. **타이머 페이지들 Redux 연동** - useTimer Hook 적용
+
+## 📝 추가 TODO
+
+- [ ] Timer 관련 페이지들에 useTimer Hook 적용
+- [ ] 타이머 통계 API 연동
+- [ ] 알림 권한 요청 UI 구현
+- [ ] 타이머 설정 모달 Redux 연동
 
 ## 📋 구현 계획
 
