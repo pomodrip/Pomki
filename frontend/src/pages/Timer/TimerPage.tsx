@@ -33,7 +33,7 @@ const PageTitle = styled(Text)(({ theme }) => ({
   textAlign: 'center',
   
   '@media (min-width: 600px)': {
-    fontSize: '28px', // H1 크기 (태블릿 이상)
+          fontSize: '28px', // H1 크기 (태블릿 이상)
   },
 }));
 
@@ -179,6 +179,7 @@ const TaskInputSection = styled(Box)(() => ({
 }));
 
 const TaskInputLabel = styled(Text)(() => ({
+const TaskInputLabel = styled(Text)(() => ({
   fontSize: '16px', // Body Regular
   fontWeight: 500, // Medium
   color: '#6B7280', // Text Secondary
@@ -238,12 +239,14 @@ const ExpandedTimerInfo = styled(Box)(() => ({
 }));
 
 const ExpandedTimerDisplay = styled(Text)(() => ({
+const ExpandedTimerDisplay = styled(Text)(() => ({
   fontSize: '28px',
   fontWeight: 700,
   color: '#1A1A1A',
   fontFamily: "'Pretendard', monospace",
 }));
 
+const ExpandedSessionInfo = styled(Text)(() => ({
 const ExpandedSessionInfo = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 500,
@@ -276,6 +279,7 @@ const NotesHeader = styled(Box)(() => ({
   marginBottom: '20px',
 }));
 
+const NotesTitle = styled(Text)(() => ({
 const NotesTitle = styled(Text)(() => ({
   fontSize: '24px',
   fontWeight: 700,
@@ -314,7 +318,7 @@ const NotesTextArea = styled('textarea')<{
   },
 }));
 
-// 확장된 노트 기능들
+// ?�장???�트 기능??
 const ExpandedNotesFeatures = styled(Box)(() => ({
   marginTop: '16px',
   display: 'flex',
@@ -333,12 +337,13 @@ const StudyModeSection = styled(Box)(() => ({
 }));
 
 const StudyModeLabel = styled(Text)(() => ({
+const StudyModeLabel = styled(Text)(() => ({
   fontSize: '14px',
   fontWeight: 500,
   color: '#6B7280',
 }));
 
-// 설정 다이얼로그 스타일
+// ?�정 ?�이?�로�??��???
 const SettingsContainer = styled(Box)(() => ({
   display: 'flex',
   flexDirection: 'column',
@@ -359,6 +364,7 @@ const PresetsSection = styled(Box)(() => ({
   gap: '12px',
 }));
 
+const PresetsTitle = styled(Text)(() => ({
 const PresetsTitle = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 600,
@@ -414,7 +420,7 @@ const TimerPage: React.FC = () => {
 
   const totalTime = settings.focusMinutes * 60;
 
-  // 진행률 계산
+  // 진행�?계산
   const currentTime = minutes * 60 + seconds;
   const progress = ((totalTime - currentTime) / totalTime) * 100;
 
@@ -443,7 +449,7 @@ const TimerPage: React.FC = () => {
       }, 1000);
     } else if (minutes === 0 && seconds === 0 && isRunning) {
       setIsRunning(false);
-      // 세션 완료 로직
+      // ?�션 ?�료 로직
       if (session < settings.sessions) {
         setSession(session + 1);
         setMinutes(settings.focusMinutes);
@@ -530,16 +536,17 @@ const TimerPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // AI 노트 생성 핸들러 (임시 구현)
+  // AI ?�트 ?�성 ?�들??(?�시 구현)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
+              alert('먼저 노트에 내용을 작성해주세요.');
               alert('먼저 노트에 내용을 작성해주세요.');
       return;
     }
 
     setIsGeneratingAI(true);
     
-    // 임시 AI 생성 시뮬레이션
+    // ?�시 AI ?�성 ?��??�이??
     setTimeout(() => {
       const aiContent = generateMockAIContent(summaryStyle, taskName);
       setNotes(prevNotes => {
@@ -548,10 +555,11 @@ const TimerPage: React.FC = () => {
       });
       setIsGeneratingAI(false);
               alert('AI 노트가 성공적으로 생성되었습니다!');
+              alert('AI 노트가 성공적으로 생성되었습니다!');
     }, 2000);
   };
 
-  // 임시 AI 컨텐츠 생성 함수
+  // ?�시 AI 컨텐�??�성 ?�수
   const generateMockAIContent = (style: string, task: string) => {
     const taskPrefix = task ? `${task}에 대한 ` : '';
     
@@ -765,6 +773,7 @@ const TimerPage: React.FC = () => {
           </NotesTitle>
           {taskName && (
             <Text 
+            <Text 
               sx={{ 
                 fontSize: '16px', 
                 color: '#6B7280', 
@@ -774,6 +783,7 @@ const TimerPage: React.FC = () => {
               }}
             >
               현재 작업: {taskName}
+            </Text>
             </Text>
           )}
         </Box>

@@ -6,20 +6,19 @@ import {
   Typography,
   TextField,
   InputAdornment,
-  IconButton,
-  Menu,
-  MenuItem,
   Fab,
-  Chip,
-  Button,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   CircularProgress,
   CardActions,
+  CardContent,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  Chip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -42,6 +41,7 @@ import {
 } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
+import Card from '../../components/ui/Card';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideDeckInfo {
@@ -96,6 +96,14 @@ const TagChip = styled(Chip)(({ theme }) => ({
 const ActionButton = styled(Button)({
   whiteSpace: 'nowrap',
 });
+
+const SelectedTagsBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(1),
+  marginBottom: theme.spacing(2),
+  minHeight: theme.spacing(4),
+  flexWrap: 'wrap',
+}));
 
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -255,21 +263,21 @@ const FlashcardDeckListPage: React.FC = () => {
           tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
         }
       }));
-    } else {
-      // 덱 생성
-      const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
-      if (createDeck.fulfilled.match(result)) {
-        const newDeck = result.payload;
-        // 새 덱에 대한 클라이언트 측 정보 추가
-        setClientSideInfo(prev => ({
-          ...prev,
-          [newDeck.deckId]: {
-            isBookmarked: false,
-            tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
-          }
-        }));
+          } else {
+        // 덱 생성
+        const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
+        if (result.meta.requestStatus === 'fulfilled' && result.payload) {
+          const newDeck = result.payload as CardDeck;
+          // 새 덱에 대한 클라이언트 측 정보 추가
+          setClientSideInfo(prev => ({
+            ...prev,
+            [newDeck.deckId]: {
+              isBookmarked: false,
+              tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
+            }
+          }));
+        }
       }
-    }
     handleCreateDialogClose();
   };
 
@@ -304,32 +312,48 @@ const FlashcardDeckListPage: React.FC = () => {
         >
           태그 필터 ({filters.selectedTags.length})
         </Button>
-        <Menu
-          anchorEl={tagMenuAnchor}
-          open={Boolean(tagMenuAnchor)}
-          onClose={() => setTagMenuAnchor(null)}
-        >
-          {allTags.map(tag => (
-            <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
-              {tag}
-            </MenuItem>
-          ))}
-        </Menu>
         <Button
           startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
         >
           북마크
         </Button>
-        <Menu
-          anchorEl={bookmarkMenuAnchor}
-          open={Boolean(bookmarkMenuAnchor)}
-          onClose={() => setBookmarkMenuAnchor(null)}
-        >
-          <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
-          <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
-        </Menu>
       </FilterBox>
+
+      {/* 선택된 태그들 표시 */}
+      <SelectedTagsBox>
+        {filters.selectedTags.map((tag: string) => (
+          <Chip
+            key={tag}
+            label={tag}
+            onDelete={() => handleTagSelect(tag)}
+            size="small"
+          />
+        ))}
+      </SelectedTagsBox>
+
+      {/* 태그 메뉴 */}
+      <Menu
+        anchorEl={tagMenuAnchor}
+        open={Boolean(tagMenuAnchor)}
+        onClose={() => setTagMenuAnchor(null)}
+      >
+        {allTags.map(tag => (
+          <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
+            {tag}
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* 북마크 메뉴 */}
+      <Menu
+        anchorEl={bookmarkMenuAnchor}
+        open={Boolean(bookmarkMenuAnchor)}
+        onClose={() => setBookmarkMenuAnchor(null)}
+      >
+        <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
+        <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
+      </Menu>
 
       {loading && <Box display="flex" justifyContent="center" my={5}><CircularProgress /></Box>}
 
@@ -390,6 +414,31 @@ const FlashcardDeckListPage: React.FC = () => {
             </DeckCard>
           ))}
         </Box>
+              )}
+
+      {/* 빈 상태 */}
+      {!loading && !error && filteredDecks.length === 0 && (
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          alignItems="center" 
+          justifyContent="center"
+          py={8}
+        >
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            플래시카드 덱이 없습니다
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            첫 번째 덱을 만들어보세요!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowCreateDialog(true)}
+          >
+            덱 만들기
+          </Button>
+        </Box>
       )}
 
       {/* 덱 생성/수정 다이얼로그 */}
@@ -404,6 +453,7 @@ const FlashcardDeckListPage: React.FC = () => {
             variant="outlined"
             value={newDeckTitle}
             onChange={(e) => setNewDeckTitle(e.target.value)}
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="dense"

@@ -166,28 +166,19 @@ const FlashcardPracticePage: React.FC = () => {
         return {
           backgroundColor: isSelected ? '#4caf50' : 'transparent',
           color: isSelected ? 'white' : '#4caf50',
-          border: `1px solid #4caf50`,
-          '&:hover': {
-            backgroundColor: isSelected ? '#45a049' : 'rgba(76, 175, 80, 0.1)',
-          },
+          border: '2px solid #4caf50',
         };
       case 'confusing':
         return {
           backgroundColor: isSelected ? '#ff9800' : 'transparent',
           color: isSelected ? 'white' : '#ff9800',
-          border: `1px solid #ff9800`,
-          '&:hover': {
-            backgroundColor: isSelected ? '#f57c00' : 'rgba(255, 152, 0, 0.1)',
-          },
+          border: '2px solid #ff9800',
         };
       case 'hard':
         return {
           backgroundColor: isSelected ? '#f44336' : 'transparent',
           color: isSelected ? 'white' : '#f44336',
-          border: `1px solid #f44336`,
-          '&:hover': {
-            backgroundColor: isSelected ? '#d32f2f' : 'rgba(244, 67, 54, 0.1)',
-          },
+          border: '2px solid #f44336',
         };
       default:
         return {};
@@ -444,12 +435,7 @@ const FlashcardPracticePage: React.FC = () => {
       )}
 
       {/* 학습 완료 다이얼로그 */}
-      <Dialog
-        open={showCompletionDialog}
-        onClose={handleCompletionCancel}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={showCompletionDialog} onClose={handleCompletionCancel}>
         <DialogTitle>
           학습 완료
         </DialogTitle>
@@ -459,11 +445,9 @@ const FlashcardPracticePage: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCompletionCancel} variant="outlined">
-            아니오
-          </Button>
+          <Button onClick={handleCompletionCancel}>계속 학습</Button>
           <Button onClick={handleCompletionConfirm} variant="contained">
-            네
+            덱 목록으로
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, Chip, styled } from '@mui/material';
+import { Box, Typography, IconButton, styled } from '@mui/material';
+import Tag from '../ui/Tag';
 import { PlayArrow, Pause, Stop, Settings } from '@mui/icons-material';
 import Timer from '../ui/Timer';
 
@@ -92,10 +93,9 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({
           {getModeText()}
         </Typography>
         {mode === 'pomodoro' && (
-          <Chip 
+          <Tag 
             label={`세션 ${sessionCount}/${totalSessions}`}
-            size="small"
-            variant="outlined"
+            selected={false}
           />
         )}
       </SessionInfo>

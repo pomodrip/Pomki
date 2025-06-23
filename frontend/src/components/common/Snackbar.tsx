@@ -1,5 +1,6 @@
 import React from 'react';
-import { Snackbar as MuiSnackbar, Alert, Button, IconButton, styled } from '@mui/material';
+import { Snackbar as MuiSnackbar, Alert, IconButton, styled } from '@mui/material';
+import Button from '../ui/Button';
 import CloseIcon from '@mui/icons-material/Close';
 
 const StyledAlert = styled(Alert)(({ theme }) => ({

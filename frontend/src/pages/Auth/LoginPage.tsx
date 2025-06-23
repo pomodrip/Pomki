@@ -5,8 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import { Box, Typography, Alert, Paper } from "@mui/material";
-import Container from '@mui/material/Container';
+import { Box, Typography, Alert, Paper, Container } from "@mui/material";
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
 import { loginUser, setOAuth2User } from "../../store/slices/authSlice";
 import type { AppDispatch, RootState } from "../../store/store";
@@ -159,7 +158,6 @@ const LoginPage = () => {
   }
 
   return (
-
     <Container
       maxWidth="sm"
       sx={{
@@ -178,7 +176,6 @@ const LoginPage = () => {
       >
         <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomkist</Typography>
         <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
-
 
         {loginError && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
