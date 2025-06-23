@@ -17,6 +17,7 @@ import {
   clearAllNotifications,
   updateScreenSize,
   updateSystemTheme,
+  processNotificationQueue,
   showSuccessNotification,
   showErrorNotification,
   showWarningNotification,
@@ -33,6 +34,7 @@ import {
   selectScreenSize,
   selectHasNotifications,
   selectUnreadNotificationCount,
+  selectNotificationSettings,
   type ThemeMode,
   type CreateNotificationPayload,
   type UISettings,
@@ -78,6 +80,7 @@ export const useUI = () => {
   const screenSize = useSelector(selectScreenSize);
   const hasNotifications = useSelector(selectHasNotifications);
   const notificationCount = useSelector(selectUnreadNotificationCount);
+  const notificationSettings = useSelector(selectNotificationSettings);
 
   // 액션 생성자들
   const initialize = useCallback(() => {
@@ -149,6 +152,10 @@ export const useUI = () => {
     dispatch(clearAllNotifications());
   }, [dispatch]);
 
+  const processQueue = useCallback(() => {
+    dispatch(processNotificationQueue());
+  }, [dispatch]);
+
   // 편의 알림 메서드들
   const showSuccess = useCallback((title: string, message?: string, duration?: number) => {
     dispatch(showSuccessNotification(title, message, duration));
@@ -210,6 +217,7 @@ export const useUI = () => {
     screenSize,
     hasNotifications,
     notificationCount,
+    notificationSettings,
     
     // 초기화
     initialize,
@@ -240,6 +248,7 @@ export const useUI = () => {
     notify,
     removeNotify,
     clearNotifications,
+    processQueue,
     showSuccess,
     showError,
     showWarning,
@@ -278,6 +287,7 @@ export const useNotifications = () => {
     notifications,
     hasNotifications,
     notificationCount,
+    notificationSettings,
     notify,
     removeNotify,
     clearNotifications,
@@ -291,6 +301,7 @@ export const useNotifications = () => {
     notifications,
     hasNotifications,
     count: notificationCount,
+    settings: notificationSettings,
     notify,
     remove: removeNotify,
     clear: clearNotifications,

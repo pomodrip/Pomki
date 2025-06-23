@@ -11,7 +11,7 @@
 | dialogSlice | ✅ 완료 | 48줄 | 모달/다이얼로그 관리 |
 | snackbarSlice | ✅ 완료 | 57줄 | 알림 메시지 |
 | toastSlice | ✅ 완료 | 41줄 | 토스트 메시지 |
-| uiSlice | ✅ 완료 | 420줄 | 전역 UI 상태 (테마, 네비게이션, 알림) |
+| uiSlice | ✅ 완료 (확장됨) | 520줄 | 전역 UI 상태 (테마, 네비게이션, 알림, 프리셋) |
 
 ## 🚧 미구현된 Slice들
 
@@ -38,31 +38,50 @@ interface TimerState {
 - `/src/pages/Timer/TimerSettingsPage.tsx`
 - `/src/pages/Timer/PomodoroStatsPage.tsx`
 
-### 2. uiSlice.ts ✅
+### 2. uiSlice.ts ✅ **확장 완료**
 ```typescript
-// 전역 UI 상태 관리 - 구현 완료
+// 전역 UI 상태 관리 - 대폭 확장됨
 interface UIState {
   theme: ThemeMode; // 'light' | 'dark' | 'system'
+  currentPreset: ThemePreset; // 테마 프리셋 시스템
+  themePresets: ThemePreset[]; // 기본 + 커스텀 프리셋
   sidebarOpen: boolean;
   bottomNavVisible: boolean;
   globalLoading: boolean;
+  loadingStack: string[]; // 여러 로딩 동시 지원
   notifications: NotificationItem[];
+  notificationQueue: NotificationItem[]; // 알림 큐
   isMobile: boolean;
   screenSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  settings: UISettings;
+  settings: UISettings; // 접근성, 알림 설정 등
 }
 ```
 
-**우선순위**: ✅ 완료
-**구현 내용**:
-- 테마 관리 (light/dark/system 모드)
-- 네비게이션 상태 (사이드바, 바텀 네비게이션)
-- 전역 로딩 상태
-- 알림 시스템 (notification queue)
-- 반응형 상태 (모바일/데스크톱 감지)
-- 로컬 스토리지 연동
-- 커스텀 훅 (useUI, useTheme, useNotifications, useResponsiveUI)
-- 사용 예제 (UIUsageExample.tsx)
+**우선순위**: ✅ **완료 및 확장됨**
+
+**새로 구현된 기능들**:
+- 🎨 **테마 프리셋 시스템**: 4가지 기본 프리셋 (기본, 포레스트, 선셋, 오션) + 커스텀 프리셋 지원
+- 📱 **스택 기반 로딩**: 여러 로딩 작업 동시 관리, 순차적 완료 지원
+- 🔔 **확장된 알림 시스템**: 
+  - 액션 버튼이 있는 알림
+  - 여러 알림 동시 표시 (최대 5개)
+  - 알림 큐 자동 처리
+  - 위치 설정 (4방향)
+  - 지속적 알림 지원
+- ♿ **접근성 설정**: 고대비 모드, 폰트 크기 조절, 애니메이션 감소
+- 🔧 **실제 페이지 적용**: NoteListPage, TimerPage, ProfilePage, NoteCreatePage
+
+**확장된 컴포넌트들**:
+- `GlobalNotifications.tsx` (150줄) - 여러 알림 동시 표시, 액션 버튼 지원
+- `UIUsageExample.tsx` (500줄) - 모든 새 기능 시연
+
+**페이지 적용 현황**:
+- ✅ `NoteListPage.tsx` - Redux 알림 + 로딩 시스템 적용
+- ✅ `NoteCreatePage.tsx` - Redux 알림 시스템 적용  
+- ✅ `TimerPage.tsx` - alert() → Redux 알림으로 교체
+- ✅ `ProfilePage.tsx` - 로그아웃 시 Redux 알림 적용
+- ✅ `Header.tsx` - 테마 토글 버튼 추가
+- ✅ `App.tsx` - 확장된 알림 시스템 연동
 
 ### 3. adSlice.ts ❌
 ```typescript
@@ -108,8 +127,13 @@ interface MembershipState {
 2. **deckSlice.ts** merge conflict 해결
 3. **studySlice.ts** 확장 구현
 
-### Phase 2: UI 개선 (다음 주)  
-1. ~~**uiSlice.ts** 구현~~ ✅ 완료
+### Phase 2: UI 개선 ✅ **완료됨**
+1. ~~**uiSlice.ts** 구현~~ ✅ 완료 및 대폭 확장
+   - 테마 프리셋 시스템 구현
+   - 알림 시스템 확장 (액션 버튼, 여러 알림 동시 표시)
+   - 로딩 스택 시스템 구현
+   - 접근성 설정 추가
+   - 실제 페이지 적용 완료
 2. **membershipSlice.ts** 구현
 
 ### Phase 3: 부가 기능 (추후)
@@ -136,22 +160,33 @@ cp src/store/template/cleanSlice.template.ts src/store/slices/timerSlice.ts
 - 집중 시간 통계
 - 설정 관리
 
-### uiSlice.ts 구현 예시
+### uiSlice.ts ✅ **확장 완료**
 
 ```typescript
 interface UIState {
-  // 테마
-  theme: 'light' | 'dark';
+  // 테마 (확장됨)
+  theme: 'light' | 'dark' | 'system';
+  currentPreset: ThemePreset;
+  themePresets: ThemePreset[];
   
   // 네비게이션
   sidebarOpen: boolean;
   bottomNavVisible: boolean;
   
-  // 전역 로딩
+  // 전역 로딩 (스택 기반)
   globalLoading: boolean;
+  loadingStack: string[];
   
-  // 알림
-  notifications: Notification[];
+  // 알림 (대폭 확장)
+  notifications: NotificationItem[];
+  notificationQueue: NotificationItem[];
+  
+  // 설정
+  settings: {
+    accessibility: AccessibilitySettings;
+    notifications: NotificationSettings;
+    animations: AnimationSettings;
+  };
 }
 ```
 
@@ -163,10 +198,10 @@ interface UIState {
 // 현재 로컬 상태 → Redux 상태로 변경 필요
 ```
 
-### BottomNav.tsx와 uiSlice 연동
+### BottomNav.tsx와 uiSlice 연동 ✅ **완료**
 ```typescript
 // src/components/common/BottomNav.tsx  
-// 현재 로컬 상태 → Redux 상태로 변경 필요
+// ✅ 완료: 로컬 상태 → Redux 상태로 변경됨
 ```
 
 ## 📝 체크리스트
@@ -178,15 +213,22 @@ interface UIState {
 - [ ] 통계 데이터 관리
 - [ ] 알림 기능 연동
 
-### uiSlice.ts ✅ 완료 
+### uiSlice.ts ✅ **확장 완료**
 - [x] 테마 토글 기능 (light/dark/system 모드)
+- [x] **NEW**: 테마 프리셋 시스템 (4가지 기본 + 커스텀)
 - [x] 사이드바 상태 관리
 - [x] 전역 로딩 상태
+- [x] **NEW**: 스택 기반 로딩 (여러 로딩 동시 지원)
 - [x] 알림 큐 관리
+- [x] **NEW**: 액션 버튼이 있는 알림
+- [x] **NEW**: 여러 알림 동시 표시
+- [x] **NEW**: 알림 위치 설정
 - [x] 반응형 상태 관리
+- [x] **NEW**: 접근성 설정 (고대비, 폰트 크기, 애니메이션)
 - [x] 로컬 스토리지 연동
 - [x] 커스텀 훅 구현
-- [x] 사용 예제 작성
+- [x] **NEW**: 확장된 사용 예제 작성 (500줄)
+- [x] **NEW**: 실제 페이지 적용 (5개 페이지)
 
 ### membershipSlice.ts
 - [ ] 현재 플랜 조회
@@ -201,4 +243,6 @@ interface UIState {
 
 ---
 
-**🎯 다음 액션**: `timerSlice.ts` 구현부터 시작하는 것을 추천합니다! 
+**🎯 다음 액션**: `timerSlice.ts` 구현부터 시작하는 것을 추천합니다!
+
+**🎉 Phase 2 완료**: UI 시스템이 대폭 확장되어 프로덕션 레벨의 기능을 제공합니다! 

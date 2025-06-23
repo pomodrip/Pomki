@@ -1,22 +1,28 @@
-
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import { logoutUser } from '../../store/slices/authSlice';
 import { AppDispatch } from '../../store/store';
 import { Box, Typography, Paper, Container } from '@mui/material';
+import { useNotifications, useUI } from '../../hooks/useUI';
 
 const ProfilePage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { success, error } = useNotifications();
+  const { showGlobalLoading, hideGlobalLoading } = useUI();
 
   const handleLogout = async () => {
     try {
+      showGlobalLoading('로그아웃 중...');
       await dispatch(logoutUser()).unwrap();
+      success('로그아웃 완료', '성공적으로 로그아웃되었습니다.');
       navigate('/login');
-    } catch (error) {
-      console.error('Failed to logout:', error);
-      // Optional: Show an error message to the user
+    } catch (err) {
+      error('로그아웃 실패', '로그아웃 중 오류가 발생했습니다.');
+      console.error('Failed to logout:', err);
+    } finally {
+      hideGlobalLoading();
     }
   };
 

@@ -8,6 +8,7 @@ import {
   Menu,
   MenuItem,
   Fab,
+  CircularProgress,
 } from '@mui/material';
 import { Text, IconButton, Tag, Button, Card } from '../../components/ui';
 import {
@@ -25,6 +26,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 // import { fetchNotes, deleteNote, setFilters, toggleBookmark } from '../../store/slices/noteSlice';
 import { deleteNote, setFilters, toggleBookmark } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
+import { useNotifications, useUI } from '../../hooks/useUI';
 // import type { Note, Tag } from '../../types/note';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -88,11 +90,13 @@ const NoteListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { notes, loading, filters } = useAppSelector((state) => state.note);
   const { showConfirmDialog } = useDialog();
+  const { success, error } = useNotifications();
+  const { globalLoading, showGlobalLoading, hideGlobalLoading } = useUI();
 
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
-  // 모든 ?�그 목록 추출
+  // 모든 태그 목록 추출
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     notes.forEach((note) => {
@@ -101,7 +105,7 @@ const NoteListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [notes]);
 
-  // ?�터링된 ?�트 목록
+  // 필터링된 노트 목록
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
       const matchesSearch = note.noteTitle.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
@@ -117,7 +121,7 @@ const NoteListPage: React.FC = () => {
   }, [notes, filters]);
 
   useEffect(() => {
-    // dispatch(fetchNotes()); // 주석 처리: ?�재??mock ?�이???�용
+    // dispatch(fetchNotes()); // 주석 처리: 재??mock ??용
   }, [dispatch]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,30 +155,47 @@ const NoteListPage: React.FC = () => {
     event.stopPropagation();
     
     const confirmed = await showConfirmDialog({
-      title: '?�트 ??��',
-      message: '???�트�??�말 ??��?�시겠습?�까?',
-      confirmText: '??��',
+      title: '노트 삭제',
+      message: '이 노트를 정말 삭제하시겠습니까?',
+      confirmText: '삭제',
       cancelText: '취소',
     });
 
     if (confirmed) {
-      dispatch(deleteNote(noteId));
+      try {
+        showGlobalLoading('노트를 삭제하는 중...');
+        await dispatch(deleteNote(noteId)).unwrap();
+        success('노트 삭제 완료', '노트가 성공적으로 삭제되었습니다.');
+      } catch {
+        error('삭제 실패', '노트 삭제 중 오류가 발생했습니다.');
+      } finally {
+        hideGlobalLoading();
+      }
     }
   };
 
   const handleCreateQuiz = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
+    success('퀴즈 생성', '플래시카드 생성 페이지로 이동합니다.');
     navigate(`/study/${noteId}/flashcard-generation`);
   };
 
   const handleToggleBookmark = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     dispatch(toggleBookmark(noteId));
+    const note = notes.find(n => n.noteId === noteId);
+    if (note) {
+      if (note.isBookmarked) {
+        success('북마크 해제', '북마크가 해제되었습니다.');
+      } else {
+        success('북마크 추가', '북마크에 추가되었습니다.');
+      }
+    }
   };
 
   return (
     <StyledContainer maxWidth="md">
-      {/* ?�더 */}
+      {/* 헤더 */}
       <HeaderBox>
         <Text variant="h5" fontWeight="bold">
           My Notes
@@ -184,7 +205,7 @@ const NoteListPage: React.FC = () => {
         </IconButton>
       </HeaderBox>
 
-      {/* 검?�창 */}
+      {/* 검색창 */}
       <SearchBox>
         <TextField
           fullWidth
@@ -207,7 +228,7 @@ const NoteListPage: React.FC = () => {
         />
       </SearchBox>
 
-      {/* ?�터 버튼??*/}
+      {/* 필터 버튼들 */}
       <FilterBox>
         <Button
           variant="outlined"
@@ -227,7 +248,7 @@ const NoteListPage: React.FC = () => {
           Bookmarked
         </Button>
 
-        {/* ?�택???�그???�시 */}
+        {/* 선택된 태그들 표시 */}
         {filters.selectedTags.map((tag: string) => (
           <TagTag
             key={tag}
@@ -239,7 +260,7 @@ const NoteListPage: React.FC = () => {
         ))}
       </FilterBox>
 
-      {/* ?�그 메뉴 */}
+      {/* 태그 메뉴 */}
       <Menu
         anchorEl={tagMenuAnchor}
         open={Boolean(tagMenuAnchor)}
@@ -256,7 +277,7 @@ const NoteListPage: React.FC = () => {
         ))}
       </Menu>
 
-      {/* 북마???�터 메뉴 */}
+      {/* 북마크 필터 메뉴 */}
       <Menu
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
@@ -266,10 +287,13 @@ const NoteListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(false)}>Show All</MenuItem>
       </Menu>
 
-      {/* ?�트 목록 */}
-      <Box mt={4}>
-        {loading ? (
-          <Text>Loading...</Text>
+      {/* 노트 목록 */}
+      <Box>
+        {loading || globalLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" py={5}>
+            <CircularProgress />
+            <Text sx={{ ml: 2 }}>Loading...</Text>
+          </Box>
         ) : filteredNotes.length > 0 ? (
           filteredNotes.map((note) => (
             <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
@@ -307,7 +331,7 @@ const NoteListPage: React.FC = () => {
                 <Text variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
                   Updated: {new Date(note.updatedAt).toLocaleDateString()}
                 </Text>
-                              </div>
+              </div>
             </NoteCard>
           ))
         ) : (
@@ -323,7 +347,7 @@ const NoteListPage: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => navigate('/note/create')}
             >
-              ?�트 ?�성
+              노트 생성
             </Button>
           </Box>
         )}

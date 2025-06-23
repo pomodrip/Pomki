@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../hooks/useRedux';
 import { createNote } from '../../store/slices/noteSlice';
+import { useNotifications, useUI } from '../../hooks/useUI';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -45,6 +46,8 @@ const TagInputBox = styled(Box)(({ theme }) => ({
 const NoteCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { success, error } = useNotifications();
+  const { showGlobalLoading, hideGlobalLoading } = useUI();
 
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
@@ -64,25 +67,30 @@ const NoteCreatePage: React.FC = () => {
 
   const handleSave = async () => {
     if (!noteTitle.trim()) {
-      alert('제목을 입력해주세요.');
+      error('입력 오류', '제목을 입력해주세요.');
       return;
     }
 
     if (!noteContent.trim()) {
-      alert('내용을 입력해주세요.');
+      error('입력 오류', '내용을 입력해주세요.');
       return;
     }
 
     try {
+      showGlobalLoading('노트를 저장하는 중...');
       
       await dispatch(createNote({
         noteTitle: noteTitle.trim(),
         noteContent: noteContent.trim(),
         // tags: tags, // TODO: tag string[]을 tagId: number[]로 변환 필요
-      }));
+      })).unwrap();
+      
+      success('노트 저장 완료', '노트가 성공적으로 저장되었습니다.');
       navigate('/note');
     } catch {
-      alert('노트 저장에 실패했습니다.');
+      error('저장 실패', '노트 저장에 실패했습니다.');
+    } finally {
+      hideGlobalLoading();
     }
   };
 

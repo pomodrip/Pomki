@@ -9,6 +9,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import { useNotifications } from '../../hooks/useUI';
 // import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
@@ -391,6 +392,8 @@ interface TimerSettings {
 }
 
 const TimerPage: React.FC = () => {
+  const { success, warning } = useNotifications();
+  
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -538,14 +541,13 @@ const TimerPage: React.FC = () => {
   // AI ?�트 ?�성 ?�들??(?�시 구현)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
-              alert('먼저 노트에 내용을 작성해주세요.');
-              alert('먼저 노트에 내용을 작성해주세요.');
+      warning('노트 입력 필요', '먼저 노트에 내용을 작성해주세요.');
       return;
     }
 
     setIsGeneratingAI(true);
     
-    // ?�시 AI ?�성 ?��??�이??
+    // 임시 AI 생성 시뮬레이션
     setTimeout(() => {
       const aiContent = generateMockAIContent(summaryStyle, taskName);
       setNotes(prevNotes => {
@@ -553,8 +555,7 @@ const TimerPage: React.FC = () => {
         return prevNotes + separator + aiContent;
       });
       setIsGeneratingAI(false);
-              alert('AI 노트가 성공적으로 생성되었습니다!');
-              alert('AI 노트가 성공적으로 생성되었습니다!');
+      success('AI 노트 생성 완료', 'AI 노트가 성공적으로 생성되었습니다!');
     }, 2000);
   };
 
