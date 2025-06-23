@@ -18,6 +18,4 @@ public class NoteUpdateRequestDto {
 
     @NotNull(message = "AI 향상 여부는 비워둘 수 없습니다.")
     private Boolean aiEnhanced;
-    @NotBlank(message = "원본 내용은 비워둘 수 없습니다.")
-    private String originalContent;
 } 

@@ -74,7 +74,6 @@ public class NoteService {
         note.setNoteTitle(noteRequestDto.getNoteTitle());
         note.setNoteContent(noteRequestDto.getNoteContent());
         note.setAiEnhanced(noteRequestDto.getAiEnhanced());
-        note.setOriginalContent(noteRequestDto.getOriginalContent());
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
         return NoteResponseDto.from(note);
