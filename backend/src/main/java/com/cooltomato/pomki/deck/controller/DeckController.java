@@ -1,0 +1,77 @@
+package com.cooltomato.pomki.deck.controller;
+
+import com.cooltomato.pomki.deck.dto.DeckRequestDto;
+import com.cooltomato.pomki.deck.dto.DeckResponseDto;
+import com.cooltomato.pomki.deck.service.DeckService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import com.cooltomato.pomki.card.dto.CardResponseDto;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
+
+
+
+@RestController
+@RequestMapping("/api/decks")
+@RequiredArgsConstructor
+@Slf4j
+public class DeckController {
+    
+    private final DeckService deckService;
+
+    // 덱 생성
+    // 0620 추가 ) 이제 더미데이터 멤버 777말고 로그인 정보에 따라 member_id별로 덱 생성 가능하도록 수정
+    @PostMapping
+    public ResponseEntity<DeckResponseDto> createOneDeck(@AuthenticationPrincipal PrincipalMember principal, @RequestBody DeckRequestDto request) {
+        log.info("debug >>> DeckController createDeck");
+        DeckResponseDto response = deckService.createOneDeckService(principal.getMemberId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    // 특정 멤버의 모든 덱 조회
+    @GetMapping("/members/my-decks")
+    public ResponseEntity<List<DeckResponseDto>> readDecksByMember(@AuthenticationPrincipal PrincipalMember principal) {
+        log.info("debug >>> DeckController readDecksByMember");
+        List<DeckResponseDto> response = deckService.readAllDecksService(principal);
+        if (response.isEmpty()) {
+            log.info("No decks found for member: {}", principal.getMemberId());
+        }
+        return ResponseEntity.ok(response);
+    }
+    
+    // 덱 내의 모든 카드 조회
+    @GetMapping("/{deckId}/cards")
+    public ResponseEntity<List<CardResponseDto>>  readCardsInAdeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
+        log.info("debug >>> DeckController readCardsInAdeck");
+        List<CardResponseDto> cardsInDeck = deckService.readAllCardsService(principal, deckId);
+        return ResponseEntity.ok(cardsInDeck);
+    }
+
+    // 덱 정보 수정
+    @PutMapping("/{deckId}")
+    public ResponseEntity<DeckResponseDto> updateOneDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId, @RequestBody DeckRequestDto request) {
+        log.info("Updating deck: {}", deckId);
+        DeckResponseDto response = deckService.updateOneDeckSerivce(principal, deckId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    // 덱 삭제 (덱 내의 모든 카드도 함께 삭제)
+    @DeleteMapping("/{deckId}")
+    public ResponseEntity<Void> deleteDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("deckId") String deckId) {
+        log.info("Deleting deck: {}", deckId);
+        deckService.deleteOneDeckService(principal, deckId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    
+}

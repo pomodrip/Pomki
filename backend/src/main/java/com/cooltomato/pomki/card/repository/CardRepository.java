@@ -1,6 +1,14 @@
 package com.cooltomato.pomki.card.repository;
 
+import com.cooltomato.pomki.card.entity.Card;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-// public interface CardRepository extends JpaRepository<Object, Long> {
-// } 
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface CardRepository extends JpaRepository<Card, Long> {
+    Optional<Card> findByCardIdAndIsDeletedFalse(Long cardId);
+    List<Card> findByDeckDeckIdAndIsDeletedFalse(String deckId);
+} 
