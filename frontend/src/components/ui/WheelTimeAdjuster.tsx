@@ -165,15 +165,21 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
       >
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center',
           height: '100%',
-          padding: '12px 0' // 전체 여백은 유지
+          gap: '4px' // 숫자와 화살표 사이 간격
         }}>
-          <Arrow aria-hidden>▲</Arrow>
+          
           <span style={{ fontSize: '32px', fontWeight: 700 }}>{value}</span>
-          <Arrow aria-hidden>▼</Arrow>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <Arrow aria-hidden>▲</Arrow>
+            <Arrow aria-hidden>▼</Arrow>
+          </Box>
         </Box>
       </WheelArea>
       <AdjusterLabel>
