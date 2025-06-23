@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, styled, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress, Fab } from '@mui/material';
+import { Box, styled, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
@@ -9,7 +9,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import theme from '../../theme/theme';
+// import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
 const PageContainer = styled(Box)(() => ({
@@ -38,12 +38,12 @@ const PageTitle = styled(Text)(({ theme }) => ({
 }));
 
 // 집중시간 섹션
-const FocusTimeSection = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '32px',
-}));
+// const FocusTimeSection = styled(Box)(() => ({
+//   display: 'flex',
+//   flexDirection: 'column',
+//   alignItems: 'center',
+//   marginBottom: '32px',
+// }));
 
 const FocusTimeLabel = styled(Text)(({ theme }) => ({
   fontSize: '20px', // H3 크기
@@ -54,13 +54,13 @@ const FocusTimeLabel = styled(Text)(({ theme }) => ({
 }));
 
 // 실행 중 상태 헤더
-const RunningHeader = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '32px',
-  width: '100%',
-}));
+// const RunningHeader = styled(Box)(() => ({
+//   display: 'flex',
+//   flexDirection: 'column',
+//   alignItems: 'center',
+//   marginBottom: '32px',
+//   width: '100%',
+// }));
 
 const SessionProgress = styled(Text)(({ theme }) => ({
   fontSize: '18px',
@@ -76,22 +76,22 @@ const ElapsedTime = styled(Text)(({ theme }) => ({
   marginBottom: '16px',
 }));
 
-const ProgressBarContainer = styled(Box)(() => ({
-  width: '100%',
-  maxWidth: '400px',
-  height: '8px',
-  backgroundColor: '#E5E7EB',
-  borderRadius: '4px',
-  overflow: 'hidden',
-  marginBottom: '32px',
-}));
+// const ProgressBarContainer = styled(Box)(() => ({
+//   width: '100%',
+//   maxWidth: '400px',
+//   height: '8px',
+//   backgroundColor: '#E5E7EB',
+//   borderRadius: '4px',
+//   overflow: 'hidden',
+//   marginBottom: '32px',
+// }));
 
-const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress, theme }) => ({
-  width: `${progress}%`,
-  height: '100%',
-  backgroundColor: theme.palette.primary.main, // theme에서 가져온 Primary 색상
-  transition: 'width 0.3s ease',
-}));
+// const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress, theme }) => ({
+//   width: `${progress}%`,
+//   height: '100%',
+//   backgroundColor: theme.palette.primary.main, // theme에서 가져온 Primary 색상
+//   transition: 'width 0.3s ease',
+// }));
 
 // 타이머 원형 컨테이너
 const TimerCircle = styled(Box)(() => ({
@@ -179,7 +179,6 @@ const TaskInputSection = styled(Box)(() => ({
 }));
 
 const TaskInputLabel = styled(Text)(() => ({
-const TaskInputLabel = styled(Text)(() => ({
   fontSize: '16px', // Body Regular
   fontWeight: 500, // Medium
   color: '#6B7280', // Text Secondary
@@ -238,7 +237,7 @@ const ExpandedTimerInfo = styled(Box)(() => ({
   gap: '20px',
 }));
 
-const ExpandedTimerDisplay = styled(Text)(() => ({
+
 const ExpandedTimerDisplay = styled(Text)(() => ({
   fontSize: '28px',
   fontWeight: 700,
@@ -246,7 +245,7 @@ const ExpandedTimerDisplay = styled(Text)(() => ({
   fontFamily: "'Pretendard', monospace",
 }));
 
-const ExpandedSessionInfo = styled(Text)(() => ({
+
 const ExpandedSessionInfo = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 500,
@@ -279,7 +278,7 @@ const NotesHeader = styled(Box)(() => ({
   marginBottom: '20px',
 }));
 
-const NotesTitle = styled(Text)(() => ({
+
 const NotesTitle = styled(Text)(() => ({
   fontSize: '24px',
   fontWeight: 700,
@@ -336,7 +335,7 @@ const StudyModeSection = styled(Box)(() => ({
   gap: '8px',
 }));
 
-const StudyModeLabel = styled(Text)(() => ({
+
 const StudyModeLabel = styled(Text)(() => ({
   fontSize: '14px',
   fontWeight: 500,
@@ -364,7 +363,7 @@ const PresetsSection = styled(Box)(() => ({
   gap: '12px',
 }));
 
-const PresetsTitle = styled(Text)(() => ({
+
 const PresetsTitle = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 600,
@@ -772,7 +771,7 @@ const TimerPage: React.FC = () => {
             📝 집중 노트
           </NotesTitle>
           {taskName && (
-            <Text 
+            
             <Text 
               sx={{ 
                 fontSize: '16px', 
@@ -784,7 +783,7 @@ const TimerPage: React.FC = () => {
             >
               현재 작업: {taskName}
             </Text>
-            </Text>
+          
           )}
         </Box>
         <IconButton
