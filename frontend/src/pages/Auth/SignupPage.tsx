@@ -5,6 +5,7 @@ import { Box, Checkbox, Container, Typography, Alert, Paper } from "@mui/materia
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { sendEmailVerification, verifyEmailCode, signup } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
+import EmailVerificationTimer from '../../components/ui/EmailVerificationTimer';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -13,12 +14,14 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isCodeSent, setIsCodeSent] = useState(true);
+  // const [isCodeSent, setIsCodeSent] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [error, setError] = useState('');
+  const [timerKey, setTimerKey] = useState(0); // 타이머 재시작용 key
 
   const handleRequestCode = async () => {
     if (!email) return;
@@ -33,6 +36,7 @@ const SignupPage = () => {
       });
       
       setIsCodeSent(true);
+      setTimerKey(prev => prev + 1); // 타이머 재시작
       // 선택적: 성공 메시지 표시
     } catch (error: any) {
       console.error('Failed to send verification code:', error);
@@ -156,14 +160,25 @@ const SignupPage = () => {
             <Typography variant="body1" color="primary" sx={{ mt: 1, ml: 1, flexShrink: 0, minWidth: 'fit-content'}}>
               인증완료
             </Typography>
-          ):<Button 
-            variant="outlined"
-            onClick={handleRequestCode}
-            disabled={!email || isCodeSent || isRequestingCode}
-            sx={{ flexShrink: 0, height: '47px', minWidth: 'fit-content' }}
-          >
-            {isRequestingCode ? '전송중...' : '인증번호 요청'}
-          </Button>}
+          ) : (
+            isCodeSent ? (
+              <Box sx={{ mt: 1, ml: 1, mr: 2, flexShrink: 0, minWidth: 'fit-content' }}>
+                <EmailVerificationTimer
+                  key={timerKey}
+                  onExpire={() => setIsCodeSent(false)}
+                />
+              </Box>
+            ) : (
+              <Button 
+                variant="outlined"
+                onClick={handleRequestCode}
+                disabled={!email || isRequestingCode}
+                sx={{ flexShrink: 0, height: '47px', minWidth: 'fit-content' }}
+              >
+                {isRequestingCode ? '전송중...' : '인증번호 요청'}
+              </Button>
+            )
+          )}
         </Box>
 
         {isCodeSent && !isVerified && (
