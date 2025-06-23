@@ -257,8 +257,8 @@ const FlashCardListPage: React.FC = () => {
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
     if (confirmed) {
-      // 🎯 새로운 API 호출 (실제 cardId 사용)
-      dispatch(deleteCard(id));
+      // 🎯 새로운 API 호출 (실제 cardId 사용) - string으로 변환
+      dispatch(deleteCard(id.toString()));
     }
   };
 
@@ -281,9 +281,9 @@ const FlashCardListPage: React.FC = () => {
   const handleEditDialogConfirm = () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
     if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null) {
-      // 🎯 새로운 API 형식으로 업데이트
+      // 🎯 새로운 API 형식으로 업데이트 - string으로 변환
       dispatch(updateCard({ 
-        cardId: editingCardId, 
+        cardId: editingCardId.toString(), 
         data: { 
           content: editCardFront.trim(), 
           answer: editCardBack.trim() 

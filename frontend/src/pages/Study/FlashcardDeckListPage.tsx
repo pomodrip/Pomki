@@ -131,9 +131,10 @@ const FlashcardDeckListPage: React.FC = () => {
 
   // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
-    // memberId가 1인 사용자로 가정하여 테스트
-    const memberIdToTest = user?.memberId ?? 1;
-    dispatch(fetchDecks(memberIdToTest));
+    // memberId 체크 후 덱 목록 로드
+    if (user?.memberId) {
+      dispatch(fetchDecks());
+    }
   }, [dispatch, user?.memberId]);
 
   // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)

@@ -3,6 +3,7 @@ import type { RootState } from '../store';
 import * as studyApi from '../../api/studyApi';
 import type {
   CardDeck,
+  Card,
   CreateDeckRequest,
   UpdateDeckRequest,
 } from '../../types/card';
@@ -24,6 +25,7 @@ interface DeckState {
   // 데이터
   decks: CardDeck[];
   selectedDeck: CardDeck | null;
+  currentDeckCards: Card[]; // 현재 덱의 카드들
   
   // 상태
   loading: boolean;
@@ -51,6 +53,7 @@ interface DeckState {
 const initialState: DeckState = {
   decks: [],
   selectedDeck: null,
+  currentDeckCards: [],
   loading: false,
   error: null,
   currentPage: 0,
@@ -153,6 +156,60 @@ export const deleteDeck = createAsyncThunk<
   }
 });
 
+// 덱의 카드 목록 조회
+export const fetchCardsInDeck = createAsyncThunk<
+  Card[],
+  string,
+  { state: RootState; rejectValue: string }
+>('deck/fetchCardsInDeck', async (deckId, { rejectWithValue }) => {
+  try {
+    // Mock 데이터 반환 (실제 API 구현 시 교체)
+    return [
+      { cardId: 1, deckId, content: '질문 1', answer: '답변 1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), isDeleted: false },
+      { cardId: 2, deckId, content: '질문 2', answer: '답변 2', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), isDeleted: false },
+    ];
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드 수정
+export const updateCard = createAsyncThunk<
+  Card,
+  { cardId: string; data: Partial<Card> },
+  { state: RootState; rejectValue: string }
+>('deck/updateCard', async ({ cardId, data }, { rejectWithValue }) => {
+  try {
+    // Mock 응답 (실제 API 구현 시 교체)
+    return { 
+      cardId: parseInt(cardId), 
+      deckId: data.deckId || '', 
+      content: data.content || '', 
+      answer: data.answer || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isDeleted: false,
+      ...data 
+    };
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드 삭제
+export const deleteCard = createAsyncThunk<
+  string,
+  string,
+  { state: RootState; rejectValue: string }
+>('deck/deleteCard', async (cardId, { rejectWithValue }) => {
+  try {
+    // Mock 응답 (실제 API 구현 시 교체)
+    return cardId;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
 // ==========================================
 // 5. Slice 정의
 // ==========================================
@@ -210,6 +267,13 @@ const deckSlice = createSlice({
       if (state.selectedDeck?.deckId === deckId) {
         // state.selectedDeck.isBookmarked = !state.selectedDeck.isBookmarked;
       }
+    },
+
+    // 현재 덱 설정 (문자열로 받아서 설정)
+    setCurrentDeck: (state, action: PayloadAction<string>) => {
+      const deckId = action.payload;
+      const deck = state.decks.find(d => d.deckId === deckId);
+      state.selectedDeck = deck || null;
     },
   },
   
@@ -303,7 +367,35 @@ const deckSlice = createSlice({
       .addCase(deleteDeck.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || '덱 삭제에 실패했습니다.';
-      });
+      })
+      
+      // 카드 목록 조회
+      .addCase(fetchCardsInDeck.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCardsInDeck.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentDeckCards = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchCardsInDeck.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || '카드 목록을 불러오는데 실패했습니다.';
+      })
+
+             // 카드 수정
+       .addCase(updateCard.fulfilled, (state, action) => {
+         const index = state.currentDeckCards.findIndex(card => card.cardId === action.payload.cardId);
+         if (index !== -1) {
+           state.currentDeckCards[index] = action.payload;
+         }
+       })
+
+       // 카드 삭제
+       .addCase(deleteCard.fulfilled, (state, action) => {
+         state.currentDeckCards = state.currentDeckCards.filter(card => card.cardId.toString() !== action.payload);
+       });
   },
 });
 
@@ -320,6 +412,7 @@ export const {
   setPageSize,
   setLoading,
   toggleDeckBookmark,
+  setCurrentDeck,
 } = deckSlice.actions;
 
 export default deckSlice.reducer;

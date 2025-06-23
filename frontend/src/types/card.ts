@@ -32,8 +32,9 @@ export interface Card {
  * 덱 생성 요청 DTO
  * API: POST /api/decks
  */
-export interface CreateDeckRequest {
+export interface CreateDeckRequest extends Record<string, unknown> {
   deckName: string;
+  [key: string]: unknown;
 }
 
 /**

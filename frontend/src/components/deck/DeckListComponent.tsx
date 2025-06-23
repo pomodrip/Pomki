@@ -79,11 +79,7 @@ const DeckListComponent: React.FC = () => {
 
   // 컴포넌트 마운트 시 덱 목록 조회
   useEffect(() => {
-    dispatch(fetchDecks({
-      page: currentPage,
-      size: pageSize,
-      search: filters.searchQuery,
-    }));
+    dispatch(fetchDecks());
   }, [dispatch, currentPage, pageSize, filters.searchQuery]);
 
   // 페이지네이션 정보 동기화
@@ -166,7 +162,15 @@ const DeckListComponent: React.FC = () => {
             <input
               type="text"
               placeholder="덱 이름을 입력하세요"
-              {...getCreateFieldProps('deckName')}
+              value={createValues.deckName}
+              onChange={(e) => {
+                const fieldProps = getCreateFieldProps('deckName');
+                fieldProps.onChange(e.target.value);
+              }}
+              onBlur={() => {
+                const fieldProps = getCreateFieldProps('deckName');
+                fieldProps.onBlur();
+              }}
             />
             {createErrors.deckName && (
               <span className="error">{createErrors.deckName}</span>

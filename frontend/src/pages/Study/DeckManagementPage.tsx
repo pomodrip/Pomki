@@ -73,7 +73,7 @@ const DeckManagementPage: React.FC = () => {
   // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
     if (user?.memberId) {
-      dispatch(fetchDecks(user.memberId));
+      dispatch(fetchDecks());
     }
   }, [dispatch, user?.memberId]);
 
