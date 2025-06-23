@@ -1,156 +1,221 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { CardDeck, Card, CreateDeckRequest, UpdateDeckRequest } from '../../types/card';
-import { deckService } from '../../services/deckService';
-import { cardService } from '../../services/cardService';
+import type { RootState } from '../store';
+import * as studyApi from '../../api/studyApi';
+import type {
+  CardDeck,
+  CreateDeckRequest,
+  UpdateDeckRequest,
+} from '../../types/card';
 
-// 🎯 덱 슬라이스 상태 정의
+/**
+ * 🃏 Deck Slice - 카드 덱 상태관리
+ * 
+ * 기능:
+ * - 덱 목록 조회/생성/수정/삭제
+ * - 검색 및 필터링
+ * - 북마크 관리
+ */
+
+// ==========================================
+// 1. 상태 인터페이스
+// ==========================================
+
 interface DeckState {
+  // 데이터
   decks: CardDeck[];
-  currentDeckCards: Card[];
+  selectedDeck: CardDeck | null;
+  
+  // 상태
   loading: boolean;
   error: string | null;
-  currentDeckId: string | null;
+  
+  // 페이지네이션
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  pageSize: number;
+  
+  // 필터
+  filters: {
+    searchQuery: string;
+    showBookmarked: boolean;
+    sortBy: 'deckName' | 'createdAt' | 'cardCnt';
+    sortOrder: 'asc' | 'desc';
+  };
 }
+
+// ==========================================
+// 2. 초기 상태
+// ==========================================
 
 const initialState: DeckState = {
   decks: [],
-  currentDeckCards: [],
+  selectedDeck: null,
   loading: false,
   error: null,
-  currentDeckId: null,
+  currentPage: 0,
+  totalPages: 0,
+  totalElements: 0,
+  pageSize: 10,
+  filters: {
+    searchQuery: '',
+    showBookmarked: false,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  },
 };
 
-// 🌐 비동기 액션들 (Thunk)
+// ==========================================
+// 3. 에러 처리 헬퍼
+// ==========================================
 
-// 덱 목록 가져오기
-export const fetchDecks = createAsyncThunk<CardDeck[], number, { rejectValue: string }>(
-  'deck/fetchDecks',
-  async (memberId, { rejectWithValue }) => {
-    try {
-      return await deckService.getDecks(memberId);
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '덱 목록을 가져오는데 실패했습니다.');
-    }
+const handleAsyncError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
   }
-);
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return '알 수 없는 오류가 발생했습니다.';
+};
+
+// ==========================================
+// 4. Async Thunk 액션들
+// ==========================================
+
+// 덱 목록 조회 (백엔드 API에 맞게 수정)
+export const fetchDecks = createAsyncThunk<
+  CardDeck[],
+  void,
+  { state: RootState; rejectValue: string }
+>('deck/fetchDecks', async (_, { rejectWithValue }) => {
+  try {
+    const decks = await studyApi.getDecks();
+    return decks;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 단일 덱 조회
+export const fetchDeck = createAsyncThunk<
+  CardDeck,
+  string,
+  { state: RootState; rejectValue: string }
+>('deck/fetchDeck', async (deckId, { rejectWithValue }) => {
+  try {
+    const deck = await studyApi.getDeck(deckId);
+    return deck;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
 
 // 덱 생성
-export const createDeck = createAsyncThunk<CardDeck, CreateDeckRequest, { rejectValue: string }>(
-  'deck/createDeck',
-  async (data, { rejectWithValue }) => {
-    try {
-      return await deckService.createDeck(data);
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '덱 생성에 실패했습니다.');
-    }
+export const createDeck = createAsyncThunk<
+  CardDeck,
+  CreateDeckRequest,
+  { state: RootState; rejectValue: string }
+>('deck/createDeck', async (data, { rejectWithValue }) => {
+  try {
+    const deck = await studyApi.createDeck(data);
+    return deck;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
   }
-);
+});
 
 // 덱 수정
-export const updateDeck = createAsyncThunk<CardDeck, { deckId: string; data: UpdateDeckRequest }, { rejectValue: string }>(
-  'deck/updateDeck',
-  async ({ deckId, data }, { rejectWithValue }) => {
-    try {
-      return await deckService.updateDeck(deckId, data);
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '덱 수정에 실패했습니다.');
-    }
+export const updateDeck = createAsyncThunk<
+  CardDeck,
+  { deckId: string; data: UpdateDeckRequest },
+  { state: RootState; rejectValue: string }
+>('deck/updateDeck', async ({ deckId, data }, { rejectWithValue }) => {
+  try {
+    const deck = await studyApi.updateDeck(deckId, data);
+    return deck;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
   }
-);
+});
 
 // 덱 삭제
-export const deleteDeck = createAsyncThunk<string, string, { rejectValue: string }>(
-  'deck/deleteDeck',
-  async (deckId, { rejectWithValue }) => {
-    try {
-      await deckService.deleteDeck(deckId);
-      return deckId;
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '덱 삭제에 실패했습니다.');
-    }
+export const deleteDeck = createAsyncThunk<
+  string,
+  string,
+  { state: RootState; rejectValue: string }
+>('deck/deleteDeck', async (deckId, { rejectWithValue }) => {
+  try {
+    await studyApi.deleteDeck(deckId);
+    return deckId;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
   }
-);
+});
 
-// 덱 내 카드 목록 가져오기
-export const fetchCardsInDeck = createAsyncThunk<{ deckId: string; cards: Card[] }, string, { rejectValue: string }>(
-  'deck/fetchCardsInDeck',
-  async (deckId, { rejectWithValue }) => {
-    try {
-      const cards = await deckService.getCardsInDeck(deckId);
-      return { deckId, cards };
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '카드 목록을 가져오는데 실패했습니다.');
-    }
-  }
-);
+// ==========================================
+// 5. Slice 정의
+// ==========================================
 
-// 카드 생성
-export const createCard = createAsyncThunk<Card, { deckId: string; data: { content: string; answer: string } }, { rejectValue: string }>(
-  'deck/createCard',
-  async ({ deckId, data }, { rejectWithValue }) => {
-    try {
-      return await cardService.createCard(deckId, data);
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '카드 생성에 실패했습니다.');
-    }
-  }
-);
-
-// 카드 수정
-export const updateCard = createAsyncThunk<Card, { cardId: number; data: { content: string; answer: string } }, { rejectValue: string }>(
-  'deck/updateCard',
-  async ({ cardId, data }, { rejectWithValue }) => {
-    try {
-      return await cardService.updateCard(cardId, data);
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '카드 수정에 실패했습니다.');
-    }
-  }
-);
-
-// 카드 삭제
-export const deleteCard = createAsyncThunk<number, number, { rejectValue: string }>(
-  'deck/deleteCard',
-  async (cardId, { rejectWithValue }) => {
-    try {
-      await cardService.deleteCard(cardId);
-      return cardId;
-    } catch (error) {
-      const e = error as Error;
-      return rejectWithValue(e.message || '카드 삭제에 실패했습니다.');
-    }
-  }
-);
-
-// 🎯 덱 슬라이스 정의
 const deckSlice = createSlice({
   name: 'deck',
   initialState,
   reducers: {
-    // 현재 덱 설정
-    setCurrentDeck: (state, action: PayloadAction<string>) => {
-      state.currentDeckId = action.payload;
-    },
     // 에러 클리어
     clearError: (state) => {
       state.error = null;
     },
-    // 현재 덱 카드 초기화
-    clearCurrentDeckCards: (state) => {
-      state.currentDeckCards = [];
-      state.currentDeckId = null;
-    }
+    
+    // 선택된 덱 설정
+    setSelectedDeck: (state, action: PayloadAction<CardDeck | null>) => {
+      state.selectedDeck = action.payload;
+    },
+    
+    // 필터 설정
+    setFilters: (state, action: PayloadAction<Partial<DeckState['filters']>>) => {
+      state.filters = { ...state.filters, ...action.payload };
+    },
+    
+    // 필터 초기화
+    clearFilters: (state) => {
+      state.filters = initialState.filters;
+    },
+    
+    // 페이지 설정
+    setCurrentPage: (state, action: PayloadAction<number>) => {
+      state.currentPage = action.payload;
+    },
+    
+    // 페이지 크기 설정
+    setPageSize: (state, action: PayloadAction<number>) => {
+      state.pageSize = action.payload;
+      state.currentPage = 0; // 페이지 크기 변경 시 첫 페이지로
+    },
+    
+    // 로딩 상태 수동 설정
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    
+    // 덱 북마크 토글 (로컬 상태 업데이트)
+    toggleDeckBookmark: (state, action: PayloadAction<string>) => {
+      const deckId = action.payload;
+      const deck = state.decks.find(d => d.deckId === deckId);
+      if (deck) {
+        // 북마크 상태는 API에 따라 다를 수 있으므로 임시로 처리
+        // 실제로는 별도의 북마크 API가 필요할 수 있음
+      }
+      
+      // 선택된 덱도 업데이트
+      if (state.selectedDeck?.deckId === deckId) {
+        // state.selectedDeck.isBookmarked = !state.selectedDeck.isBookmarked;
+      }
+    },
   },
+  
   extraReducers: (builder) => {
-    // 덱 목록 가져오기
     builder
+      // 덱 목록 조회
       .addCase(fetchDecks.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -158,108 +223,183 @@ const deckSlice = createSlice({
       .addCase(fetchDecks.fulfilled, (state, action) => {
         state.loading = false;
         state.decks = action.payload;
+        state.totalElements = action.payload.length;
+        state.totalPages = Math.ceil(action.payload.length / state.pageSize);
+        state.error = null;
       })
       .addCase(fetchDecks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 덱 생성
-    builder
+        state.error = action.payload || '덱 목록을 불러오는데 실패했습니다.';
+      })
+      
+      // 단일 덱 조회
+      .addCase(fetchDeck.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDeck.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedDeck = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchDeck.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || '덱을 불러오는데 실패했습니다.';
+      })
+      
+      // 덱 생성
       .addCase(createDeck.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createDeck.fulfilled, (state, action) => {
         state.loading = false;
-        state.decks.unshift(action.payload);
+        state.decks.unshift(action.payload); // 새 덱을 맨 앞에 추가
+        state.totalElements += 1;
+        state.error = null;
       })
       .addCase(createDeck.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 덱 수정
-    builder
+        state.error = action.payload || '덱 생성에 실패했습니다.';
+      })
+      
+      // 덱 수정
+      .addCase(updateDeck.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateDeck.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.decks.findIndex(deck => deck.deckId === action.payload.deckId);
         if (index !== -1) {
           state.decks[index] = action.payload;
         }
+        // 선택된 덱도 업데이트
+        if (state.selectedDeck?.deckId === action.payload.deckId) {
+          state.selectedDeck = action.payload;
+        }
+        state.error = null;
       })
       .addCase(updateDeck.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
-
-    // 덱 삭제
-    builder
-      .addCase(deleteDeck.fulfilled, (state, action) => {
-        state.decks = state.decks.filter(deck => deck.deckId !== action.payload);
+        state.loading = false;
+        state.error = action.payload || '덱 수정에 실패했습니다.';
       })
-      .addCase(deleteDeck.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
-
-    // 카드 목록 가져오기
-    builder
-      .addCase(fetchCardsInDeck.pending, (state) => {
+      
+      // 덱 삭제
+      .addCase(deleteDeck.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchCardsInDeck.fulfilled, (state, action) => {
+      .addCase(deleteDeck.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentDeckId = action.payload.deckId;
-        state.currentDeckCards = action.payload.cards;
+        state.decks = state.decks.filter(deck => deck.deckId !== action.payload);
+        // 선택된 덱이 삭제된 경우 초기화
+        if (state.selectedDeck?.deckId === action.payload) {
+          state.selectedDeck = null;
+        }
+        state.totalElements = Math.max(0, state.totalElements - 1);
+        state.error = null;
       })
-      .addCase(fetchCardsInDeck.rejected, (state, action) => {
+      .addCase(deleteDeck.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 카드 생성
-    builder
-      .addCase(createCard.fulfilled, (state, action) => {
-        state.currentDeckCards.push(action.payload);
-        // 해당 덱의 카드 수 증가
-        const deck = state.decks.find(d => d.deckId === action.payload.deckId);
-        if (deck) {
-          deck.cardCnt += 1;
-        }
-      })
-      .addCase(createCard.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
-
-    // 카드 수정
-    builder
-      .addCase(updateCard.fulfilled, (state, action) => {
-        const index = state.currentDeckCards.findIndex(card => card.cardId === action.payload.cardId);
-        if (index !== -1) {
-          state.currentDeckCards[index] = action.payload;
-        }
-      })
-      .addCase(updateCard.rejected, (state, action) => {
-        state.error = action.payload as string;
-      });
-
-    // 카드 삭제
-    builder
-      .addCase(deleteCard.fulfilled, (state, action) => {
-        const deletedCard = state.currentDeckCards.find(card => card.cardId === action.payload);
-        if (deletedCard) {
-          state.currentDeckCards = state.currentDeckCards.filter(card => card.cardId !== action.payload);
-          // 해당 덱의 카드 수 감소
-          const deck = state.decks.find(d => d.deckId === deletedCard.deckId);
-          if (deck && deck.cardCnt > 0) {
-            deck.cardCnt -= 1;
-          }
-        }
-      })
-      .addCase(deleteCard.rejected, (state, action) => {
-        state.error = action.payload as string;
+        state.error = action.payload || '덱 삭제에 실패했습니다.';
       });
   },
 });
 
-export const { setCurrentDeck, clearError, clearCurrentDeckCards } = deckSlice.actions;
-export default deckSlice.reducer; 
+// ==========================================
+// 6. 액션과 리듀서 내보내기
+// ==========================================
+
+export const { 
+  clearError, 
+  setSelectedDeck, 
+  setFilters, 
+  clearFilters,
+  setCurrentPage,
+  setPageSize,
+  setLoading,
+  toggleDeckBookmark,
+} = deckSlice.actions;
+
+export default deckSlice.reducer;
+
+// ==========================================
+// 7. Selector 함수들
+// ==========================================
+
+// 기본 selector들
+export const selectDecks = (state: RootState) => state.deck.decks;
+export const selectSelectedDeck = (state: RootState) => state.deck.selectedDeck;
+export const selectDeckLoading = (state: RootState) => state.deck.loading;
+export const selectDeckError = (state: RootState) => state.deck.error;
+export const selectDeckFilters = (state: RootState) => state.deck.filters;
+export const selectDeckPagination = (state: RootState) => ({
+  currentPage: state.deck.currentPage,
+  totalPages: state.deck.totalPages,
+  totalElements: state.deck.totalElements,
+  pageSize: state.deck.pageSize,
+});
+
+// 파생 상태 selector
+export const selectFilteredDecks = (state: RootState) => {
+  const decks = selectDecks(state);
+  const filters = selectDeckFilters(state);
+  
+  let filteredDecks = [...decks];
+  
+  // 검색 필터링
+  if (filters.searchQuery) {
+    const query = filters.searchQuery.toLowerCase();
+    filteredDecks = filteredDecks.filter(deck =>
+      deck.deckName.toLowerCase().includes(query)
+    );
+  }
+  
+  // 북마크 필터링
+  if (filters.showBookmarked) {
+    // 북마크 필드가 있다면 사용
+    // filteredDecks = filteredDecks.filter(deck => deck.isBookmarked);
+  }
+  
+  // 정렬
+  filteredDecks.sort((a, b) => {
+    let aValue: string | number;
+    let bValue: string | number;
+    
+    switch (filters.sortBy) {
+      case 'deckName':
+        aValue = a.deckName;
+        bValue = b.deckName;
+        break;
+      case 'cardCnt':
+        aValue = a.cardCnt;
+        bValue = b.cardCnt;
+        break;
+      case 'createdAt':
+      default:
+        aValue = a.createdAt;
+        bValue = b.createdAt;
+        break;
+    }
+    
+    if (filters.sortOrder === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
+  });
+  
+  return filteredDecks;
+};
+
+// 통계 selector
+export const selectDeckStats = (state: RootState) => {
+  const decks = selectDecks(state);
+  
+  return {
+    totalDecks: decks.length,
+    totalCards: decks.reduce((sum, deck) => sum + deck.cardCnt, 0),
+    // bookmarkedDecks: decks.filter(deck => deck.isBookmarked).length,
+  };
+}; 
