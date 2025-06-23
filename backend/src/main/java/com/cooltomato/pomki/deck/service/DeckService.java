@@ -140,6 +140,40 @@ public class DeckService {
             
         }
 
+        // 덱에서 검색어를 입력하면 덱 안에 있는 검색어가 있는 카드들이 표시됨
+        public List<CardResponseDto> searchCardsInDeckService(PrincipalMember principal, String query) {
+            log.info("debug >>> DeckService searchCardsInDeck");
+
+            List<Deck> decks = deckRepository.findByMemberIdAndIsDeletedFalse(principal.getMemberId());
+            if (decks.isEmpty()) {
+                throw new IllegalArgumentException("멤버의 덱이 존재하지 않습니다.");
+            }
+
+            List<String> deckIds = decks.stream()
+                                        .map(Deck::getDeckId)
+                                        .toList();
+
+            List<Card> cards = cardRepository.findByDeckDeckIdInAndIsDeletedFalse(deckIds);
+
+            // 검색어가 content 또는 answer에 포함된 카드만 필터링
+            List<Card> filteredCards = cards.stream()
+                .filter(card -> (card.getContent() != null && card.getContent().contains(query)) ||
+                                (card.getAnswer() != null && card.getAnswer().contains(query)))
+                .toList();
+
+            if (filteredCards.isEmpty()) {
+                throw new IllegalArgumentException("검색어에 해당하는 카드가 존재하지 않습니다.");
+            }
+
+            return filteredCards.stream().map(card -> CardResponseDto.builder()
+                    .cardId(card.getCardId())
+                    .content(card.getContent())
+                    .answer(card.getAnswer())
+                    .createdAt(card.getCreatedAt())
+                    .updatedAt(card.getUpdatedAt())
+                    .build()).toList();
+        }
+
         // 덱 이름 수정
         
         

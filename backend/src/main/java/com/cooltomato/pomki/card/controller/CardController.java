@@ -1,6 +1,9 @@
 package com.cooltomato.pomki.card.controller;
 
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,5 +64,11 @@ public class CardController {
         service.deleteOnecardService(principal, cardId);
         return ResponseEntity.noContent().build() ;
     }
-    
+
+    // 카드 검색
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<List<CardResponseDto>> searchCards(@PathVariable("keyword") String keyword) {
+        List<CardResponseDto> result = service.searchCardsByKeywordService(keyword);
+        return ResponseEntity.ok(result);
+    }
 } 

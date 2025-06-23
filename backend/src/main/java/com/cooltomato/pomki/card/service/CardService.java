@@ -148,4 +148,19 @@ public class CardService {
         }
         
     }
+
+    @Transactional(readOnly = true)
+    public List<CardResponseDto> searchCardsByKeywordService(String keyword) {
+        List<Card> cards = cardRepository.findByContentContainingIgnoreCaseOrAnswerContainingIgnoreCaseAndIsDeletedFalse(keyword, keyword);
+        return cards.stream().map(card -> CardResponseDto.builder()
+                .cardId(card.getCardId())
+                .content(card.getContent())
+                .answer(card.getAnswer())
+                .deckId(card.getDeck().getDeckId())
+                .createdAt(card.getCreatedAt())
+                .updatedAt(card.getUpdatedAt())
+                .isDeleted(card.getIsDeleted())
+                .build()
+        ).toList();
+    }
 } 

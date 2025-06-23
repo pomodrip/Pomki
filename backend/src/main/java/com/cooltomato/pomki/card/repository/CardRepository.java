@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface CardRepository extends JpaRepository<Card, Long> {
     Optional<Card> findByCardIdAndIsDeletedFalse(Long cardId);
     List<Card> findByDeckDeckIdAndIsDeletedFalse(String deckId);
+    List<Card> findByDeckDeckIdInAndIsDeletedFalse(List<String> deckIds);
+    List<Card> findByContentContainingIgnoreCaseOrAnswerContainingIgnoreCaseAndIsDeletedFalse(String contentKeyword, String answerKeyword);
 } 

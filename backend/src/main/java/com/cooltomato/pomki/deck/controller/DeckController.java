@@ -72,6 +72,15 @@ public class DeckController {
         deckService.deleteOneDeckService(principal, deckId);
         return ResponseEntity.noContent().build();
     }
+
+    // 덱에서 검색어를 입력하면 덱 안에 있는 검색어가 있는 카드들이 표시됨.
+    // 여러 개의 덱에서 검출된 여러 개의 카드 결과를 볼 수 있음.
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<List<CardResponseDto>> searchCardsInDeck(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("keyword") String query) {
+        log.info("debug >>> DeckController searchCardsInDeck 덱 목록에서 카드 검색");
+        List<CardResponseDto> cards = deckService.searchCardsInDeckService(principal, query);
+        return ResponseEntity.ok(cards);
+    }
     
     
 }
