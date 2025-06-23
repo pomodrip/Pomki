@@ -5,12 +5,10 @@ import { styled } from '@mui/material/styles';
 import {
   Container,
   Box,
-  Typography,
-  IconButton,
-  Chip,
   Button,
   Paper,
 } from '@mui/material';
+import { Text, IconButton, Tag } from '../../components/ui';
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon } from '@mui/icons-material';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -42,7 +40,7 @@ const NoteDetailPage: React.FC = () => {
   if (!note) {
     return (
       <StyledContainer maxWidth="md">
-        <Typography>Note not found.</Typography>
+        <Text>Note not found.</Text>
       </StyledContainer>
     );
   }
@@ -54,9 +52,9 @@ const NoteDetailPage: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold" noWrap>
+          <Text variant="h5" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {note.noteTitle}
-          </Typography>
+          </Text>
         </Box>
         <Button
           variant="contained"
@@ -69,20 +67,20 @@ const NoteDetailPage: React.FC = () => {
       
       <Box mb={2}>
         {note.tags?.map((tag) => (
-          <Chip key={tag.tagId} label={tag.tagName} sx={{ mr: 1 }} />
+          <Tag key={tag.tagId} label={tag.tagName} sx={{ mr: 1 }} />
         ))}
       </Box>
 
       <ContentPaper variant="outlined">
-        <Typography variant="body1">
+        <Text variant="body1">
             {note.noteContent}
-        </Typography>
+        </Text>
       </ContentPaper>
       
       <Box mt={2}>
-        <Typography variant="caption" color="textSecondary">
+        <Text variant="caption" color="textSecondary">
           Last updated: {new Date(note.updatedAt).toLocaleString()}
-        </Typography>
+        </Text>
       </Box>
 
     </StyledContainer>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled } from '@mui/material';
 import Card from '../../components/ui/Card';
-// import Button from '../../components/ui/Button';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useLocation } from 'react-router-dom';

@@ -26,6 +26,7 @@ import {
   Bookmark,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  //ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
@@ -200,17 +201,18 @@ const FlashCardListPage: React.FC = () => {
   // 필터링된 카드 목록 (기존 로직 유지)
   const filteredCards = useMemo(() => {
     return flashCards.filter((card) => {
-      const matchesSearch = card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                           card.back.toLowerCase().includes(filters.searchQuery.toLowerCase());
-      
       const matchesTags = filters.selectedTags.length === 0 || 
                          filters.selectedTags.some((tag: string) => card.tags.includes(tag));
       
       const matchesBookmark = !filters.showBookmarked || cardBookmarks[card.id];
 
-      return matchesSearch && matchesTags && matchesBookmark;
+      const matchesSearch = filters.searchQuery.trim() === '' || 
+                            card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+                            card.back.toLowerCase().includes(filters.searchQuery.toLowerCase());
+
+      return matchesTags && matchesBookmark && matchesSearch;
     });
-  }, [flashCards, filters.searchQuery, filters.selectedTags, filters.showBookmarked, cardBookmarks]);
+  }, [filters, flashCards, cardBookmarks]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilters({ searchQuery: event.target.value }));
@@ -240,14 +242,12 @@ const FlashCardListPage: React.FC = () => {
 
   const handleEditCard = (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    
-    // 수정할 카드 찾기
-    const cardToEdit = flashCards.find(card => card.id === id);
-    if (cardToEdit) {
+    const card = flashCards.find(c => c.id === id);
+    if (card) {
       setEditingCardId(id);
-      setEditCardFront(cardToEdit.front);
-      setEditCardBack(cardToEdit.back);
-      setEditCardTags(cardToEdit.tags.join(', '));
+      setEditCardFront(card.front);
+      setEditCardBack(card.back);
+      setEditCardTags(card.tags.join(', '));
       setShowEditDialog(true);
     }
   };
@@ -328,30 +328,24 @@ const FlashCardListPage: React.FC = () => {
         </Typography>
       </HeaderBox>
 
-      {/* 검색창 */}
+      {/* 검색 */}
       <SearchBox>
         <TextField
           fullWidth
-          placeholder="Search cards"
+          placeholder="카드 내용 검색..."
           value={filters.searchQuery}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon />
               </InputAdornment>
             ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              borderRadius: 2,
-            },
           }}
         />
       </SearchBox>
 
-      {/* 필터 버튼들 */}
+      {/* 필터 */}
       <FilterBox>
         <Button
           variant="outlined"
@@ -403,12 +397,8 @@ const FlashCardListPage: React.FC = () => {
         open={Boolean(tagMenuAnchor)}
         onClose={() => setTagMenuAnchor(null)}
       >
-        {allTags.map((tag: string) => (
-          <MenuItem 
-            key={tag} 
-            onClick={() => handleTagSelect(tag)}
-            selected={filters.selectedTags.includes(tag)}
-          >
+        {allTags.map(tag => (
+          <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
             {tag}
           </MenuItem>
         ))}
@@ -537,16 +527,9 @@ const FlashCardListPage: React.FC = () => {
         </Box>
       )}
 
-      {/* 플래시카드 수정 다이얼로그 */}
-      <Dialog
-        open={showEditDialog}
-        onClose={handleEditDialogClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          플래시카드 수정
-        </DialogTitle>
+      {/* 카드 수정 다이얼로그 */}
+      <Dialog open={showEditDialog} onClose={handleEditDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>카드 수정</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -590,14 +573,8 @@ const FlashCardListPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleEditDialogClose} variant="outlined">
-            취소
-          </Button>
-          <Button 
-            onClick={handleEditDialogConfirm} 
-            variant="contained" 
-            disabled={!editCardFront.trim() || !editCardBack.trim()}
-          >
+          <Button onClick={handleEditDialogClose}>취소</Button>
+          <Button onClick={handleEditDialogConfirm} variant="contained">
             수정
           </Button>
         </DialogActions>

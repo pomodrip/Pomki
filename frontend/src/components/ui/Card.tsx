@@ -10,11 +10,7 @@ const StyledCard = styled(MuiCard)(({ theme }) => ({
   padding: theme.spacing(2), // 51. Card Padding
   margin: `${theme.spacing(1)} 0`, // 52. Card Margin
   
-  '&:hover': {
-    boxShadow: theme.shadows[2], // 53. Card Hover Effect
-    transform: 'translateY(-1px)',
-    transition: 'all 0.2s ease-in-out',
-  },
+
   
   '&:last-child': {
     marginBottom: 0,

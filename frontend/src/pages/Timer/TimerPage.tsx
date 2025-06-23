@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, styled, IconButton, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress } from '@mui/material';
+import { Box, styled, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress } from '@mui/material';
+import { Text, IconButton } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import Button from '../../components/ui/Button';
@@ -12,7 +13,7 @@ const PageContainer = styled(Box)(() => ({
   flexDirection: 'column',
   alignItems: 'center',
   padding: '32px 24px', // Large Spacing
-  minHeight: 'calc(100vh - 128px)', // 헤더/푸터 제외
+      minHeight: 'calc(100vh - 128px)', // 헤더/푸터 제외
   backgroundColor: '#F8F9FA', // Background Secondary
   
   '@media (min-width: 600px)': {
@@ -21,15 +22,15 @@ const PageContainer = styled(Box)(() => ({
 }));
 
 // 페이지 제목 - design.md 타이포그래피 가이드
-const PageTitle = styled(Typography)(() => ({
-  fontSize: '24px', // H2 크기
+const PageTitle = styled(Text)(() => ({
+      fontSize: '24px', // H2 크기
   fontWeight: 700, // Bold
   color: '#1A1A1A', // Text Primary
   marginBottom: '48px', // Extra Large Spacing
   textAlign: 'center',
   
   '@media (min-width: 600px)': {
-    fontSize: '28px', // H1 크기 (태블릿 이상)
+          fontSize: '28px', // H1 크기 (태블릿 이상)
   },
 }));
 
@@ -41,7 +42,7 @@ const FocusTimeSection = styled(Box)(() => ({
   marginBottom: '32px',
 }));
 
-const FocusTimeLabel = styled(Typography)(() => ({
+const FocusTimeLabel = styled(Text)(() => ({
   fontSize: '20px', // H3 크기
   fontWeight: 600, // Semibold
   color: '#1A1A1A', // Text Primary
@@ -58,14 +59,14 @@ const RunningHeader = styled(Box)(() => ({
   width: '100%',
 }));
 
-const SessionProgress = styled(Typography)(() => ({
+const SessionProgress = styled(Text)(() => ({
   fontSize: '18px',
   fontWeight: 600,
   color: '#1A1A1A',
   marginBottom: '8px',
 }));
 
-const ElapsedTime = styled(Typography)(() => ({
+const ElapsedTime = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 500,
   color: '#2563EB', // Primary color
@@ -114,7 +115,7 @@ const CircularProgress = styled('svg')(() => ({
   left: 0,
   width: '100%',
   height: '100%',
-  transform: 'rotate(-90deg)', // 12시 방향부터 시작
+      transform: 'rotate(-90deg)', // 12시 방향부터 시작
 }));
 
 const ProgressCircle = styled('circle')<{ progress: number }>(({ progress }) => ({
@@ -131,12 +132,12 @@ const ProgressCircle = styled('circle')<{ progress: number }>(({ progress }) => 
 }));
 
 // 타이머 시간 표시
-const TimerDisplay = styled(Typography)(() => ({
-  fontSize: '48px', // 큰 디스플레이 크기
+const TimerDisplay = styled(Text)(() => ({
+      fontSize: '48px', // 큰 디스플레이 크기
   fontWeight: 700, // Bold
   color: '#1A1A1A', // Text Primary
   lineHeight: 1,
-  fontFamily: "'Pretendard', monospace", // 숫자용 폰트
+      fontFamily: "'Pretendard', monospace", // 숫자용 폰트
   zIndex: 1,
   
   '@media (min-width: 600px)': {
@@ -166,7 +167,7 @@ const TaskInputSection = styled(Box)(() => ({
   alignItems: 'center',
 }));
 
-const TaskInputLabel = styled(Typography)(() => ({
+const TaskInputLabel = styled(Text)(() => ({
   fontSize: '16px', // Body Regular
   fontWeight: 500, // Medium
   color: '#6B7280', // Text Secondary
@@ -196,7 +197,7 @@ const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
   }),
 }));
 
-// 확대된 노트의 타이머 바
+// ?��????�트???�?�머 �?
 const ExpandedTimerBar = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
@@ -218,14 +219,14 @@ const ExpandedTimerInfo = styled(Box)(() => ({
   gap: '20px',
 }));
 
-const ExpandedTimerDisplay = styled(Typography)(() => ({
+const ExpandedTimerDisplay = styled(Text)(() => ({
   fontSize: '28px',
   fontWeight: 700,
   color: '#1A1A1A',
   fontFamily: "'Pretendard', monospace",
 }));
 
-const ExpandedSessionInfo = styled(Typography)(() => ({
+const ExpandedSessionInfo = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 500,
   color: '#6B7280',
@@ -257,7 +258,7 @@ const NotesHeader = styled(Box)(() => ({
   marginBottom: '20px',
 }));
 
-const NotesTitle = styled(Typography)(() => ({
+const NotesTitle = styled(Text)(() => ({
   fontSize: '24px',
   fontWeight: 700,
   color: '#1A1A1A',
@@ -287,7 +288,7 @@ const NotesTextArea = styled('textarea')<{ expanded: boolean }>(({ expanded }) =
   },
 }));
 
-// 확장된 노트 기능들
+// ?�장???�트 기능??
 const ExpandedNotesFeatures = styled(Box)(() => ({
   marginTop: '16px',
   display: 'flex',
@@ -305,13 +306,13 @@ const StudyModeSection = styled(Box)(() => ({
   gap: '8px',
 }));
 
-const StudyModeLabel = styled(Typography)(() => ({
+const StudyModeLabel = styled(Text)(() => ({
   fontSize: '14px',
   fontWeight: 500,
   color: '#6B7280',
 }));
 
-// 설정 다이얼로그 스타일
+// ?�정 ?�이?�로�??��???
 const SettingsContainer = styled(Box)(() => ({
   display: 'flex',
   flexDirection: 'column',
@@ -353,7 +354,7 @@ const SettingValue = styled(Box)(() => ({
   },
 }));
 
-const SettingLabel = styled(Typography)(() => ({
+const SettingLabel = styled(Text)(() => ({
   fontSize: '14px',
   fontWeight: 500,
   color: '#6B7280',
@@ -366,7 +367,7 @@ const PresetsSection = styled(Box)(() => ({
   gap: '12px',
 }));
 
-const PresetsTitle = styled(Typography)(() => ({
+const PresetsTitle = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 600,
   color: '#1A1A1A',
@@ -412,11 +413,11 @@ const TimerPage: React.FC = () => {
 
   const totalTime = settings.focusMinutes * 60;
 
-  // 진행률 계산
+  // 진행�?계산
   const currentTime = minutes * 60 + seconds;
   const progress = ((totalTime - currentTime) / totalTime) * 100;
 
-  // 타이머 로직
+  // ?�?�머 로직
   useEffect(() => {
     let interval: number | null = null;
     
@@ -432,7 +433,7 @@ const TimerPage: React.FC = () => {
       }, 1000);
     } else if (minutes === 0 && seconds === 0 && isRunning) {
       setIsRunning(false);
-      // 세션 완료 로직
+      // ?�션 ?�료 로직
       if (session < settings.sessions) {
         setSession(session + 1);
         setMinutes(settings.focusMinutes);
@@ -501,16 +502,16 @@ const TimerPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // AI 노트 생성 핸들러 (임시 구현)
+  // AI ?�트 ?�성 ?�들??(?�시 구현)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
-      alert('먼저 노트에 내용을 작성해주세요.');
+              alert('먼저 노트에 내용을 작성해주세요.');
       return;
     }
 
     setIsGeneratingAI(true);
     
-    // 임시 AI 생성 시뮬레이션
+    // ?�시 AI ?�성 ?��??�이??
     setTimeout(() => {
       const aiContent = generateMockAIContent(summaryStyle, taskName);
       setNotes(prevNotes => {
@@ -518,11 +519,11 @@ const TimerPage: React.FC = () => {
         return prevNotes + separator + aiContent;
       });
       setIsGeneratingAI(false);
-      alert('AI 노트가 성공적으로 생성되었습니다!');
+              alert('AI 노트가 성공적으로 생성되었습니다!');
     }, 2000);
   };
 
-  // 임시 AI 컨텐츠 생성 함수
+  // ?�시 AI 컨텐�??�성 ?�수
   const generateMockAIContent = (style: string, task: string) => {
     const taskPrefix = task ? `${task}에 대한 ` : '';
     
@@ -552,8 +553,8 @@ const TimerPage: React.FC = () => {
     }
   };
 
-  // SVG 원의 둘레 계산 (반지름 기준)
-  const radius = 136; // 280px 원의 반지름에서 stroke-width 고려
+  // SVG ?�의 ?�레 계산 (반�?�?기�?)
+  const radius = 136; // 280px ?�의 반�?름에??stroke-width 고려
   const circumference = 2 * Math.PI * radius;
 
   const settingsActions = (
@@ -566,10 +567,10 @@ const TimerPage: React.FC = () => {
     </Button>
   );
 
-  // 확대된 노트 렌더링 함수
+  // ?��????�트 ?�더�??�수
   const renderExpandedNotes = () => (
     <NotesSection expanded={true}>
-      {/* 타이머 바 */}
+      {/* ?�?�머 �?*/}
       <ExpandedTimerBar>
         <ExpandedTimerInfo>
           <ExpandedTimerDisplay>
@@ -612,7 +613,7 @@ const TimerPage: React.FC = () => {
             📝 집중 노트
           </NotesTitle>
           {taskName && (
-            <Typography 
+            <Text 
               sx={{ 
                 fontSize: '16px', 
                 color: '#6B7280', 
@@ -621,7 +622,7 @@ const TimerPage: React.FC = () => {
               }}
             >
               현재 작업: {taskName}
-            </Typography>
+            </Text>
           )}
         </Box>
       </NotesHeader>
@@ -841,7 +842,7 @@ const TimerPage: React.FC = () => {
                   📝 집중 노트
                 </NotesTitle>
                 {taskName && (
-                  <Typography 
+                  <Text 
                     sx={{ 
                       fontSize: '14px', 
                       color: '#6B7280', 
@@ -850,7 +851,7 @@ const TimerPage: React.FC = () => {
                     }}
                   >
                     현재 작업: {taskName}
-                  </Typography>
+                  </Text>
                 )}
               </Box>
               <IconButton 
@@ -884,7 +885,7 @@ const TimerPage: React.FC = () => {
                 📝 집중 노트
               </NotesTitle>
               {taskName && (
-                <Typography 
+                <Text 
                   sx={{ 
                     fontSize: '14px', 
                     color: '#6B7280', 
@@ -893,7 +894,7 @@ const TimerPage: React.FC = () => {
                   }}
                 >
                   현재 작업: {taskName}
-                </Typography>
+                </Text>
               )}
             </Box>
             <IconButton 
