@@ -1,6 +1,10 @@
 package com.cooltomato.pomki.tag.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.entity.Card;
@@ -74,9 +78,21 @@ public class TagService {
             throw new RuntimeException("해당 태그의 주인이 아닙니다: 태그 주인 - " + tag.getMemberId() + "/" + "현재 사용자 - " + principal.getMemberId());
         }
 
-
         // 태그 삭제
         tagRepository.deleteById(tagId);
 
     }
+
+    public List<TagResponseDto> searchAllTagsService(PrincipalMember principal) {
+        List<Tag> tags = tagRepository.findAllByMemberId(principal.getMemberId());
+        return tags.stream()
+                    .map(tag -> TagResponseDto.builder()
+                        .tagId(tag.getTagId())
+                        .tagName(tag.getTagName())
+                        .memberId(tag.getMemberId())
+                    .build())
+                    .collect(Collectors.toList());
+    }
+
+    
 } 
