@@ -7,6 +7,7 @@ import SignupPage from '../pages/Auth/SignupPage';
 import SetGoalPage from '../pages/Auth/SetGoalPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
+import EditProfilePage from '../pages/Profile/EditProfilePage';
 import FlashcardGenerationPage from '../pages/Study/FlashcardGenerationPage';
 import FlashcardDeckListPage from '../pages/Study/FlashcardDeckListPage';
 import FlashCardListPage from '../pages/Study/FlashCardListPage';
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         <Route path="note" element={<NoteListPage />} />
         <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
 
 
         {/* 테스트 페이지 */}
