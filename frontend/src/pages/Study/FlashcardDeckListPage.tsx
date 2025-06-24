@@ -74,6 +74,7 @@ const FilterBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
+//덱 카드 컨테이너 스타일
 const DeckCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
@@ -87,12 +88,14 @@ const DeckCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+//태그 칩 스타일
 const TagChip = styled(Chip)(({ theme }) => ({
   fontSize: '0.75rem',
   height: 24,
   marginRight: theme.spacing(0.5),
 }));
 
+//액션 버튼 스타일
 const ActionButton = styled(Button)({
   whiteSpace: 'nowrap',
 });
@@ -261,7 +264,10 @@ const FlashcardDeckListPage: React.FC = () => {
         ...prev,
         [editingDeckId]: {
           ...(prev[editingDeckId] || { isBookmarked: false }), // 기존 북마크 정보 유지
-          tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
+          tags: newDeckTags.split(',').map(t => {
+            const trimmed = t.trim();
+            return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+          }).filter(Boolean),
         }
       }));
           } else {
@@ -274,7 +280,10 @@ const FlashcardDeckListPage: React.FC = () => {
             ...prev,
             [newDeck.deckId]: {
               isBookmarked: false,
-              tags: newDeckTags.split(',').map(t => t.trim()).filter(Boolean),
+              tags: newDeckTags.split(',').map(t => {
+                const trimmed = t.trim();
+                return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+              }).filter(Boolean),
             }
           }));
         }
@@ -376,15 +385,18 @@ const FlashcardDeckListPage: React.FC = () => {
           {filteredDecks.map((deck) => (
             <DeckCard key={deck.deckId} onClick={() => handleDeckClick(deck.deckId)}>
               <CardContent sx={{ flexGrow: 1 }}>
+                {/*  덱 이름과 북마크 버튼 */}
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
                   <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
                     {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
                   </IconButton>
                 </Box>
+                {/* 카드 개수 */}
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   카드 {deck.cardCnt}개
                 </Typography>
+                {/* 태그들 */}
                 <Box 
                   mt={1.5} 
                   sx={{ 
@@ -402,6 +414,7 @@ const FlashcardDeckListPage: React.FC = () => {
                   )}
                 </Box>
               </CardContent>
+              {/* 액션 버튼들 */}
               <CardActions sx={{ justifyContent: 'flex-end' }}>
                 <ActionButton size="small" startIcon={<QuizIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
                   연습
@@ -459,12 +472,12 @@ const FlashcardDeckListPage: React.FC = () => {
           />
           <TextField
             margin="dense"
-            label="태그 (쉼표로 구분)"
+            label="태그 (쉼표로 구분, 자동으로 # 추가)"
             fullWidth
             variant="outlined"
             value={newDeckTags}
             onChange={(e) => setNewDeckTags(e.target.value)}
-            placeholder="예: #React, #자바스크립트"
+            placeholder="예: React, 자바스크립트"
           />
         </DialogContent>
         <DialogActions>
