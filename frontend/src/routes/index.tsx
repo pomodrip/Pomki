@@ -16,7 +16,6 @@ import NotFoundPage from '../pages/Etc/NotFoundPage';
 import TimerPage from '../pages/Timer/TimerPage';
 import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
-import NoteDetailPage from '../pages/Note/NoteDetailPage';
 import DeckManagementPage from '../pages/Study/DeckManagementPage';
 import AdUsageExample from '../examples/AdUsageExample';
 // import SimpleNoteList from '../pages/Note/SimpleNoteList';
@@ -59,7 +58,6 @@ const AppRoutes = () => {
         {/* Note Routes */}
         <Route path="note" element={<NoteListPage />} />
         <Route path="note/create" element={<NoteCreatePage />} />
-        <Route path="note/:noteId" element={<NoteDetailPage />} />
         <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
 
         {/* Study Routes */}

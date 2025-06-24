@@ -3,17 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import { styled } from '@mui/material/styles';
-import {
-  Container,
-  Box,
-  Button,
-  Paper,
-} from '@mui/material';
-import { Text, IconButton, Tag } from '../../components/ui';
+import { Container, Box, Button, TextField, CircularProgress } from '@mui/material';
+import { Text, IconButton } from '../../components/ui';
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon } from '@mui/icons-material';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(4),
 }));
 
@@ -24,24 +19,24 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const ContentPaper = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
-    whiteSpace: 'pre-wrap',
-    lineHeight: 1.7,
+const FormBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(3),
 }));
 
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
-  const { currentNote, loading } = useAppSelector((state) => state.note);
+
+  const { currentNote, loading } = useAppSelector(state => state.note);
 
   useEffect(() => {
     if (noteId) {
       dispatch(fetchNote(noteId));
     }
-    
+
     return () => {
       dispatch(clearCurrentNote());
     };
@@ -49,9 +44,9 @@ const NoteDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <StyledContainer maxWidth="md">
-        <Text>로딩 중...</Text>
-      </StyledContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
@@ -66,41 +61,50 @@ const NoteDetailPage: React.FC = () => {
   return (
     <StyledContainer maxWidth="md">
       <HeaderBox>
-        <Box display="flex" alignItems="center">
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Text variant="h5" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {currentNote.title}
+          <Text variant="h5" fontWeight="bold">
+            노트 상세 정보
           </Text>
         </Box>
         <Button
           variant="contained"
           startIcon={<EditIcon />}
-          onClick={() => navigate(`/note/${currentNote.id}/edit`)}
+          onClick={() => navigate(`/note/${currentNote.noteId}/edit`)}
         >
           수정
         </Button>
       </HeaderBox>
-      
-      <Box mb={2}>
-        {(currentNote.tags || []).map((tag) => (
-          <Tag key={tag.id} label={tag.tagName} sx={{ mr: 1 }} />
-        ))}
-      </Box>
 
-      <ContentPaper variant="outlined">
-        <Text variant="body1">
-            {currentNote.content}
-        </Text>
-      </ContentPaper>
-      
-      <Box mt={2}>
+      <FormBox>
+        <TextField
+          label="제목"
+          value={currentNote.noteTitle}
+          variant="filled"
+          fullWidth
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+        <TextField
+          label="내용"
+          value={currentNote.noteContent}
+          variant="filled"
+          fullWidth
+          multiline
+          rows={15}
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+      </FormBox>
+      <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Text variant="caption" color="textSecondary">
-          마지막 수정: {new Date(currentNote.updatedAt).toLocaleString()}
+          최종 수정일: {new Date(currentNote.updatedAt).toLocaleString()}
         </Text>
       </Box>
-
     </StyledContainer>
   );
 };

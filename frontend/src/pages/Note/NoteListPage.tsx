@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { styled } from '@mui/material/styles';
-import { Container, Box, Fab, CircularProgress, Grid } from '@mui/material';
-import { Text, IconButton } from '../../components/ui';
+import { Container, Box, Fab, CircularProgress, Grid, Button } from '@mui/material';
+import { Text } from '../../components/ui';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Quiz as QuizIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
@@ -40,6 +40,11 @@ const ActionBox = styled(Box)({
   marginTop: '8px',
 });
 
+const ActionButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1.5),
+  fontSize: '0.8rem',
+}));
+
 const NoteListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -58,7 +63,7 @@ const NoteListPage: React.FC = () => {
   }, [error, showError]);
 
   const handleNoteClick = (noteId: string) => {
-    navigate(`/note/${noteId}`);
+    navigate(`/note/${noteId}/edit`);
   };
 
   const handleEditNote = (noteId: string, event: React.MouseEvent) => {
@@ -128,15 +133,15 @@ const NoteListPage: React.FC = () => {
                 Updated: {new Date(note.updatedAt).toLocaleDateString()}
               </Text>
               <ActionBox>
-                <IconButton size="small" onClick={e => handleCreateQuiz(note.noteId, e)}>
-                  <QuizIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" onClick={e => handleEditNote(note.noteId, e)}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton size="small" onClick={e => handleDeleteNote(note.noteId, e)}>
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                <ActionButton size="small" startIcon={<QuizIcon />} onClick={(e: React.MouseEvent) => handleCreateQuiz(note.noteId, e)}>
+                  퀴즈 생성
+                </ActionButton>
+                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}>
+                  수정
+                </ActionButton>
+                <ActionButton size="small" startIcon={<DeleteIcon />} onClick={(e: React.MouseEvent) => handleDeleteNote(note.noteId, e)}>
+                  삭제
+                </ActionButton>
               </ActionBox>
             </NoteCard>
           </Grid>
