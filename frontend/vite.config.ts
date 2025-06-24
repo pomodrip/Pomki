@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     svgr(),
     react(),
+    svgr(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
@@ -43,7 +44,7 @@ export default defineConfig({
           {
             src: 'logo512.png',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/png', 
           },
           {
             src: 'logo512.png',

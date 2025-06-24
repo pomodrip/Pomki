@@ -1,0 +1,458 @@
+name: Frontend Accessibility Test
+
+on:
+  push:
+    branches: [ "dev-fe","release", "main" ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-accessibility.yml'
+  pull_request:
+    branches: [ "dev-fe", "release","main" ]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: '테스트 유형을 선택하세요'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - accessibility-only
+        - performance-only
+
+env:
+  FE_DIR: frontend
+  DEPLOY_BUCKET_NAME: ${{ secrets.FE_DEPLOY_BUCKET_NAME }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  REPORT_TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
+  LIGHTHOUSE_SERVER_URL: ${{ vars.LIGHTHOUSE_SERVER_URL }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test_type: ${{ steps.determine-test.outputs.test_type }}
+    steps:
+    - name: Determine test type
+      id: determine-test
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          case "${{ github.event.inputs.test_type }}" in
+            "full"|"accessibility-only"|"performance-only")
+              echo "test_type=${{ github.event.inputs.test_type }}" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "⚠️ Invalid test_type input, defaulting to 'full'"
+              echo "test_type=full" >> $GITHUB_OUTPUT
+              ;;
+          esac
+        else
+          echo "test_type=full" >> $GITHUB_OUTPUT
+        fi
+
+  axe-accessibility-testing:
+    needs: setup
+    if: needs.setup.outputs.test_type == 'full' || needs.setup.outputs.test_type == 'accessibility-only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'yarn'
+        cache-dependency-path: ${{ env.FE_DIR }}/yarn.lock
+
+    - name: Install dependencies
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn install --frozen-lockfile
+
+    - name: Install accessibility testing dependencies
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "📦 Installing accessibility testing packages..."
+        yarn add -D @playwright/test@^1.48.0 @axe-core/playwright@^4.10.2 playwright-html-reporter@^0.1.11
+        yarn playwright install chromium
+
+    - name: Inject accessibility test file
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "📝 Injecting accessibility test configuration..."
+        cat << 'ACCESSIBILITY_TEST_EOF' > accessibility.test.js
+        ${{ vars.ACCESSIBILITY_TEST_JS }}
+        ACCESSIBILITY_TEST_EOF
+        echo "✅ Accessibility test file created"
+
+    - name: Inject playwright config file
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "📝 Injecting playwright configuration..."
+        cat << 'PLAYWRIGHT_CONFIG_EOF' > playwright.config.accessibility.js
+        ${{ vars.PLAYWRIGHT_CONFIG_ACCESSIBILITY_JS }}
+        PLAYWRIGHT_CONFIG_EOF
+        echo "✅ Playwright config file created"
+
+    - name: Build application
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn build
+
+    - name: Start development server
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "🚀 Starting development server..."
+        yarn preview --port 5173 --host &
+        sleep 10
+        
+        for i in {1..10}; do
+          if curl -f http://localhost:5173 > /dev/null 2>&1; then
+            echo "✅ Server is ready!"
+            break
+          fi
+          echo "⏳ Waiting for server... ($i/10)"
+          sleep 3
+        done
+
+    - name: Run axe accessibility tests
+      working-directory: ${{ env.FE_DIR }}
+      env:
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        GITHUB_SHA: ${{ github.sha }}
+        GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        CI: true
+      run: |
+        echo "🧪 Running axe accessibility tests..."
+        mkdir -p screenshots accessibility-reports
+        echo "🚀 Running tests:"
+        yarn playwright test --config=./playwright.config.accessibility.js --reporter=list
+      continue-on-error: false
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOY_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Upload axe reports to S3
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "📋 Uploading Axe reports to S3..."
+        echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
+        if [ -d "accessibility-reports" ]; then
+          aws s3 cp ./accessibility-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/axe-reports/ --recursive
+          aws s3 cp ./accessibility-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/axe-reports/ --recursive
+        fi
+        if [ -d "screenshots" ]; then
+          aws s3 cp ./screenshots/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/screenshots/ --recursive
+          aws s3 cp ./screenshots/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/screenshots/ --recursive
+        fi
+
+  lighthouse-ci-testing:
+    needs: setup
+    if: needs.setup.outputs.test_type == 'full' || needs.setup.outputs.test_type == 'performance-only'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      matrix:
+        device: [desktop, mobile]
+      fail-fast: false
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'yarn'
+        cache-dependency-path: ${{ env.FE_DIR }}/yarn.lock
+
+    - name: Install dependencies
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn install --frozen-lockfile
+
+    - name: Install Lighthouse CI
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "📦 Installing Lighthouse CI..."
+        yarn add -D @lhci/cli@^0.15.0
+
+    - name: Inject Lighthouse configuration
+      working-directory: ${{ env.FE_DIR }}
+      env:
+        LIGHTHOUSERC_DESKTOP_JSON: ${{ vars.LIGHTHOUSERC_DESKTOP_JSON }}
+        LIGHTHOUSERC_MOBILE_JSON: ${{ vars.LIGHTHOUSERC_MOBILE_JSON }}
+      run: |
+        echo "📝 Injecting ${{ matrix.device }} Lighthouse CI configuration..."
+        
+        if [ "${{ matrix.device }}" == "desktop" ]; then
+          echo "$LIGHTHOUSERC_DESKTOP_JSON" > .lighthouserc.desktop.json
+        else
+          echo "$LIGHTHOUSERC_MOBILE_JSON" > .lighthouserc.mobile.json
+        fi
+        
+        echo "✅ ${{ matrix.device }} Lighthouse configuration injected successfully"
+
+    - name: Build application
+      working-directory: ${{ env.FE_DIR }}
+      run: yarn build
+
+    - name: Start production server
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "🚀 Starting production server for ${{ matrix.device }} testing..."
+        yarn preview --port 5173 --host &
+        sleep 15
+        
+        for i in {1..10}; do
+          if curl -f http://localhost:5173 > /dev/null 2>&1; then
+            echo "✅ Server is ready!"
+            break
+          fi
+          echo "⏳ Waiting for server... ($i/10)"
+          sleep 3
+        done
+
+    - name: Test Lighthouse server connection
+      id: lighthouse-server-test
+      run: |
+        echo "🔍 Testing Lighthouse server connection..."
+        if curl -f "${{ env.LIGHTHOUSE_SERVER_URL }}/health" > /dev/null 2>&1; then
+          echo "✅ Lighthouse server is available"
+          echo "server_available=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ Lighthouse server is not available, will run locally only"
+          echo "server_available=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run Lighthouse CI (${{ matrix.device }}) with server upload
+      if: steps.lighthouse-server-test.outputs.server_available == 'true'
+      working-directory: ${{ env.FE_DIR }}
+      env:
+        LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
+      run: |
+        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI with server upload..."
+        yarn lhci autorun --config=.lighthouserc.${{ matrix.device }}.json
+      continue-on-error: true
+
+    - name: Run Lighthouse CI (${{ matrix.device }}) - local only
+      if: steps.lighthouse-server-test.outputs.server_available == 'false'
+      working-directory: ${{ env.FE_DIR }}
+      env:
+        LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
+        LIGHTHOUSERC_DESKTOP_LOCAL_JSON: ${{ vars.LIGHTHOUSERC_DESKTOP_LOCAL_JSON }}
+        LIGHTHOUSERC_MOBILE_LOCAL_JSON: ${{ vars.LIGHTHOUSERC_MOBILE_LOCAL_JSON }}
+      run: |
+        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI (local only)..."
+        
+        if [ "${{ matrix.device }}" == "desktop" ]; then
+          echo "$LIGHTHOUSERC_DESKTOP_LOCAL_JSON" > .lighthouserc.desktop.local.json
+          yarn lhci autorun --config=.lighthouserc.desktop.local.json
+        else
+          echo "$LIGHTHOUSERC_MOBILE_LOCAL_JSON" > .lighthouserc.mobile.local.json
+          yarn lhci autorun --config=.lighthouserc.mobile.local.json
+        fi
+      continue-on-error: true
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOY_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Upload Lighthouse reports to S3
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        echo "🚀 Uploading ${{ matrix.device }} Lighthouse reports to S3..."
+        echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
+        
+        UPLOAD_SOURCE=""
+        if [ -d ".lighthouseci" ]; then
+          UPLOAD_SOURCE=".lighthouseci"
+          echo "📁 LHCI 서버 보고서 (.lighthouseci) 업로드"
+        elif [ -d "lighthouse-reports-${{ matrix.device }}" ]; then
+          UPLOAD_SOURCE="lighthouse-reports-${{ matrix.device }}"
+          echo "📁 로컬 보고서 (lighthouse-reports-${{ matrix.device }}) 업로드"
+        else
+          echo "⚠️ Lighthouse 보고서 폴더를 찾을 수 없습니다."
+        fi
+        
+        if [ -n "$UPLOAD_SOURCE" ]; then
+          aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/lighthouse-${{ matrix.device }}/ --recursive
+          aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}/ --recursive
+          echo "✅ ${{ matrix.device }} 보고서 업로드 완료"
+        fi
+
+    - name: Cache lighthouse reports
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-${{ matrix.device }}/
+        key: lighthouse-reports-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  generate-combined-report:
+    needs: [axe-accessibility-testing, lighthouse-ci-testing]
+    if: always() && (needs.axe-accessibility-testing.result != 'cancelled' || needs.lighthouse-ci-testing.result != 'cancelled')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Restore desktop lighthouse reports
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-desktop/
+        key: lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}
+      continue-on-error: true
+
+    - name: Restore mobile lighthouse reports
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ env.FE_DIR }}/.lighthouseci/
+          ${{ env.FE_DIR }}/lighthouse-reports-mobile/
+        key: lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}
+      continue-on-error: true
+
+    - name: Organize lighthouse reports
+      run: |
+        echo "🔧 Organizing lighthouse reports..."
+        mkdir -p ./lighthouse-desktop ./lighthouse-mobile
+        
+        # Desktop reports
+        if [ -d "${{ env.FE_DIR }}/.lighthouseci" ]; then
+          echo "📁 Found .lighthouseci folder"
+          find ${{ env.FE_DIR }}/.lighthouseci -name "*.html" | head -6 | while read -r file; do
+            cp "$file" ./lighthouse-desktop/
+          done
+        fi
+        
+        if [ -d "${{ env.FE_DIR }}/lighthouse-reports-desktop" ]; then
+          echo "📁 Found lighthouse-reports-desktop folder"
+          find ${{ env.FE_DIR }}/lighthouse-reports-desktop -name "*.html" | while read -r file; do
+            cp "$file" ./lighthouse-desktop/
+          done
+        fi
+        
+        # Mobile reports
+        if [ -d "${{ env.FE_DIR }}/lighthouse-reports-mobile" ]; then
+          echo "📁 Found lighthouse-reports-mobile folder"
+          find ${{ env.FE_DIR }}/lighthouse-reports-mobile -name "*.html" | while read -r file; do
+            cp "$file" ./lighthouse-mobile/
+          done
+        fi
+        
+        echo "📋 Desktop files:"
+        ls -la ./lighthouse-desktop/ || echo "No desktop files"
+        echo "📋 Mobile files:"
+        ls -la ./lighthouse-mobile/ || echo "No mobile files"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOY_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Generate combined report
+      env:
+        AXE_RESULT: ${{ needs.axe-accessibility-testing.result }}
+        LIGHTHOUSE_RESULT: ${{ needs.lighthouse-ci-testing.result }}
+        REPORT_TIMESTAMP: ${{ env.REPORT_TIMESTAMP }}
+        DEPLOY_BUCKET_NAME: ${{ secrets.FE_DEPLOY_BUCKET_NAME }}
+      run: |
+        echo "📊 Generating combined accessibility & performance report..."
+        mkdir -p combined-reports
+        
+
+        cat << 'GENERATE_REPORT_EOF' > generate-combined-report.js
+        ${{ secrets.GENERATE_COMBINED_REPORT_JS }}
+        GENERATE_REPORT_EOF
+
+        node ./generate-combined-report.js
+
+    - name: Upload combined reports to S3
+      run: |
+        echo "📤 Uploading reports to S3..."
+        echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
+        
+        aws s3 sync ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/ 
+        aws s3 sync ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/ 
+        
+        echo "✅ 보고서 업로드 완료!"
+        echo "📋 최신 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/index.html"
+        echo "🕐 타임스탬프 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/index.html"
+
+    - name: Clean up lighthouse caches
+      run: |
+        echo "🧹 사용된 캐시 정리 중..."
+        
+        # GitHub CLI를 사용해서 캐시 삭제
+        gh cache delete "lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Desktop 캐시 삭제 실패 또는 존재하지 않음"
+        gh cache delete "lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Mobile 캐시 삭제 실패 또는 존재하지 않음"
+        
+        echo "✅ 캐시 정리 완료"
+      env:
+        GH_TOKEN: ${{ github.token }}
+      continue-on-error: true
+
+    - name: Notify Discord on Success
+      if: success()
+      uses: tsickert/discord-webhook@v7.0.0
+      with:
+        webhook-url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
+        embed-title: "✅ 접근성 & 성능 검사 완료!"
+        embed-description: |
+          **브랜치:** `${{ github.ref_name }}`
+          **커밋:** `${{ github.event.head_commit.message }}`
+          **작성자:** `${{ github.event.head_commit.author.name }}`
+          
+          📊 **보고서:**
+          • [📋 최신 통합 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/index.html)
+          • [🕐 타임스탬프 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/index.html)
+          • [🌐 Lighthouse 서버 대시보드](${{ env.LIGHTHOUSE_SERVER_URL }})
+          • [🌐 axe 접근성 검사 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/axe-reports/accessibility-report.html)
+          
+          🔍 **테스트 상세:**
+          • Axe 접근성 테스트: ${{ needs.axe-accessibility-testing.result }}
+          • Lighthouse 종합 테스트: ${{ needs.lighthouse-ci-testing.result }}
+          
+          📋 **검사된 페이지:**
+          • 🏠 홈페이지, 🔐 로그인, 📊 대시보드
+          • 📝 노트, ⏰ 타이머, 📚 스터디
+          
+          🔗 **링크:**
+          • [커밋 보기](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+        embed-color: 3066993
+
+    - name: Notify Discord on Failure
+      if: failure()
+      uses: tsickert/discord-webhook@v7.0.0
+      with:
+        webhook-url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
+        embed-title: "❌ 접근성 & 성능 검사 실패!"
+        embed-description: |
+          **브랜치:** `${{ github.ref_name }}`
+          **커밋:** `${{ github.event.head_commit.message }}`
+          **작성자:** `${{ github.event.head_commit.author.name }}`
+          
+          🔍 **테스트 상태:**
+          • Axe 접근성 테스트: ${{ needs.axe-accessibility-testing.result }}
+          • Lighthouse 종합 테스트: ${{ needs.lighthouse-ci-testing.result }}
+          
+          🔗 **링크:**
+          • [커밋 보기](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          • [Lighthouse 서버](${{ env.LIGHTHOUSE_SERVER_URL }})
+        embed-color: 15158332 

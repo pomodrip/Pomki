@@ -2,6 +2,7 @@ import type { AxiosResponse } from 'axios';
 import api from './index';
 import type {
   UpdateMemberRequest,
+  UpdateMemberResponse,
   ChangeEmailRequest,
   MyInfoResponse,
 } from '../types/user';
@@ -14,8 +15,8 @@ export const getMyInfo = async (): Promise<MyInfoResponse> => {
 };
 
 // 멤버 정보 수정
-export const updateMember = async (data: UpdateMemberRequest): Promise<ApiResponse> => {
-  const response: AxiosResponse<ApiResponse> = await api.put('/api/members', data);
+export const updateMember = async (data: UpdateMemberRequest): Promise<UpdateMemberResponse> => {
+  const response: AxiosResponse<UpdateMemberResponse> = await api.put('/api/members', data);
   return response.data;
 };
 

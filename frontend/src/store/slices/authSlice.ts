@@ -158,6 +158,13 @@ const authSlice = createSlice({
       state.accessToken = action.payload;
       state.isAuthenticated = true;
     },
+
+    // 사용자 정보 업데이트
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
   },
   
   // extraReducers - builder 패턴 최신 방식
@@ -235,7 +242,7 @@ const authSlice = createSlice({
 });
 
 // 액션 크리에이터 export
-export const { clearAuth, clearError, resetAuthStatus, setAccessToken } = authSlice.actions;
+export const { clearAuth, clearError, resetAuthStatus, setAccessToken, updateUser } = authSlice.actions;
 
 // 셀렉터들 - 타입 안전한 셀렉터 패턴
 export const selectAuth = (state: RootState) => state.auth;

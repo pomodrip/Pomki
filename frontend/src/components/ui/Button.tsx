@@ -25,7 +25,6 @@ const StyledButton = styled(MuiButton)<ButtonProps>(({ theme, variant, color }) 
       },
     }),
     
-
 }));  
 
 const Button: React.FC<ButtonProps> = (props) => {

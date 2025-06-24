@@ -1,82 +1,28 @@
 import React from 'react';
-import { BottomNavigation, BottomNavigationAction, Paper, styled } from '@mui/material';
-import {
-  TimerOutlined as TimerIcon,
-  StickyNote2Outlined as NoteIcon,
-  HomeOutlined as HomeIcon,
-  SchoolOutlined as StudyIcon,
-  PersonOutlined as ProfileIcon,
-} from '@mui/icons-material';
+import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
+import HomeIcon  from '../../assets/icons/home.svg?react';
+import TimerIcon  from '../../assets/icons/timer.svg?react';
+import NoteIcon  from '../../assets/icons/note.svg?react';
+import StudyIcon  from '../../assets/icons/study.svg?react';
+import ProfileIcon  from '../../assets/icons/profile.svg?react';
+import { useTheme } from '@mui/material/styles';
+
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useResponsive } from '../../hooks/useResponsive';
-
-// design.md 디자인 시스템 적용
-const StyledBottomNavigation = styled(BottomNavigation)(({ theme }) => ({
-  height: '64px', // 헤더와 동일한 높이
-  borderTop: '1px solid #E5E7EB', // Border Medium
-  backgroundColor: '#FFFFFF', // Background Primary
-  
-  '& .MuiBottomNavigationAction-root': {
-    color: '#6B7280', // Text Secondary
-    minWidth: 'auto',
-    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
-    transition: 'all 0.2s ease', // Normal Transition
-    
-    '&.Mui-selected': {
-      color: '#2563EB', // Primary Main
-      transform: 'scale(1.02)', // Hover Scale (활성 상태)
-    },
-    
-    '& .MuiSvgIcon-root': {
-      fontSize: '24px', // 알림 아이콘 크기와 동일
-      transition: 'all 0.2s ease',
-    },
-    
-    '& .MuiBottomNavigationAction-label': {
-      fontSize: '12px', // Caption 크기
-      fontWeight: 500,
-      marginTop: theme.spacing(0.5),
-      transition: 'all 0.2s ease',
-      
-      '&.Mui-selected': {
-        fontSize: '12px',
-        fontWeight: 600,
-      },
-    },
-  },
-}));
-
-const StyledPaper = styled(Paper)(() => ({
-  position: 'fixed',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  zIndex: 1000,
-  borderTop: '1px solid #E5E7EB', // Border Medium
-  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', // Shadow SM
-  
-  // 900px 이상에서만 완전히 숨김
-  '@media (min-width: 900px)': {
-    display: 'none',
-  },
-}));
+import { useResponsiveUI } from '../../hooks/useUI';
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile } = useResponsive();
+  const theme = useTheme();
+  const { isMobile } = useResponsiveUI();
 
-  // 모바일에서만 표시
-  if (!isMobile) {
-    return null;
-  }
 
   const getActiveTab = () => {
     const pathname = location.pathname;
     if (pathname.startsWith('/timer')) return 0;
     if (pathname.startsWith('/note')) return 1;
     if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
-    if (pathname.startsWith('/study')) return 3;
+    if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
     if (pathname.startsWith('/profile')) return 4;
     return 2; // default to home
   };
@@ -101,32 +47,60 @@ const BottomNav: React.FC = () => {
     }
   };
 
-  return (
-    <StyledPaper elevation={0}>
-      <StyledBottomNavigation value={getActiveTab()} onChange={handleChange} showLabels>
-        <BottomNavigationAction 
-          label="타이머" 
-          icon={<TimerIcon />}
-        />
-        <BottomNavigationAction 
-          label="노트" 
-          icon={<NoteIcon />}
-        />
-        <BottomNavigationAction 
-          label="홈" 
-          icon={<HomeIcon />}
-        />
-        <BottomNavigationAction 
-          label="학습" 
-          icon={<StudyIcon />}
-        />
-        <BottomNavigationAction 
-          label="프로필" 
-          icon={<ProfileIcon />}
-        />
-      </StyledBottomNavigation>
-    </StyledPaper>
-  );
+  const navItems = [
+    { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
+    { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.text.secondary}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
+    { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.text.secondary}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
+    { label: '학습', inactiveIcon: <StudyIcon stroke={theme.palette.text.secondary}/>, activeIcon: <StudyIcon stroke={theme.palette.primary.main}/> },
+    { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.text.secondary}/>, activeIcon: <ProfileIcon fill={theme.palette.primary.main}/> }
+  ];
+
+  return isMobile ? (
+    <Paper
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '64px',
+        zIndex: (theme) => theme.zIndex.appBar,
+        borderTop: `1px solid ${theme.palette.divider}`,
+      }}
+      elevation={0}
+    >
+      <BottomNavigation
+        showLabels
+        value={getActiveTab()}
+        onChange={handleChange}
+        sx={{
+          height: '100%',
+        }}
+      >
+        {navItems.map((item, index) => (
+          <BottomNavigationAction
+            key={item.label}
+            label={item.label}
+            icon={getActiveTab() === index ? item.activeIcon : item.inactiveIcon}
+            sx={{
+              padding: '0',
+              minWidth: 'auto',
+              '& .MuiBottomNavigationAction-label': {
+                fontSize: '10px',
+                marginTop: '4px',
+                '&.Mui-selected': {
+                  fontSize: '10px',
+                },
+              },
+              '& .MuiSvgIcon-root': {
+                fontSize: '24px',
+              },
+              color: getActiveTab() === index ? theme.palette.primary.main : theme.palette.text.secondary,
+            }}
+          />
+        ))}
+      </BottomNavigation>
+    </Paper>
+  ) : null;
 };
 
 export default BottomNav;

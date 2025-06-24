@@ -1,10 +1,13 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, styled, Button } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Box, styled } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
+import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useTheme } from '../../hooks/useUI';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -82,38 +85,130 @@ const DesktopNav = styled(Box)(() => ({
   },
 }));
 
-const NavButton = styled(Button)(() => ({
-  fontSize: '14px', // 모바일/태블릿용 축소 크기 (16px → 14px)
-  fontWeight: 500, // 12. 네비게이션 메뉴 폰트 무게
-  color: '#6B7280', // 13. 네비게이션 메뉴 기본 색상
-  textTransform: 'none',
-  padding: '6px 12px', // 패딩 축소 (8px 16px → 6px 12px)
-  borderRadius: '8px', // 19. 네비게이션 메뉴 border-radius
-  transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
-  whiteSpace: 'nowrap', // 줄바꿈 방지
-  minWidth: 'auto', // 최소 너비 제거
-  
-  '&:hover': {
-    backgroundColor: 'rgba(26, 26, 26, 0.04)', // 18. 네비게이션 메뉴 hover 배경
-    color: '#1A1A1A', // 14. 네비게이션 메뉴 호버 색상
-  },
-  
-  '&.active': {
-    color: '#1A1A1A', // 15. 네비게이션 메뉴 활성 색상
-    backgroundColor: 'rgba(26, 26, 26, 0.04)',
-  },
-  
-  // 데스크톱에서는 원래 크기
-  '@media (min-width: 900px)': {
-    fontSize: '15px',
-    padding: '8px 14px',
-  },
-  
-  '@media (min-width: 1200px)': {
-    fontSize: '16px', // 큰 화면에서는 원래 크기
-    padding: '8px 16px',
-  },
-}));
+ const NavButton = styled(Button)(({ theme }) => ({
+   fontSize: '14px', // 모바일/태블릿용 축소 크기 (16px → 14px)
+   fontWeight: 500, // 12. 네비게이션 메뉴 폰트 무게
+   color: '#6B7280', // 13. 네비게이션 메뉴 기본 색상
+   textTransform: 'none',
+   padding: '6px 12px', // 패딩 축소 (8px 16px → 6px 12px)
+   borderRadius: '8px', // 19. 네비게이션 메뉴 border-radius
+   transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
+   whiteSpace: 'nowrap', // 줄바꿈 방지
+   minWidth: 'auto', // 최소 너비 제거
+   position: 'relative', // 가상 요소를 위한 상대 위치
+   
+   // 기본 상태의 언더바 (투명하게 숨김)
+   '&::after': {
+     content: '""',
+     position: 'absolute',
+     bottom: '2px',
+     left: '50%',
+     transform: 'translateX(-50%)',
+     width: '80%',
+     height: '2px',
+     backgroundColor: theme.palette.primary.main,
+     borderRadius: '1px',
+     opacity: 0,
+     transition: 'opacity 0.3s ease, transform 0.3s ease',
+   },
+   
+   
+   // 새로운 호버 효과 - 연한 파란색 배경
+   '&:hover': {
+     backgroundColor: theme.palette.primary.light, // E3F2FD 연한 파란색 배경
+     color: theme.palette.primary.main, // 파란색 텍스트
+     fontSize: '15px', // 폰트 크기 증가
+     '&::after': {
+       opacity: 0, // 일반 호버 시에는 언더바 숨김
+     },
+   },
+   
+   // 선택된 상태에서 호버 시 - 밑줄 + 배경색 함께
+   '&.active:hover': {
+     backgroundColor: theme.palette.primary.light, // 연한 파란색 배경
+     '&::after': {
+       opacity: 1, // 선택된 상태에서 호버 시에는 언더바 유지
+     },
+   },
+   
+   '&:active': {
+     backgroundColor: 'transparent', // 배경색 변화 없음
+     color: theme.palette.primary.main, // 파란색으로 변경
+     fontSize: '15px', // 폰트 크기 증가
+     '&::after': {
+       opacity: 1, // 언더바 나타남
+       transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
+     },
+   },
+   
+   '&.active': {
+     backgroundColor: 'transparent', // 배경색 변화 없음
+     color: theme.palette.primary.main, // 활성화 시 파란색
+     fontSize: '15px', // 폰트 크기 증가
+     fontWeight: 700, // 활성화 시 폰트 굵기 증가
+     '&::after': {
+       opacity: 1, // 언더바 항상 표시
+       transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
+     },
+   },
+   
+   // 데스크톱에서는 원래 크기
+   '@media (min-width: 900px)': {
+     fontSize: '15px',
+     padding: '8px 14px',
+
+     // 새로운 호버 효과
+     '&:hover': {
+       backgroundColor: theme.palette.primary.light,
+       color: theme.palette.primary.main,
+       fontSize: '16px',
+       '&::after': {
+         opacity: 0,
+       },
+     },
+     '&.active:hover': {
+       backgroundColor: theme.palette.primary.light,
+       '&::after': {
+         opacity: 1,
+       },
+     },
+     '&:active': {
+       fontSize: '16px',
+     },
+     '&.active': {
+       fontSize: '16px',
+       fontWeight: 700,
+     },
+   },
+   
+   '@media (min-width: 1200px)': {
+     fontSize: '16px', // 큰 화면에서는 원래 크기
+     padding: '8px 16px',
+
+     // 새로운 호버 효과
+     '&:hover': {
+       backgroundColor: theme.palette.primary.light,
+       color: theme.palette.primary.main,
+       fontSize: '17px',
+       '&::after': {
+         opacity: 0,
+       },
+     },
+     '&.active:hover': {
+       backgroundColor: theme.palette.primary.light,
+       '&::after': {
+         opacity: 1,
+       },
+     },
+     '&:active': {
+       fontSize: '17px',
+     },
+     '&.active': {
+       fontSize: '17px',
+       fontWeight: 700,
+     },
+   },
+ }));
 
 // 우측 영역 - design.md 가이드 21-25번 적용
 const NotificationButton = styled(IconButton)(() => ({
@@ -165,6 +260,7 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useResponsive();
+  const { toggleTheme, isDark } = useTheme();
 
   const handleBack = () => {
     navigate(-1);
@@ -184,7 +280,7 @@ const Header: React.FC<HeaderProps> = ({
     if (path.startsWith('/note/')) return 'Note Detail';
     if (path === '/note') return 'My Notes';
     if (path === '/timer') return 'Focus Timer';
-    if (path === '/study') return 'Study';
+    if (path === '/study' || path.startsWith('/flashcards')) return 'Study';
     if (path === '/profile') return 'Profile';
     return 'Pomki';
   };
@@ -192,13 +288,7 @@ const Header: React.FC<HeaderProps> = ({
   const shouldShowBackButton = showBackButton ?? (location.pathname !== '/' && location.pathname !== '/dashboard');
   const isHomePage = location.pathname === '/' || location.pathname === '/dashboard';
 
-  const getDefaultRightContent = () => {
-    return (
-      <NotificationButton>
-        <NotificationsNoneIcon />
-      </NotificationButton>
-    );
-  };
+
 
   const isActiveRoute = (path: string) => {
     return location.pathname.startsWith(path) || (path === '/' && isHomePage);
@@ -210,12 +300,12 @@ const Header: React.FC<HeaderProps> = ({
         {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {shouldShowBackButton && isMobile ? (
-            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }}>
+            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }} disableRipple>
               <ArrowBackIosNewIcon />
             </IconButton>
           ) : (
             <>
-              <MenuButton onClick={handleMenuClick}>
+              <MenuButton onClick={handleMenuClick} disableRipple>
                 <MenuIcon />
               </MenuButton>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
@@ -264,37 +354,51 @@ const Header: React.FC<HeaderProps> = ({
             <NavButton 
               className={isActiveRoute('/dashboard') ? 'active' : ''}
               onClick={() => navigate('/dashboard')}
+              disableRipple
             >
               홈
             </NavButton>
             <NavButton 
               className={isActiveRoute('/timer') ? 'active' : ''}
               onClick={() => navigate('/timer')}
+              disableRipple
             >
               타이머
             </NavButton>
             <NavButton 
               className={isActiveRoute('/note') ? 'active' : ''}
               onClick={() => navigate('/note')}
+              disableRipple
             >
               노트
             </NavButton>
             <NavButton 
               className={isActiveRoute('/study') ? 'active' : ''}
               onClick={() => navigate('/study')}
+              disableRipple
             >
               학습
             </NavButton>
             <NavButton 
               className={isActiveRoute('/profile') ? 'active' : ''}
               onClick={() => navigate('/profile')}
+              disableRipple
             >
               프로필
             </NavButton>
           </DesktopNav>
           
+          {/* 테마 토글 버튼 */}
+          <NotificationButton onClick={toggleTheme} disableRipple title={`${isDark ? 'Light' : 'Dark'} 모드로 변경`}>
+            {isDark ? <Brightness7 /> : <Brightness4 />}
+          </NotificationButton>
+          
           {/* 알림 아이콘 (항상 표시) */}
-          {rightContent || getDefaultRightContent()}
+          {rightContent || (
+            <NotificationButton disableRipple>
+              <NotificationsNoneIcon />
+            </NotificationButton>
+          )}
         </Box>
       </StyledToolbar>
     </StyledAppBar>

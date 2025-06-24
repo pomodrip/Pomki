@@ -1,15 +1,15 @@
 import axios from 'axios';
 import { cookies } from '../utils/cookies';
+import type { EnhancedStore } from '@reduxjs/toolkit';
 
 // API 기본 URL 설정 - 개발 환경에서는 프록시 사용
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
 
 // Store 참조를 위한 변수 (순환 참조 방지)
-let store: any = null;
+let store: EnhancedStore | null = null;
 
 // Store 설정 함수 (store에서 호출)
-export const setStoreReference = (storeInstance: any) => {
+export const setStoreReference = (storeInstance: EnhancedStore) => {
   store = storeInstance;
 };
 
@@ -90,7 +90,8 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // 🔥 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
+        // �� 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
+        console.error('Token refresh failed:', refreshError);
         cookies.clearAuthCookies();
         
         // Redux store도 클리어
@@ -111,7 +112,8 @@ api.interceptors.response.use(
 export * from './authApi';
 export * from './userApi';
 export * from './noteApi';
-export * from './studyApi';
+export * from './deckApi';
+export * from './cardApi';
 export * from './membershipApi';
 export * from './timerApi';
 export * from './adApi';

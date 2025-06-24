@@ -8,48 +8,58 @@ import { useNavigate } from "react-router-dom";
 import EmailVerificationTimer from '../../components/common/EmailVerificationTimer';
 
 const SignupPage = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [error, setError] = useState('');
   const [timerKey, setTimerKey] = useState(0); // 타이머 재시작용 key
+  
+  const navigate = useNavigate();
 
   const handleRequestCode = async () => {
-    if (!email) return;
-    
+    if (!email) {
+      setError('이메일을 입력해주세요.');
+      return;
+    }
+
     setIsRequestingCode(true);
-    setError('');
+    setError(null);
     
     try {
-      await sendEmailVerification({
-        email,
-        type: 'SIGNUP'
-      });
+      await sendEmailVerification({ email, type: 'SIGNUP' });
       
       setIsCodeSent(true);
       setTimerKey(prev => prev + 1); // 타이머 재시작
       // 선택적: 성공 메시지 표시
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to send verification code:', error);
-      setError(error.response?.data?.message || '인증번호 전송에 실패했습니다.');
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' && 
+        error.response.data && 'message' in error.response.data ? 
+        error.response.data.message : '인증번호 전송에 실패했습니다.';
+      setError(errorMessage as string);
     } finally {
       setIsRequestingCode(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    if (!verificationCode) return;
-    
+    if (!verificationCode) {
+      setError('인증번호를 입력해주세요.');
+      return;
+    }
+
     setIsVerifyingCode(true);
-    setError('');
+    setError(null);
     
     try {
       const response = await verifyEmailCode({
@@ -64,9 +74,14 @@ const SignupPage = () => {
       } else {
         setError(response.message || '인증에 실패했습니다.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to verify code:', error);
-      setError(error.response?.data?.message || '인증번호 확인에 실패했습니다.');
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' && 
+        error.response.data && 'message' in error.response.data ? 
+        error.response.data.message : '인증번호 확인에 실패했습니다.';
+      setError(errorMessage as string);
     } finally {
       setIsVerifyingCode(false);
     }
@@ -79,8 +94,8 @@ const SignupPage = () => {
     }
 
     setIsSigningUp(true);
-    setError('');
-
+    setError(null);
+    
     try {
       await signup({
         email,
@@ -93,9 +108,14 @@ const SignupPage = () => {
       alert('회원가입이 완료되었습니다! 로그인해주세요.');
       navigate('/login');
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to signup:', error);
-      setError(error.response?.data?.message || '회원가입에 실패했습니다.');
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' && 
+        error.response.data && 'message' in error.response.data ? 
+        error.response.data.message : '회원가입에 실패했습니다.';
+      setError(errorMessage as string);
     } finally {
       setIsSigningUp(false);
     }
@@ -125,7 +145,7 @@ const SignupPage = () => {
         </Typography>
         
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
             {error}
           </Alert>
         )}
@@ -152,7 +172,7 @@ const SignupPage = () => {
             sx={{ width: '100%', flex: 1, minWidth: '300px' }}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isCodeSent}
+            disabled={isVerified}
           />
 
           {isVerified ? (
@@ -196,7 +216,7 @@ const SignupPage = () => {
               onChange={(e) => setVerificationCode(e.target.value)}
               sx={{ flex: 1, minWidth: '200px' }}
             />
-            <Button 
+            <Button
               variant="outlined"
               onClick={handleVerifyCode}
               disabled={!verificationCode || isVerifyingCode}
@@ -221,8 +241,7 @@ const SignupPage = () => {
           variant="contained" 
           color="primary" 
           fullWidth 
-          style={{ marginBottom: 32 }} 
-          disabled={!isVerified || !name || !password || isSigningUp}
+          disabled={!isVerified || isSigningUp}
           onClick={handleSignup}
         >
           {isSigningUp ? '가입중...' : '회원가입'}

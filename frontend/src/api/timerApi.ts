@@ -102,6 +102,12 @@ export const updateTimerSettings = async (settings: Partial<TimerSettings>): Pro
   return response.data;
 };
 
+// 타이머 설정 저장 (updateTimerSettings와 동일한 기능)
+export const saveTimerSettings = async (settings: TimerSettings): Promise<TimerSettings> => {
+  const response: AxiosResponse<TimerSettings> = await api.put('/api/timer/settings', settings);
+  return response.data;
+};
+
 // 타이머 통계 조회
 export const getTimerStats = async (period: 'daily' | 'weekly' | 'monthly' = 'weekly'): Promise<TimerStats> => {
   const response: AxiosResponse<TimerStats> = await api.get('/api/timer/stats', { params: { period } });
