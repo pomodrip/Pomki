@@ -100,20 +100,11 @@ const ProfilePage: React.FC = () => {
       {/* 통합된 프로필 카드 */}
       <Card cardVariant="default" sx={{ backgroundColor: 'background.paper' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Typography variant="h3" gutterBottom sx={{ mb: 3 }}>
+            사용자 정보
+          </Typography>
           {/* 프로필 정보 섹션 */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 3 }}>
-            {/* 아바타 이미지 */}
-            <Avatar
-              sx={{
-                width: 100,
-                height: 100,
-                fontSize: '2rem',
-                backgroundColor: 'primary.main'
-              }}
-            >
-              {user?.nickname?.charAt(0)?.toUpperCase() || 'U'}
-            </Avatar>
-
             {/* 사용자 이름 */}
             <Typography variant="h2" sx={{ fontWeight: 600 }}>
               {user?.nickname || '사용자명'}
