@@ -16,6 +16,9 @@ import TimerPage from '../pages/Timer/TimerPage';
 import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import NoteDetailPage from '../pages/Note/NoteDetailPage';
+import DeckManagementPage from '../pages/Study/DeckManagementPage';
+import AdUsageExample from '../examples/AdUsageExample';
+// import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 // const TestPage = ({ title }: { title: string }) => {
 //   console.log(`${title} page rendering...`);
@@ -60,6 +63,12 @@ const AppRoutes = () => {
         <Route path="note" element={<NoteListPage />} />
         <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="profile" element={<ProfilePage />} />
+
+
+        {/* 테스트 페이지 */}
+        <Route path="study/deck-management" element={<DeckManagementPage />} />
+        <Route path="ad" element={< AdUsageExample/>} />
+        {/* <Route path="membership" element={<MembershipUsageExample/>} /> */}
       </Route>
       
       {/* 404 페이지 */}
