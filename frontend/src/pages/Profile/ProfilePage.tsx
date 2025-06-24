@@ -152,6 +152,43 @@ const ProfilePage: React.FC = () => {
             opacity: 0.12
           }} />
 
+          {/* 개발자 도구 섹션 */}
+          {import.meta.env.DEV && (
+            <>
+              {/* 구분선 */}
+              <Box sx={{
+                height: '1px',
+                backgroundColor: 'divider',
+                opacity: 0.12
+              }} />
+              
+              <Box>
+                <Typography variant="h3" gutterBottom sx={{ mb: 3 }}>
+                  개발자 도구 🔧
+                </Typography>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr',
+                  gap: 2
+                }}>
+                  <NavListButton onClick={() => navigate('/api-fallback')}>
+                    API Fallback 테스트
+                  </NavListButton>
+                  <NavListButton onClick={() => navigate('/ad')}>
+                    광고 시스템 예제
+                  </NavListButton>
+                </Box>
+              </Box>
+            </>
+          )}
+
+          {/* 구분선 */}
+          <Box sx={{
+            height: '1px',
+            backgroundColor: 'divider',
+            opacity: 0.12
+          }} />
+
           {/* 액션 버튼들 섹션 */}
           <Box>
             <Typography variant="h3" gutterBottom sx={{ mb: 3 }}>

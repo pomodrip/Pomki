@@ -29,6 +29,7 @@ import {
   BookmarkBorder,
   Bookmark,
   FilterList as FilterListIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
@@ -43,6 +44,7 @@ import {
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
 import Card from '../../components/ui/Card';
+import { deckApiWithFallback } from '../../api/apiWithFallback';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideDeckInfo {
@@ -133,12 +135,32 @@ const FlashcardDeckListPage: React.FC = () => {
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
+  // 🎯 API Fallback을 사용한 덱 목록 로드
+  const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+
   // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
-    // memberId 체크 후 덱 목록 로드
+    // Redux를 통한 기존 로드
     if (user?.memberId) {
       dispatch(fetchDecks());
     }
+    
+    // API Fallback을 통한 추가 로드
+    const loadDecksWithFallback = async () => {
+      setFallbackLoading(true);
+      try {
+        const fallbackData = await deckApiWithFallback.getDecksByMemberId(user?.memberId || 1);
+        setFallbackDecks(fallbackData);
+        console.log('✅ API Fallback으로 덱 목록 로드:', fallbackData);
+      } catch (error) {
+        console.error('❌ API Fallback 덱 로드 실패:', error);
+      } finally {
+        setFallbackLoading(false);
+      }
+    };
+
+    loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
 
   // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
@@ -159,13 +181,33 @@ const FlashcardDeckListPage: React.FC = () => {
     }
   }, [decks]);
 
+  // 🎯 Redux 덱과 Fallback 덱을 합치기
+  const combinedDecks = useMemo(() => {
+    // Redux 덱과 Fallback 덱을 합치고 중복 제거
+    const deckMap = new Map<string, CardDeck>();
+    
+    // Redux 덱 추가
+    decks.forEach(deck => {
+      deckMap.set(deck.deckId, deck);
+    });
+    
+    // Fallback 덱 추가 (중복되지 않는 경우만)
+    fallbackDecks.forEach(deck => {
+      if (!deckMap.has(deck.deckId)) {
+        deckMap.set(deck.deckId, deck);
+      }
+    });
+    
+    return Array.from(deckMap.values());
+  }, [decks, fallbackDecks]);
+
   // 🎯 필터링 및 UI 렌더링을 위한 데이터 합치기
   const enrichedDecks: EnrichedDeck[] = useMemo(() => {
-    return decks.map(deck => ({
+    return combinedDecks.map(deck => ({
       ...deck,
       ...(clientSideInfo[deck.deckId] || { isBookmarked: false, tags: [] }),
     }));
-  }, [decks, clientSideInfo]);
+  }, [combinedDecks, clientSideInfo]);
   
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -285,21 +327,58 @@ const FlashcardDeckListPage: React.FC = () => {
         }
       }));
           } else {
-        // 덱 생성
-        const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
-        if (result.meta.requestStatus === 'fulfilled' && result.payload) {
-          const newDeck = result.payload as CardDeck;
-          // 새 덱에 대한 클라이언트 측 정보 추가
-          setClientSideInfo(prev => ({
-            ...prev,
-            [newDeck.deckId]: {
-              isBookmarked: false,
-              tags: newDeckTags.split(',').map(t => {
-                const trimmed = t.trim();
-                return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-              }).filter(Boolean),
-            }
-          }));
+        try {
+          // Redux를 통한 덱 생성
+          const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
+          if (result.meta.requestStatus === 'fulfilled' && result.payload) {
+            const newDeck = result.payload as CardDeck;
+            // 새 덱에 대한 클라이언트 측 정보 추가
+            setClientSideInfo(prev => ({
+              ...prev,
+              [newDeck.deckId]: {
+                isBookmarked: false,
+                tags: newDeckTags.split(',').map(t => {
+                  const trimmed = t.trim();
+                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+                }).filter(Boolean),
+              }
+            }));
+          }
+        } catch (error) {
+          console.log('Redux 덱 생성 실패, API Fallback 사용 시도...');
+          // Redux 실패시 API Fallback 사용
+          try {
+            const newDeck = await deckApiWithFallback.createDeck({
+              deckName: newDeckTitle.trim(),
+              memberId: user?.memberId || 1
+            });
+            
+            // fallbackDecks 상태에 추가
+            setFallbackDecks(prev => [...prev, newDeck]);
+            
+            // 클라이언트 측 정보 추가
+            setClientSideInfo(prev => ({
+              ...prev,
+              [newDeck.deckId]: {
+                isBookmarked: false,
+                tags: newDeckTags.split(',').map(t => {
+                  const trimmed = t.trim();
+                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+                }).filter(Boolean),
+              }
+            }));
+            
+            dispatch(showToast({
+              message: '✅ API Fallback으로 덱이 생성되었습니다!',
+              severity: 'success'
+            }));
+          } catch (fallbackError) {
+            console.error('API Fallback 덱 생성도 실패:', fallbackError);
+            dispatch(showToast({
+              message: '덱 생성에 실패했습니다.',
+              severity: 'error'
+            }));
+          }
         }
       }
     handleCreateDialogClose();
@@ -314,6 +393,33 @@ const FlashcardDeckListPage: React.FC = () => {
           <AddIcon />
         </Fab>
       </HeaderBox>
+
+      {/* API Fallback 정보 표시 */}
+      {fallbackDecks.length > 0 && (
+        <Box 
+          sx={{ 
+            mb: 2, 
+            p: 2, 
+            backgroundColor: '#e3f2fd', 
+            border: '1px solid #2196f3',
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <InfoIcon color="primary" />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              🎉 API Fallback 시스템 작동 중!
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              실제 API 호출 실패시 자동으로 Mock 데이터({fallbackDecks.length}개 덱)를 표시하고 있습니다.
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       <SearchBox>
         <TextField
           fullWidth
@@ -380,7 +486,11 @@ const FlashcardDeckListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
       </Menu>
 
-      {loading && <Box display="flex" justifyContent="center" my={5}><CircularProgress /></Box>}
+      {(loading || fallbackLoading) && (
+        <Box display="flex" justifyContent="center" my={5}>
+          <CircularProgress />
+        </Box>
+      )}
 
       {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
       
