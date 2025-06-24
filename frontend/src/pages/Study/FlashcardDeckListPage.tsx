@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { setFilters } from '../../store/slices/studySlice';
 import { showToast, hideToast } from '../../store/slices/toastSlice';
 import {
@@ -535,6 +536,15 @@ const FlashcardDeckListPage: React.FC = () => {
     }
     handleCreateDialogClose();
   };
+
+  // 🎯 덱 생성/수정 다이얼로그 키보드 단축키
+  useDialogKeyboardShortcuts(
+    handleCreateDialogConfirm,
+    handleCreateDialogClose,
+    {
+      enabled: showCreateDialog
+    }
+  );
 
   return (
     <StyledContainer>

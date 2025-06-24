@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { setFilters } from '../../store/slices/studySlice'; 
 import { 
   fetchCardsInDeck, 
@@ -489,6 +490,15 @@ const FlashCardListPage: React.FC = () => {
       handleEditDialogClose();
     }
   };
+
+  // 🎯 카드 수정 다이얼로그 키보드 단축키
+  useDialogKeyboardShortcuts(
+    handleEditDialogConfirm,
+    handleEditDialogClose,
+    {
+      enabled: showEditDialog
+    }
+  );
 
   // 덱이 없는 경우 (기존 로직 유지)
   if (!currentDeck) {

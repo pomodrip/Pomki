@@ -27,7 +27,9 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useNavigationKeyboardShortcuts, useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { fetchCardsInDeck, setCurrentDeck } from '../../store/slices/deckSlice';
+import { showToast } from '../../store/slices/toastSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
 import type { Card } from '../../types/card';
 
@@ -196,43 +198,68 @@ const FlashcardPracticePage: React.FC = () => {
   };
 
   const handleCompletionConfirm = () => {
-    setShowCompletionDialog(false);
-    navigate('/study');
-  };
+    try {
+      setShowCompletionDialog(false);
+      
+      // 학습 완료 토스트 알림
+      dispatch(showToast({
+        message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
+        severity: 'success',
+        duration: 4000
+      }));
+      
+      // 상태 초기화
+      setCurrentCardIndex(0);
+      setShowAnswer(false);
+      setSelectedDifficulty(null);
+      setCurrentQuestionFeedback('');
+      setGlobalFeedback('');
+      setIsFeedbackOpen(false);
+      
+      console.log('학습 완료 - 덱 목록으로 이동');
+      navigate('/study');
+    } catch (error) {
+      console.error('학습 완료 처리 중 오류:', error);
+      // 에러 토스트
+      dispatch(showToast({
+        message: '학습 완료 처리 중 오류가 발생했습니다.',
+        severity: 'error'
+      }));
+      // 에러가 발생해도 기본 동작은 수행
+      navigate('/study');
+    }  };
 
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
+    
+    // 계속 학습 토스트 알림
+    dispatch(showToast({
+      message: '학습을 계속 진행합니다!',
+      severity: 'info',
+      duration: 2000
+    }));
+    
+    console.log('학습 계속 진행');
   };
 
-  // 🎯 키보드 방향키 이벤트 리스너 등록 (이전/다음 카드 이동)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // 다이얼로그가 열려있거나 입력 필드에 포커스가 있을 때는 키보드 이벤트 무시
-      if (showCompletionDialog || isFeedbackOpen) return;
-      
-      // 입력 필드나 텍스트 영역에 포커스가 있을 때도 무시
-      const activeElement = document.activeElement;
-      if (activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA') {
-        return;
-      }
-
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault(); // 브라우저 기본 동작 방지
-        handlePrevious();
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault(); // 브라우저 기본 동작 방지
-        handleNext();
-      }
-    };
-
-    // 윈도우에 키보드 이벤트 리스너 등록
-    window.addEventListener('keydown', handleKeyDown);
-
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentCardIndex, flashcards.length, showCompletionDialog, isFeedbackOpen]);
+  // 🎯 플래시카드 네비게이션 키보드 단축키
+  useNavigationKeyboardShortcuts(
+    handlePrevious,
+    handleNext,
+    {
+      enabled: flashcards.length > 0,
+      isActive: () => !showCompletionDialog && !isFeedbackOpen
+    }
+  );
+  
+  // 🎯 학습 완료 다이얼로그 키보드 단축키
+  useDialogKeyboardShortcuts(
+    handleCompletionConfirm,
+    handleCompletionCancel,
+    {
+      enabled: showCompletionDialog
+    }
+  );
 
   const getDifficultyButtonStyle = (difficulty: Difficulty) => {
     const isSelected = selectedDifficulty === difficulty;
