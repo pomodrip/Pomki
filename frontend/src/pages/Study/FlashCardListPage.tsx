@@ -39,6 +39,7 @@ import {
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
 import type { Card } from '../../types/card';
+import { showToast } from '../../store/slices/toastSlice';
 
 // 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
 interface Flashcard {
@@ -144,6 +145,9 @@ const FlashCardListPage: React.FC = () => {
     9: false,
   });
   
+  // 카드별 사용자 정의 태그 저장
+  const [customCardTags, setCustomCardTags] = useState<{[key: number]: string[]}>({});
+  
   // 수정 다이얼로그 상태
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingCardId, setEditingCardId] = useState<number | null>(null);
@@ -196,14 +200,17 @@ const FlashCardListPage: React.FC = () => {
       tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
       flashcards: allCards
         .filter(card => card.deckId === `deck_${deckId}`)
-        .map(card => ({
-          id: parseInt(card.cardId.toString()),
-          front: card.content || 'No content',
-          back: card.answer || 'No answer',
-          tags: [`#카드${card.cardId}`, '#학습'],
-        }))
+        .map(card => {
+          const cardId = parseInt(card.cardId.toString());
+          return {
+            id: cardId,
+            front: card.content || 'No content',
+            back: card.answer || 'No answer',
+            tags: customCardTags[cardId] || [`#카드${card.cardId}`, '#학습'],
+          };
+        })
     }];
-  }, [deckId, allCards, currentDeckTitle]);
+  }, [deckId, allCards, currentDeckTitle, customCardTags]);
 
   // 🎯 현재 덱 찾기 (기존 로직 유지)
   const currentDeck = useMemo(() => {
@@ -303,27 +310,99 @@ const FlashCardListPage: React.FC = () => {
       setEditingCardId(id);
       setEditCardFront(card.front);
       setEditCardBack(card.back);
-      setEditCardTags(card.tags.join(', '));
+      // 기존 태그에서 # 제거하여 표시 (사용자 입력 형태로)
+      setEditCardTags(card.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
       setShowEditDialog(true);
     }
   };
 
-  const handleDeleteCard = (id: number, event: React.MouseEvent) => {
+  const handleDeleteCard = async (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
     if (confirmed) {
-      // 🎯 새로운 API 호출 (실제 cardId 사용) - string으로 변환
-      dispatch(deleteCard(id.toString()));
+      // 먼저 fallback 카드에서 해당 카드를 찾아 삭제 (타입 안전하게 비교)
+      const fallbackCardIndex = fallbackCards.findIndex(card => Number(card.cardId) === Number(id));
+      if (fallbackCardIndex !== -1) {
+        // fallback 카드에서 삭제
+        setFallbackCards(prev => prev.filter(card => Number(card.cardId) !== Number(id)));
+        
+        // 해당 카드의 사용자 정의 태그도 삭제
+        setCustomCardTags(prev => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
+        
+        dispatch(showToast({
+          message: '카드가 성공적으로 삭제되었습니다.',
+          severity: 'success'
+        }));
+      } else {
+        // Redux 카드 삭제 시도
+        try {
+          const result = await dispatch(deleteCard(id.toString()));
+          if (result.meta.requestStatus === 'fulfilled') {
+            // Redux 삭제 성공 시에도 사용자 정의 태그 삭제
+            setCustomCardTags(prev => {
+              const updated = { ...prev };
+              delete updated[id];
+              return updated;
+            });
+            
+            dispatch(showToast({
+              message: '카드가 성공적으로 삭제되었습니다.',
+              severity: 'success'
+            }));
+          } else {
+            throw new Error('Redux 카드 삭제 실패');
+          }
+        } catch (error) {
+          console.error('카드 삭제 실패:', error);
+          dispatch(showToast({
+            message: '카드 삭제에 실패했습니다.',
+            severity: 'error'
+          }));
+        }
+      }
     }
   };
 
-  const handleToggleBookmark = (cardId: number, event: React.MouseEvent) => {
+  const handleToggleBookmark = async (cardId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    setCardBookmarks(prev => ({
-      ...prev,
-      [cardId]: !prev[cardId]
-    }));
+    
+    try {
+      // 클라이언트 상태 즉시 업데이트 (UI 반응성)
+      const newBookmarkState = !cardBookmarks[cardId];
+      setCardBookmarks(prev => ({
+        ...prev,
+        [cardId]: newBookmarkState
+      }));
+      
+      // 향후 API 연동 시 서버 동기화
+      // await dispatch(updateCardBookmark({ cardId, isBookmarked: newBookmarkState }));
+      
+      console.log(`📌 카드 ${cardId} 북마크 ${newBookmarkState ? '추가' : '제거'}`);
+      
+      // 성공 토스트 메시지
+      dispatch(showToast({
+        message: newBookmarkState ? '북마크에 추가되었습니다.' : '북마크에서 제거되었습니다.',
+        severity: 'success'
+      }));
+      
+    } catch (error) {
+      // 실패 시 상태 롤백
+      console.error('북마크 상태 변경 실패:', error);
+      setCardBookmarks(prev => ({
+        ...prev,
+        [cardId]: cardBookmarks[cardId] // 원래 상태로 되돌림
+      }));
+      
+      dispatch(showToast({
+        message: '북마크 상태 변경에 실패했습니다.',
+        severity: 'error'
+      }));
+    }
   };
 
   const handleEditDialogClose = () => {
@@ -334,18 +413,79 @@ const FlashCardListPage: React.FC = () => {
     setEditCardTags('');
   };
 
-  const handleEditDialogConfirm = () => {
+  const handleEditDialogConfirm = async () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
-    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null) {
-      // 🎯 새로운 API 형식으로 업데이트 - string으로 변환
-      dispatch(updateCard({ 
-        cardId: editingCardId.toString(), 
-        data: { 
-          content: editCardFront.trim(), 
-          answer: editCardBack.trim() 
-        } 
+    if (!confirmed || !editCardFront.trim() || !editCardBack.trim() || editingCardId === null) {
+      return;
+    }
+
+    try {
+      console.log('🔍 수정 시도:', { editingCardId, fallbackCards: fallbackCards.map(c => ({ cardId: c.cardId, type: typeof c.cardId })) });
+      
+      // 태그 처리: 쉼표로 분리하고 # 자동 추가
+      const processedTags = editCardTags
+        .split(',')
+        .map(tag => {
+          const trimmed = tag.trim();
+          return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+        })
+        .filter(tag => tag.length > 1); // 빈 태그나 #만 있는 것 제거
+      
+      // 먼저 fallback 카드에서 해당 카드를 찾아 수정 (타입 안전하게 비교)
+      const fallbackCardIndex = fallbackCards.findIndex(card => 
+        Number(card.cardId) === Number(editingCardId)
+      );
+      
+      if (fallbackCardIndex !== -1) {
+        console.log('✅ Fallback 카드에서 찾음, 수정 진행');
+        // fallback 카드 업데이트
+        setFallbackCards(prev => prev.map(card => 
+          Number(card.cardId) === Number(editingCardId)
+            ? { 
+                ...card, 
+                content: editCardFront.trim(),
+                answer: editCardBack.trim()
+              }
+            : card
+        ));
+        
+        console.log('📝 Fallback 태그 업데이트:', processedTags);
+      } else {
+        console.log('⚠️ Fallback 카드에서 찾지 못함, Redux 시도');
+        // Redux 카드 수정 시도
+        const result = await dispatch(updateCard({ 
+          cardId: editingCardId.toString(), 
+          data: { 
+            content: editCardFront.trim(), 
+            answer: editCardBack.trim() 
+          } 
+        }));
+        
+        if (result.meta.requestStatus !== 'fulfilled') {
+          throw new Error('Redux 카드 수정 실패');
+        }
+        
+        console.log('📝 Redux 태그 업데이트:', processedTags);
+      }
+      
+      // 성공 시 항상 태그 업데이트 (두 시스템 모두)
+      setCustomCardTags(prev => ({
+        ...prev,
+        [editingCardId]: processedTags
       }));
       
+      dispatch(showToast({
+        message: '카드가 성공적으로 수정되었습니다.',
+        severity: 'success'
+      }));
+      
+    } catch (error) {
+      console.error('카드 수정 실패:', error);
+      dispatch(showToast({
+        message: '카드 수정에 실패했습니다.',
+        severity: 'error'
+      }));
+    } finally {
       handleEditDialogClose();
     }
   };
@@ -597,19 +737,15 @@ const FlashCardListPage: React.FC = () => {
             />
             
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              태그 (쉼표로 구분)
+              태그 (쉼표로 구분, 자동으로 # 추가)
             </Typography>
             <TextField
               fullWidth
-              placeholder="예: #React, #JavaScript, #Frontend"
+              placeholder="React, JavaScript, Frontend"
               value={editCardTags}
               onChange={(e) => setEditCardTags(e.target.value)}
-              sx={{ mb: 1 }}
+              sx={{ mb: 2 }}
             />
-            
-            <Typography variant="caption" color="text.secondary">
-              태그는 쉼표(,)로 구분하여 입력하세요
-            </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
