@@ -6,6 +6,7 @@ import { setStoreReference } from '../api/index';
 import noteReducer from './slices/noteSlice';
 import studyReducer from './slices/studySlice';
 import deckReducer from './slices/deckSlice';
+import timerReducer from './slices/timerSlice';
 import uiReducer from './slices/uiSlice';
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     note: noteReducer,
     study: studyReducer,
     deck: deckReducer, // 🎯 새로운 덱 슬라이스 추가
+    timer: timerReducer, // 🎯 새로운 타이머 슬라이스 추가
     ui: uiReducer, // 🎨 UI 상태 관리 슬라이스 추가
   },
   middleware: (getDefaultMiddleware) =>
