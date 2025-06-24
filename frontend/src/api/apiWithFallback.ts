@@ -118,11 +118,15 @@ export const deckApiWithFallback = {
   },
 
   getCardsInDeck: async (deckId: string) => {
-    const { getCardsInDeck } = await import('./deckApi');
-    return apiWithFallback(
-      () => getCardsInDeck(deckId),
-      mockData.deck.getCardsInDeck
-    );
+    try {
+      const { getCardsInDeck } = await import('./deckApi');
+      return apiWithFallback(
+        () => getCardsInDeck(deckId),
+        () => mockData.deck.getCardsInDeck(deckId)
+      );
+    } catch {
+      return mockData.deck.getCardsInDeck(deckId);
+    }
   },
 
   updateDeck: async (deckId: string, data: any) => {

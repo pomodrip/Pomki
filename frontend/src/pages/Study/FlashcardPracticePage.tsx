@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Card,
+  Card as MuiCard,
   Button,
 } from '@mui/material';
 import {
@@ -22,10 +22,13 @@ import {
   ArrowForward as ArrowForwardIcon,
   EditNote as EditNoteIcon,
   ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { fetchCardsInDeck, setCurrentDeck } from '../../store/slices/deckSlice';
+import { deckApiWithFallback } from '../../api/apiWithFallback';
+import type { Card } from '../../types/card';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -39,7 +42,7 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const FlashcardCard = styled(Card)(({ theme }) => ({
+const FlashcardCard = styled(MuiCard)(({ theme }) => ({
   marginBottom: theme.spacing(3),
   minHeight: 200,
   display: 'flex',
@@ -88,6 +91,10 @@ const FlashcardPracticePage: React.FC = () => {
     (state) => state.deck
   );
 
+  // 🎯 API Fallback을 위한 상태
+  const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(null);
@@ -106,20 +113,55 @@ const FlashcardPracticePage: React.FC = () => {
     if (deckId) {
       dispatch(setCurrentDeck(deckId));
       dispatch(fetchCardsInDeck(deckId));
+      
+      // API Fallback으로 카드 데이터 로드
+      const loadCardsWithFallback = async () => {
+        setFallbackLoading(true);
+        try {
+          const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
+          setFallbackCards(fallbackData);
+          console.log('✅ API Fallback으로 카드 목록 로드:', fallbackData);
+        } catch (error) {
+          console.error('❌ API Fallback 카드 로드 실패:', error);
+        } finally {
+          setFallbackLoading(false);
+        }
+      };
+
+      loadCardsWithFallback();
     }
   }, [dispatch, deckId]);
 
+  // 🎯 Redux와 Fallback 카드를 합치기
+  const combinedCards = useMemo(() => {
+    const cardMap = new Map<number, Card>();
+    
+    // Redux 카드 추가
+    currentDeckCards.forEach(card => {
+      cardMap.set(card.cardId, card);
+    });
+    
+    // Fallback 카드 추가 (중복되지 않는 경우만)
+    fallbackCards.forEach(card => {
+      if (!cardMap.has(card.cardId)) {
+        cardMap.set(card.cardId, card);
+      }
+    });
+    
+    return Array.from(cardMap.values());
+  }, [currentDeckCards, fallbackCards]);
+
   // 🎯 API 데이터를 UI에 맞게 변환
   const flashcards = useMemo(() => {
-    if (!currentDeck) return [];
-    return currentDeckCards.map(card => ({
+    if (!currentDeck && fallbackCards.length === 0) return [];
+    return combinedCards.map(card => ({
       ...card,
       id: card.cardId,
       question: card.content, // content -> question
       answer: card.answer,   // answer -> answer
       tags: [], // API에 태그 정보가 없으므로 임시로 빈 배열 사용
     }));
-  }, [currentDeck, currentDeckCards]);
+  }, [currentDeck, combinedCards, fallbackCards.length]);
 
   const currentCard = flashcards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
@@ -194,9 +236,35 @@ const FlashcardPracticePage: React.FC = () => {
         </Typography>
       </HeaderBox>
 
-      {loading && <Typography>카드를 불러오는 중...</Typography>}
+      {/* API Fallback 정보 표시 */}
+      {fallbackCards.length > 0 && (
+        <Box 
+          sx={{ 
+            mb: 2, 
+            p: 2, 
+            backgroundColor: '#e3f2fd', 
+            border: '1px solid #2196f3',
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <InfoIcon color="primary" />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              🎉 API Fallback 시스템 작동 중!
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {fallbackCards.length}개의 Mock 카드를 사용하여 학습 기능을 체험하고 있습니다.
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
-      {!loading && flashcards.length > 0 && (
+      {(loading || fallbackLoading) && <Typography>카드를 불러오는 중...</Typography>}
+
+      {!loading && !fallbackLoading && flashcards.length > 0 && (
         <>
           {/* 진행률 */}
           <Box sx={{ mb: 3 }}>
@@ -417,10 +485,10 @@ const FlashcardPracticePage: React.FC = () => {
         </>
       )}
 
-      {!loading && !flashcards.length && (
+      {!loading && !fallbackLoading && !flashcards.length && (
         <Box textAlign="center" py={5}>
           <Typography variant="h6" color="text.secondary">
-            {currentDeck
+            {currentDeck || fallbackCards.length > 0
               ? '이 덱에는 카드가 없습니다.'
               : '덱을 찾을 수 없습니다.'}
           </Typography>

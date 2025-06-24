@@ -12,7 +12,7 @@ import {
   Chip,
   Button,
   TextField,
-  Card,
+  Card as MuiCard,
   CardContent,
   Dialog,
   DialogTitle,
@@ -37,6 +37,8 @@ import {
   deleteCard, 
   setCurrentDeck 
 } from '../../store/slices/deckSlice';
+import { deckApiWithFallback } from '../../api/apiWithFallback';
+import type { Card } from '../../types/card';
 
 // 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
 interface Flashcard {
@@ -78,7 +80,7 @@ const FilterBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const FlashCard = styled(Card)(({ theme }) => ({
+const FlashCard = styled(MuiCard)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   cursor: 'pointer',
   transition: 'all 0.2s',
@@ -123,6 +125,10 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
   const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
   
+  // 🎯 API Fallback을 위한 상태
+  const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
@@ -145,25 +151,59 @@ const FlashCardListPage: React.FC = () => {
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
 
+  // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거)
+  const allCards = useMemo(() => {
+    const combinedCards = new Map<string, Card>();
+    
+    // 1. Redux에서 가져온 카드들 추가
+    currentDeckCards.forEach(card => {
+      combinedCards.set(card.cardId.toString(), card);
+    });
+    
+    // 2. Fallback 카드들 추가 (중복 아닌 것만)
+    fallbackCards.forEach(card => {
+      if (!combinedCards.has(card.cardId.toString())) {
+        combinedCards.set(card.cardId.toString(), card);
+      }
+    });
+    
+    return Array.from(combinedCards.values());
+  }, [currentDeckCards, fallbackCards]);
+
+  // 🎯 현재 덱에 해당하는 카드들만 필터링
+  const currentDeckTitle = useMemo(() => {
+    const targetDeckId = `deck_${deckId}`;
+    
+    // 덱 이름 매핑
+    const deckTitles: { [key: string]: string } = {
+      'deck_1': '영어 단어장',
+      'deck_2': '일본어 단어장', 
+      'deck_3': '프로그래밍 용어'
+    };
+    
+    return deckTitles[targetDeckId] || `덱 ${deckId}`;
+  }, [deckId]);
+
   // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
   const mockDecks: FlashcardDeck[] = useMemo(() => {
-    // 새로운 API에서 가져온 덱 정보를 기존 구조로 변환
-    return decks.map(deck => ({
-      id: parseInt(deck.deckId.replace('deck-uuid-', '')), // deckId를 숫자로 변환
+    if (!deckId || allCards.length === 0) return [];
+    
+    return [{
+      id: parseInt(deckId),
       category: '학습',
-      title: deck.deckName,
-      isBookmarked: Math.random() > 0.5, // Mock 데이터
-      tags: [`#${deck.deckName.split(' ')[0]}`, '#학습'], // Mock 태그
-      flashcards: currentDeckCards
-        .filter(card => card.deckId === deck.deckId)
+      title: currentDeckTitle,
+      isBookmarked: false,
+      tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
+      flashcards: allCards
+        .filter(card => card.deckId === `deck_${deckId}`)
         .map(card => ({
-          id: card.cardId,
-          front: card.content, // content -> front 변환
-          back: card.answer,   // answer -> back 변환
-          tags: [`#카드${card.cardId}`, '#학습'], // Mock 태그
+          id: parseInt(card.cardId.toString()),
+          front: card.content || 'No content',
+          back: card.answer || 'No answer',
+          tags: [`#카드${card.cardId}`, '#학습'],
         }))
-    }));
-  }, [decks, currentDeckCards]);
+    }];
+  }, [deckId, allCards, currentDeckTitle]);
 
   // 🎯 현재 덱 찾기 (기존 로직 유지)
   const currentDeck = useMemo(() => {
@@ -173,10 +213,26 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
     if (deckId) {
-      // 실제 덱 ID 형식으로 변환 (숫자 -> UUID 형식)
-      const realDeckId = `deck-uuid-${deckId}`;
+      // Redux를 통한 기존 로드
+      const realDeckId = `deck_${deckId}`;
       dispatch(setCurrentDeck(realDeckId));
       dispatch(fetchCardsInDeck(realDeckId));
+      
+      // API Fallback으로 카드 데이터 로드
+      const loadCardsWithFallback = async () => {
+        setFallbackLoading(true);
+        try {
+          const fallbackData = await deckApiWithFallback.getCardsInDeck(realDeckId);
+          setFallbackCards(fallbackData);
+          console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
+        } catch (error) {
+          console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
+        } finally {
+          setFallbackLoading(false);
+        }
+      };
+
+      loadCardsWithFallback();
     }
   }, [dispatch, deckId]);
 
@@ -327,6 +383,26 @@ const FlashCardListPage: React.FC = () => {
           {currentDeck.title}
         </Typography>
       </HeaderBox>
+
+      {/* API Fallback 정보 표시 */}
+      {fallbackCards.length > 0 && (
+        <Box
+          sx={{
+            bgcolor: '#e3f2fd',
+            border: '1px solid #2196f3',
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="#1976d2">
+            ℹ️ API Fallback이 활성화되어 Mock 데이터를 표시하고 있습니다. ({fallbackCards.length}개 카드)
+          </Typography>
+        </Box>
+      )}
 
       {/* 검색 */}
       <SearchBox>

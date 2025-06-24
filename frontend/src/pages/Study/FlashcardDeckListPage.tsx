@@ -250,9 +250,20 @@ const FlashcardDeckListPage: React.FC = () => {
   };
   
   const handleDeckClick = (deckId: string) => {
-    // 덱 ID를 숫자 형식으로 변환하여 라우팅 (deck-uuid-1 -> 1)
-    const numericId = deckId.replace('deck-uuid-', '');
-    navigate(`/flashcards/${numericId}/cards`);
+    // 덱 ID 매핑 처리
+    let routeId = deckId;
+    
+    // fallback 덱 ID (deck_1, deck_2, deck_3) -> 1, 2, 3
+    if (deckId.startsWith('deck_')) {
+      routeId = deckId.replace('deck_', '');
+    }
+    // Redux 덱 ID (deck-uuid-1) -> 1
+    else if (deckId.startsWith('deck-uuid-')) {
+      routeId = deckId.replace('deck-uuid-', '');
+    }
+    
+    console.log('🎯 덱 클릭:', deckId, '→ 라우팅 ID:', routeId);
+    navigate(`/flashcards/${routeId}/cards`);
   };
 
   const handleEditDeck = (deck: EnrichedDeck, event: React.MouseEvent) => {

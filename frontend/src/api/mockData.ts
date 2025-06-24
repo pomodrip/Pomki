@@ -50,7 +50,7 @@ export const mockData = {
         deckId: 'deck_1',
         deckName: '영어 단어',
         memberId: 1,
-        cardCnt: 25,
+        cardCnt: 10,
         isDeleted: false,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
@@ -59,7 +59,7 @@ export const mockData = {
         deckId: 'deck_2',
         deckName: '일본어 단어',
         memberId: 1,
-        cardCnt: 30,
+        cardCnt: 10,
         isDeleted: false,
         createdAt: '2024-01-02T00:00:00Z',
         updatedAt: '2024-01-02T00:00:00Z',
@@ -68,39 +68,62 @@ export const mockData = {
         deckId: 'deck_3',
         deckName: '프로그래밍 용어',
         memberId: 1,
-        cardCnt: 15,
+        cardCnt: 10,
         isDeleted: false,
         createdAt: '2024-01-03T00:00:00Z',
         updatedAt: '2024-01-03T00:00:00Z',
       },
     ],
     
-    getCardsInDeck: [
-      {
-        cardId: 1,
-        content: 'Hello',
-        answer: '안녕하세요',
-        deckId: 'deck_1',
-        isDeleted: false,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T12:00:00Z',
-      },
-      {
-        cardId: 2,
-        content: 'Goodbye',
-        answer: '안녕히 가세요',
-        deckId: 'deck_1',
-        isDeleted: false,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T14:00:00Z',
-      },
-    ],
+    // 덱별 카드 더미데이터
+    getCardsInDeck: (deckId: string) => {
+      const cardData: { [key: string]: any[] } = {
+        'deck_1': [ // 영어 단어
+          { cardId: 1, content: 'Hello', answer: '안녕하세요', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+          { cardId: 2, content: 'Goodbye', answer: '안녕히 가세요', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T01:00:00Z', updatedAt: '2024-01-01T01:00:00Z' },
+          { cardId: 3, content: 'Thank you', answer: '감사합니다', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T02:00:00Z', updatedAt: '2024-01-01T02:00:00Z' },
+          { cardId: 4, content: 'Please', answer: '부탁합니다', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T03:00:00Z', updatedAt: '2024-01-01T03:00:00Z' },
+          { cardId: 5, content: 'Sorry', answer: '미안합니다', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T04:00:00Z', updatedAt: '2024-01-01T04:00:00Z' },
+          { cardId: 6, content: 'Yes', answer: '네', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T05:00:00Z', updatedAt: '2024-01-01T05:00:00Z' },
+          { cardId: 7, content: 'No', answer: '아니요', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T06:00:00Z', updatedAt: '2024-01-01T06:00:00Z' },
+          { cardId: 8, content: 'Good morning', answer: '좋은 아침', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T07:00:00Z', updatedAt: '2024-01-01T07:00:00Z' },
+          { cardId: 9, content: 'Good night', answer: '좋은 밤', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+          { cardId: 10, content: 'How are you?', answer: '어떻게 지내세요?', deckId: 'deck_1', isDeleted: false, createdAt: '2024-01-01T09:00:00Z', updatedAt: '2024-01-01T09:00:00Z' }
+        ],
+        'deck_2': [ // 일본어 단어
+          { cardId: 11, content: 'こんにちは', answer: '안녕하세요', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' },
+          { cardId: 12, content: 'ありがとう', answer: '감사합니다', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T01:00:00Z', updatedAt: '2024-01-02T01:00:00Z' },
+          { cardId: 13, content: 'すみません', answer: '실례합니다', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T02:00:00Z', updatedAt: '2024-01-02T02:00:00Z' },
+          { cardId: 14, content: 'はい', answer: '네', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T03:00:00Z', updatedAt: '2024-01-02T03:00:00Z' },
+          { cardId: 15, content: 'いいえ', answer: '아니요', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T04:00:00Z', updatedAt: '2024-01-02T04:00:00Z' },
+          { cardId: 16, content: 'おはよう', answer: '좋은 아침', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T05:00:00Z', updatedAt: '2024-01-02T05:00:00Z' },
+          { cardId: 17, content: 'おやすみ', answer: '안녕히 주무세요', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T06:00:00Z', updatedAt: '2024-01-02T06:00:00Z' },
+          { cardId: 18, content: 'さようなら', answer: '안녕히 가세요', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T07:00:00Z', updatedAt: '2024-01-02T07:00:00Z' },
+          { cardId: 19, content: 'お元気ですか', answer: '어떻게 지내세요?', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T08:00:00Z', updatedAt: '2024-01-02T08:00:00Z' },
+          { cardId: 20, content: 'がんばって', answer: '힘내세요', deckId: 'deck_2', isDeleted: false, createdAt: '2024-01-02T09:00:00Z', updatedAt: '2024-01-02T09:00:00Z' }
+        ],
+        'deck_3': [ // 프로그래밍 용어
+          { cardId: 21, content: 'function', answer: '함수', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T00:00:00Z', updatedAt: '2024-01-03T00:00:00Z' },
+          { cardId: 22, content: 'variable', answer: '변수', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T01:00:00Z', updatedAt: '2024-01-03T01:00:00Z' },
+          { cardId: 23, content: 'array', answer: '배열', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T02:00:00Z', updatedAt: '2024-01-03T02:00:00Z' },
+          { cardId: 24, content: 'object', answer: '객체', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T03:00:00Z', updatedAt: '2024-01-03T03:00:00Z' },
+          { cardId: 25, content: 'loop', answer: '반복문', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T04:00:00Z', updatedAt: '2024-01-03T04:00:00Z' },
+          { cardId: 26, content: 'condition', answer: '조건문', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T05:00:00Z', updatedAt: '2024-01-03T05:00:00Z' },
+          { cardId: 27, content: 'class', answer: '클래스', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T06:00:00Z', updatedAt: '2024-01-03T06:00:00Z' },
+          { cardId: 28, content: 'method', answer: '메소드', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T07:00:00Z', updatedAt: '2024-01-03T07:00:00Z' },
+          { cardId: 29, content: 'parameter', answer: '매개변수', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T08:00:00Z', updatedAt: '2024-01-03T08:00:00Z' },
+          { cardId: 30, content: 'return', answer: '반환', deckId: 'deck_3', isDeleted: false, createdAt: '2024-01-03T09:00:00Z', updatedAt: '2024-01-03T09:00:00Z' }
+        ]
+      };
+      
+      return cardData[deckId] || [];
+    },
     
     updateDeck: (deckId: string, deckName: string) => ({
       deckId,
       deckName: deckName || 'Updated Mock Deck',
       memberId: 1,
-      cardCnt: 5,
+      cardCnt: 10,
       isDeleted: false,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: new Date().toISOString(),
