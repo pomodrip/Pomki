@@ -16,6 +16,7 @@ import {
   TextField,
   Card as MuiCard,
   Button,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -132,6 +133,8 @@ const FlashcardPracticePage: React.FC = () => {
     }
   }, [dispatch, deckId]);
 
+
+
   // 🎯 Redux와 Fallback 카드를 합치기
   const combinedCards = useMemo(() => {
     const cardMap = new Map<number, Card>();
@@ -200,6 +203,36 @@ const FlashcardPracticePage: React.FC = () => {
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
   };
+
+  // 🎯 키보드 방향키 이벤트 리스너 등록 (이전/다음 카드 이동)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // 다이얼로그가 열려있거나 입력 필드에 포커스가 있을 때는 키보드 이벤트 무시
+      if (showCompletionDialog || isFeedbackOpen) return;
+      
+      // 입력 필드나 텍스트 영역에 포커스가 있을 때도 무시
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault(); // 브라우저 기본 동작 방지
+        handlePrevious();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault(); // 브라우저 기본 동작 방지
+        handleNext();
+      }
+    };
+
+    // 윈도우에 키보드 이벤트 리스너 등록
+    window.addEventListener('keydown', handleKeyDown);
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentCardIndex, flashcards.length, showCompletionDialog, isFeedbackOpen]);
 
   const getDifficultyButtonStyle = (difficulty: Difficulty) => {
     const isSelected = selectedDifficulty === difficulty;
@@ -322,6 +355,8 @@ const FlashcardPracticePage: React.FC = () => {
             </Box>
           </FlashcardCard>
 
+
+
           {/* 네비게이션(이전/다음) */}
           <Box
             sx={{
@@ -335,24 +370,28 @@ const FlashcardPracticePage: React.FC = () => {
             }}
           >
             {/* 이전 버튼 */}
-            <IconButton
-              onClick={handlePrevious}
-              disabled={currentCardIndex === 0}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
-                '&:disabled': {
-                  bgcolor: 'grey.300',
-                  color: 'grey.500',
-                },
-                boxShadow: 1,
-              }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
+            <Tooltip title="← 방향키: 이전 카드" arrow placement="top">
+              <span>
+                <IconButton
+                  onClick={handlePrevious}
+                  disabled={currentCardIndex === 0}
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    '&:disabled': {
+                      bgcolor: 'grey.300',
+                      color: 'grey.500',
+                    },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
 
             {/* 중앙: 인디케이터 */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -382,23 +421,25 @@ const FlashcardPracticePage: React.FC = () => {
             </Box>
 
             {/* 다음 버튼 */}
-            <IconButton
-              onClick={handleNext}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
-                '&:disabled': {
-                  bgcolor: 'grey.300',
-                  color: 'grey.500',
-                },
-                boxShadow: 1,
-              }}
-            >
-              <ArrowForwardIcon />
-            </IconButton>
+            <Tooltip title="→ 방향키: 다음 카드" arrow placement="top">
+              <IconButton
+                onClick={handleNext}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                    color: 'grey.500',
+                  },
+                  boxShadow: 1,
+                }}
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
