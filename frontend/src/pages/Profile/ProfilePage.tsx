@@ -8,6 +8,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { logoutUser } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
 import MembershipBadge from '../../components/common/MembershipBadge';
+import NavListButton from '../../components/ui/NavListButton';
 
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -136,13 +137,9 @@ const ProfilePage: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
               {/* 멤버십 관리 버튼 */}
-              <Button
-                variant="contained"
-                onClick={handleMembershipManagement}
-                sx={{ py: 1.5 }}
-              >
+              <NavListButton onClick={handleMembershipManagement}>
                 멤버십 관리
-              </Button>
+              </NavListButton>
             </Box>
           </Box>
 
@@ -160,25 +157,15 @@ const ProfilePage: React.FC = () => {
             </Typography>
             <Box sx={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gridTemplateColumns: '1fr',
               gap: 2
             }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleEditProfile}
-                sx={{ py: 1.5 }}
-              >
-                프로필 편집
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={handleLogout}
-                sx={{ py: 1.5 }}
-              >
-                로그아웃
-              </Button>
+            <NavListButton onClick={handleEditProfile}>
+              프로필 편집
+            </NavListButton>
+            <NavListButton onClick={handleLogout} sx={{ color: 'error.main' }}>
+              로그아웃
+            </NavListButton>
             </Box>
           </Box>
         </Box>
