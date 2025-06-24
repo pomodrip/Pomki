@@ -95,29 +95,39 @@ export const logoutUser = createAsyncThunk<
 
 // 토큰 검증 및 자동 로그인 thunk - 쿠키 기반으로 수정
 export const validateToken = createAsyncThunk<
-  User,
+  { user: User; accessToken: string },
   void,
   {
     state: RootState;
     rejectValue: string;
   }
->('auth/validateToken', async (_, { rejectWithValue }) => {
+>('auth/validateToken', async (_, { rejectWithValue, dispatch }) => {
   try {
+    console.log("리프레시 요청 성공 1");
     // refreshToken 쿠키가 있는지 확인
     if (!cookies.hasRefreshToken()) {
-      return rejectWithValue('No refresh token found');
+      console.log("리프레시 요청 성공 1-1");
+      // return rejectWithValue('No refresh token found');
     }
-
-    // 토큰으로 사용자 정보 가져오기 (서버에서 자동으로 accessToken 갱신)
+    console.log("리프레시 요청 성공 2");
+    // 1. refreshToken으로 새 accessToken 발급
+    const refreshResponse = await authApi.refreshTokenFromCookie();
+    const { accessToken } = refreshResponse;
+    
+    console.log("리프레시 요청 성공");
+    dispatch(setAccessToken(accessToken));
+    // 2. 새 토큰으로 사용자 정보 가져오기
     const userInfo = await getMyInfo();
     
-    return {
+    const user = {
       memberId: 0, // API에서 받아야 할 실제 값
       email: userInfo.email,
       nickname: userInfo.nickname,
       isEmailVerified: true,
       socialLogin: false, // API에서 받아야 할 실제 값
     };
+
+    return { user, accessToken };
   } catch (error: any) {
     // 토큰이 유효하지 않으면 쿠키 제거
     cookies.clearAuthCookies();
@@ -227,9 +237,8 @@ const authSlice = createSlice({
       .addCase(validateToken.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.isAuthenticated = true;
-        state.user = action.payload;
-        // accessToken은 API 응답에서 받아야 함 (현재는 임시로 null)
-        // 실제로는 토큰 갱신 API를 호출해야 함
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
         state.error = null;
       })
       .addCase(validateToken.rejected, (state) => {
