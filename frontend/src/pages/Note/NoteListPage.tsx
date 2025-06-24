@@ -5,9 +5,9 @@ import { Text } from '../../components/ui';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Quiz as QuizIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { fetchNotes, deleteNoteAsync } from '../../store/slices/noteSlice';
+import { deleteNoteAsync, fetchNotes } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
-import { useNotifications } from '../../hooks/useUI';
+import { showToast } from '../../store/slices/toastSlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
@@ -25,9 +25,7 @@ const NoteCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  marginBottom: theme.spacing(2),
   cursor: 'pointer',
-  transition: 'box-shadow 0.3s',
   '&:hover': {
     boxShadow: theme.shadows[4],
   },
@@ -40,27 +38,15 @@ const ActionBox = styled(Box)({
   marginTop: '8px',
 });
 
-const ActionButton = styled(Button)(({ theme }) => ({
-  padding: theme.spacing(0.5, 1.5),
-  fontSize: '0.8rem',
-}));
-
 const NoteListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { notes, loading, error } = useAppSelector(state => state.note);
   const { showConfirmDialog } = useDialog();
-  const { success: showSuccess, error: showError } = useNotifications();
 
   useEffect(() => {
     dispatch(fetchNotes());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (error) {
-      showError('오류', error);
-    }
-  }, [error, showError]);
 
   const handleNoteClick = (noteId: string) => {
     navigate(`/note/${noteId}/edit`);
@@ -73,35 +59,39 @@ const NoteListPage: React.FC = () => {
 
   const handleDeleteNote = async (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-
+    
     const confirmed = await showConfirmDialog({
       title: '노트 삭제',
-      message: '이 노트를 정말 삭제하시겠습니까?',
+      message: '정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
     });
 
     if (confirmed) {
       try {
         await dispatch(deleteNoteAsync(noteId)).unwrap();
-        showSuccess('성공', '노트가 성공적으로 삭제되었습니다.');
-      } catch (e: unknown) {
-        const error = e as { message?: string };
-        showError('삭제 실패', error.message || '노트 삭제 중 오류가 발생했습니다.');
+        dispatch(showToast({ message: '노트가 삭제되었습니다.', severity: 'success' }));
+        // 삭제 후 목록을 다시 불러올 필요 없이 슬라이스에서 처리됩니다.
+      } catch (err) {
+        dispatch(showToast({ message: '노트 삭제에 실패했습니다.', severity: 'error' }));
+        console.error('Failed to delete note: ', err);
       }
     }
   };
   
-  const handleCreateQuiz = (noteId: string, event: React.MouseEvent) => {
+  const handleGenerateFlashcards = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    showSuccess('퀴즈 생성', '플래시카드 생성 페이지로 이동합니다.');
     navigate(`/study/${noteId}/flashcard-generation`);
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
       </Box>
     );
+  }
+
+  if (error) {
+    return <Box>Error: {error}</Box>;
   }
 
   return (
@@ -119,29 +109,42 @@ const NoteListPage: React.FC = () => {
         {notes.map(note => (
           <Grid item xs={12} sm={6} md={4} key={note.noteId}>
             <NoteCard onClick={() => handleNoteClick(note.noteId)}>
-              <Text
-                variant="h6"
-                sx={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {note.noteTitle}
-              </Text>
+              <Text variant="h6">{note.noteTitle}</Text>
               <Text variant="body2" color="textSecondary">
-                Updated: {new Date(note.updatedAt).toLocaleDateString()}
+                마지막 수정: {new Date(note.updatedAt).toLocaleDateString()}
               </Text>
               <ActionBox>
-                <ActionButton size="small" startIcon={<QuizIcon />} onClick={(e: React.MouseEvent) => handleCreateQuiz(note.noteId, e)}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<QuizIcon />}
+                  onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
                   퀴즈 생성
-                </ActionButton>
-                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}>
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
                   수정
-                </ActionButton>
-                <ActionButton size="small" startIcon={<DeleteIcon />} onClick={(e: React.MouseEvent) => handleDeleteNote(note.noteId, e)}>
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleDeleteNote(note.noteId, e);
+                  }}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
                   삭제
-                </ActionButton>
+                </Button>
               </ActionBox>
             </NoteCard>
           </Grid>
