@@ -299,7 +299,7 @@ const FlashcardPracticePage: React.FC = () => {
 
       {!loading && !fallbackLoading && flashcards.length > 0 && (
         <>
-          {/* 진행률 */}
+          {/* 진행률: 상단에만 표시 (미니멀리즘 적용) */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
               {currentCardIndex + 1}/{flashcards.length}
@@ -357,7 +357,7 @@ const FlashcardPracticePage: React.FC = () => {
 
 
 
-          {/* 네비게이션(이전/다음) */}
+          {/* 네비게이션: 이전/다음 버튼만 (미니멀리즘 적용) */}
           <Box
             sx={{
               display: 'flex',
@@ -393,31 +393,36 @@ const FlashcardPracticePage: React.FC = () => {
               </span>
             </Tooltip>
 
-            {/* 중앙: 인디케이터 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* 중앙: 진행률 표시 */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              {/* 진행률 숫자 */}
               <Typography
-                variant="body1"
+                variant="body2"
                 color="primary.main"
                 fontWeight={600}
-                sx={{ minWidth: 40, textAlign: 'center', mr: 1 }}
+                sx={{ fontSize: '0.875rem' }}
               >
                 {currentCardIndex + 1}/{flashcards.length}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                {flashcards.map((_, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
-                      boxShadow: idx === currentCardIndex ? 1 : 0,
-                      transition: 'all 0.2s',
-                    }}
-                  />
-                ))}
-              </Box>
+              
+              {/* 동그라미 인디케이터 - 페이지네이션 필요 없어서 일단 주석처리 */}
+              {/* {flashcards.length <= 10 && (
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {flashcards.map((_, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
+                        boxShadow: idx === currentCardIndex ? 1 : 0,
+                        transition: 'all 0.2s',
+                      }}
+                    />
+                  ))}
+                </Box>
+              )} */}
             </Box>
 
             {/* 다음 버튼 */}
