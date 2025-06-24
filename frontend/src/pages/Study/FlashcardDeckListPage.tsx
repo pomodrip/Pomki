@@ -348,6 +348,9 @@ const FlashcardDeckListPage: React.FC = () => {
               return newInfo;
             });
             
+            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+            dispatch(fetchDecks());
+            
             dispatch(showToast({
               message: '덱이 성공적으로 삭제되었습니다.',
               severity: 'success'
@@ -483,6 +486,14 @@ const FlashcardDeckListPage: React.FC = () => {
                 return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
               }).filter(Boolean),
             }
+          }));
+          
+          // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+          dispatch(fetchDecks());
+          
+          dispatch(showToast({
+            message: '덱이 성공적으로 생성되었습니다.',
+            severity: 'success'
           }));
         }
       } catch (error) {
