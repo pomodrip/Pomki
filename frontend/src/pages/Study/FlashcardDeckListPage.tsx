@@ -25,7 +25,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Quiz as QuizIcon,
+  School as SchoolIcon,
   BookmarkBorder,
   Bookmark,
   FilterList as FilterListIcon,
@@ -223,21 +223,19 @@ const FlashcardDeckListPage: React.FC = () => {
     }
   }, [fallbackDecks]);
 
-  // 🎯 Redux 덱과 Fallback 덱을 합치기
+  // 🎯 Redux 덱과 Fallback 덱을 합치기 (Fallback 덱 우선순위)
   const combinedDecks = useMemo(() => {
-    // Redux 덱과 Fallback 덱을 합치고 중복 제거
+    // Redux 덱과 Fallback 덱을 합치고 중복 제거 (Fallback 덱 우선)
     const deckMap = new Map<string, CardDeck>();
     
-    // Redux 덱 추가
+    // Redux 덱을 먼저 추가
     decks.forEach(deck => {
       deckMap.set(deck.deckId, deck);
     });
     
-    // Fallback 덱 추가 (중복되지 않는 경우만)
+    // Fallback 덱 추가 (덮어쓰기로 우선순위 적용)
     fallbackDecks.forEach(deck => {
-      if (!deckMap.has(deck.deckId)) {
-        deckMap.set(deck.deckId, deck);
-      }
+      deckMap.set(deck.deckId, deck);
     });
     
     return Array.from(deckMap.values());
@@ -313,20 +311,58 @@ const FlashcardDeckListPage: React.FC = () => {
     setIsEditMode(true);
     setEditingDeckId(deck.deckId);
     setNewDeckTitle(deck.deckName);
-    setNewDeckTags(deck.tags.join(', '));
+    // 태그에서 # 기호를 제거하여 표시
+    setNewDeckTags(deck.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
     setShowCreateDialog(true);
   };
 
   const handleDeleteDeck = async (deck: EnrichedDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
-      await dispatch(deleteDeck(deck.deckId));
-      // 클라이언트 측 정보도 삭제
-      setClientSideInfo(prev => {
-        const newInfo = { ...prev };
-        delete newInfo[deck.deckId];
-        return newInfo;
-      });
+      // 먼저 fallback 덱에서 해당 덱을 찾아 삭제
+      const fallbackDeckIndex = fallbackDecks.findIndex(fallbackDeck => fallbackDeck.deckId === deck.deckId);
+      if (fallbackDeckIndex !== -1) {
+        // fallback 덱에서 삭제
+        setFallbackDecks(prev => prev.filter(fallbackDeck => fallbackDeck.deckId !== deck.deckId));
+        
+        // 클라이언트 측 정보도 삭제
+        setClientSideInfo(prev => {
+          const newInfo = { ...prev };
+          delete newInfo[deck.deckId];
+          return newInfo;
+        });
+        
+        dispatch(showToast({
+          message: '덱이 성공적으로 삭제되었습니다.',
+          severity: 'success'
+        }));
+      } else {
+        // Redux 덱 삭제 시도
+        try {
+          const result = await dispatch(deleteDeck(deck.deckId));
+          if (result.meta.requestStatus === 'fulfilled') {
+            // 클라이언트 측 정보도 삭제
+            setClientSideInfo(prev => {
+              const newInfo = { ...prev };
+              delete newInfo[deck.deckId];
+              return newInfo;
+            });
+            
+            dispatch(showToast({
+              message: '덱이 성공적으로 삭제되었습니다.',
+              severity: 'success'
+            }));
+          } else {
+            throw new Error('Redux 덱 삭제 실패');
+          }
+        } catch (error) {
+          console.error('덱 삭제 실패:', error);
+          dispatch(showToast({
+            message: '덱 삭제에 실패했습니다.',
+            severity: 'error'
+          }));
+        }
+      }
     }
   };
   
@@ -366,19 +402,71 @@ const FlashcardDeckListPage: React.FC = () => {
     if (!newDeckTitle.trim()) return;
 
     if (isEditMode && editingDeckId) {
-      // 덱 이름 수정
-      await dispatch(updateDeck({ deckId: editingDeckId, data: { deckName: newDeckTitle.trim() } }));
-      // 클라이언트 측 태그 수정
-      setClientSideInfo(prev => ({
-        ...prev,
-        [editingDeckId]: {
-          ...(prev[editingDeckId] || { isBookmarked: false }), // 기존 북마크 정보 유지
-          tags: newDeckTags.split(',').map(t => {
-            const trimmed = t.trim();
-            return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-          }).filter(Boolean),
+      // 먼저 fallback 덱에서 해당 덱을 찾아 수정
+      const fallbackDeckIndex = fallbackDecks.findIndex(deck => deck.deckId === editingDeckId);
+      if (fallbackDeckIndex !== -1) {
+        // fallback 덱 업데이트
+        setFallbackDecks(prev => prev.map(deck => 
+          deck.deckId === editingDeckId 
+            ? { ...deck, deckName: newDeckTitle.trim() }
+            : deck
+        ));
+        
+        // 클라이언트 측 태그 수정
+        setClientSideInfo(prev => ({
+          ...prev,
+          [editingDeckId]: {
+            ...(prev[editingDeckId] || { isBookmarked: false }),
+            tags: newDeckTags.split(',').map(t => {
+              const trimmed = t.trim();
+              return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+            }).filter(Boolean),
+          }
+        }));
+        
+        // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+        dispatch(fetchDecks());
+        
+        dispatch(showToast({
+          message: '덱이 성공적으로 수정되었습니다.',
+          severity: 'success'
+        }));
+      } else {
+        // Redux 덱 수정 시도
+        try {
+          const result = await dispatch(updateDeck({ deckId: editingDeckId, data: { deckName: newDeckTitle.trim() } }));
+          
+          if (result.meta.requestStatus === 'fulfilled') {
+            // 성공 시 클라이언트 측 태그 수정
+            setClientSideInfo(prev => ({
+              ...prev,
+              [editingDeckId]: {
+                ...(prev[editingDeckId] || { isBookmarked: false }),
+                tags: newDeckTags.split(',').map(t => {
+                  const trimmed = t.trim();
+                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+                }).filter(Boolean),
+              }
+            }));
+            
+            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+            dispatch(fetchDecks());
+            
+            dispatch(showToast({
+              message: '덱이 성공적으로 수정되었습니다.',
+              severity: 'success'
+            }));
+          } else {
+            throw new Error('Redux 덱 수정 실패');
+          }
+        } catch (error) {
+          console.error('덱 수정 실패:', error);
+          dispatch(showToast({
+            message: '덱 수정에 실패했습니다.',
+            severity: 'error'
+          }));
         }
-      }));
+      }
     } else {
       try {
         // Redux를 통한 덱 생성
@@ -595,14 +683,14 @@ const FlashcardDeckListPage: React.FC = () => {
               </CardContent>
               {/* 액션 버튼들 */}
               <CardActions sx={{ justifyContent: 'flex-end' }}>
-                <ActionButton size="small" startIcon={<QuizIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
-                  연습
-                </ActionButton>
                 <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
                   수정
                 </ActionButton>
                 <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
                   삭제
+                </ActionButton>
+                <ActionButton size="small" startIcon={<SchoolIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+                  학습하기
                 </ActionButton>
               </CardActions>
             </DeckCard>
@@ -637,7 +725,7 @@ const FlashcardDeckListPage: React.FC = () => {
 
       {/* 덱 생성/수정 다이얼로그 */}
       <Dialog open={showCreateDialog} onClose={handleCreateDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{isEditMode ? '덱 수정' : '새 덱 만들기'}</DialogTitle>
+        <DialogTitle>{isEditMode ? '덱 수정' : '덱 생성'}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
