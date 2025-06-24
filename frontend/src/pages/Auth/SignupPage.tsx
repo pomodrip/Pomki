@@ -5,7 +5,7 @@ import { Box, Checkbox, Container, Typography, Alert, Paper } from "@mui/materia
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { sendEmailVerification, verifyEmailCode, signup } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
-import EmailVerificationTimer from '../../components/ui/EmailVerificationTimer';
+import EmailVerificationTimer from '../../components/common/EmailVerificationTimer';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -14,8 +14,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [isCodeSent, setIsCodeSent] = useState(true);
-  // const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isCodeSent, setIsCodeSent] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
