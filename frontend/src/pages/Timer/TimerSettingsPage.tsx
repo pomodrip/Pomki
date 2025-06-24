@@ -8,11 +8,11 @@ import {
   FormControlLabel, 
   Slider, 
   Divider,
-  Alert,
   Chip,
   styled
 } from '@mui/material';
 import { useTimer } from '../../hooks/useTimer';
+import Alert from '../../components/ui/Alert';
 
 const Container = styled(Box)(() => ({
   padding: '32px',
@@ -159,7 +159,7 @@ const TimerSettingsPage: React.FC = () => {
               </Typography>
               <Slider
                 value={settings.focusTime}
-                onChange={(_, value) => handleSettingChange('focusTime', value)}
+                onChange={(_, value) => handleSettingChange('focusTime', value as number)}
                 min={5}
                 max={120}
                 step={5}
@@ -185,7 +185,7 @@ const TimerSettingsPage: React.FC = () => {
               </Typography>
               <Slider
                 value={settings.shortBreakTime}
-                onChange={(_, value) => handleSettingChange('shortBreakTime', value)}
+                onChange={(_, value) => handleSettingChange('shortBreakTime', value as number)}
                 min={1}
                 max={30}
                 step={1}
@@ -211,7 +211,7 @@ const TimerSettingsPage: React.FC = () => {
               </Typography>
               <Slider
                 value={settings.longBreakTime}
-                onChange={(_, value) => handleSettingChange('longBreakTime', value)}
+                onChange={(_, value) => handleSettingChange('longBreakTime', value as number)}
                 min={5}
                 max={60}
                 step={5}
@@ -237,7 +237,7 @@ const TimerSettingsPage: React.FC = () => {
               </Typography>
               <Slider
                 value={settings.longBreakInterval}
-                onChange={(_, value) => handleSettingChange('longBreakInterval', value)}
+                onChange={(_, value) => handleSettingChange('longBreakInterval', value as number)}
                 min={2}
                 max={10}
                 step={1}
