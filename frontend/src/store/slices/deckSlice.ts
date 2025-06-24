@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import * as studyApi from '../../api/studyApi';
+import { deckService } from '../../services/deckService';
 import type {
   CardDeck,
   Card,
@@ -86,32 +86,28 @@ const handleAsyncError = (error: unknown): string => {
 // 4. Async Thunk 액션들
 // ==========================================
 
-// 덱 목록 조회 (백엔드 API에 맞게 수정)
+// 덱 목록 조회
 export const fetchDecks = createAsyncThunk<
   CardDeck[],
   void,
   { state: RootState; rejectValue: string }
->('deck/fetchDecks', async (_, { rejectWithValue }) => {
-  try {
-    const decks = await studyApi.getDecks();
-    return decks;
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/fetchDecks', async (_, { getState }) => {
+  const { user } = (getState() as RootState).auth;
+  const decks = await deckService.getDecks(user!.memberId!);
+  return decks;
 });
 
-// 단일 덱 조회
+// 단일 덱 조회 (이 Thunk는 현재 페이지에서 사용되지 않지만, 일관성을 위해 수정)
+// 참고: getDeckById는 deckService에 없으므로, getDecks에서 필터링하는 방식으로 대체하거나
+// deckService에 추가해야 합니다. 여기서는 getDecks를 활용합니다.
 export const fetchDeck = createAsyncThunk<
-  CardDeck,
+  CardDeck | undefined,
   string,
   { state: RootState; rejectValue: string }
->('deck/fetchDeck', async (deckId, { rejectWithValue }) => {
-  try {
-    const deck = await studyApi.getDeck(deckId);
-    return deck;
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/fetchDeck', async (deckId, { getState }) => {
+  const { user } = (getState() as RootState).auth;
+  const decks = await deckService.getDecks(user!.memberId!);
+  return decks.find(d => d.deckId === deckId);
 });
 
 // 덱 생성
@@ -119,13 +115,9 @@ export const createDeck = createAsyncThunk<
   CardDeck,
   CreateDeckRequest,
   { state: RootState; rejectValue: string }
->('deck/createDeck', async (data, { rejectWithValue }) => {
-  try {
-    const deck = await studyApi.createDeck(data);
-    return deck;
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/createDeck', async (data) => {
+  const deck = await deckService.createDeck(data);
+  return deck;
 });
 
 // 덱 수정
@@ -133,13 +125,9 @@ export const updateDeck = createAsyncThunk<
   CardDeck,
   { deckId: string; data: UpdateDeckRequest },
   { state: RootState; rejectValue: string }
->('deck/updateDeck', async ({ deckId, data }, { rejectWithValue }) => {
-  try {
-    const deck = await studyApi.updateDeck(deckId, data);
-    return deck;
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/updateDeck', async ({ deckId, data }) => {
+  const deck = await deckService.updateDeck(deckId, data);
+  return deck;
 });
 
 // 덱 삭제
@@ -147,13 +135,9 @@ export const deleteDeck = createAsyncThunk<
   string,
   string,
   { state: RootState; rejectValue: string }
->('deck/deleteDeck', async (deckId, { rejectWithValue }) => {
-  try {
-    await studyApi.deleteDeck(deckId);
-    return deckId;
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/deleteDeck', async (deckId) => {
+  await deckService.deleteDeck(deckId);
+  return deckId;
 });
 
 // 덱의 카드 목록 조회
@@ -161,19 +145,13 @@ export const fetchCardsInDeck = createAsyncThunk<
   Card[],
   string,
   { state: RootState; rejectValue: string }
->('deck/fetchCardsInDeck', async (deckId, { rejectWithValue }) => {
-  try {
-    // Mock 데이터 반환 (실제 API 구현 시 교체)
-    return [
-      { cardId: 1, deckId, content: '질문 1', answer: '답변 1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), isDeleted: false },
-      { cardId: 2, deckId, content: '질문 2', answer: '답변 2', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), isDeleted: false },
-    ];
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
+>('deck/fetchCardsInDeck', async (deckId) => {
+  const cards = await deckService.getCardsInDeck(deckId);
+  return cards;
 });
 
-// 카드 수정
+// 카드 수정 - cardService를 사용해야 하지만, 우선 deckService 패턴에 맞춰 수정
+// 이 Thunk들은 현재 페이지와 직접적 관련은 없지만, 일관성 유지를 위해 수정합니다.
 export const updateCard = createAsyncThunk<
   Card,
   { cardId: string; data: Partial<Card> },
@@ -302,8 +280,8 @@ const deckSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchDeck.fulfilled, (state, action) => {
+        state.selectedDeck = action.payload ?? null;
         state.loading = false;
-        state.selectedDeck = action.payload;
         state.error = null;
       })
       .addCase(fetchDeck.rejected, (state, action) => {

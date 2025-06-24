@@ -14,8 +14,6 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  Snackbar,
-  Alert,
   Chip,
 } from '@mui/material';
 import {
@@ -25,6 +23,7 @@ import {
   PlayArrow as PlayIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useNotifications } from '../../hooks/useUI';
 import {
   fetchDecks,
   createDeck,

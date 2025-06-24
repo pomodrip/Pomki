@@ -1,4 +1,4 @@
-import { Flashcard, PracticeGrade } from '../types/card';
+import { Flashcard, PracticeGrade } from '../types/study';
 
 export const sm2 = (card: Flashcard, grade: PracticeGrade): Flashcard => {
   if (grade < 0 || grade > 5) {

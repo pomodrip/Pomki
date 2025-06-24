@@ -26,7 +26,7 @@ const DeckUsageExample: React.FC = () => {
 
   // 컴포넌트 마운트 시 덱 목록 조회
   useEffect(() => {
-    dispatch(fetchDecks({ page: 0, size: 10 }));
+    dispatch(fetchDecks());
   }, [dispatch]);
 
   // 새 덱 생성 핸들러

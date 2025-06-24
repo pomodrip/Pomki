@@ -214,34 +214,61 @@ class MockDeckService implements IDeckService {
 
 // 🌐 실제 API 서비스 구현
 class RealDeckService implements IDeckService {
+  private mockService = new MockDeckService();
+
   async getDecks(memberId: number): Promise<CardDeck[]> {
-    return await deckApi.getDecksByMemberId(memberId);
+    try {
+      return await deckApi.getDecksByMemberId(memberId);
+    } catch (error) {
+      console.warn('⚠️ Real API (getDecks) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.getDecks(memberId);
+    }
   }
 
   async createDeck(data: CreateDeckRequest): Promise<CardDeck> {
-    return await deckApi.createDeck(data);
+    try {
+      return await deckApi.createDeck(data);
+    } catch (error) {
+      console.warn('⚠️ Real API (createDeck) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.createDeck(data);
+    }
   }
 
   async updateDeck(deckId: string, data: UpdateDeckRequest): Promise<CardDeck> {
-    return await deckApi.updateDeck(deckId, data);
+    try {
+      return await deckApi.updateDeck(deckId, data);
+    } catch (error) {
+      console.warn('⚠️ Real API (updateDeck) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.updateDeck(deckId, data);
+    }
   }
 
   async deleteDeck(deckId: string): Promise<void> {
-    return await deckApi.deleteDeck(deckId);
+    try {
+      await deckApi.deleteDeck(deckId);
+    } catch (error) {
+      console.warn('⚠️ Real API (deleteDeck) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.deleteDeck(deckId);
+    }
   }
 
   async getCardsInDeck(deckId: string): Promise<Card[]> {
-    return await deckApi.getCardsInDeck(deckId);
+    try {
+      return await deckApi.getCardsInDeck(deckId);
+    } catch (error) {
+      console.warn('⚠️ Real API (getCardsInDeck) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.getCardsInDeck(deckId);
+    }
   }
 }
 
 // 🏭 Factory 함수 - 환경에 따라 서비스 선택
 export const createDeckService = (): IDeckService => {
-  // 🎯 강제로 Mock 데이터 사용 (개발 중)
-  const useMockData = true; // import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+  // VITE_USE_MOCK_DATA 환경 변수를 사용하여 Mock/Real 모드 결정
+  // VITE_USE_MOCK_DATA=true 이면 MockDeckService를, 아니면 RealDeckService (with fallback) 사용
+  const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
   
-  console.log(`🎯 Deck Service Mode: ${useMockData ? 'MOCK' : 'REAL'}`);
-  console.log(`🎯 환경 변수 VITE_USE_MOCK_DATA:`, import.meta.env.VITE_USE_MOCK_DATA);
+  console.log(`[DeckService] Mode: ${useMockData ? 'MOCK' : 'REAL (with Mock Fallback)'}`);
   
   return useMockData ? new MockDeckService() : new RealDeckService();
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, styled } from '@mui/material';
 import { Text } from './';
-import theme from '../../theme/theme';
 
 interface WheelTimeAdjusterProps {
   value: number;
@@ -55,17 +54,6 @@ const Arrow = styled('div')({
   pointerEvents: 'none', // 클릭 이벤트 방지
   lineHeight: 1,
 });
-
-// 안내 텍스트 스타일
-const HelperText = styled(Text)(({ theme }) => ({
-  fontSize: '12px',
-  color: theme.palette.text.secondary,
-  marginTop: '2px',
-  textAlign: 'center',
-  userSelect: 'none',
-}));
-
-
 
 const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
   value,

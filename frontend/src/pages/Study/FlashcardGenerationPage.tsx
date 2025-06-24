@@ -23,9 +23,35 @@ import {
   EditNote as EditNoteIcon,
 } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
-import { QuizQuestion, FlashcardGenerationSession } from '../../types/card';
 import { useAppSelector } from '../../hooks/useRedux';
 // import * as studyApi from '../../api/studyApi';
+
+// ======================================================================
+// 타입 정의: 이 페이지에서만 사용되는 로컬 타입
+// ======================================================================
+interface QuizQuestion {
+  id: string;
+  title: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+interface QuestionFeedback {
+  questionId: string;
+  feedback: string;
+}
+
+interface FlashcardGenerationSession {
+  id:string;
+  questions: QuizQuestion[];
+  currentQuestionIndex: number;
+  userAnswers: Record<string, number>;
+  selectedQuestions: Set<string>;
+  feedback: string;
+  questionFeedbacks: QuestionFeedback[];
+  isCompleted: boolean;
+}
 
 // 품질 개선된 퀴즈 데이터
 const sampleQuestions: QuizQuestion[] = [
