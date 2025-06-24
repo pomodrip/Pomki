@@ -14,10 +14,13 @@ import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SaveIcon from '@mui/icons-material/Save';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 
 import { useTimer } from '../../hooks/useTimer';
+import { createNote } from '../../api/noteApi';
+import type { NoteCreateRequest } from '../../types/note';
 // import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
@@ -392,13 +395,41 @@ const PresetButton = styled(Button)(() => ({
   },
 }));
 
-const AISection = styled(Box)({
-  marginTop: '16px',
+const AISection = styled(Box)(({ theme }) => ({
   display: 'flex',
-  justifyContent: 'space-between',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: '12px',
-});
+  marginTop: '12px',
+
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  }
+}));
+
+const FloatingActionButton = styled(IconButton)<{ visible: boolean }>(({ theme, visible }) => ({
+  position: 'fixed',
+  right: '24px',
+  bottom: '88px',
+  width: '56px',
+  height: '56px',
+  backgroundColor: theme.palette.primary.main,
+  color: 'white',
+  borderRadius: '50%',
+  boxShadow: theme.shadows[6],
+  transition: 'transform 0.3s ease, opacity 0.3s ease, bottom 0.3s ease',
+  zIndex: 1300, 
+  opacity: visible ? 1 : 0,
+  transform: visible ? 'scale(1)' : 'scale(0)',
+  '&:hover': {
+    backgroundColor: theme.palette.primary.dark,
+  },
+  [theme.breakpoints.up('sm')]: {
+    right: '32px',
+    bottom: '32px',
+  },
+}));
 
 // 로컬 설정 인터페이스 (Redux 설정과 매핑용)
 interface LocalTimerSettings {
@@ -432,6 +463,9 @@ const TimerPage: React.FC = () => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
   const [hasTimerStarted, setHasTimerStarted] = useState(false);
+  
+  // 노트 저장 관련 상태
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   // 로컬 설정 상태 (UI 전용)
   const [localSettings, setLocalSettings] = useState<LocalTimerSettings>({
@@ -445,6 +479,8 @@ const TimerPage: React.FC = () => {
 
   // 진행률 계산용 (UI 호환성)
   const totalTime = reduxSettings.focusTime * 60;
+
+  const isDirty = (taskName.trim().length > 0 || notes.trim().length > 0) && hasTimerStarted;
 
   // 노트 임팩트 효과
   useEffect(() => {
@@ -481,26 +517,23 @@ const TimerPage: React.FC = () => {
 
   // 타이머 리셋 핸들러
   const handleReset = () => {
-    stop();
-    setHasTimerStarted(false);
-    setTaskName('');
-    setNotes('');
+    if (window.confirm("타이머를 초기화하고 작성중인 노트를 삭제하시겠습니까?")) {
+        stop();
+        setHasTimerStarted(false);
+        setTaskName('');
+        setNotes('');
+        localStorage.removeItem('timerTempNote');
+    }
   };
 
   // 설정 핸들러
   const handleSettings = () => {
-    if (isRunning) {
-      handleReset();
-    } else {
-      // 설정 모달을 열 때 현재 설정값을 임시 설정값에 복사
-      setTempSettings({ ...localSettings });
-      setShowSettings(true);
-    }
+    setTempSettings({ ...localSettings });
+    setShowSettings(true);
   };
 
   // 설정 적용 핸들러
   const handleApplySettings = () => {
-    // 로컬 설정을 Redux 설정으로 변환하여 적용
     updateTimerSettings({
       focusTime: tempSettings.focusMinutes,
       shortBreakTime: tempSettings.breakMinutes,
@@ -570,6 +603,60 @@ const TimerPage: React.FC = () => {
       alert('AI 노트가 성공적으로 생성되었습니다!');
     }, 2000);
   };
+
+  // 노트 생성 핸들러
+  const handleCreateNote = async () => {
+    if (!taskName.trim() || !notes.trim()) {
+      alert('제목(목표)과 내용을 모두 입력해주세요.');
+      return;
+    }
+
+    setIsSavingNote(true);
+    
+    try {
+      const noteData: NoteCreateRequest = {
+        noteTitle: taskName || '타이머 세션 노트',
+        noteContent: notes,
+        aiEnhanced: false,
+        originalContent: notes,
+      };
+
+      await createNote(noteData);
+      alert('노트가 성공적으로 생성되었습니다!');
+      
+      setTaskName('');
+      setNotes('');
+      localStorage.removeItem('timerTempNote');
+      
+    } catch (error) {
+      console.error('노트 생성 실패:', error);
+      alert('노트 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  // 자동 임시 저장 (로컬 스토리지 사용)
+  useEffect(() => {
+    if (hasTimerStarted) {
+      const tempData = { title: taskName, content: notes };
+      localStorage.setItem('timerTempNote', JSON.stringify(tempData));
+    }
+  }, [taskName, notes, hasTimerStarted]);
+
+  // 컴포넌트 마운트 시 임시 저장된 노트 복원
+  useEffect(() => {
+    const savedTempNote = localStorage.getItem('timerTempNote');
+    if (savedTempNote) {
+      try {
+        const tempData = JSON.parse(savedTempNote);
+        if (tempData.title) setTaskName(tempData.title);
+        if (tempData.content) setNotes(tempData.content);
+      } catch (error) {
+        console.error('임시 저장된 노트 복원 실패:', error);
+      }
+    }
+  }, []);
 
   // 임시 AI 컨텐츠 생성 함수 (기존 로직 유지)
   const generateMockAIContent = (style: string, task: string) => {
@@ -857,96 +944,7 @@ const TimerPage: React.FC = () => {
           </FormControl>
         </StudyModeSection>
         
-        <Button
-          variant="contained"
-          size="small"
-          onClick={handleGenerateAI}
-          disabled={isGeneratingAI || !notes.trim()}
-          sx={{
-            backgroundColor: '#10B981',
-            '&:hover': {
-              backgroundColor: '#059669',
-            },
-            '&:disabled': {
-              backgroundColor: '#D1D5DB',
-              color: '#9CA3AF',
-            },
-            fontWeight: 600,
-            textTransform: 'none',
-            minWidth: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          {isGeneratingAI ? (
-            <>
-              <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
-              생성 중...
-            </>
-          ) : (
-            'AI 생성'
-          )}
-        </Button>
-      </ExpandedNotesFeatures>
-
-      {/* 모바일 하단 툴바 */}
-      <Box sx={{ 
-        display: { xs: 'block', sm: 'none' },
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #E5E7EB',
-        padding: '16px',
-        zIndex: 10000,
-        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
-      }}>
-        {/* 요약 스타일 라벨 */}
-        <Text sx={{ 
-          fontSize: '14px', 
-          fontWeight: 500, 
-          color: '#6B7280',
-          marginBottom: '8px',
-          display: 'block',
-        }}>
-          요약 스타일
-        </Text>
-        
-        {/* 선택란과 AI 생성 버튼 */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          gap: '12px',
-        }}>
-          <FormControl size="small" variant="outlined" sx={{ flex: 1 }}>
-            <Select
-              value={summaryStyle}
-              onChange={(e) => setSummaryStyle(e.target.value as string)}
-              displayEmpty
-              sx={{
-                backgroundColor: '#FFFFFF',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#E5E7EB',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#D1D5DB',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#2563EB',
-                },
-              }}
-            >
-              <MenuItem value="concept">Concept-focused</MenuItem>
-              <MenuItem value="detail">Detail-focused</MenuItem>
-              <MenuItem value="summary">Summary-focused</MenuItem>
-            </Select>
-          </FormControl>
-          
-          {/* AI 생성 버튼 */}
+        <Box sx={{ display: 'flex', gap: '12px' }}>
           <Button
             variant="contained"
             size="small"
@@ -977,6 +975,126 @@ const TimerPage: React.FC = () => {
             ) : (
               'AI 생성'
             )}
+          </Button>
+          
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCreateNote}
+            disabled={isSavingNote || !taskName.trim() || !notes.trim()}
+            startIcon={<SaveIcon />}
+            sx={{
+              backgroundColor: '#2563EB',
+              '&:hover': {
+                backgroundColor: '#1D4ED8',
+              },
+              '&:disabled': {
+                backgroundColor: '#D1D5DB',
+                color: '#9CA3AF',
+              },
+              fontWeight: 600,
+              textTransform: 'none',
+              minWidth: '120px',
+            }}
+          >
+            {isSavingNote ? '저장 중...' : '노트 생성'}
+          </Button>
+        </Box>
+      </ExpandedNotesFeatures>
+
+      {/* 모바일 하단 툴바 */}
+      <Box sx={{ 
+        display: { xs: 'block', sm: 'none' },
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid #E5E7EB',
+        padding: '16px',
+        zIndex: 10000,
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
+      }}>
+        {/* 요약 스타일 라벨 */}
+        <Text sx={{ 
+          fontSize: '14px', 
+          fontWeight: 500, 
+          color: '#6B7280',
+          marginBottom: '8px',
+          display: 'block',
+        }}>
+          요약 스타일
+        </Text>
+        
+        {/* 선택란과 버튼들 */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'flex-end', 
+          justifyContent: 'space-between',
+          gap: '8px',
+        }}>
+          <FormControl size="small" variant="outlined" sx={{ flex: 1, minWidth: 0 }}>
+            <Select
+              value={summaryStyle}
+              onChange={(e) => setSummaryStyle(e.target.value as string)}
+              displayEmpty
+              sx={{
+                backgroundColor: '#FFFFFF',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#E5E7EB',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#D1D5DB',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#2563EB',
+                },
+              }}
+            >
+              <MenuItem value="concept">Concept-focused</MenuItem>
+              <MenuItem value="detail">Detail-focused</MenuItem>
+              <MenuItem value="summary">Summary-focused</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleGenerateAI}
+            disabled={isGeneratingAI || !notes.trim()}
+            sx={{
+              backgroundColor: '#10B981',
+              '&:hover': { backgroundColor: '#059669' },
+              '&:disabled': { backgroundColor: '#D1D5DB', color: '#9CA3AF' },
+              fontWeight: 600,
+              textTransform: 'none',
+              minWidth: '80px',
+              fontSize: '12px',
+              padding: '6px 12px',
+            }}
+          >
+            {isGeneratingAI ? '생성 중...' : 'AI 생성'}
+          </Button>
+          
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCreateNote}
+            disabled={isSavingNote || !taskName.trim() || !notes.trim()}
+            startIcon={<SaveIcon sx={{ fontSize: '14px' }} />}
+            sx={{
+              backgroundColor: '#2563EB',
+              '&:hover': { backgroundColor: '#1D4ED8' },
+              '&:disabled': { backgroundColor: '#D1D5DB', color: '#9CA3AF' },
+              fontWeight: 600,
+              textTransform: 'none',
+              minWidth: '90px',
+              fontSize: '12px',
+              padding: '6px 12px',
+            }}
+          >
+            {isSavingNote ? '저장 중...' : '노트 생성'}
           </Button>
         </Box>
       </Box>
@@ -1010,7 +1128,7 @@ const TimerPage: React.FC = () => {
               세션 {sessionProgress.current + 1}/{sessionProgress.target}
             </SessionProgress>
             <ElapsedTime>
-              경과시간: {formatElapsedTime((totalTime - (currentTime.minutes * 60 + currentTime.seconds)))}
+              경과시간: {formatElapsedTime((totalTime - (minutes * 60 + seconds)))}
             </ElapsedTime>
           </>
         ) : (
@@ -1165,18 +1283,32 @@ const TimerPage: React.FC = () => {
                 </SummaryStyleSelect>
               </FormControl>
               
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleGenerateAI}
-                disabled={isGeneratingAI}
-                sx={{ 
-                  minWidth: '100px',
-                  fontSize: '14px',
-                }}
-              >
-                {isGeneratingAI ? '생성 중...' : 'AI 노트 생성'}
-              </Button>
+              <Box sx={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleGenerateAI}
+                  disabled={isGeneratingAI || !notes.trim()}
+                  sx={{ 
+                    minWidth: '100px',
+                    fontSize: '14px',
+                  }}
+                >
+                  {isGeneratingAI ? '생성 중...' : 'AI 노트 생성'}
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleCreateNote}
+                  disabled={isSavingNote || !taskName.trim() || !notes.trim()}
+                  startIcon={<SaveIcon />}
+                  sx={{
+                    fontSize: '14px',
+                  }}
+                >
+                  {isSavingNote ? '저장 중...' : '노트 생성'}
+                </Button>
+              </Box>
             </AISection>
           </NotesSection>
         </>
@@ -1231,6 +1363,20 @@ const TimerPage: React.FC = () => {
           </PresetsSection>
         </SettingsContainer>
       </Modal>
+
+      <FloatingActionButton 
+        visible={isDirty} 
+        onClick={handleCreateNote} 
+        aria-label="노트 저장"
+        sx={{
+          bottom: {
+            xs: notesExpanded ? '150px' : '88px', // Adjust position when expanded on mobile
+            sm: '32px'
+          }
+        }}
+      >
+        <SaveIcon />
+      </FloatingActionButton>
     </PageContainer>
   );
 };
