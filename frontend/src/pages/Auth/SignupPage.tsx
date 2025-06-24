@@ -19,7 +19,6 @@ const SignupPage = () => {
   const [isRequestingCode, setIsRequestingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
-  const [error, setError] = useState('');
   const [timerKey, setTimerKey] = useState(0); // 타이머 재시작용 key
   
   const navigate = useNavigate();
