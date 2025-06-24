@@ -232,18 +232,7 @@ jobs:
           echo "server_available=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Run Lighthouse CI (${{ matrix.device }}) with server upload
-      if: steps.lighthouse-server-test.outputs.server_available == 'true'
-      working-directory: ${{ env.FE_DIR }}
-      env:
-        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
-      run: |
-        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI with server upload..."
-        yarn lhci autorun --config=.lighthouserc.${{ matrix.device }}.json
-      continue-on-error: true
-
-    - name: Run Lighthouse CI (${{ matrix.device }}) - local only
-      if: steps.lighthouse-server-test.outputs.server_available == 'false'
+    - name: Run Lighthouse CI (${{ matrix.device }}) - local report generation
       working-directory: ${{ env.FE_DIR }}
       env:
         LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
