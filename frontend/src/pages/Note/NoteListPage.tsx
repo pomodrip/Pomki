@@ -80,7 +80,7 @@ const NoteListPage: React.FC = () => {
   const handleGenerateFlashcards = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     navigate(`/study/${noteId}/flashcard-generation`);
-  };
+  }; 
 
   if (loading) {
     return (
