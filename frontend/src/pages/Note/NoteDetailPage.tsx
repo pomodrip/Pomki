@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/useRedux';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import { styled } from '@mui/material/styles';
 import {
   Container,
@@ -32,15 +33,32 @@ const ContentPaper = styled(Paper)(({ theme }) => ({
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   
-  const note = useAppSelector((state) => 
-    state.note.notes.find((n) => n.noteId === noteId)
-  );
+  const { currentNote, loading } = useAppSelector((state) => state.note);
 
-  if (!note) {
+  useEffect(() => {
+    if (noteId) {
+      dispatch(fetchNote(noteId));
+    }
+    
+    return () => {
+      dispatch(clearCurrentNote());
+    };
+  }, [noteId, dispatch]);
+
+  if (loading) {
     return (
       <StyledContainer maxWidth="md">
-        <Text>Note not found.</Text>
+        <Text>로딩 중...</Text>
+      </StyledContainer>
+    );
+  }
+
+  if (!currentNote) {
+    return (
+      <StyledContainer maxWidth="md">
+        <Text>노트를 찾을 수 없습니다.</Text>
       </StyledContainer>
     );
   }
@@ -53,33 +71,33 @@ const NoteDetailPage: React.FC = () => {
             <ArrowBackIcon />
           </IconButton>
           <Text variant="h5" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {note.noteTitle}
+            {currentNote.title}
           </Text>
         </Box>
         <Button
           variant="contained"
           startIcon={<EditIcon />}
-          onClick={() => navigate(`/note/${note.noteId}/edit`)}
+          onClick={() => navigate(`/note/${currentNote.id}/edit`)}
         >
-          Edit
+          수정
         </Button>
       </HeaderBox>
       
       <Box mb={2}>
-        {note.tags?.map((tag) => (
-          <Tag key={tag.tagId} label={tag.tagName} sx={{ mr: 1 }} />
+        {(currentNote.tags || []).map((tag) => (
+          <Tag key={tag.id} label={tag.tagName} sx={{ mr: 1 }} />
         ))}
       </Box>
 
       <ContentPaper variant="outlined">
         <Text variant="body1">
-            {note.noteContent}
+            {currentNote.content}
         </Text>
       </ContentPaper>
       
       <Box mt={2}>
         <Text variant="caption" color="textSecondary">
-          Last updated: {new Date(note.updatedAt).toLocaleString()}
+          마지막 수정: {new Date(currentNote.updatedAt).toLocaleString()}
         </Text>
       </Box>
 

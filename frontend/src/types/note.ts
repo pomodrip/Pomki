@@ -1,65 +1,46 @@
-// 노트 기본 정보
+/**
+ * 백엔드 Note DTO와 동기화된 타입 정의
+ */
+
+// 노트 상세 정보 (NoteResponseDto 기반)
 export interface Note {
   noteId: string;
-  memberId?: number;
+  noteTitle: string;
+  noteContent: string;
+  aiEnhanced: boolean;
+  originalContent: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 노트 목록의 아이템 (NoteListResponseDto 기반)
+export interface NoteListItem {
+  noteId: string;
+  noteTitle: string;
+  aiEnhanced: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 노트 생성 요청 (NoteCreateRequestDto 기반)
+export interface NoteCreateRequest {
   noteTitle: string;
   noteContent: string;
   aiEnhanced?: boolean;
   originalContent?: string;
-  createdAt: string;
-  updatedAt: string;
-  isDeleted?: boolean;
-  tags?: Tag[];
-  images?: NoteImage[];
-  isBookmarked?: boolean;
 }
 
-// 노트 생성 요청
-export interface CreateNoteRequest {
+// 노트 수정 요청 (NoteUpdateRequestDto 기반)
+export interface NoteUpdateRequest {
   noteTitle: string;
   noteContent: string;
-  tagIds?: number[];
+  aiEnhanced: boolean;
 }
 
-// 노트 업데이트 요청
-export interface UpdateNoteRequest {
-  noteTitle: string;
-  noteContent: string;
-  tagIds?: number[];
-}
-
-// 노트 리스트 조회 요청
-export interface GetNotesRequest {
-  page?: number;
-  size?: number;
-  search?: string;
-  tagId?: number;
-  sortBy?: 'createdAt' | 'updatedAt' | 'title';
-  sortDirection?: 'asc' | 'desc';
-}
-
-// 태그
-export interface Tag {
-  tagId: number;
-  memberId: number;
-  tagName: string;
-}
-
-// 노트 이미지
-export interface NoteImage {
-  imageId: number;
-  noteId: string;
-  imageUrl: string;
-  imageName?: string;
-  fileSize?: number;
-  mimeType?: string;
-  createdAt: string;
-  oriFileName: string;
-  resizeImageUrl?: string;
-}
-
-// 노트 AI 향상 요청
-export interface EnhanceNoteRequest {
-  noteId: string;
-  enhancementType: 'POLISHING' | 'SUMMARY' | 'FORMATTING';
+// Redux 슬라이스에서 사용될 노트 상태
+export interface NoteState {
+  notes: NoteListItem[]; // 목록은 가벼운 타입 사용
+  currentNote: Note | null; // 상세 정보는 전체 타입 사용
+  loading: boolean;
+  error: string | null;
 }

@@ -2,8 +2,15 @@ import axios from 'axios';
 import { cookies } from '../utils/cookies';
 import type { EnhancedStore } from '@reduxjs/toolkit';
 
-// API 기본 URL 설정 - 개발 환경에서는 프록시 사용
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8088' : 'http://localhost:8088');
+// API 기본 URL 설정 - 개발 환경에서는 프록시(/api), 운영에서는 실제 도메인
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://api.pomkist.com');
+
+console.log('=== API 기본 설정 ===');
+console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('DEV 모드:', import.meta.env.DEV);
+console.log('최종 API_BASE_URL:', API_BASE_URL);
 
 // Store 참조를 위한 변수 (순환 참조 방지)
 let store: EnhancedStore | null = null;
@@ -27,14 +34,26 @@ export const api = axios.create({
 // 🔥 요청 인터셉터 - store에서 토큰 가져오기
 api.interceptors.request.use(
   (config) => {
+    console.log('=== API 요청 인터셉터 ===');
+    console.log('요청 URL:', config.baseURL + config.url);
+    console.log('요청 메서드:', config.method);
+    console.log('요청 데이터:', config.data);
+    console.log('요청 헤더:', config.headers);
+    
     // Redux store에서 토큰 가져오기
     if (store) {
-              const state = store.getState();
-        const accessToken = state.auth?.accessToken;
-        
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
+      const state = store.getState();
+      const accessToken = state.auth?.accessToken;
+      
+      console.log('Store 상태:', !!store);
+      console.log('AccessToken 존재:', !!accessToken);
+      
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+        console.log('Authorization 헤더 설정됨');
+      } else {
+        console.log('AccessToken이 없음 - 인증 없이 요청');
+      }
     } else {
       console.error('❌ Store reference not found in API interceptor');
     }
@@ -47,6 +66,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('=== API 요청 인터셉터 에러 ===', error);
     return Promise.reject(error);
   }
 );
@@ -90,7 +110,7 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // �� 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
+        // 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
         console.error('Token refresh failed:', refreshError);
         cookies.clearAuthCookies();
         

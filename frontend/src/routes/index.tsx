@@ -19,6 +19,10 @@ import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import NoteDetailPage from '../pages/Note/NoteDetailPage';
 import DeckManagementPage from '../pages/Study/DeckManagementPage';
 import AdUsageExample from '../examples/AdUsageExample';
+// import SimpleNoteList from '../pages/Note/SimpleNoteList';
+// import SimpleNoteCreate from '../pages/Note/SimpleNoteCreate';
+// import SimpleNoteDetail from '../pages/Note/SimpleNoteDetail';
+
 // import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 // const TestPage = ({ title }: { title: string }) => {
@@ -51,26 +55,25 @@ const AppRoutes = () => {
         <Route index element={<Navigate replace to="/dashboard" />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="timer" element={<TimerPage />} />
-        <Route path="note" element={<NoteListPage  />} />
+        
+        {/* Note Routes */}
+        <Route path="note" element={<NoteListPage />} />
         <Route path="note/create" element={<NoteCreatePage />} />
         <Route path="note/:noteId" element={<NoteDetailPage />} />
         <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
+
+        {/* Study Routes */}
         <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />
         <Route path="flashcards/:deckId/practice" element={<FlashcardPracticePage />} />
-        {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />
-        <Route path="profile" element={<ProfilePage title="프로필 페이지" />} /> */}
-        <Route path="timer" element={<TimerPage />} />
-        <Route path="note" element={<NoteListPage />} />
-        <Route path="study" element={<FlashcardDeckListPage />} />
+        
+        {/* Profile Routes */}
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/edit" element={<EditProfilePage />} />
 
-
-        {/* 테스트 페이지 */}
+        {/* Test/Example Routes */}
         <Route path="study/deck-management" element={<DeckManagementPage />} />
-        <Route path="ad" element={< AdUsageExample/>} />
-        {/* <Route path="membership" element={<MembershipUsageExample/>} /> */}
+        <Route path="ad" element={<AdUsageExample />} />
       </Route>
       
       {/* 404 페이지 */}

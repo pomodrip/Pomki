@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Container,
   Box,
   TextField,
   Button,
-  Stack,
 } from '@mui/material';
-import { Text, IconButton, Tag } from '../../components/ui';
+import { Text, IconButton } from '../../components/ui';
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
-  Add as AddIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../../hooks/useRedux';
-import { createNote } from '../../store/slices/noteSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import { useNotifications, useUI } from '../../hooks/useUI';
+import type { NoteUpdateRequest } from '../../types/note';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -36,34 +35,36 @@ const FormBox = styled(Box)(({ theme }) => ({
   gap: theme.spacing(3),
 }));
 
-const TagInputBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  alignItems: 'center',
-  marginBottom: theme.spacing(1),
-}));
-
 const NoteCreatePage: React.FC = () => {
+  const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  const { currentNote, loading: noteLoading } = useAppSelector(state => state.note);
   const { success, error } = useNotifications();
   const { showGlobalLoading, hideGlobalLoading } = useUI();
 
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
 
-  const handleAddTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
-      setNewTag('');
+  const isEditMode = Boolean(noteId);
+
+  useEffect(() => {
+    if (isEditMode && noteId) {
+      dispatch(fetchNote(noteId));
     }
-  };
+    // 컴포넌트가 언마운트될 때 현재 노트 정보 정리
+    return () => {
+      dispatch(clearCurrentNote());
+    };
+  }, [dispatch, noteId, isEditMode]);
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag: string) => tag !== tagToRemove));
-  };
+  useEffect(() => {
+    if (isEditMode && currentNote) {
+      setNoteTitle(currentNote.noteTitle);
+      setNoteContent(currentNote.noteContent);
+    }
+  }, [currentNote, isEditMode]);
 
   const handleSave = async () => {
     if (!noteTitle.trim()) {
@@ -76,42 +77,56 @@ const NoteCreatePage: React.FC = () => {
       return;
     }
 
+    showGlobalLoading(isEditMode ? '노트를 수정하는 중...' : '노트를 저장하는 중...');
+
     try {
-      showGlobalLoading('노트를 저장하는 중...');
-      
-      await dispatch(createNote({
-        noteTitle: noteTitle.trim(),
-        noteContent: noteContent.trim(),
-        // tags: tags, // TODO: tag string[]을 tagId: number[]로 변환 필요
-      })).unwrap();
-      
-      success('노트 저장 완료', '노트가 성공적으로 저장되었습니다.');
+      if (isEditMode && noteId) {
+        const updateData: NoteUpdateRequest = {
+          noteTitle: noteTitle.trim(),
+          noteContent: noteContent.trim(),
+          aiEnhanced: currentNote?.aiEnhanced ?? false,
+        };
+        await dispatch(updateNoteAsync({ noteId, data: updateData })).unwrap();
+        success('노트 수정 완료', '노트가 성공적으로 수정되었습니다.');
+      } else {
+        await dispatch(
+          createNoteAsync({
+            noteTitle: noteTitle.trim(),
+            noteContent: noteContent.trim(),
+          }),
+        ).unwrap();
+        success('노트 저장 완료', '노트가 성공적으로 저장되었습니다.');
+      }
       navigate('/note');
-    } catch {
-      error('저장 실패', '노트 저장에 실패했습니다.');
+    } catch (e: unknown) {
+      const caughtError = e as { message?: string };
+      error(
+        isEditMode ? '수정 실패' : '저장 실패',
+        caughtError.message || '작업 중 오류가 발생했습니다.',
+      );
     } finally {
       hideGlobalLoading();
     }
   };
 
+  if (noteLoading && isEditMode) {
+    return <Box>Loading...</Box>; // Or a spinner
+  }
+
   return (
     <StyledContainer maxWidth="md">
       {/* 헤더 */}
       <HeaderBox>
-        <Box display="flex" alignItems="center">
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
           <Text variant="h5" fontWeight="bold">
-            새 노트 작성
+            {isEditMode ? '노트 수정' : '새 노트 작성'}
           </Text>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<SaveIcon />}
-          onClick={handleSave}
-        >
-          저장
+        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave}>
+          {isEditMode ? '수정' : '저장'}
         </Button>
       </HeaderBox>
 
@@ -126,38 +141,6 @@ const NoteCreatePage: React.FC = () => {
           variant="outlined"
           placeholder="노트 제목을 입력하세요"
         />
-
-        {/* 태그 입력 */}
-        <Box>
-          <Text variant="subtitle1" gutterBottom>
-            태그
-          </Text>
-          <TagInputBox>
-            <TextField
-              size="small"
-              label="새 태그"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-              placeholder="태그를 입력하고 Enter 또는 + 버튼을 눌러주세요"
-              sx={{ flexGrow: 1 }}
-            />
-            <IconButton onClick={handleAddTag} color="primary">
-              <AddIcon />
-            </IconButton>
-          </TagInputBox>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {tags.map((tag: string) => (
-              <Tag
-                key={tag}
-                label={tag}
-                onDelete={() => handleRemoveTag(tag)}
-                color="primary"
-                variant="outlined"
-              />
-            ))}
-          </Stack>
-        </Box>
 
         {/* 내용 입력 */}
         <TextField
