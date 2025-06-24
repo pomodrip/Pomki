@@ -379,61 +379,61 @@ const FlashcardDeckListPage: React.FC = () => {
           }).filter(Boolean),
         }
       }));
-          } else {
+    } else {
+      try {
+        // Redux를 통한 덱 생성
+        const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
+        if (result.meta.requestStatus === 'fulfilled' && result.payload) {
+          const newDeck = result.payload as CardDeck;
+          // 새 덱에 대한 클라이언트 측 정보 추가
+          setClientSideInfo(prev => ({
+            ...prev,
+            [newDeck.deckId]: {
+              isBookmarked: false,
+              tags: newDeckTags.split(',').map(t => {
+                const trimmed = t.trim();
+                return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+              }).filter(Boolean),
+            }
+          }));
+        }
+      } catch (error) {
+        console.log('Redux 덱 생성 실패, API Fallback 사용 시도...');
+        // Redux 실패시 API Fallback 사용
         try {
-          // Redux를 통한 덱 생성
-          const result = await dispatch(createDeck({ deckName: newDeckTitle.trim() }));
-          if (result.meta.requestStatus === 'fulfilled' && result.payload) {
-            const newDeck = result.payload as CardDeck;
-            // 새 덱에 대한 클라이언트 측 정보 추가
-            setClientSideInfo(prev => ({
-              ...prev,
-              [newDeck.deckId]: {
-                isBookmarked: false,
-                tags: newDeckTags.split(',').map(t => {
-                  const trimmed = t.trim();
-                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-                }).filter(Boolean),
-              }
-            }));
-          }
-        } catch (error) {
-          console.log('Redux 덱 생성 실패, API Fallback 사용 시도...');
-          // Redux 실패시 API Fallback 사용
-          try {
-            const newDeck = await deckApiWithFallback.createDeck({
-              deckName: newDeckTitle.trim(),
-              memberId: user?.memberId || 1
-            });
-            
-            // fallbackDecks 상태에 추가
-            setFallbackDecks(prev => [...prev, newDeck]);
-            
-            // 클라이언트 측 정보 추가
-            setClientSideInfo(prev => ({
-              ...prev,
-              [newDeck.deckId]: {
-                isBookmarked: false,
-                tags: newDeckTags.split(',').map(t => {
-                  const trimmed = t.trim();
-                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-                }).filter(Boolean),
-              }
-            }));
-            
-            dispatch(showToast({
-              message: '✅ API Fallback으로 덱이 생성되었습니다!',
-              severity: 'success'
-            }));
-          } catch (fallbackError) {
-            console.error('API Fallback 덱 생성도 실패:', fallbackError);
-            dispatch(showToast({
-              message: '덱 생성에 실패했습니다.',
-              severity: 'error'
-            }));
-          }
+          const newDeck = await deckApiWithFallback.createDeck({
+            deckName: newDeckTitle.trim(),
+            memberId: user?.memberId || 1
+          });
+          
+          // fallbackDecks 상태에 추가
+          setFallbackDecks(prev => [...prev, newDeck]);
+          
+          // 클라이언트 측 정보 추가
+          setClientSideInfo(prev => ({
+            ...prev,
+            [newDeck.deckId]: {
+              isBookmarked: false,
+              tags: newDeckTags.split(',').map(t => {
+                const trimmed = t.trim();
+                return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+              }).filter(Boolean),
+            }
+          }));
+          
+          dispatch(showToast({
+            message: '✅ API Fallback으로 덱이 생성되었습니다!',
+            severity: 'success'
+          }));
+        } catch (fallbackError) {
+          console.error('API Fallback 덱 생성도 실패:', fallbackError);
+          dispatch(showToast({
+            message: '덱 생성에 실패했습니다.',
+            severity: 'error'
+          }));
         }
       }
+    }
     handleCreateDialogClose();
   };
 
