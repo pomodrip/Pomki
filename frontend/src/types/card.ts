@@ -50,6 +50,7 @@ export interface UpdateDeckRequest {
  * API: POST /api/card?deckId={deckId}
  */
 export interface CreateCardRequest {
+  deckId: string;
   content: string;
   answer: string;
 }

@@ -7,9 +7,6 @@ import type {
   UpdateDeckRequest,
   CreateCardRequest,
   UpdateCardRequest,
-  StudyResult,
-  StudySessionRequest,
-  GenerateCardsRequest,
 } from '../types/card';
 import type { ApiResponse } from '../types/api';
 

@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Box, styled, Select, MenuItem, FormControl, CircularProgress as MuiCircularProgress, Fab } from '@mui/material';
+import {
+  styled,
+  Box,
+  Button,
+  Select,
+  MenuItem,
+  CircularProgress as MuiCircularProgress,
+  FormControl,
+} from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import theme from '../../theme/theme';
 
 import { useTimer } from '../../hooks/useTimer';
 // import theme from '../../theme/theme';
@@ -89,11 +95,11 @@ const ElapsedTime = styled(Text)(({ theme }) => ({
 //   marginBottom: '32px',
 // }));
 
-const ProgressBarFill = styled(Box)<{ progress: number }>(({ progress, theme }) => ({
-  width: `${progress}%`,
-  height: '100%',
-  backgroundColor: theme.palette.primary.main, // theme에서 가져온 Primary 색상
-  transition: 'width 0.3s ease',
+const ProgressCircle = styled('circle')(() => ({
+  fill: 'none',
+  strokeWidth: '8',
+  strokeLinecap: 'round',
+  transition: 'stroke-dashoffset 0.3s ease',
 }));
 
 // 타이머 원형 컨테이너  
@@ -103,7 +109,6 @@ const TimerCircle = styled(Box)(() => ({
   alignItems: 'center',
   justifyContent: 'center',
   marginBottom: '32px', // Large Spacing
-  position: 'relative',
   
   '@media (min-width: 600px)': {
     width: '320px',
@@ -128,19 +133,6 @@ const BackgroundCircle = styled('circle')(() => ({
   '@media (min-width: 600px)': {
     strokeWidth: '12px',
   },
-}));
-
-const BackgroundCircle = styled('circle')(({ theme }) => ({
-  fill: 'none',
-  stroke: theme.palette.grey[200], // 90. Timer Circle Background
-  strokeWidth: '8', // 90. Timer Circle Thickness
-}));
-
-const ProgressCircle = styled('circle')(() => ({
-  fill: 'none',
-  strokeWidth: '8',
-  strokeLinecap: 'round',
-  transition: 'stroke-dashoffset 0.3s ease',
 }));
 
 // 타이머 시간 표시 - theme 활용
@@ -175,12 +167,27 @@ const GoalSection = styled(Box)(() => ({
   alignItems: 'center',
 }));
 
-const TaskInputLabel = styled(Text)(() => ({
-  fontSize: '16px', // Body Regular
-  fontWeight: 500, // Medium
-  color: '#6B7280', // Text Secondary
-  marginBottom: '16px', // Medium Spacing
-  textAlign: 'center',
+const GoalLabel = styled(Text)(({ theme }) => ({
+  fontSize: '16px',
+  fontWeight: 600,
+  color: theme.palette.text.primary,
+  marginBottom: '8px',
+  display: 'block',
+}));
+
+const GoalInput = styled(Input)(() => ({
+  width: '100%',
+  fontSize: '16px',
+  padding: '12px 16px',
+  borderRadius: '8px',
+  border: '1px solid #E5E7EB',
+  backgroundColor: '#FFFFFF',
+  
+  '&:focus': {
+    borderColor: '#2563EB',
+    outline: 'none',
+    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
+  },
 }));
 
 // 노트 섹션
@@ -228,35 +235,41 @@ const ExpandedTimerBar = styled(Box)(({ theme }) => ({
   },
 }));
 
-const GoalLabel = styled(Text)(({ theme }) => ({
-  fontSize: '16px',
-  fontWeight: 600,
+const ExpandedTimerInfo = styled(Box)({
+  display: 'flex',
+  alignItems: 'baseline',
+  gap: '12px',
+});
+
+const ExpandedTimerDisplay = styled(Text)(({ theme }) => ({
+  fontSize: '24px',
+  fontWeight: 700,
   color: theme.palette.text.primary,
-  marginBottom: '8px',
-  display: 'block',
 }));
 
-const GoalInput = styled(Input)(() => ({
-  width: '100%',
-  fontSize: '16px',
-  padding: '12px 16px',
-  borderRadius: '8px',
-  border: '1px solid #E5E7EB',
-  backgroundColor: '#FFFFFF',
-  
-  '&:focus': {
-    borderColor: '#2563EB',
-    outline: 'none',
-    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
-  },
+const ExpandedSessionInfo = styled(Text)(({ theme }) => ({
+  fontSize: '14px',
+  fontWeight: 500,
+  color: theme.palette.text.secondary,
+}));
+
+const ExpandedProgressBar = styled(Box)(({ theme }) => ({
+  flex: 1,
+  height: '6px',
+  backgroundColor: theme.palette.grey[200],
+  borderRadius: '3px',
+  overflow: 'hidden',
+  margin: '0 24px',
+}));
+
+const ExpandedProgressFill = styled(Box)<{ progress: number }>(({ progress, theme }) => ({
+  width: `${progress}%`,
+  height: '100%',
+  backgroundColor: theme.palette.primary.main,
+  transition: 'width 0.3s ease',
 }));
 
 // 노트 섹션
-const NotesSection = styled(Box)(() => ({
-  width: '100%',
-  maxWidth: '600px',
-}));
-
 const NotesHeader = styled(Box)(() => ({
   display: 'flex',
   alignItems: 'center',
@@ -264,7 +277,7 @@ const NotesHeader = styled(Box)(() => ({
   marginBottom: '8px',
 }));
 
-const NotesLabel = styled(Text)(({ theme }) => ({
+const NotesTitle = styled(Text)(({ theme }) => ({
   fontSize: '16px',
   fontWeight: 600,
   color: theme.palette.text.primary,
@@ -322,6 +335,12 @@ const StudyModeSection = styled(Box)(() => ({
   flexWrap: 'wrap',
 }));
 
+const StudyModeLabel = styled(Text)(({ theme }) => ({
+  fontSize: '14px',
+  fontWeight: 500,
+  color: theme.palette.text.secondary,
+}));
+
 const SummaryStyleSelect = styled(Select)(() => ({
   minWidth: '120px',
   height: '36px',
@@ -373,6 +392,14 @@ const PresetButton = styled(Button)(() => ({
   },
 }));
 
+const AISection = styled(Box)({
+  marginTop: '16px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '12px',
+});
+
 // 로컬 설정 인터페이스 (Redux 설정과 매핑용)
 interface LocalTimerSettings {
   sessions: number;
@@ -394,12 +421,9 @@ const TimerPage: React.FC = () => {
     updateTimerSettings,
   } = useTimer();
 
-  // UI 전용 로컬 상태 (기존 구조 유지)
-  const [hasTimerStarted, setHasTimerStarted] = useState(false);
-  const [minutes, setMinutes] = useState(25);
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [hasTimerStarted, setHasTimerStarted] = useState(false);
+  const { minutes, seconds } = currentTime;
+
+  // UI 전용 로컬 상태
   const [taskName, setTaskName] = useState('');
   const [notes, setNotes] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -407,26 +431,8 @@ const TimerPage: React.FC = () => {
   const [summaryStyle, setSummaryStyle] = useState('concept');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
-  const [settings, setSettings] = useState<TimerSettings>({
-    sessions: 3,
-    focusMinutes: 25,
-    breakMinutes: 5,
-  });
-  
-  // 임시 설정값 (모달에서 편집용)
-  const [tempSettings, setTempSettings] = useState<TimerSettings>({
-    sessions: 3,
-    focusMinutes: 25,
-    breakMinutes: 5,
-  });
+  const [hasTimerStarted, setHasTimerStarted] = useState(false);
 
-  const totalTime = settings.focusMinutes * 60;
-
-  // 진행률 계산
-  const currentTime = minutes * 60 + seconds;
-  const progress = ((totalTime - currentTime) / totalTime) * 100;
-  const [noteImpact, setNoteImpact] = useState(false);
-  
   // 로컬 설정 상태 (UI 전용)
   const [localSettings, setLocalSettings] = useState<LocalTimerSettings>({
     sessions: reduxSettings.longBreakInterval,
@@ -435,11 +441,10 @@ const TimerPage: React.FC = () => {
   });
   
   // 임시 설정값 (모달에서 편집용)
-  const [tempSettings, setTempSettings] = useState<LocalTimerSettings>({
-    sessions: reduxSettings.longBreakInterval,
-    focusMinutes: reduxSettings.focusTime,
-    breakMinutes: reduxSettings.shortBreakTime,
-  });
+  const [tempSettings, setTempSettings] = useState<LocalTimerSettings>(localSettings);
+
+  // 진행률 계산용 (UI 호환성)
+  const totalTime = reduxSettings.focusTime * 60;
 
   // 노트 임팩트 효과
   useEffect(() => {
@@ -461,24 +466,9 @@ const TimerPage: React.FC = () => {
     setTempSettings(newLocalSettings);
   }, [reduxSettings]);
 
-  // 진행률 계산용 (UI 호환성)
-  const totalTime = reduxSettings.focusTime * 60;
-  
-
-  // 노트 임팩트 효과
-  useEffect(() => {
-    if (isRunning) {
-      setNoteImpact(true);
-      const timer = setTimeout(() => setNoteImpact(false), 600); // 0.6초 임팩트
-      return () => clearTimeout(timer);
-    }
-  }, [isRunning]);
-
   // 타이머 시작/일시정지 핸들러
   const handleStart = () => {
-    if (!isRunning && !hasTimerStarted) {
-      setHasTimerStarted(true);
-    if (!isRunning && !hasTimerStarted) {
+    if (!hasTimerStarted) {
       setHasTimerStarted(true);
     }
     
@@ -491,14 +481,6 @@ const TimerPage: React.FC = () => {
 
   // 타이머 리셋 핸들러
   const handleReset = () => {
-    setIsRunning(false);
-    setHasTimerStarted(false);
-    setMinutes(settings.focusMinutes);
-    setSeconds(0);
-    setSession(1);
-    setElapsedTime(0);
-    setTaskName('');
-    setNotes('');
     stop();
     setHasTimerStarted(false);
     setTaskName('');
@@ -518,12 +500,6 @@ const TimerPage: React.FC = () => {
 
   // 설정 적용 핸들러
   const handleApplySettings = () => {
-    // 임시 설정값을 실제 설정값에 적용
-    setSettings({ ...tempSettings });
-    setMinutes(tempSettings.focusMinutes);
-    setSeconds(0);
-    setSession(1);
-    setElapsedTime(0);
     // 로컬 설정을 Redux 설정으로 변환하여 적용
     updateTimerSettings({
       focusTime: tempSettings.focusMinutes,
@@ -539,12 +515,6 @@ const TimerPage: React.FC = () => {
   const handleCancelSettings = () => {
     // 설정 취소 시 임시 설정값 초기화
     setTempSettings({ ...localSettings });
-    setShowSettings(false);
-  };
-
-  const handleCancelSettings = () => {
-    // 설정 취소 시 임시 설정값 초기화
-    setTempSettings({ ...settings });
     setShowSettings(false);
   };
 
@@ -678,7 +648,7 @@ const TimerPage: React.FC = () => {
             {formatTime(minutes, seconds)}
           </ExpandedTimerDisplay>
           <ExpandedSessionInfo>
-            세션 {session}/{settings.sessions}
+            세션 {sessionProgress.current + 1}/{sessionProgress.target}
           </ExpandedSessionInfo>
         </ExpandedTimerInfo>
         
@@ -784,7 +754,7 @@ const TimerPage: React.FC = () => {
           {/* 세션 정보 */}
           <Box sx={{ flex: 1, textAlign: 'right' }}>
             <Text sx={{ fontSize: '14px', color: '#6B7280' }}>
-              세션 {session}/{settings.sessions}
+              세션 {sessionProgress.current + 1}/{sessionProgress.target}
             </Text>
           </Box>
         </Box>
@@ -1060,7 +1030,6 @@ const TimerPage: React.FC = () => {
             cy="140"
             r={radius}
             stroke="#2979FF" // theme의 primary.main 색상
-            progress={progress}
             style={{
               strokeDasharray: `${circumference}, ${circumference}`,
               strokeDashoffset:
@@ -1140,7 +1109,7 @@ const TimerPage: React.FC = () => {
             />
           </GoalSection>
 
-          <NotesSection>
+          <NotesSection expanded={notesExpanded}>
             <NotesHeader>
               <Box>
                 <NotesTitle>📝 집중 노트</NotesTitle>
