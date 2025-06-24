@@ -1,5 +1,6 @@
 package com.cooltomato.pomki.tag.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,6 +33,7 @@ public class Tag {
     private String tagName;
 
     // 연관관계 매핑 (양방향)
-    @OneToMany(mappedBy = "tag")
+    @OneToMany(mappedBy = "tag", cascade = CascadeType.PERSIST)
+    @Builder.Default
     private List<TagCard> cardTags = new ArrayList<>();
 }

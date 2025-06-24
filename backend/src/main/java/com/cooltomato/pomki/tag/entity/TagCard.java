@@ -32,6 +32,7 @@ public class TagCard {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode
+    @Builder
     public static class TagCardId {
         private Long cardId;
         private Long tagId;

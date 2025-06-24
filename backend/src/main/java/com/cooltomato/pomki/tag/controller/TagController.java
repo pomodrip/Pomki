@@ -26,8 +26,8 @@ public class TagController {
     private final TagService service;
 
     @PostMapping
-    public ResponseEntity<TagResponseDto> createOneTagForCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam String tagName) {
-        TagResponseDto response = service.createOneTagService(principal, tagName);
+    public ResponseEntity<TagResponseDto> createOneTagForCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("cardId") Long cardId, @RequestParam("tagName") String tagName) {
+        TagResponseDto response = service.createOneTagService(principal, cardId, tagName);
 
         return ResponseEntity.ok(response);
     }
