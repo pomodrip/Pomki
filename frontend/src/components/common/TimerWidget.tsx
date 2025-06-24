@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, Chip, styled } from '@mui/material';
+import React from 'react';
+import { Box, Typography, IconButton, styled } from '@mui/material';
+import Tag from '../ui/Tag';
 import { PlayArrow, Pause, Stop, Settings } from '@mui/icons-material';
 import Timer from '../ui/Timer';
+import { useTimer } from '../../hooks/useTimer';
 
 const WidgetContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -28,62 +30,59 @@ const SessionInfo = styled(Box)(({ theme }) => ({
 }));
 
 export interface TimerWidgetProps {
-  mode: 'pomodoro' | 'focus' | 'break';
-  sessionCount?: number;
-  totalSessions?: number;
-  onModeChange?: (mode: 'pomodoro' | 'focus' | 'break') => void;
   onSettingsClick?: () => void;
 }
 
 const TimerWidget: React.FC<TimerWidgetProps> = ({
-  mode = 'pomodoro',
-  sessionCount = 1,
-  totalSessions = 4,
   onSettingsClick,
 }) => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [seconds, setSeconds] = useState(25 * 60); // 25분 기본값
-  const [totalSeconds] = useState(25 * 60);
-  
-  const minutes = Math.floor(seconds / 60);
-  const displaySeconds = seconds % 60;
-  const elapsedSeconds = totalSeconds - seconds;
-
-  useEffect(() => {
-    let interval: number;
-    
-    if (isRunning && seconds > 0) {
-      interval = setInterval(() => {
-        setSeconds(prev => prev - 1);
-      }, 1000) as unknown as number;
-    } else if (seconds === 0) {
-      setIsRunning(false);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isRunning, seconds]);
+  // Redux 기반 타이머 Hook 사용
+  const {
+    mode,
+    isRunning,
+    currentTime,
+    sessionProgress,
+    settings,
+    canStart,
+    canPause,
+    start,
+    pause,
+    stop,
+  } = useTimer();
 
   const handlePlayPause = () => {
-    setIsRunning(!isRunning);
+    if (isRunning) {
+      pause();
+    } else {
+      start();
+    }
   };
 
   const handleStop = () => {
-    setIsRunning(false);
-    setSeconds(totalSeconds);
+    stop();
   };
 
   const getModeText = () => {
     switch (mode) {
-      case 'pomodoro':
+      case 'FOCUS':
         return '집중시간';
-      case 'focus':
-        return '자유 집중';
-      case 'break':
-        return '휴식시간';
+      case 'SHORT_BREAK':
+        return '짧은 휴식';
+      case 'LONG_BREAK':
+        return '긴 휴식';
       default:
         return '집중시간';
     }
   };
+
+  // 전체 시간 계산 (초 단위)
+  const totalSeconds = mode === 'FOCUS' 
+    ? settings.focusTime * 60 
+    : mode === 'SHORT_BREAK'
+    ? settings.shortBreakTime * 60
+    : settings.longBreakTime * 60;
+
+  const elapsedSeconds = totalSeconds - (currentTime.minutes * 60 + currentTime.seconds);
 
   return (
     <WidgetContainer>
@@ -91,18 +90,17 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({
         <Typography variant="subtitle1" color="text.secondary">
           {getModeText()}
         </Typography>
-        {mode === 'pomodoro' && (
-          <Chip 
-            label={`세션 ${sessionCount}/${totalSessions}`}
-            size="small"
-            variant="outlined"
+        {mode === 'FOCUS' && (
+          <Tag 
+            label={`세션 ${sessionProgress.current}/${sessionProgress.target}`}
+            selected={false}
           />
         )}
       </SessionInfo>
 
       <Timer
-        minutes={minutes}
-        seconds={displaySeconds}
+        minutes={currentTime.minutes}
+        seconds={currentTime.seconds}
         totalSeconds={totalSeconds}
         elapsedSeconds={elapsedSeconds}
       />
@@ -110,6 +108,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({
       <ControlsContainer>
         <IconButton 
           onClick={handlePlayPause}
+          disabled={!canStart && !canPause}
           color="primary"
           size="large"
           sx={{ 
@@ -119,6 +118,10 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({
             color: 'white',
             '&:hover': {
               backgroundColor: 'primary.dark',
+            },
+            '&:disabled': {
+              backgroundColor: 'grey.300',
+              color: 'grey.500',
             },
           }}
         >

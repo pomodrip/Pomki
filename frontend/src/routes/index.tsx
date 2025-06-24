@@ -7,6 +7,7 @@ import SignupPage from '../pages/Auth/SignupPage';
 import SetGoalPage from '../pages/Auth/SetGoalPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
+import EditProfilePage from '../pages/Profile/EditProfilePage';
 import FlashcardGenerationPage from '../pages/Study/FlashcardGenerationPage';
 import FlashcardDeckListPage from '../pages/Study/FlashcardDeckListPage';
 import FlashCardListPage from '../pages/Study/FlashCardListPage';
@@ -16,6 +17,9 @@ import TimerPage from '../pages/Timer/TimerPage';
 import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import NoteDetailPage from '../pages/Note/NoteDetailPage';
+import DeckManagementPage from '../pages/Study/DeckManagementPage';
+import AdUsageExample from '../examples/AdUsageExample';
+// import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 // const TestPage = ({ title }: { title: string }) => {
 //   console.log(`${title} page rendering...`);
@@ -60,6 +64,13 @@ const AppRoutes = () => {
         <Route path="note" element={<NoteListPage />} />
         <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
+
+
+        {/* 테스트 페이지 */}
+        <Route path="study/deck-management" element={<DeckManagementPage />} />
+        <Route path="ad" element={< AdUsageExample/>} />
+        {/* <Route path="membership" element={<MembershipUsageExample/>} /> */}
       </Route>
       
       {/* 404 페이지 */}

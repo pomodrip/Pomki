@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import HomeIcon  from '../../assets/icons/home.svg?react';
 import TimerIcon  from '../../assets/icons/timer.svg?react';
@@ -8,27 +8,13 @@ import ProfileIcon  from '../../assets/icons/profile.svg?react';
 import { useTheme } from '@mui/material/styles';
 
 import { useNavigate, useLocation } from 'react-router-dom';
-// import { useResponsive } from '../../hooks/useResponsive';
-
-const MOBILE_BREAKPOINT = 1024;
+import { useResponsiveUI } from '../../hooks/useUI';
 
 const BottomNav: React.FC = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    // 초기 설정
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile } = useResponsiveUI();
 
 
   const getActiveTab = () => {

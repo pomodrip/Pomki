@@ -5,6 +5,11 @@ import toastReducer from './slices/toastSlice';
 import { setStoreReference } from '../api/index';
 import noteReducer from './slices/noteSlice';
 import studyReducer from './slices/studySlice';
+import deckReducer from './slices/deckSlice';
+import membershipReducer from './slices/membershipSlice';
+import timerReducer from './slices/timerSlice';
+import uiReducer from './slices/uiSlice';
+import adReducer from './slices/adSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +18,11 @@ export const store = configureStore({
     toast: toastReducer,
     note: noteReducer,
     study: studyReducer,
+    deck: deckReducer, // 🎯 새로운 덱 슬라이스 추가
+    membership: membershipReducer, // 🎯 새로운 멤버십 슬라이스 추가
+    timer: timerReducer, // 🎯 새로운 타이머 슬라이스 추가
+    ui: uiReducer, // 🎨 UI 상태 관리 슬라이스 추가
+    ad: adReducer, // 🎯 새로운 광고 슬라이스 추가
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

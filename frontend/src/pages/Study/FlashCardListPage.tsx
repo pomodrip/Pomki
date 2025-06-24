@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import { 
   Box, 
@@ -26,10 +26,35 @@ import {
   Bookmark,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  //ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { setFilters, updateCard, deleteCard } from '../../store/slices/studySlice';
+import { setFilters } from '../../store/slices/studySlice'; 
+import { 
+  fetchCardsInDeck, 
+  updateCard, 
+  deleteCard, 
+  setCurrentDeck 
+} from '../../store/slices/deckSlice';
+
+// 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
+interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+  tags?: string[];
+}
+
+// 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
+interface FlashcardDeck {
+  id: number;
+  category: string;
+  title: string;
+  isBookmarked: boolean;
+  tags: string[];
+  flashcards: Flashcard[];
+}
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -91,7 +116,12 @@ const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
   const { deckId } = useParams<{ deckId: string }>();
   const dispatch = useAppDispatch();
-  const { decks, filters } = useAppSelector((state) => state.study);
+  
+  // 🎯 기존 구조 유지: studySlice에서 필터만 가져오기
+  const { filters } = useAppSelector((state) => state.study);
+  
+  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
+  const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
   
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
@@ -102,6 +132,10 @@ const FlashCardListPage: React.FC = () => {
     3: false,
     4: true,
     5: false,
+    6: true,
+    7: false,
+    8: true,
+    9: false,
   });
   
   // 수정 다이얼로그 상태
@@ -111,12 +145,42 @@ const FlashCardListPage: React.FC = () => {
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
 
-  // 현재 덱 찾기
-  const currentDeck = useMemo(() => {
-    return decks.find(deck => deck.id === parseInt(deckId || '0'));
-  }, [decks, deckId]);
+  // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
+  const mockDecks: FlashcardDeck[] = useMemo(() => {
+    // 새로운 API에서 가져온 덱 정보를 기존 구조로 변환
+    return decks.map(deck => ({
+      id: parseInt(deck.deckId.replace('deck-uuid-', '')), // deckId를 숫자로 변환
+      category: '학습',
+      title: deck.deckName,
+      isBookmarked: Math.random() > 0.5, // Mock 데이터
+      tags: [`#${deck.deckName.split(' ')[0]}`, '#학습'], // Mock 태그
+      flashcards: currentDeckCards
+        .filter(card => card.deckId === deck.deckId)
+        .map(card => ({
+          id: card.cardId,
+          front: card.content, // content -> front 변환
+          back: card.answer,   // answer -> back 변환
+          tags: [`#카드${card.cardId}`, '#학습'], // Mock 태그
+        }))
+    }));
+  }, [decks, currentDeckCards]);
 
-  // 플래시카드 목록 (Redux에서 가져옴)
+  // 🎯 현재 덱 찾기 (기존 로직 유지)
+  const currentDeck = useMemo(() => {
+    return mockDecks.find(deck => deck.id === parseInt(deckId || '0'));
+  }, [mockDecks, deckId]);
+
+  // 🎯 컴포넌트 마운트 시 카드 데이터 로드
+  useEffect(() => {
+    if (deckId) {
+      // 실제 덱 ID 형식으로 변환 (숫자 -> UUID 형식)
+      const realDeckId = `deck-uuid-${deckId}`;
+      dispatch(setCurrentDeck(realDeckId));
+      dispatch(fetchCardsInDeck(realDeckId));
+    }
+  }, [dispatch, deckId]);
+
+  // 🎯 플래시카드 목록 (기존 로직 유지)
   const flashCards = useMemo(() => {
     if (!currentDeck) return [];
     return currentDeck.flashcards.map(card => ({
@@ -125,7 +189,7 @@ const FlashCardListPage: React.FC = () => {
     }));
   }, [currentDeck]);
 
-  // 모든 태그 목록 추출
+  // 모든 태그 목록 추출 (기존 로직 유지)
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     flashCards.forEach((card) => {
@@ -134,20 +198,21 @@ const FlashCardListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [flashCards]);
 
-  // 필터링된 카드 목록
+  // 필터링된 카드 목록 (기존 로직 유지)
   const filteredCards = useMemo(() => {
     return flashCards.filter((card) => {
-      const matchesSearch = card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                           card.back.toLowerCase().includes(filters.searchQuery.toLowerCase());
-      
       const matchesTags = filters.selectedTags.length === 0 || 
                          filters.selectedTags.some((tag: string) => card.tags.includes(tag));
       
       const matchesBookmark = !filters.showBookmarked || cardBookmarks[card.id];
 
-      return matchesSearch && matchesTags && matchesBookmark;
+      const matchesSearch = filters.searchQuery.trim() === '' || 
+                            card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+                            card.back.toLowerCase().includes(filters.searchQuery.toLowerCase());
+
+      return matchesTags && matchesBookmark && matchesSearch;
     });
-  }, [flashCards, filters.searchQuery, filters.selectedTags, filters.showBookmarked, cardBookmarks]);
+  }, [filters, flashCards, cardBookmarks]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilters({ searchQuery: event.target.value }));
@@ -177,14 +242,12 @@ const FlashCardListPage: React.FC = () => {
 
   const handleEditCard = (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    
-    // 수정할 카드 찾기
-    const cardToEdit = flashCards.find(card => card.id === id);
-    if (cardToEdit) {
+    const card = flashCards.find(c => c.id === id);
+    if (card) {
       setEditingCardId(id);
-      setEditCardFront(cardToEdit.front);
-      setEditCardBack(cardToEdit.back);
-      setEditCardTags(cardToEdit.tags.join(', '));
+      setEditCardFront(card.front);
+      setEditCardBack(card.back);
+      setEditCardTags(card.tags.join(', '));
       setShowEditDialog(true);
     }
   };
@@ -193,8 +256,9 @@ const FlashCardListPage: React.FC = () => {
     event.stopPropagation();
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
-    if (confirmed && currentDeck) {
-      dispatch(deleteCard({ deckId: currentDeck.id, cardId: id }));
+    if (confirmed) {
+      // 🎯 새로운 API 호출 (실제 cardId 사용) - string으로 변환
+      dispatch(deleteCard(id.toString()));
     }
   };
 
@@ -216,25 +280,21 @@ const FlashCardListPage: React.FC = () => {
 
   const handleEditDialogConfirm = () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
-    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null && currentDeck) {
-      const tags = editCardTags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null) {
+      // 🎯 새로운 API 형식으로 업데이트 - string으로 변환
+      dispatch(updateCard({ 
+        cardId: editingCardId.toString(), 
+        data: { 
+          content: editCardFront.trim(), 
+          answer: editCardBack.trim() 
+        } 
+      }));
       
-      const updatedCard = {
-        id: editingCardId,
-        front: editCardFront.trim(),
-        back: editCardBack.trim(),
-        tags: tags
-      };
-      
-      dispatch(updateCard({ deckId: currentDeck.id, card: updatedCard }));
       handleEditDialogClose();
     }
   };
 
-  // 덱이 없는 경우
+  // 덱이 없는 경우 (기존 로직 유지)
   if (!currentDeck) {
     return (
       <StyledContainer maxWidth="md">
@@ -248,8 +308,8 @@ const FlashCardListPage: React.FC = () => {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             덱을 찾을 수 없습니다
           </Typography>
-          <Button
-            variant="contained"
+          <Button 
+            variant="contained" 
             onClick={() => navigate('/flashcards')}
           >
             덱 목록으로 이동
@@ -268,30 +328,24 @@ const FlashCardListPage: React.FC = () => {
         </Typography>
       </HeaderBox>
 
-      {/* 검색창 */}
+      {/* 검색 */}
       <SearchBox>
         <TextField
           fullWidth
-          placeholder="Search cards"
+          placeholder="카드 내용 검색..."
           value={filters.searchQuery}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon color="action" />
+                <SearchIcon />
               </InputAdornment>
             ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              borderRadius: 2,
-            },
           }}
         />
       </SearchBox>
 
-      {/* 필터 버튼들 */}
+      {/* 필터 */}
       <FilterBox>
         <Button
           variant="outlined"
@@ -343,12 +397,8 @@ const FlashCardListPage: React.FC = () => {
         open={Boolean(tagMenuAnchor)}
         onClose={() => setTagMenuAnchor(null)}
       >
-        {allTags.map((tag: string) => (
-          <MenuItem 
-            key={tag} 
-            onClick={() => handleTagSelect(tag)}
-            selected={filters.selectedTags.includes(tag)}
-          >
+        {allTags.map(tag => (
+          <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
             {tag}
           </MenuItem>
         ))}
@@ -368,8 +418,15 @@ const FlashCardListPage: React.FC = () => {
         </MenuItem>
       </Menu>
 
+      {/* 로딩 상태 */}
+      {loading && (
+        <Box display="flex" justifyContent="center" py={4}>
+          <Typography>카드를 불러오는 중...</Typography>
+        </Box>
+      )}
+
       {/* 카드 리스트 */}
-      {filteredCards.map((card) => (
+      {!loading && filteredCards.map((card) => (
         <FlashCard key={card.id}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -450,7 +507,7 @@ const FlashCardListPage: React.FC = () => {
       ))}
 
       {/* 빈 상태 */}
-      {filteredCards.length === 0 && (
+      {!loading && filteredCards.length === 0 && (
         <Box 
           display="flex" 
           flexDirection="column" 
@@ -470,16 +527,9 @@ const FlashCardListPage: React.FC = () => {
         </Box>
       )}
 
-      {/* 플래시카드 수정 다이얼로그 */}
-      <Dialog
-        open={showEditDialog}
-        onClose={handleEditDialogClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          플래시카드 수정
-        </DialogTitle>
+      {/* 카드 수정 다이얼로그 */}
+      <Dialog open={showEditDialog} onClose={handleEditDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>카드 수정</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -523,14 +573,8 @@ const FlashCardListPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleEditDialogClose} variant="outlined">
-            취소
-          </Button>
-          <Button 
-            onClick={handleEditDialogConfirm} 
-            variant="contained" 
-            disabled={!editCardFront.trim() || !editCardBack.trim()}
-          >
+          <Button onClick={handleEditDialogClose}>취소</Button>
+          <Button onClick={handleEditDialogConfirm} variant="contained">
             수정
           </Button>
         </DialogActions>

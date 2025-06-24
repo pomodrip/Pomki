@@ -3,6 +3,13 @@ export interface Flashcard {
   front: string;
   back: string;
   tags?: string[]; // 카드별 태그 (덱 태그와 분리)
+
+  // SM-2 알고리즘 관련 필드
+  repetitions?: number;
+  efactor?: number;
+  interval?: number;
+  dueDate?: string;
+  nextReviewDate?: Date;
 }
 
 export interface FlashcardDeck {
@@ -19,6 +26,8 @@ export interface StudyFilters {
   selectedTags: string[];
   showBookmarked: boolean;
 }
+
+export type PracticeGrade = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface CreateDeckRequest {
   title: string;
