@@ -33,6 +33,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { setFilters } from '../../store/slices/studySlice';
+import { showToast } from '../../store/slices/toastSlice';
 import {
   fetchDecks,
   createDeck,
@@ -236,12 +237,24 @@ const FlashcardDeckListPage: React.FC = () => {
   
   const handleToggleBookmark = (deckId: string, event: React.MouseEvent) => {
     event.stopPropagation();
+    const currentBookmarkStatus = clientSideInfo[deckId]?.isBookmarked;
+    const newBookmarkStatus = !currentBookmarkStatus;
+    
     setClientSideInfo(prev => ({
       ...prev,
       [deckId]: {
         ...(prev[deckId] || { tags: [] }), // 기존 태그 정보 유지
-        isBookmarked: !prev[deckId]?.isBookmarked,
+        //기존 코드 주석처리
+        //isBookmarked: newBookmarkStatus, !prev[deckId]?.isBookmarked,
+        isBookmarked: newBookmarkStatus,
       }
+    }));
+
+    // 토스트 메시지 표시
+    dispatch(showToast({
+      message: newBookmarkStatus ? '북마크가 추가되었습니다.' : '북마크가 해제되었습니다.',
+      severity: 'success',
+      duration: 1500
     }));
   };
 

@@ -27,8 +27,16 @@ const Toast: React.FC = () => {
       open={open}
       autoHideDuration={duration}
       onClose={handleClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      sx={{ top: '80px !important' }}
+      // 기존 위치 설정 (상단 중앙)
+      // anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      // sx={{ top: '80px !important' }}
+      
+      // 새로운 위치 설정 (하단 오른쪽, 모바일에서는 bottomnav 위)
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      sx={{ 
+        bottom: { xs: '80px !important', sm: '16px !important' }, // 모바일에서는 bottomnav 위에, 데스크탑에서는 하단
+        right: '16px !important'
+      }}
     >
       <StyledAlert onClose={handleClose} severity={severity as AlertProps['severity']} variant="filled">
         {message}

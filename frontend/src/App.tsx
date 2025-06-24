@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -7,6 +6,7 @@ import GlobalStyles from './theme/GlobalStyles';
 import AppRoutes from './routes';
 import { useUI } from './hooks/useUI';
 import GlobalNotifications from './components/common/GlobalNotifications';
+import Toast from './components/common/Toast';
 
 // UI 초기화 컴포넌트
 function UIInitializer() {
@@ -42,6 +42,7 @@ function UIInitializer() {
       <GlobalStyles />
       <AppRoutes />
       <GlobalNotifications />
+      <Toast />
     </ThemeProvider>
   );
 }
