@@ -159,7 +159,7 @@ const FlashcardPracticePage: React.FC = () => {
       id: card.cardId,
       question: card.content, // content -> question
       answer: card.answer,   // answer -> answer
-      tags: [], // API에 태그 정보가 없으므로 임시로 빈 배열 사용
+      tags: [`#카드${card.cardId}`, '#학습'], // FlashCardListPage와 동일한 태그
     }));
   }, [currentDeck, combinedCards, fallbackCards.length]);
 
@@ -278,32 +278,49 @@ const FlashcardPracticePage: React.FC = () => {
           
           {/* 플래시카드 */}
           <FlashcardCard onClick={handleCardClick}>
-            <Typography
-              variant={showAnswer ? "h4" : "h5"}
-              textAlign="center"
-              sx={{
-                lineHeight: 1.6,
-                fontWeight: showAnswer ? 700 : 500,
-              }}
-            >
-              {showAnswer ? currentCard.answer : currentCard.question}
-            </Typography>
-          </FlashcardCard>
-
-          {/* 태그들 */}
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {currentCard.tags.map((tag, index) => (
-                <TagChip
-                  key={index}
-                  label={tag}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* 카드 내용 */}
+              <Typography
+                variant={showAnswer ? "h4" : "h5"}
+                textAlign="center"
+                sx={{
+                  lineHeight: 1.6,
+                  fontWeight: showAnswer ? 700 : 500,
+                  mb: !showAnswer ? 2 : 0,
+                }}
+              >
+                {showAnswer ? currentCard.answer : currentCard.question}
+              </Typography>
+              
+              {/* 태그들 - function 텍스트 아래에 표시 */}
+              {!showAnswer && (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: 0.5, 
+                  justifyContent: 'center'
+                }}>
+                  {currentCard.tags.slice(0, 3).map((tag, index) => (
+                    <TagChip 
+                      key={index} 
+                      label={tag} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  ))}
+                  {currentCard.tags.length > 3 && (
+                    <TagChip 
+                      label={`+${currentCard.tags.length - 3}`} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  )}
+                </Box>
+              )}
             </Box>
-          </Box>
+          </FlashcardCard>
 
           {/* 네비게이션(이전/다음) */}
           <Box
