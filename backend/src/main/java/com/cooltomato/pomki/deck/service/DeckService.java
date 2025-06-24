@@ -11,6 +11,7 @@ import com.cooltomato.pomki.card.repository.CardRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,8 @@ public class DeckService {
                                         .deckName(request.getDeckName())
                                         .isDeleted(false)
                                         .cardCnt(0L)
+                                        .updatedAt(LocalDateTime.now())
+                                        .createdAt(LocalDateTime.now())
                                         .build();
             
             Deck entity = deckRepository.save(deck);
@@ -48,6 +51,7 @@ public class DeckService {
                     .deckId(entity.getDeckId())
                     .deckName(entity.getDeckName())
                     .createdAt(entity.getCreatedAt())
+                    .updatedAt(entity.getUpdatedAt())
                     .cardCnt(entity.getCardCnt())
                     .build();
         }
@@ -69,6 +73,7 @@ public class DeckService {
                     .deckId(deck.getDeckId())
                     .deckName(deck.getDeckName())
                     .createdAt(deck.getCreatedAt())
+                    .updatedAt(deck.getUpdatedAt())
                     .cardCnt(deck.getCardCnt())
                     .build())
                     .toList();
@@ -106,6 +111,7 @@ public class DeckService {
             Deck deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId)
                     .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
             deck.setDeckName(request.getDeckName());
+            deck.setUpdatedAt(LocalDateTime.now());
             Deck entity = deckRepository.save(deck);
             return DeckResponseDto.builder()
                     .deckId(entity.getDeckId())
@@ -146,7 +152,7 @@ public class DeckService {
 
             List<Deck> decks = deckRepository.findByMemberIdAndIsDeletedFalse(principal.getMemberId());
             if (decks.isEmpty()) {
-                throw new IllegalArgumentException("멤버의 덱이 존재하지 않습니다.");
+                throw new IllegalArgumentException("검색 결과가 없습니다.");
             }
 
             List<String> deckIds = decks.stream()

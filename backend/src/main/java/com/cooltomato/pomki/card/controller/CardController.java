@@ -67,8 +67,8 @@ public class CardController {
 
     // 카드 검색
     @GetMapping("/search/{keyword}")
-    public ResponseEntity<List<CardResponseDto>> searchCards(@PathVariable("keyword") String keyword) {
-        List<CardResponseDto> result = service.searchCardsByKeywordService(keyword);
+    public ResponseEntity<List<CardResponseDto>> searchCards(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("keyword") String keyword) {
+        List<CardResponseDto> result = service.searchCardsByKeywordService(principal, keyword);
         return ResponseEntity.ok(result);
     }
 } 
