@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, styled, Typography } from '@mui/material';
+import { Avatar, Box, Container, styled, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button';
 import { useResponsive } from '../../hooks/useResponsive';
 import { logoutUser } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
+import MembershipBadge from '../../components/common/MembershipBadge';
 
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -32,6 +33,10 @@ const ProfilePage: React.FC = () => {
 
   const handleEditProfile = () => {
     navigate('/profile/edit');
+  };
+
+  const handleMembershipManagement = () => {
+    navigate('/membership/premium');
   };
 
   // 디버깅용 로그
@@ -95,49 +100,64 @@ const ProfilePage: React.FC = () => {
       {/* 통합된 프로필 카드 */}
       <Card cardVariant="default" sx={{ backgroundColor: 'background.paper' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* 사용자 정보 섹션 */}
+          {/* 프로필 정보 섹션 */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 3 }}>
+            {/* 아바타 이미지 */}
+            <Avatar
+              sx={{
+                width: 100,
+                height: 100,
+                fontSize: '2rem',
+                backgroundColor: 'primary.main'
+              }}
+            >
+              {user?.nickname?.charAt(0)?.toUpperCase() || 'U'}
+            </Avatar>
+
+            {/* 사용자 이름 */}
+            <Typography variant="h2" sx={{ fontWeight: 600 }}>
+              {user?.nickname || '사용자명'}
+            </Typography>
+
+            {/* 멤버십 뱃지 */}
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <MembershipBadge membership="premium" size="medium" />
+            </Box>
+
+            {/* 이메일 */}
+            <Typography variant="body1" color="text.secondary">
+              {user?.email || 'user@example.com'}
+            </Typography>
+          </Box>
+
+          {/* 구분선 */}
+          <Box sx={{
+            height: '1px',
+            backgroundColor: 'divider',
+            opacity: 0.12
+          }} />
+
+          {/* 멤버십 섹션 */}
           <Box>
             <Typography variant="h3" gutterBottom sx={{ mb: 3 }}>
-              사용자 정보
+              멤버십
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* 이름 */}
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: isMobile ? 'column' : 'row',
-                justifyContent: 'space-between', 
-                alignItems: isMobile ? 'flex-start' : 'center',
-                gap: 1
-              }}>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  이름
-                </Typography>
-                <Typography variant="body1">
-                  {user?.nickname || '사용자명'}
-                </Typography>
-              </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-              {/* 이메일 */}
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: isMobile ? 'column' : 'row',
-                justifyContent: 'space-between', 
-                alignItems: isMobile ? 'flex-start' : 'center',
-                gap: 1
-              }}>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  이메일
-                </Typography>
-                <Typography variant="body1">
-                  {user?.email || 'user@example.com'}
-                </Typography>
-              </Box>
+              {/* 멤버십 관리 버튼 */}
+              <Button
+                variant="contained"
+                onClick={handleMembershipManagement}
+                sx={{ py: 1.5 }}
+              >
+                멤버십 관리
+              </Button>
             </Box>
           </Box>
 
           {/* 구분선 */}
-          <Box sx={{ 
-            height: '1px', 
+          <Box sx={{
+            height: '1px',
             backgroundColor: 'divider',
             opacity: 0.12
           }} />
@@ -152,17 +172,17 @@ const ProfilePage: React.FC = () => {
               gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
               gap: 2
             }}>
-              <Button 
-                variant="contained" 
-                color="primary" 
+              <Button
+                variant="contained"
+                color="primary"
                 onClick={handleEditProfile}
                 sx={{ py: 1.5 }}
               >
                 프로필 편집
               </Button>
-              <Button 
-                variant="outlined" 
-                color="error" 
+              <Button
+                variant="outlined"
+                color="error"
                 onClick={handleLogout}
                 sx={{ py: 1.5 }}
               >
