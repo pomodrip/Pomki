@@ -25,9 +25,15 @@ import java.util.List;
 public class Deck {
     
     @Id
-    @GeneratedValue(generator = "uuid2")
     @Column(name = "deck_id", length = 50, nullable = false, unique = true)
     private String deckId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.deckId == null) {
+            this.deckId = java.util.UUID.randomUUID().toString();
+        }
+    }
 
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Card> cards = new ArrayList<>();
