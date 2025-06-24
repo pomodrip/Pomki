@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.card.repository.CardRepository;
+import com.cooltomato.pomki.deck.entity.Deck;
+import com.cooltomato.pomki.deck.repository.DeckRepository;
 import com.cooltomato.pomki.tag.dto.TagRequestDto;
 import com.cooltomato.pomki.tag.dto.TagResponseDto;
 import com.cooltomato.pomki.tag.entity.Tag;
@@ -18,10 +20,17 @@ import lombok.RequiredArgsConstructor;
 public class TagService {
     private final TagRepository tagRepository;
     private final CardRepository cardRepository; 
-    
+    private final DeckRepository deckRepository;
+
     public TagResponseDto createOneTagService(PrincipalMember principal, Long cardId, String tagName) {
         // 1. Card와 Tag를 미리 조회하거나 생성
         Card card = cardRepository.findById(cardId).orElseThrow(()-> new RuntimeException("해당하는 카드가 없습니다"));
+
+        Deck deck = deckRepository.findMemberIdByDeckId(card.getDeck().getDeckId());
+
+        if(deck.getMemberId() != principal.getMemberId()) {
+            throw new RuntimeException("해당 카드의 주인이 아닙니다: 카드의 주인 - " + deck.getMemberId() + "/" + "현재 사용자 - " + principal.getMemberId());
+        }
         
         Tag tag = Tag.builder()
             .memberId(principal.getMemberId())
@@ -56,7 +65,7 @@ public class TagService {
         
     }
 
-    public String deleteOneTagService(PrincipalMember principal, Long tagId) {
+    public void deleteOneTagService(PrincipalMember principal, Long tagId) {
         
         Tag tag = tagRepository.findById(tagId).orElseThrow(()-> new RuntimeException("해당하는 태그가 없습니다"));
         
@@ -68,8 +77,6 @@ public class TagService {
 
         // 태그 삭제
         tagRepository.deleteById(tagId);
-        
-        return "태그 삭제 성공";
 
     }
 } 

@@ -54,10 +54,7 @@ public class Card {
     )
     private Deck deck;
 
-    public Optional<Card> orElseThrow(Object object) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
-    }
+    
 
     // // deck_id를 가져오는 편의 메서드
     // public String getDeckId() {
