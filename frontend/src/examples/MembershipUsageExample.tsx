@@ -59,7 +59,7 @@ const MembershipUsageExample: React.FC = () => {
     // 복합 상태
     hasPremiumMembership,
     selectedPlanInfo,
-    premiumFeatures,
+    // premiumFeatures,
     
     // 액션들
     loadCurrentMembership,
@@ -87,8 +87,8 @@ const MembershipUsageExample: React.FC = () => {
   const membershipFeatures = useMembershipFeatures();
   
   const {
-    startPayment,
-    checkStatus,
+    //startPayment,
+    //checkStatus,
     resetProcess,
     isPaymentComplete,
     isPaymentFailed,
@@ -604,7 +604,7 @@ const MembershipUsageExample: React.FC = () => {
               <ListItemText primary="노트 내보내기 기능" />
             </ListItem>
             <ListItem>
-              <ListItemIcon><CheckCircle color="primary" /></ListItemText>
+              <ListItemIcon><CheckCircle color="primary" /></ListItemIcon>
               <ListItemText primary="무제한 덱 생성" />
             </ListItem>
             <ListItem>
