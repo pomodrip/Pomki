@@ -2,6 +2,7 @@ package com.cooltomato.pomki.email.service;
 
 import java.util.UUID;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.cooltomato.pomki.auth.jwt.JwtProvider;
@@ -27,7 +28,8 @@ public class EmailService {
     private final EmailUtil emailUtil;
     private final JwtProvider jwtProvider;
 
-    public EmailVerificationResponseDto sendVerificationCode(EmailVerificationRequestDto request) {
+    @Async("emailTaskExecutor")
+    public void sendVerificationCode(EmailVerificationRequestDto request) {
 
         EmailVerification existingVerification = emailVerificationRepository
                 .findById(request.getEmail())
@@ -57,14 +59,11 @@ public class EmailService {
             emailUtil.sendEmail(request.getEmail(), subject, content);
             log.debug("이메일 발송 성공: {}", request.getEmail());
             
-            return EmailVerificationResponseDto.builder()
-                    .success(true)
-                    .message("인증코드가 발송되었습니다.")
-                    .build();
+            log.info("이메일 인증코드 발송 완료: {}", request.getEmail());
         } catch (Exception e) {
             emailVerificationRepository.deleteById(request.getEmail());
             log.error("이메일 발송 실패: {} - 에러: {}", request.getEmail(), e.getMessage(), e);
-            throw new BadRequestException("이메일 발송에 실패했습니다: " + e.getMessage());
+            throw new BadRequestException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 

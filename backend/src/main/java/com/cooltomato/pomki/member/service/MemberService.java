@@ -36,12 +36,12 @@ public class MemberService {
     private final JwtProvider jwtProvider;
 
     @Transactional
-    public Member signUp(MemberSignUpRequestDto request) {
+    public void signUp(MemberSignUpRequestDto request) {
         if (!emailService.isValidVerificationToken(request.getEmail(), request.getVerificationToken())) {
             throw new BadRequestException("이메일 인증이 완료되지 않았거나 만료된 요청입니다.");
         }
         
-        return createMember(request);
+        createMember(request);
     }
     
     private Member createMember(MemberSignUpRequestDto request) {
