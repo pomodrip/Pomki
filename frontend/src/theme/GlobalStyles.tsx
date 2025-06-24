@@ -9,7 +9,6 @@ const GlobalStyles = () => {
           margin: 0,
           padding: 0,
           boxSizing: 'border-box',
-          WebkitTapHighlightColor: 'transparent', // 모바일 터치 하이라이트 제거
         },
         html: {
           width: '100%',
