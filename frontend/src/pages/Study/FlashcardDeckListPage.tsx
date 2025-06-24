@@ -168,11 +168,23 @@ const FlashcardDeckListPage: React.FC = () => {
     if (decks.length > 0) {
       setClientSideInfo(prevInfo => {
         const newInfo = { ...prevInfo };
-        decks.forEach(deck => {
+        decks.forEach((deck, index) => {
           if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
+            // 덱별로 다양한 태그 생성
+            const tagSets = [
+              ['#영어', '#단어', '#기초'],
+              ['#일본어', '#회화', '#중급'],
+              ['#프로그래밍', '#개발', '#CS'],
+              ['#수학', '#공식', '#고등'],
+              ['#과학', '#물리', '#화학'],
+              ['#역사', '#한국사', '#근현대'],
+              ['#문학', '#고전', '#현대'],
+              ['#경제', '#금융', '#투자'],
+            ];
+            
             newInfo[deck.deckId] = {
               isBookmarked: Math.random() > 0.5, // Mock 데이터
-              tags: [`#${deck.deckName.split(' ')[0]}`, '#임시태그'], // Mock 데이터
+              tags: tagSets[index % tagSets.length], // Mock 데이터
             };
           }
         });
@@ -180,6 +192,36 @@ const FlashcardDeckListPage: React.FC = () => {
       });
     }
   }, [decks]);
+
+  // 🎯 Fallback 덱이 로드될 때도 클라이언트 측 정보 초기화
+  useEffect(() => {
+    if (fallbackDecks.length > 0) {
+      setClientSideInfo(prevInfo => {
+        const newInfo = { ...prevInfo };
+        fallbackDecks.forEach((deck, index) => {
+          if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
+            // 덱별로 다양한 태그 생성
+            const tagSets = [
+              ['#영어', '#단어', '#기초'],
+              ['#일본어', '#회화', '#중급'],
+              ['#프로그래밍', '#개발', '#CS'],
+              ['#수학', '#공식', '#고등'],
+              ['#과학', '#물리', '#화학'],
+              ['#역사', '#한국사', '#근현대'],
+              ['#문학', '#고전', '#현대'],
+              ['#경제', '#금융', '#투자'],
+            ];
+            
+            newInfo[deck.deckId] = {
+              isBookmarked: Math.random() > 0.5, // Mock 데이터
+              tags: tagSets[index % tagSets.length], // Mock 데이터
+            };
+          }
+        });
+        return newInfo;
+      });
+    }
+  }, [fallbackDecks]);
 
   // 🎯 Redux 덱과 Fallback 덱을 합치기
   const combinedDecks = useMemo(() => {
@@ -470,6 +512,8 @@ const FlashcardDeckListPage: React.FC = () => {
             label={tag}
             onDelete={() => handleTagSelect(tag)}
             size="small"
+            color="primary"
+            variant="filled"
           />
         ))}
       </SelectedTagsBox>
@@ -542,10 +586,10 @@ const FlashcardDeckListPage: React.FC = () => {
                   }}
                 >
                   {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
-                    <TagChip key={tag} label={tag} size="small" />
+                    <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
                   ))}
                   {isMobile && deck.tags.length > 5 && (
-                    <TagChip label={`+${deck.tags.length - 5}`} size="small" />
+                    <TagChip label={`+${deck.tags.length - 5}`} size="small" color="primary" variant="outlined" />
                   )}
                 </Box>
               </CardContent>
