@@ -286,6 +286,7 @@ const FlashcardDeckListPage: React.FC = () => {
     <StyledContainer>
       <HeaderBox>
         <Typography variant="h4" component="h1">플래시카드 덱</Typography>
+        {/* 덱 생성 버튼 - 상단 고정  */}
         <Fab color="primary" aria-label="add" onClick={() => setShowCreateDialog(true)} size="medium">
           <AddIcon />
         </Fab>
@@ -473,6 +474,11 @@ const FlashcardDeckListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 덱 생성 버튼 - 하단 고정 */}
+      <Fab color="primary" aria-label="add" onClick={() => setShowCreateDialog(true)} size={isMobile ? "small" : "medium"} sx={{ position: 'fixed', bottom: isMobile ? 80 : 16, right: 16, zIndex: 1000 }}>
+        <AddIcon />
+      </Fab>
     </StyledContainer>
   );
 };
