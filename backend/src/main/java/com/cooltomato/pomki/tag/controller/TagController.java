@@ -15,6 +15,7 @@ import java.net.ResponseCache;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -25,11 +26,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class TagController {
     private final TagService service;
 
+    // 태그 생성
     @PostMapping
-    public ResponseEntity<TagResponseDto> createOneTagForCard(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("cardId") Long cardId, @RequestParam("tagName") String tagName) {
+    public ResponseEntity<TagResponseDto> createOneTagForCard(
+        @AuthenticationPrincipal PrincipalMember principal,
+        @RequestParam("cardId") Long cardId, @RequestParam("tagName") String tagName) {
         TagResponseDto response = service.createOneTagService(principal, cardId, tagName);
 
         return ResponseEntity.ok(response);
     }
     
-} 
+    // 태그 삭제
+    @DeleteMapping
+    public ResponseEntity<Void> deleteOneTagForCard(
+        @AuthenticationPrincipal PrincipalMember principal, 
+        @RequestParam("tagId") Long tagId) {
+
+        service.deleteOneTagService(principal, tagId);
+
+        return ResponseEntity.noContent().build();
+            
+    } 
+}

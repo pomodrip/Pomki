@@ -33,7 +33,7 @@ public class Tag {
     private String tagName;
 
     // 연관관계 매핑 (양방향)
-    @OneToMany(mappedBy = "tag", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TagCard> cardTags = new ArrayList<>();
 }

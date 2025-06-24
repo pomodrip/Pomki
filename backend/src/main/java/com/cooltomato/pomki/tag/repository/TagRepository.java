@@ -1,5 +1,6 @@
 package com.cooltomato.pomki.tag.repository;
 
+import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.tag.entity.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

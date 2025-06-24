@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TagService {
     private final TagRepository tagRepository;
-    private final CardRepository cardRepository;
+    private final CardRepository cardRepository; 
     
     public TagResponseDto createOneTagService(PrincipalMember principal, Long cardId, String tagName) {
         // 1. Card와 Tag를 미리 조회하거나 생성
@@ -54,5 +54,22 @@ public class TagService {
                                 .memberId(tag.getMemberId())
                             .build() ;
         
+    }
+
+    public String deleteOneTagService(PrincipalMember principal, Long tagId) {
+        
+        Tag tag = tagRepository.findById(tagId).orElseThrow(()-> new RuntimeException("해당하는 태그가 없습니다"));
+        
+        
+        if(tag.getMemberId() != principal.getMemberId()) {
+            throw new RuntimeException("해당 태그의 주인이 아닙니다: 태그 주인 - " + tag.getMemberId() + "/" + "현재 사용자 - " + principal.getMemberId());
+        }
+
+
+        // 태그 삭제
+        tagRepository.deleteById(tagId);
+        
+        return "태그 삭제 성공";
+
     }
 } 
