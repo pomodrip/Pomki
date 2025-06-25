@@ -11,4 +11,10 @@ import java.util.Optional;
 public interface CardRepository extends JpaRepository<Card, Long> {
     Optional<Card> findByCardIdAndIsDeletedFalse(Long cardId);
     List<Card> findByDeckDeckIdAndIsDeletedFalse(String deckId);
+    List<Card> findByDeckDeckIdInAndIsDeletedFalse(List<String> deckIds);
+    List<Card> findByContentContainingIgnoreCaseOrAnswerContainingIgnoreCaseAndIsDeletedFalse(String contentKeyword, String answerKeyword);
+    
+    // 사용자의 덱에 속한 카드들 중에서 키워드로 검색
+    List<Card> findByDeck_MemberIdAndContentContainingIgnoreCaseOrDeck_MemberIdAndAnswerContainingIgnoreCaseAndIsDeletedFalse(
+        Long memberId, String contentKeyword, Long memberId2, String answerKeyword);
 } 
