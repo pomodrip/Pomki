@@ -54,6 +54,7 @@ const FlashcardCard = styled(MuiCard)(({ theme }) => ({
   cursor: 'pointer',
   padding: theme.spacing(3),
   transition: 'all 0.2s',
+  position: 'relative', // 태그를 절대 위치로 배치하기 위해
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: theme.shadows[4],
@@ -61,9 +62,12 @@ const FlashcardCard = styled(MuiCard)(({ theme }) => ({
 }));
 
 const TagChip = styled(Chip)(({ theme }) => ({
-  fontSize: '0.75rem',
-  height: 24,
+  fontSize: '0.65rem', // 더 작은 글자 크기
+  height: 20, // 더 작은 높이
   marginRight: theme.spacing(0.5),
+  '& .MuiChip-label': {
+    padding: theme.spacing(0, 0.5), // 패딩 조정
+  },
 }));
 
 const ProgressBar = styled(Box)(({ theme }) => ({
@@ -352,9 +356,13 @@ const FlashcardPracticePage: React.FC = () => {
                 {showAnswer ? currentCard.answer : currentCard.question}
               </Typography>
               
-              {/* 태그들 - function 텍스트 아래에 표시 */}
+              {/* 태그들 - 카드 하단에 고정 */}
               {!showAnswer && (
                 <Box sx={{ 
+                  position: 'absolute',
+                  bottom: theme => theme.spacing(2.5), // 카드 바닥에서 조금 더 위로
+                  left: theme => theme.spacing(3),
+                  right: theme => theme.spacing(3),
                   display: 'flex', 
                   flexWrap: 'wrap', 
                   gap: 0.5, 
