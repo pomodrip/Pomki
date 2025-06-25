@@ -90,26 +90,34 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // 🔥 토큰 갱신 실패 시 401 에러 스낵바 표시
+        // 🔥 토큰 갱신 실패 시 스낵바 표시 후 자동 리디렉션
         console.error('Token refresh failed:', refreshError);
         cookies.clearAuthCookies();
         
         // Redux store도 클리어
         if (store) {
           const { clearAuth } = await import('../store/slices/authSlice');
+          store.dispatch(clearAuth());
+        }
+        
+        // 현재 페이지가 로그인 페이지가 아닌 경우에만 스낵바 표시
+        if (window.location.pathname !== '/login' && store) {
+          const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
+          store.dispatch(show401ErrorSnackbar());
+        }
+        
+        return Promise.reject(error);
+      }
+      
+      // refreshToken이 없는 경우에도 스낵바 표시 후 자동 리디렉션
+      if (window.location.pathname !== '/login') {
+        cookies.clearAuthCookies();
+        if (store) {
+          const { clearAuth } = await import('../store/slices/authSlice');
           const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
           store.dispatch(clearAuth());
           store.dispatch(show401ErrorSnackbar());
         }
-        
-        // 스낵바가 표시된 후 자동으로 리디렉션하지 않음 (사용자가 로그인 버튼을 클릭해야 함)
-        return Promise.reject(error);
-      }
-      
-      // refreshToken이 없는 경우에도 401 에러 스낵바 표시
-      if (store) {
-        const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
-        store.dispatch(show401ErrorSnackbar());
       }
     }
     

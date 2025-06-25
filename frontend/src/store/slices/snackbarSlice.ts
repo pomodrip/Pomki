@@ -50,7 +50,7 @@ const snackbarSlice = createSlice({
       state.action = undefined;
       state.anchorOrigin = { vertical: 'bottom', horizontal: 'center' };
     },
-    showErrorSnackbar: (state, action: PayloadAction<{ message: string }>) => {
+        showErrorSnackbar: (state, action: PayloadAction<{ message: string }>) => {
       state.open = true;
       state.message = action.payload.message;
       state.severity = 'error';
@@ -75,9 +75,9 @@ const snackbarSlice = createSlice({
       state.action = undefined;
     },
   },
-});
-
-export const { 
+  });
+  
+  export const { 
   showSnackbar, 
   showSuccessSnackbar, 
   showErrorSnackbar,

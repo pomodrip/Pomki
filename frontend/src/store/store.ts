@@ -42,6 +42,13 @@ setStoreReference(store);
 // 🛠️ 개발 환경에서만 브라우저 콘솔에서 store에 접근할 수 있도록 전역 노출
 if (import.meta.env.DEV) {
   (window as any).store = store;
+  
+  // 콘솔에서 쉽게 테스트할 수 있는 함수들 노출
+  (window as any).test401Error = () => {
+    store.dispatch({
+      type: 'snackbar/show401ErrorSnackbar'
+    });
+  };
 }
 
 export type RootState = ReturnType<typeof store.getState>;
