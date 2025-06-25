@@ -8,12 +8,12 @@ public class JwtUtil {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
 
-    public static String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader(AUTHORIZATION_HEADER);
+    public static String resolveToken(String authorization) {
+        String bearer = authorization;
         if (bearer != null && bearer.startsWith(BEARER_PREFIX)) {
             return bearer.substring(BEARER_PREFIX.length());
         }
-        return null;
+        return "";
     }
 
     public static String extractRefreshToken(HttpServletRequest request) {

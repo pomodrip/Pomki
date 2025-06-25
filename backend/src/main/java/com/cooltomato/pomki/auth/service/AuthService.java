@@ -59,13 +59,8 @@ public class AuthService {
     }
 
     public AccessTokenResponseDto refresh(String refreshToken) {
-        tokenProvider.validateToken(refreshToken);
 
-        refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 RefreshToken 입니다."));
-
-        Authentication authentication = tokenProvider.getAuthentication(refreshToken);
-        String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
+        String newAccessToken = tokenProvider.createAccessTokenFromRefreshToken(refreshToken);
 
         return AccessTokenResponseDto.builder()
                 .accessToken(newAccessToken)
@@ -76,14 +71,9 @@ public class AuthService {
         refreshTokenRepository.deleteById(refreshToken);
     }
 
-    public AccessTokenResponseDto reissue(String refreshToken) {
-        tokenProvider.validateToken(refreshToken);
-
-        refreshTokenRepository.findById(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 RefreshToken 입니다."));
-
-        Authentication authentication = tokenProvider.getAuthentication(refreshToken);
-        String newAccessToken = tokenProvider.createAccessTokenFromAuthentication(authentication);
+    public AccessTokenResponseDto refresh(String refreshToken, String accessToken) {
+        
+        String newAccessToken = tokenProvider.createAccessTokenFromRefreshToken(refreshToken,accessToken);
 
         return AccessTokenResponseDto.builder()
                 .accessToken(newAccessToken)

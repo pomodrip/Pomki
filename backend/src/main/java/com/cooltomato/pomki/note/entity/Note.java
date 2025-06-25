@@ -1,67 +1,60 @@
 package com.cooltomato.pomki.note.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
+import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.noteimage.entity.NoteImage;
+import com.cooltomato.pomki.tag.entity.NoteTag;
 
 @Entity
-@Table(name = "NOTE")
-@Getter
-@Setter
-@NoArgsConstructor
-public class Note {
+@Table(name = "review_note")
+@Data
 
+public class Note {
     @Id
-    @UuidGenerator
-    @Column(name = "note_id", length = 50)
+    @Column(name = "note_id", length = 50, nullable = false)
     private String noteId;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    // FK: member_id → member 테이블
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 
-    @Column(name = "note_title", nullable = false)
+    @Column(name = "note_title", length = 255)
     private String noteTitle;
 
-    @Lob
-    @Column(name = "note_content", nullable = false, columnDefinition = "LONGTEXT")
+    @Column(name = "note_content", columnDefinition = "LONGTEXT", nullable = false)
     private String noteContent;
 
-    @Lob
+    @Column(name = "ai_enhanced")
+    private Boolean aiEnhanced;
+
     @Column(name = "original_content", columnDefinition = "LONGTEXT")
     private String originalContent;
 
-    @Column(name = "ai_enhanced")
-    private Boolean aiEnhanced = false;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false;
-
-    @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
 
-    @Builder
-    public Note(Long memberId, String noteTitle, String noteContent, String originalContent, 
-                Boolean aiEnhanced, boolean isDeleted) {
-        this.memberId = memberId;
-        this.noteTitle = noteTitle;
-        this.noteContent = noteContent;
-        this.originalContent = originalContent;
-        this.aiEnhanced = aiEnhanced != null ? aiEnhanced : false;
-        this.isDeleted = isDeleted;
-    }
+    // 연관관계: NOTE_IMAGE(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<NoteImage> noteImages;
+
+    // 연관관계: BOOKMARK_NOTE(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<Bookmark> bookmarkNotes;
+
+    // 연관관계: NOTE_TAG(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<NoteTag> noteTags;
 } 

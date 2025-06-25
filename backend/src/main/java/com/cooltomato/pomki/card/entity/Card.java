@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.card.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,54 +9,60 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.cooltomato.pomki.deck.entity.Deck;
+import com.cooltomato.pomki.tag.entity.Tag;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
+@Builder
 @Entity
-@Table(name = "CARD")
+@Table(name = "card")
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Card {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "card_id")
     private Long cardId;
 
-    @Column(name = "deck_id", nullable = false, length = 50)
-    private String deckId;
-
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
-
-    @Lob
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Lob
     @Column(name = "answer", nullable = false, columnDefinition = "TEXT")
     private String answer;
 
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false;
-
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 
-    @Builder
-    public Card(String deckId, Long memberId, String content, String answer, boolean isDeleted) {
-        this.deckId = deckId;
-        this.memberId = memberId;
-        this.content = content;
-        this.answer = answer;
-        this.isDeleted = isDeleted;
-    }
+    // 의존관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "deck_id",
+        referencedColumnName = "deck_id",
+        nullable = false,
+        foreignKey = @ForeignKey(name = "FK_card_deck")
+    )
+    private Deck deck;
+
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Tag> tags = new ArrayList<>();
+
+    
+
+    // // deck_id를 가져오는 편의 메서드
+    // public String getDeckId() {
+    //     return deck != null ? deck.getDeckId() : null;
+    // }
 } 

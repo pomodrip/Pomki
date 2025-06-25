@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.validation.FieldError;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.sql.SQLException;
 
@@ -43,6 +44,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<String> handleNotFoundException(NotFoundException exception) {
         log.error("NotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<String> handleMemberNotFoundException(MemberNotFoundException exception) {
+        log.error("MemberNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(NoteNotFoundException.class)
+    public ResponseEntity<String> handleNoteNotFoundException(NoteNotFoundException exception) {
+        log.error("NoteNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(EmailVerificationNotFoundException.class)
+    public ResponseEntity<String> handleEmailVerificationNotFoundException(EmailVerificationNotFoundException exception) {
+        log.error("EmailVerificationNotFoundException: ", exception);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
     }
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -108,5 +127,54 @@ public class GlobalExceptionHandler {
         }
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+    }
+
+    @ExceptionHandler(EmptyFileException.class)
+    public ResponseEntity<String> handleEmptyFileException(EmptyFileException exception) {
+        log.error("EmptyFileException: ", exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(UnsupportedFormatException.class)
+    public ResponseEntity<String> handleUnsupportedFormatException(UnsupportedFormatException exception) {
+        log.error("UnsupportedFormatException: ", exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(FileSizeExceededException.class)
+    public ResponseEntity<String> handleFileSizeExceededException(FileSizeExceededException exception) {
+        log.error("FileSizeExceededException: ", exception);
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(ProcessingFailedException.class)
+    public ResponseEntity<String> handleProcessingFailedException(ProcessingFailedException exception) {
+        log.error("ProcessingFailedException: ", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(UploadFailedException.class)
+    public ResponseEntity<String> handleUploadFailedException(UploadFailedException exception) {
+        log.error("UploadFailedException: ", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(S3OperationFailedException.class)
+    public ResponseEntity<String> handleS3OperationFailedException(S3OperationFailedException exception) {
+        log.error("S3OperationFailedException: ", exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException exception) {
+        log.error("MaxUploadSizeExceededException: ", exception);
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body("업로드 파일 크기가 허용된 최대 크기를 초과했습니다.");
+    }
+
+    @ExceptionHandler(ImageException.class)
+    public ResponseEntity<String> handleImageException(ImageException exception) {
+        log.error("ImageException: ", exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
 }
