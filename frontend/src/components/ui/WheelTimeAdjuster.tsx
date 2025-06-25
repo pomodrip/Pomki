@@ -35,6 +35,12 @@ const WheelArea = styled(Box)(({ theme }) => ({
   cursor: 'pointer',
   userSelect: 'none',
   fontFamily: theme.typography.fontFamily, // KoddiUD 폰트 적용
+  
+  [theme.breakpoints.down('sm')]: {
+    width: '65px', // 모바일에서 너비 줄임
+    height: '65px', // 모바일에서 높이 줄임
+    fontSize: '24px', // 모바일에서 폰트 크기 줄임
+  },
 }));
 
 // 라벨 스타일
@@ -54,6 +60,12 @@ const Arrow = styled('div')({
   pointerEvents: 'none', // 클릭 이벤트 방지
   lineHeight: 1,
 });
+
+// 숫자 표시 스타일
+const ValueText = styled('span')(() => ({
+  fontSize: '32px',
+  fontWeight: 700,
+}));
 
 const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
   value,
@@ -159,7 +171,7 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
           gap: '4px' // 숫자와 화살표 사이 간격
         }}>
           
-          <span style={{ fontSize: '32px', fontWeight: 700 }}>{value}</span>
+          <ValueText>{value}</ValueText>
           <Box sx={{ 
             display: 'flex', 
             flexDirection: 'column',

@@ -109,6 +109,8 @@ const TimerCircle = styled(Box)(() => ({
   alignItems: 'center',
   justifyContent: 'center',
   marginBottom: '32px', // Large Spacing
+  width: '280px', // 기본 크기 설정
+  height: '280px', // 기본 크기 설정
   
   '@media (min-width: 600px)': {
     width: '320px',
@@ -359,11 +361,15 @@ const SettingsContainer = styled(Box)(() => ({
   gap: '24px',
 }));
 
-const SettingsRow = styled(Box)(() => ({
+const SettingsRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: '16px',
+  
+  [theme.breakpoints.down('sm')]: {
+    gap: '8px', // 모바일에서 간격 줄임
+  },
 }));
 
 const PresetsSection = styled(Box)(() => ({
@@ -508,6 +514,10 @@ const TimerPage: React.FC = () => {
     });
     
     setLocalSettings({ ...tempSettings });
+    
+    // 타이머 상태 초기화
+    stop();
+    setHasTimerStarted(false);
     setShowSettings(false);
   };
 
@@ -1038,7 +1048,12 @@ const TimerPage: React.FC = () => {
           />
         </CircularProgress>
 
-        <TimerDisplay>{formatTime(minutes, seconds)}</TimerDisplay>
+        <TimerDisplay>
+          {isRunning || hasTimerStarted 
+            ? formatTime(minutes, seconds)
+            : formatTime(localSettings.focusMinutes, 0)
+          }
+        </TimerDisplay>
       </TimerCircle>
 
       <ButtonContainer>
@@ -1186,9 +1201,27 @@ const TimerPage: React.FC = () => {
       <Modal
         open={showSettings}
         onClose={handleCancelSettings}
-        title="타이머 설정"
+        title=""
         actions={settingsActions}
       >
+        {/* 커스텀 제목 헤더 */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'baseline', 
+          gap: '8px', 
+          marginBottom: '16px'
+        }}>
+          <Text sx={{ fontSize: '1.25rem', fontWeight: 600 }}>
+            타이머 설정
+          </Text>
+          <Text sx={{ 
+            fontSize: '0.75rem', 
+            fontWeight: 400, 
+            color: '#6B7280'
+          }}>
+            (휠 또는 터치로 조정 가능)
+          </Text>
+        </Box>
         <SettingsContainer>
           <SettingsRow>
             <WheelTimeAdjuster
