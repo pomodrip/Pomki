@@ -17,47 +17,47 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AIService {
 
-    private final AIPromptRepository aiPromptRepository;
+    // private final AIPromptRepository aiPromptRepository;
     private final MemberRepository memberRepository;
-    private final MemberAiHistoryService memberAiHistoryService; // 비용 로깅 서비스 주입
-    private final Map<String, LLMService> llmServices;
+    // private final MemberAiHistoryService memberAiHistoryService; // 비용 로깅 서비스 주입
+    // private final Map<String, LLMService> llmServices;
 
-    // 생성자에서 provider 이름으로 서비스를 맵핑
-    public AIService(AIPromptRepository aiPromptRepository, MemberRepository memberRepository, MemberAiHistoryService memberAiHistoryService, List<LLMService> services) {
-        this.aiPromptRepository = aiPromptRepository;
-        this.memberRepository = memberRepository;
-        this.memberAiHistoryService = memberAiHistoryService;
-        this.llmServices = services.stream()
-             .collect(Collectors.toMap(LLMService::getProviderName, Function.identity()));
-    }
+    // // 생성자에서 provider 이름으로 서비스를 맵핑
+    // public AIService(AIPromptRepository aiPromptRepository, MemberRepository memberRepository, MemberAiHistoryService memberAiHistoryService, List<LLMService> services) {
+    //     this.aiPromptRepository = aiPromptRepository;
+    //     this.memberRepository = memberRepository;
+    //     this.memberAiHistoryService = memberAiHistoryService;
+    //     this.llmServices = services.stream()
+    //          .collect(Collectors.toMap(LLMService::getProviderName, Function.identity()));
+    // }
 
-    public Mono<String> execute(String promptName, Map<String, String> variables, Long memberId) {
-        // 1. DB에서 프롬프트 조회
-        AIPrompt prompt = aiPromptRepository.findByPromptNameAndVersion(promptName, "1.0") // 버전 관리
-             .orElseThrow(() -> new RuntimeException("Prompt not found: " + promptName));
+    // public Mono<String> execute(String promptName, Map<String, String> variables, Long memberId) {
+    //     // 1. DB에서 프롬프트 조회
+    //     // AIPrompt prompt = aiPromptRepository.findByPromptNameAndVersion(promptName, "1.0") // 버전 관리
+    //         //  .orElseThrow(() -> new RuntimeException("Prompt not found: " + promptName));
 
-        // 2. 변수를 프롬프트에 주입
-        String finalPrompt = substituteVariables(prompt.getPromptContent(), variables);
+    //     // 2. 변수를 프롬프트에 주입
+    //     // String finalPrompt = substituteVariables(prompt.getPromptContent(), variables);
 
-        // 3. 적절한 LLM 서비스 선택
-        LLMService llmService = llmServices.get(prompt.getModelProvider());
-        if (llmService == null) {
-            throw new RuntimeException("LLM provider not found: " + prompt.getModelProvider());
-        }
+    //     // 3. 적절한 LLM 서비스 선택
+    //     // LLMService llmService = llmServices.get(prompt.getModelProvider());
+    //     // if (llmService == null) {
+    //     //     throw new RuntimeException("LLM provider not found: " + prompt.getModelProvider());
+    //     // }
 
-        // 4. AI 호출 실행 및 비용/성능 로깅
-        // 참고: 정확한 토큰 계산을 위해서는 tiktoken-java 같은 라이브러리 사용을 권장합니다.
-        int inputTokens = finalPrompt.length() / 2; // 한글 등을 고려한 보수적인 근사치
+    //     // 4. AI 호출 실행 및 비용/성능 로깅
+    //     // 참고: 정확한 토큰 계산을 위해서는 tiktoken-java 같은 라이브러리 사용을 권장합니다.
+    //     int inputTokens = finalPrompt.length() / 2; // 한글 등을 고려한 보수적인 근사치
 
-        return llmService.generate(finalPrompt, prompt.getModelName())
-              .doOnSuccess(response -> {
-                    int outputTokens = response.length() / 2; // 한글 등을 고려한 보수적인 근사치
-                    Member member = memberRepository.findById(memberId).orElse(null);
-                    if (member!= null) {
-                        memberAiHistoryService.recordHistory(member, promptName, inputTokens, outputTokens);
-                    }
-                });
-    }
+    //     return llmService.generate(finalPrompt, prompt.getModelName())
+    //           .doOnSuccess(response -> {
+    //                 int outputTokens = response.length() / 2; // 한글 등을 고려한 보수적인 근사치
+    //                 Member member = memberRepository.findById(memberId).orElse(null);
+    //                 if (member!= null) {
+    //                     memberAiHistoryService.recordHistory(member, promptName, inputTokens, outputTokens);
+    //                 }
+    //             });
+    // }
 
     private String substituteVariables(String template, Map<String, String> variables) {
         for (Map.Entry<String, String> entry : variables.entrySet()) {

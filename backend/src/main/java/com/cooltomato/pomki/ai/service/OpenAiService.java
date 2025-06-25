@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service("openAiService")
-public class OpenAiService implements LLMService {
+public class OpenAiService 
+// implements LLMService 
+{
 
     private final WebClient webClient;
 
@@ -21,20 +23,20 @@ public class OpenAiService implements LLMService {
              .build();
     }
 
-    @Override
-    public Mono<String> generate(String prompt, String modelName) {
-        OpenAiRequestDto request = new OpenAiRequestDto(modelName, prompt); 
+    // @Override
+    // public Mono<String> generate(String prompt, String modelName) {
+    //     OpenAiRequestDto request = new OpenAiRequestDto(modelName, prompt); 
         
-        return webClient.post()
-             .uri("/chat/completions")
-             .bodyValue(request)
-             .retrieve()
-             .bodyToMono(OpenAiResponseDto.class)
-             .map(response -> response.getChoices().get(0).getMessage().getContent());
-    }
+    //     return webClient.post()
+    //          .uri("/chat/completions")
+    //          .bodyValue(request)
+    //          .retrieve()
+    //          .bodyToMono(OpenAiResponseDto.class)
+    //          .map(response -> response.getChoices().get(0).getMessage().getContent());
+    // }
 
-    @Override
-    public String getProviderName() {
-        return "openai";
-    }
+    // @Override
+    // public String getProviderName() {
+    //     return "openai";
+    // }
 }
