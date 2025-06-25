@@ -354,12 +354,15 @@ const deckSlice = createSlice({
       })
       .addCase(fetchCardsInDeck.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentDeckCards = action.payload;
+        // 안전장치: payload가 배열인지 확인
+        state.currentDeckCards = Array.isArray(action.payload) ? action.payload : [];
         state.error = null;
       })
       .addCase(fetchCardsInDeck.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || '카드 목록을 불러오는데 실패했습니다.';
+        // 에러 시 빈 배열로 초기화
+        state.currentDeckCards = [];
       })
 
              // 카드 수정

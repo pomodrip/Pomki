@@ -124,10 +124,10 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 기존 구조 유지: studySlice에서 필터만 가져오기
   const { filters } = useAppSelector((state) => state.study);
   
-  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
-  const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
+  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기 (안전장치 추가)
+  const { decks = [], currentDeckCards = [], loading } = useAppSelector((state) => state.deck);
   
-  // 🎯 API Fallback을 위한 상태
+  // 🎯 API Fallback을 위한 상태 (초기값 빈 배열 보장)
   const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   
@@ -158,21 +158,36 @@ const FlashCardListPage: React.FC = () => {
 
   // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거)
   const allCards = useMemo(() => {
+    console.log('🔍 allCards useMemo 실행:', { 
+      currentDeckCards: { type: typeof currentDeckCards, isArray: Array.isArray(currentDeckCards), value: currentDeckCards },
+      fallbackCards: { type: typeof fallbackCards, isArray: Array.isArray(fallbackCards), value: fallbackCards }
+    });
+    
     const combinedCards = new Map<string, Card>();
     
-    // 1. Redux에서 가져온 카드들 추가
-    currentDeckCards.forEach(card => {
-      combinedCards.set(card.cardId.toString(), card);
-    });
+    // 1. Redux에서 가져온 카드들 추가 (배열인지 확인)
+    if (Array.isArray(currentDeckCards)) {
+      currentDeckCards.forEach(card => {
+        combinedCards.set(card.cardId.toString(), card);
+      });
+    } else {
+      console.warn('⚠️ currentDeckCards가 배열이 아닙니다:', currentDeckCards);
+    }
     
     // 2. Fallback 카드들 추가 (중복 아닌 것만)
-    fallbackCards.forEach(card => {
-      if (!combinedCards.has(card.cardId.toString())) {
-        combinedCards.set(card.cardId.toString(), card);
-      }
-    });
+    if (Array.isArray(fallbackCards)) {
+      fallbackCards.forEach(card => {
+        if (!combinedCards.has(card.cardId.toString())) {
+          combinedCards.set(card.cardId.toString(), card);
+        }
+      });
+    } else {
+      console.warn('⚠️ fallbackCards가 배열이 아닙니다:', fallbackCards);
+    }
     
-    return Array.from(combinedCards.values());
+    const result = Array.from(combinedCards.values());
+    console.log('✅ allCards 결과:', result);
+    return result;
   }, [currentDeckCards, fallbackCards]);
 
   // 🎯 현재 덱에 해당하는 카드들만 필터링
@@ -516,7 +531,7 @@ const FlashCardListPage: React.FC = () => {
           </Typography>
           <Button 
             variant="contained" 
-            onClick={() => navigate('/flashcards')}
+            onClick={() => navigate('/study')}
           >
             덱 목록으로 이동
           </Button>
