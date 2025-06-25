@@ -550,8 +550,16 @@ const FlashcardDeckListPage: React.FC = () => {
     <StyledContainer>
       <HeaderBox>
         <Typography variant="h4" component="h1">플래시카드 덱</Typography>
-        {/* 덱 생성 버튼 - 상단 고정  */}
-        <Fab color="primary" aria-label="add" onClick={() => setShowCreateDialog(true)} size="medium">
+        {/* 덱 생성 버튼 - 데스크탑에서만 표시 */}
+        <Fab 
+          color="primary" 
+          aria-label="add" 
+          onClick={() => setShowCreateDialog(true)} 
+          size="medium"
+          sx={{
+            display: { xs: 'none', md: 'flex' } // 모바일에서는 숨김, 데스크탑에서만 표시
+          }}
+        >
           <AddIcon />
         </Fab>
       </HeaderBox>
@@ -776,8 +784,37 @@ const FlashcardDeckListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 덱 생성 버튼 - 하단 고정 */}
-      <Fab color="primary" aria-label="add" onClick={() => setShowCreateDialog(true)} size={isMobile ? "small" : "medium"} sx={{ position: 'fixed', bottom: isMobile ? 80 : 16, right: 16, zIndex: 1000 }}>
+      {/* 덱 생성 버튼 - 모바일에서만 하단 플로팅 */}
+      <Fab 
+        color="primary" 
+        aria-label="새로운 플래시카드 덱 만들기" 
+        onClick={() => setShowCreateDialog(true)} 
+        size={isMobile ? "small" : "medium"} 
+        sx={{ 
+          display: { xs: 'flex', md: 'none' }, // 모바일에서만 표시, 데스크탑에서는 숨김
+          position: 'fixed', 
+          bottom: isMobile ? 80 : 16, 
+          right: 16, 
+          zIndex: 1000,
+          // 📱 접근성 및 UX 개선
+          '&:hover': {
+            transform: 'scale(1.1)',
+            transition: 'transform 0.2s ease-in-out',
+          },
+          // 🎯 포커스 가시성 향상
+          '&:focus': {
+            outline: '2px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: '2px',
+          },
+          // 📱 터치 디바이스 최적화
+          '@media (hover: none)': {
+            '&:hover': {
+              transform: 'none',
+            }
+          }
+        }}
+      >
         <AddIcon />
       </Fab>
     </StyledContainer>
