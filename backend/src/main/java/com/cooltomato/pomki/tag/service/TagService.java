@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.card.repository.CardRepository;
 import com.cooltomato.pomki.member.entity.Member;
@@ -67,15 +68,42 @@ public class TagService {
         tagRepository.deleteById(tagId);
     }
     
-    public List<TagResponseDto> searchAllTagsService(PrincipalMember principal) {
+    public List<String> searchAllTagsService(PrincipalMember principal) {
         List<Tag> tags = tagRepository.findAllByMember_MemberId(principal.getMemberId());
-        return tags.stream()
-            .map(tag -> TagResponseDto.builder()
-                .tagId(tag.getTagId())
-                .tagName(tag.getTagName())
-                .memberId(tag.getMember().getMemberId())
-                .build())
+
+        List<String> distinctOnlyTagsNames = tags.stream()
+            .collect(Collectors.toMap(
+                Tag::getTagName,  // 태그 이름을 키로 사용
+                tag -> tag,       // 태그 객체를 값으로 사용
+                (existing, replacement) -> existing  // 중복 시 기존 것 유지
+            ))
+            .values()
+            .stream()
+            .map(tag -> tag.getTagName())
             .collect(Collectors.toList());
+
+        if (distinctOnlyTagsNames.isEmpty()) {
+            throw new RuntimeException("생성한 태그가 없습니다.");
+        }
+        
+        // 태그 이름을 기준으로 중복 제거
+        return distinctOnlyTagsNames ;
+    }
+
+    public List<Card> searchAllCardsByTagService(PrincipalMember principal, String tagName) {
+        // 각 태그에 해당하는 카드 가져오기
+        List<Tag> tags = tagRepository.findAllByMember_MemberIdAndTagName(principal.getMemberId(), tagName);
+
+        // 각 태그에 해당하는 카드 가져오기
+        List<Card> cards = tags.stream()
+            .map(tag -> tag.getCard())
+            .collect(Collectors.toList());
+        
+        if (cards.isEmpty()) {
+            throw new RuntimeException("찾으시는 태그에 해당하는 카드가 없습니다.");
+        }
+        
+        return cards ;
     }
 
     

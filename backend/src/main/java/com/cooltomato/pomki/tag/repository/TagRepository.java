@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findAllByMember_MemberId(Long memberId);
+
+    List<Tag> findAllByMember_MemberIdAndTagName(Long memberId, String tagName);
 } 
