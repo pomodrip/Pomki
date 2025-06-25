@@ -4,6 +4,7 @@ import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.auth.dto.TokenResponseDto;
 import com.cooltomato.pomki.auth.dto.MemberInfoDto;
 import com.cooltomato.pomki.auth.jwt.JwtProvider;
+import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,8 +38,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         log.info("OAuth2 Login 성공");
         try {
             PrincipalMember principal = (PrincipalMember) authentication.getPrincipal();
-            Member member = memberRepository.findById(principal.getMemberId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+            Member member = memberRepository.findByIdAndIsDeletedIsFalse(principal.getMemberId())
+                    .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
 
             MemberInfoDto memberInfo = MemberInfoDto.builder()
                     .memberId(member.getMemberId())
