@@ -7,6 +7,8 @@ import {
   MenuItem,
   CircularProgress as MuiCircularProgress,
   FormControl,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
@@ -311,6 +313,34 @@ const StudyModeLabel = styled(Text)(() => ({
   color: '#6B7280',
 }));
 
+// 자동 저장 설정 섹션
+const AutoSaveSection = styled(Box)(() => ({
+  marginBottom: '16px',
+  padding: '12px 16px',
+  backgroundColor: '#F9FAFB',
+  borderRadius: '8px',
+  border: '1px solid #E5E7EB',
+}));
+
+const AutoSaveTitle = styled(Text)(() => ({
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#374151',
+  marginBottom: '8px',
+}));
+
+const ToggleContainer = styled(Box)(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}));
+
+const ToggleLabel = styled(Text)(() => ({
+  fontSize: '14px',
+  color: '#374151',
+  fontWeight: 500,
+}));
+
 // 통합된 작업 입력
 const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled }) => ({
   width: '100%',
@@ -406,6 +436,8 @@ const TimerPage: React.FC = () => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
   const [hasTimerStarted, setHasTimerStarted] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [hasGeneratedAI, setHasGeneratedAI] = useState(false);
   
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
@@ -457,6 +489,13 @@ const TimerPage: React.FC = () => {
     setLocalSettings(newLocalSettings);
     setTempSettings(newLocalSettings);
   }, [settings]);
+
+  // 자동 저장 비활성화 시 AI 생성 상태 리셋
+  useEffect(() => {
+    if (!autoSaveEnabled) {
+      setHasGeneratedAI(false);
+    }
+  }, [autoSaveEnabled]);
 
   const handleStart = () => {
     if (isRunning) {
@@ -548,6 +587,7 @@ const TimerPage: React.FC = () => {
         return prevNotes + separator + aiContent;
       });
       setIsGeneratingAI(false);
+      setHasGeneratedAI(true);
       alert('AI 노트가 성공적으로 생성되었습니다!');
     }, 2000);
   };
@@ -562,12 +602,16 @@ const TimerPage: React.FC = () => {
     // 임시 저장 로직 (실제로는 API 호출)
     try {
       // TODO: API 연동 - 노트 저장
-      console.log('저장될 데이터:', {
+      const saveData = {
         taskName,
         notes,
         sessionId: `session-${Date.now()}`,
         timestamp: new Date().toISOString(),
-      });
+        autoSaveEnabled,
+        hasAIGenerated: hasGeneratedAI,
+      };
+
+      console.log('저장될 데이터:', saveData);
       
       alert('노트가 성공적으로 저장되었습니다!');
     } catch (error) {
@@ -604,6 +648,10 @@ const TimerPage: React.FC = () => {
         return `${taskPrefix}학습 내용 정리 및 다음 단계 계획`;
     }
   };
+
+  // 버튼 활성화 조건
+  const canGenerateAI = notes.trim() && !isGeneratingAI;
+  const canSave = (notes.trim() || taskName.trim());
 
   // SVG 원의 중심과 반지름 계산 (반지름 기준)
   const radius = 130; // 280px 원의 반지름에서 stroke-width 고려하여 조정
@@ -690,6 +738,33 @@ const TimerPage: React.FC = () => {
         </Box>
       </NotesHeader>
 
+      {/* 자동 저장 토글 */}
+      <AutoSaveSection>
+        <ToggleContainer>
+          <ToggleLabel sx={{ color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
+            자동 저장
+          </ToggleLabel>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={autoSaveEnabled}
+                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                size="small"
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#10B981',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#10B981',
+                  },
+                }}
+              />
+            }
+            label=""
+          />
+        </ToggleContainer>
+      </AutoSaveSection>
+
       {/* 통합된 작업 입력 영역 */}
       <TaskInput
         type="text"
@@ -723,7 +798,12 @@ const TimerPage: React.FC = () => {
 
       {/* 확장된 기능들 */}
       <ExpandedNotesFeatures>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          flex: 1,
+        }}>
           <StudyModeLabel>요약 스타일</StudyModeLabel>
           <FormControl size="small" variant="outlined">
             <Select
@@ -754,7 +834,7 @@ const TimerPage: React.FC = () => {
             variant="contained"
             size="small"
             onClick={handleGenerateAI}
-            disabled={isGeneratingAI || !notes.trim()}
+            disabled={!canGenerateAI}
             sx={{
               backgroundColor: '#10B981',
               '&:hover': {
@@ -787,7 +867,7 @@ const TimerPage: React.FC = () => {
           variant="outlined"
           size="small"
           onClick={handleSaveNotes}
-          disabled={!notes.trim() && !taskName.trim()}
+          disabled={!canSave}
           sx={{
             borderColor: '#2563EB',
             color: '#2563EB',
@@ -961,6 +1041,35 @@ const TimerPage: React.FC = () => {
             </IconButton>
           </NotesHeader>
 
+                    {/* 자동 저장 토글 */}
+          {isRunning && (
+            <AutoSaveSection>
+              <ToggleContainer>
+                <ToggleLabel sx={{ color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
+                  자동 저장
+                </ToggleLabel>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={autoSaveEnabled}
+                      onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                      size="small"
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#10B981',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#10B981',
+                        },
+                      }}
+                    />
+                  }
+                  label=""
+                />
+              </ToggleContainer>
+              </AutoSaveSection>
+            )}
+
           {/* 통합된 작업 입력 영역 */}
           <TaskInput
             type="text"
@@ -991,7 +1100,7 @@ const TimerPage: React.FC = () => {
             aria-label={isRunning ? "집중 노트 입력" : "타이머 시작 후 사용 가능한 노트 입력"}
           />
           
-          {/* 하단 AI 섹션 */}
+          {/* 하단 버튼 섹션 */}
           <Box sx={{ 
             marginTop: '16px',
             display: 'flex',
@@ -1023,7 +1132,7 @@ const TimerPage: React.FC = () => {
               variant="outlined"
               size="small"
               onClick={handleGenerateAI}
-              disabled={isGeneratingAI || !notes.trim()}
+              disabled={!canGenerateAI}
               sx={{ 
                 minWidth: '100px',
                 height: '32px',
@@ -1049,7 +1158,7 @@ const TimerPage: React.FC = () => {
               variant="outlined"
               size="small"
               onClick={handleSaveNotes}
-              disabled={!notes.trim() && !taskName.trim()}
+              disabled={!canSave}
               sx={{ 
                 minWidth: '60px',
                 height: '32px',
