@@ -178,8 +178,16 @@ const LoginPage = () => {
         <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
 
         {loginError && (
-          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {loginError}
+          <Alert 
+            severity="error" 
+            sx={{ 
+              width: '100%', 
+              mb: 2,
+              borderRadius: 1,
+              // boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.12)'
+            }}
+          >
+            로그인에 실패했습니다.
           </Alert>
         )}
 
