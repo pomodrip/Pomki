@@ -24,6 +24,7 @@ import com.cooltomato.pomki.auth.repository.RefreshTokenRepository;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
 import com.cooltomato.pomki.global.exception.InvalidTokenException;
+import com.cooltomato.pomki.global.exception.MemberNotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 
@@ -32,6 +33,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -132,7 +134,13 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String createAccessTokenFromRefreshToken(String accessToken, String refreshToken) {
+    /**
+     * 리프레시 토큰과 액세스 토큰을 받아 새로운 액세스 토큰을 생성
+     * @param refreshToken
+     * @param accessToken
+     * @return String new accessToken
+     */
+    public String createAccessTokenFromRefreshToken(String refreshToken, String accessToken) {
         if (!validateToken(refreshToken)) {
             throw new InvalidTokenException("유효하지 않은 리프레시 토큰입니다.");
         }
@@ -154,15 +162,28 @@ public class JwtProvider {
         MemberInfoDto memberInfo = getMemberInfoById(Long.valueOf(refreshTokenSubject));
         return createAccessToken(memberInfo);
     }
+
+    /**
+     * 리프레시 토큰을 받아 새로운 액세스 토큰을 생성
+     * @param refreshToken
+     * @return String new accessToken
+     */
+    public String createAccessTokenFromRefreshToken(String refreshToken) {
+        if (!validateToken(refreshToken)) {
+            throw new InvalidTokenException("유효하지 않은 리프레시 토큰입니다.");
+        }
+
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findById(refreshToken)
+                .orElseThrow(() -> new InvalidTokenException("DB에 존재하지 않는 리프레시 토큰입니다."));
+            // DB 조회는 별도 메서드로 분리
+        MemberInfoDto memberInfo = getMemberInfoById(refreshTokenEntity.getMemberId());
+        return createAccessToken(memberInfo);
+    }
     
     @Transactional(readOnly = true)
     private MemberInfoDto getMemberInfoById(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new InvalidTokenException("존재하지 않는 사용자입니다."));
-
-        if (member.isDeleted()) {
-            throw new InvalidTokenException("삭제된 사용자입니다.");
-        }
+        Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
 
         return MemberInfoDto.builder()
                 .memberId(member.getMemberId())
@@ -210,7 +231,7 @@ public class JwtProvider {
             Claims claims = parseClaims(token);
             return !claims.getExpiration().before(Date.from(Instant.now()));
         } catch (Exception e) {
-            return false;
+            throw new InvalidTokenException("유효하지 않은 토큰입니다.");
         }
     }
 

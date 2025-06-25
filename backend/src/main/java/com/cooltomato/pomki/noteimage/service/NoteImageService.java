@@ -2,7 +2,7 @@ package com.cooltomato.pomki.noteimage.service;
 
 import com.cooltomato.pomki.global.exception.BadRequestException;
 import com.cooltomato.pomki.global.exception.EmptyFileException;
-import com.cooltomato.pomki.global.exception.NotFoundException;
+import com.cooltomato.pomki.global.exception.NoteNotFoundException;
 import com.cooltomato.pomki.global.exception.UnsupportedFormatException;
 import com.cooltomato.pomki.global.exception.UploadFailedException;
 import com.cooltomato.pomki.global.exception.ProcessingFailedException;
@@ -62,7 +62,7 @@ public class NoteImageService {
         String noteId = requestDto.getNoteId();
 
         Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new NotFoundException("해당 ID의 노트를 찾을 수 없습니다: " + noteId));
+                .orElseThrow(() -> new NoteNotFoundException("해당 ID의 노트를 찾을 수 없습니다."));
 
         if (file.isEmpty()) {
             throw new EmptyFileException("이미지 파일이 비어있습니다.");

@@ -1,7 +1,8 @@
 package com.cooltomato.pomki.note.service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
-import com.cooltomato.pomki.global.exception.NotFoundException;
+import com.cooltomato.pomki.global.exception.MemberNotFoundException;
+import com.cooltomato.pomki.global.exception.NoteNotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.note.dto.NoteCreateRequestDto;
@@ -80,12 +81,12 @@ public class NoteService {
     }
 
     private Member getMember(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("Member not found"));
+        return memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
     }
 
     private Note getNote(String noteId, Member member) {
         return noteRepository.findByNoteIdAndMemberAndIsDeletedIsFalse(noteId, member)
-                .orElseThrow(() -> new NotFoundException("Note not found"));
+                .orElseThrow(() -> new NoteNotFoundException());
     }
 }

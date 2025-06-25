@@ -46,6 +46,24 @@ public class GlobalExceptionHandler {
         log.error("NotFoundException: ", exception);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
     }
+    
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<String> handleMemberNotFoundException(MemberNotFoundException exception) {
+        log.error("MemberNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(NoteNotFoundException.class)
+    public ResponseEntity<String> handleNoteNotFoundException(NoteNotFoundException exception) {
+        log.error("NoteNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    
+    @ExceptionHandler(EmailVerificationNotFoundException.class)
+    public ResponseEntity<String> handleEmailVerificationNotFoundException(EmailVerificationNotFoundException exception) {
+        log.error("EmailVerificationNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException exception) {
         log.error("UsernameNotFoundException: ", exception);
