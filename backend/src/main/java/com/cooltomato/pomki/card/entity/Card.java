@@ -10,9 +10,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.cooltomato.pomki.deck.entity.Deck;
-import java.sql.Timestamp;
+import com.cooltomato.pomki.tag.entity.Tag;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
 
 @Builder
 @Entity
@@ -54,10 +55,11 @@ public class Card {
     )
     private Deck deck;
 
-    public Optional<Card> orElseThrow(Object object) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
-    }
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Tag> tags = new ArrayList<>();
+
+    
 
     // // deck_id를 가져오는 편의 메서드
     // public String getDeckId() {

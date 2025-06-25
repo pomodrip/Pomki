@@ -1,33 +1,45 @@
 package com.cooltomato.pomki.tag.entity;
 
-import java.util.List;
-
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import lombok.Data;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import jakarta.persistence.OneToMany;
+import java.util.List;
+import java.util.ArrayList;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.card.entity.Card;
 
 @Entity
 @Table(name = "tag")
-@Data
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "tag_id")
     private Long tagId;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    // Member와의 비식별 관계 (ManyToOne)
+    @ManyToOne
+    @JoinColumn(name = "member_id")
+    private Member member;
 
-    @Column(name = "tag_name", nullable = false, length = 50)
+    @ManyToOne
+    @JoinColumn(name = "card_id")
+    private Card card;
+
     private String tagName;
 
-    // 연관관계: NOTE_TAG(1:N)
-    @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL)
-    private List<NoteTag> noteTags;
 }

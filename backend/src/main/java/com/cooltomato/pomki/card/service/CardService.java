@@ -148,4 +148,25 @@ public class CardService {
         }
         
     }
+
+    @Transactional(readOnly = true)
+    public List<CardResponseDto> searchCardsByKeywordService(PrincipalMember principal, String keyword) {
+        List<Card> cards = cardRepository.findByDeck_MemberIdAndContentContainingIgnoreCaseOrDeck_MemberIdAndAnswerContainingIgnoreCaseAndIsDeletedFalse(
+            principal.getMemberId(), keyword, principal.getMemberId(), keyword);
+        
+        if (cards.isEmpty()) {
+            throw new IllegalArgumentException("검색 결과가 없습니다.");
+        }
+
+        return cards.stream().map(card -> CardResponseDto.builder()
+                .cardId(card.getCardId())
+                .content(card.getContent())
+                .answer(card.getAnswer())
+                .deckId(card.getDeck().getDeckId())
+                .createdAt(card.getCreatedAt())
+                .updatedAt(card.getUpdatedAt())
+                .isDeleted(card.getIsDeleted())
+                .build()
+        ).toList();
+    }
 } 
