@@ -4,7 +4,7 @@
 // import lombok.Data;
 // import java.time.LocalDateTime;
 
-// @Entity
+// @Entity 
 // @Table(name = "AI_PROMPT")
 // @Data
 // public class AIPrompt {
