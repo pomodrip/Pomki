@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import mockData from './mockData';
 
 // 환경 변수로 Mock 모드 제어
@@ -48,7 +47,7 @@ export async function apiWithFallback<T>(
 
 // Auth API with Fallback
 export const authApiWithFallback = {
-  login: async (data: any) => {
+  login: async (data: { email: string; password: string }) => {
     const { login } = await import('./authApi');
     return apiWithFallback(
       () => login(data),
@@ -64,7 +63,7 @@ export const authApiWithFallback = {
     );
   },
 
-  refreshToken: async (data: any) => {
+  refreshToken: async (data: { refreshToken: string }) => {
     const { refreshToken } = await import('./authApi');
     return apiWithFallback(
       () => refreshToken(data),
@@ -74,7 +73,7 @@ export const authApiWithFallback = {
     );
   },
 
-  signup: async (data: any) => {
+  signup: async (data: { email: string; password: string; nickname: string; verificationToken: string }) => {
     const { signup } = await import('./authApi');
     return apiWithFallback(
       () => signup(data),
@@ -82,7 +81,7 @@ export const authApiWithFallback = {
     );
   },
 
-  sendEmailVerification: async (data: any) => {
+  sendEmailVerification: async (data: { email: string; type: "SIGNUP" | "EMAIL_CHANGE" }) => {
     const { sendEmailVerification } = await import('./authApi');
     return apiWithFallback(
       () => sendEmailVerification(data),
@@ -90,7 +89,7 @@ export const authApiWithFallback = {
     );
   },
 
-  verifyEmailCode: async (data: any) => {
+  verifyEmailCode: async (data: { email: string; verificationCode: string; type: "SIGNUP" | "EMAIL_CHANGE" }) => {
     const { verifyEmailCode } = await import('./authApi');
     return apiWithFallback(
       () => verifyEmailCode(data),
@@ -101,7 +100,7 @@ export const authApiWithFallback = {
 
 // Deck API with Fallback
 export const deckApiWithFallback = {
-  createDeck: async (data: any) => {
+  createDeck: async (data: { deckName: string; memberId: number }) => {
     const { createDeck } = await import('./deckApi');
     return apiWithFallback(
       () => createDeck(data),
@@ -129,7 +128,7 @@ export const deckApiWithFallback = {
     }
   },
 
-  updateDeck: async (deckId: string, data: any) => {
+  updateDeck: async (deckId: string, data: { deckName: string }) => {
     const { updateDeck } = await import('./deckApi');
     return apiWithFallback(
       () => updateDeck(deckId, data),
@@ -146,14 +145,13 @@ export const deckApiWithFallback = {
   },
 };
 
-// 기타 API들은 실제 함수가 있을 때 추가
 // 예시: User API with Fallback
 export const userApiWithFallback = {
   getProfile: async () => {
     try {
-      const { getProfile } = await import('./userApi');
+      const { getMyInfo } = await import('./userApi');
       return apiWithFallback(
-        () => getProfile(),
+        () => getMyInfo(),
         mockData.user.getProfile
       );
     } catch {
@@ -170,10 +168,36 @@ export const timerApiWithFallback = {
       const { getTimerStats } = await import('./timerApi');
       return apiWithFallback(
         () => getTimerStats(),
-        mockData.timer.getTimerStats
+        () => ({
+          totalFocusTime: Math.floor(mockData.timer.getTimerStats.totalFocusTime / 60), // 초를 분으로 변환
+          totalSessions: mockData.timer.getTimerStats.totalSessions,
+          completedSessions: mockData.timer.getTimerStats.totalSessions - 1,
+          averageSessionLength: Math.floor(mockData.timer.getTimerStats.averageSessionTime / 60), // 초를 분으로 변환
+          streakDays: mockData.timer.getTimerStats.streak,
+          dailyGoal: 120, // 2시간 목표
+          dailyProgress: Math.floor(mockData.timer.getTimerStats.todayFocusTime / 60), // 초를 분으로 변환
+          weeklyStats: mockData.timer.getTimerStats.weeklyStats.map(stat => ({
+            date: stat.date,
+            focusTime: Math.floor(stat.focusTime / 60), // 초를 분으로 변환
+            sessions: 2 // 기본 세션 수
+          }))
+        })
       );
     } catch {
-      return mockData.timer.getTimerStats;
+      return {
+        totalFocusTime: Math.floor(mockData.timer.getTimerStats.totalFocusTime / 60),
+        totalSessions: mockData.timer.getTimerStats.totalSessions,
+        completedSessions: mockData.timer.getTimerStats.totalSessions - 1,
+        averageSessionLength: Math.floor(mockData.timer.getTimerStats.averageSessionTime / 60),
+        streakDays: mockData.timer.getTimerStats.streak,
+        dailyGoal: 120,
+        dailyProgress: Math.floor(mockData.timer.getTimerStats.todayFocusTime / 60),
+        weeklyStats: mockData.timer.getTimerStats.weeklyStats.map(stat => ({
+          date: stat.date,
+          focusTime: Math.floor(stat.focusTime / 60),
+          sessions: 2
+        }))
+      };
     }
   },
 };
@@ -185,21 +209,54 @@ export const noteApiWithFallback = {
       const { getNotes } = await import('./noteApi');
       return apiWithFallback(
         () => getNotes(),
-        mockData.note.getNotes
+        () => ({
+          content: mockData.note.getNotes.map(note => ({
+            noteId: note.noteId,
+            memberId: note.memberId,
+            noteTitle: note.title,
+            noteContent: note.content,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+          })),
+          totalElements: mockData.note.getNotes.length,
+          totalPages: 1,
+          size: mockData.note.getNotes.length,
+          number: 0,
+          first: true,
+          last: true,
+          empty: false
+        })
       );
     } catch {
-      return mockData.note.getNotes;
+      return {
+        content: mockData.note.getNotes.map(note => ({
+          noteId: note.noteId,
+          memberId: note.memberId,
+          noteTitle: note.title,
+          noteContent: note.content,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+        })),
+        totalElements: mockData.note.getNotes.length,
+        totalPages: 1,
+        size: mockData.note.getNotes.length,
+        number: 0,
+        first: true,
+        last: true,
+        empty: false
+      };
     }
   },
 
-  createNote: async (data: any) => {
+  createNote: async (data: { noteTitle: string; noteContent: string }) => {
     try {
       const { createNote } = await import('./noteApi');
       return apiWithFallback(
         () => createNote(data),
         {
           noteId: 'note_' + Date.now(),
-          ...data,
+          noteTitle: data.noteTitle,
+          noteContent: data.noteContent,
           memberId: 1,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -208,7 +265,8 @@ export const noteApiWithFallback = {
     } catch {
       return {
         noteId: 'note_' + Date.now(),
-        ...data,
+        noteTitle: data.noteTitle,
+        noteContent: data.noteContent,
         memberId: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -221,13 +279,35 @@ export const noteApiWithFallback = {
 export const adApiWithFallback = {
   getAds: async () => {
     try {
-      const { getAds } = await import('./adApi');
+      const { getActiveAds } = await import('./adApi');
       return apiWithFallback(
-        () => getAds(),
-        mockData.ad.getAds
+        () => getActiveAds(),
+        [{
+          adId: 'ad_1',
+          title: 'Premium 플랜 무료 체험',
+          description: '프리미엄 기능을 7일간 무료로 체험해보세요!',
+          imageUrl: undefined,
+          linkUrl: '/premium',
+          type: 'BANNER' as const,
+          position: 'TOP' as const,
+          isActive: true,
+          startDate: '2024-01-01T00:00:00Z',
+          endDate: '2024-12-31T23:59:59Z',
+        }]
       );
     } catch {
-      return mockData.ad.getAds;
+      return [{
+        adId: 'ad_1',
+        title: 'Premium 플랜 무료 체험',
+        description: '프리미엄 기능을 7일간 무료로 체험해보세요!',
+        imageUrl: undefined,
+        linkUrl: '/premium',
+        type: 'BANNER' as const,
+        position: 'TOP' as const,
+        isActive: true,
+        startDate: '2024-01-01T00:00:00Z',
+        endDate: '2024-12-31T23:59:59Z',
+      }];
     }
   },
 };

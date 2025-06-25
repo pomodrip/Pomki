@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, CircularProgress, Typography } from '@mui/material';
+import { CssBaseline, Box, CircularProgress } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import baseTheme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';

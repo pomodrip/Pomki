@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { styled, alpha } from '@mui/material/styles';
+import { styled } from '@mui/material/styles'; // alpha
 import { 
   Box, 
   Typography, 
@@ -13,7 +13,7 @@ import {
   TextField,
   Card as MuiCard,
   CardContent,
-  CircularProgress,
+  // CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -125,13 +125,11 @@ const FlashCardListPage: React.FC = () => {
   const { filters } = useAppSelector((state) => state.study);
   
   // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
-  const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
+  const { currentDeckCards, loading } = useAppSelector((state) => state.deck);
   
   // 🎯 API Fallback을 위한 상태
   const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
   
-  const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
   const [cardBookmarks, setCardBookmarks] = useState<{[key: number]: boolean}>({
@@ -228,15 +226,12 @@ const FlashCardListPage: React.FC = () => {
       
       // API Fallback으로 카드 데이터 로드
       const loadCardsWithFallback = async () => {
-        setFallbackLoading(true);
         try {
           const fallbackData = await deckApiWithFallback.getCardsInDeck(realDeckId);
           setFallbackCards(fallbackData);
           console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
         } catch (error) {
           console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
-        } finally {
-          setFallbackLoading(false);
         }
       };
 
@@ -296,13 +291,14 @@ const FlashCardListPage: React.FC = () => {
     setBookmarkMenuAnchor(null);
   };
 
-  const handleCardSelect = (id: number, selected: boolean) => {
-    if (selected) {
-      setSelectedCards([...selectedCards, id]);
-    } else {
-      setSelectedCards(selectedCards.filter(cardId => cardId !== id));
-    }
-  };
+  // 카드 선택 기능 (현재 사용하지 않음)
+  // const handleCardSelect = (id: number, selected: boolean) => {
+  //   if (selected) {
+  //     setSelectedCards([...selectedCards, id]);
+  //   } else {
+  //     setSelectedCards(selectedCards.filter(cardId => cardId !== id));
+  //   }
+  // };
 
   const handleEditCard = (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
