@@ -12,6 +12,7 @@ interface AuthState {
   user: User | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
+  isInitialized: boolean; // 앱 초기화 완료 여부
 }
 
 // 초기 상태 - satisfies를 사용한 타입 안전성 향상
@@ -21,6 +22,7 @@ const initialState: AuthState = {
   user: null,
   status: 'idle',
   error: null,
+  isInitialized: false, // 앱 시작 시 초기화되지 않은 상태
 } satisfies AuthState as AuthState;
 
 // OAuth2 토큰 처리를 위한 새로운 액션 타입
@@ -191,6 +193,7 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken;
         state.user = action.payload.member;
         state.error = null;
+        state.isInitialized = true; // 로그인 성공 시 초기화 완료
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';
@@ -211,6 +214,7 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken;
         state.user = action.payload.user;
         state.error = null;
+        state.isInitialized = true; // OAuth2 로그인 성공 시 초기화 완료
       })
       .addCase(setOAuth2User.rejected, (state, action) => {
         state.status = 'failed';
@@ -240,12 +244,14 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.error = null;
+        state.isInitialized = true; // 토큰 검증 완료 후 초기화 완료
       })
       .addCase(validateToken.rejected, (state) => {
         state.status = 'failed';
         state.isAuthenticated = false;
         state.accessToken = null;
         state.user = null;
+        state.isInitialized = true; // 토큰 검증 실패해도 초기화는 완료
       });
   },
 });
@@ -265,6 +271,7 @@ export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 export const selectIsLoading = (state: RootState) => state.auth.status === 'loading';
 export const selectIsLoggedIn = (state: RootState) => 
   state.auth.isAuthenticated && state.auth.user !== null;
+export const selectIsInitialized = (state: RootState) => state.auth.isInitialized;
 
 // 기본 리듀서 export
 export default authSlice.reducer;

@@ -10,5 +10,6 @@ export const useAuth = () => {
     isLoading: auth.status === 'loading',
     error: auth.error,
     isAuthenticated: auth.isAuthenticated,
+    isInitialized: auth.isInitialized,
   };
 };
