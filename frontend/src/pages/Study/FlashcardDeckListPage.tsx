@@ -164,65 +164,65 @@ const FlashcardDeckListPage: React.FC = () => {
     loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
 
-  // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
-  useEffect(() => {
-    if (decks.length > 0) {
-      setClientSideInfo(prevInfo => {
-        const newInfo = { ...prevInfo };
-        decks.forEach((deck, index) => {
-          if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-            // 덱별로 다양한 태그 생성
-            const tagSets = [
-              ['#영어', '#단어', '#기초'],
-              ['#일본어', '#회화', '#중급'],
-              ['#프로그래밍', '#개발', '#CS'],
-              ['#수학', '#공식', '#고등'],
-              ['#과학', '#물리', '#화학'],
-              ['#역사', '#한국사', '#근현대'],
-              ['#문학', '#고전', '#현대'],
-              ['#경제', '#금융', '#투자'],
-            ];
+  // // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
+  // useEffect(() => {
+  //   if (decks.length > 0) {
+  //     setClientSideInfo(prevInfo => {
+  //       const newInfo = { ...prevInfo };
+  //       decks.forEach((deck, index) => {
+  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
+  //           // 덱별로 다양한 태그 생성
+  //           const tagSets = [
+  //             ['#영어', '#단어', '#기초'],
+  //             ['#일본어', '#회화', '#중급'],
+  //             ['#프로그래밍', '#개발', '#CS'],
+  //             ['#수학', '#공식', '#고등'],
+  //             ['#과학', '#물리', '#화학'],
+  //             ['#역사', '#한국사', '#근현대'],
+  //             ['#문학', '#고전', '#현대'],
+  //             ['#경제', '#금융', '#투자'],
+  //           ];
             
-            newInfo[deck.deckId] = {
-              isBookmarked: Math.random() > 0.5, // Mock 데이터
-              tags: tagSets[index % tagSets.length], // Mock 데이터
-            };
-          }
-        });
-        return newInfo;
-      });
-    }
-  }, [decks]);
+  //           newInfo[deck.deckId] = {
+  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
+  //             tags: tagSets[index % tagSets.length], // Mock 데이터
+  //           };
+  //         }
+  //       });
+  //       return newInfo;
+  //     });
+  //   }
+  // }, [decks]);
 
-  // 🎯 Fallback 덱이 로드될 때도 클라이언트 측 정보 초기화
-  useEffect(() => {
-    if (fallbackDecks.length > 0) {
-      setClientSideInfo(prevInfo => {
-        const newInfo = { ...prevInfo };
-        fallbackDecks.forEach((deck, index) => {
-          if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-            // 덱별로 다양한 태그 생성
-            const tagSets = [
-              ['#영어', '#단어', '#기초'],
-              ['#일본어', '#회화', '#중급'],
-              ['#프로그래밍', '#개발', '#CS'],
-              ['#수학', '#공식', '#고등'],
-              ['#과학', '#물리', '#화학'],
-              ['#역사', '#한국사', '#근현대'],
-              ['#문학', '#고전', '#현대'],
-              ['#경제', '#금융', '#투자'],
-            ];
+  // // 🎯 Fallback 덱이 로드될 때도 클라이언트 측 정보 초기화
+  // useEffect(() => {
+  //   if (fallbackDecks.length > 0) {
+  //     setClientSideInfo(prevInfo => {
+  //       const newInfo = { ...prevInfo };
+  //       fallbackDecks.forEach((deck, index) => {
+  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
+  //           // 덱별로 다양한 태그 생성
+  //           const tagSets = [
+  //             ['#영어', '#단어', '#기초'],
+  //             ['#일본어', '#회화', '#중급'],
+  //             ['#프로그래밍', '#개발', '#CS'],
+  //             ['#수학', '#공식', '#고등'],
+  //             ['#과학', '#물리', '#화학'],
+  //             ['#역사', '#한국사', '#근현대'],
+  //             ['#문학', '#고전', '#현대'],
+  //             ['#경제', '#금융', '#투자'],
+  //           ];
             
-            newInfo[deck.deckId] = {
-              isBookmarked: Math.random() > 0.5, // Mock 데이터
-              tags: tagSets[index % tagSets.length], // Mock 데이터
-            };
-          }
-        });
-        return newInfo;
-      });
-    }
-  }, [fallbackDecks]);
+  //           newInfo[deck.deckId] = {
+  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
+  //             tags: tagSets[index % tagSets.length], // Mock 데이터
+  //           };
+  //         }
+  //       });
+  //       return newInfo;
+  //     });
+  //   }
+  // }, [fallbackDecks]);
 
   // 🎯 Redux 덱과 Fallback 덱을 합치기 (Fallback 덱 우선순위)
   const combinedDecks = useMemo(() => {
