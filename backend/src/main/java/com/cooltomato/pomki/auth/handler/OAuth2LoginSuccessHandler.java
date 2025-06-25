@@ -38,7 +38,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         log.info("OAuth2 Login 성공");
         try {
             PrincipalMember principal = (PrincipalMember) authentication.getPrincipal();
-            Member member = memberRepository.findByIdAndIsDeletedIsFalse(principal.getMemberId())
+            Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(principal.getMemberId())
                     .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
 
             MemberInfoDto memberInfo = MemberInfoDto.builder()

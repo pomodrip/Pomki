@@ -81,7 +81,7 @@ public class NoteService {
     }
 
     private Member getMember(Long memberId) {
-        return memberRepository.findByIdAndIsDeletedIsFalse(memberId)
+        return memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
     }
 
