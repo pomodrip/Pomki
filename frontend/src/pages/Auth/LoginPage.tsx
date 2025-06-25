@@ -7,7 +7,7 @@ import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { Box, Typography, Alert, Paper, Container } from "@mui/material";
 import { getEmailValidationMessage, getPasswordValidationMessage } from "../../utils/validators";
-import { loginUser, setOAuth2User } from "../../store/slices/authSlice";
+import { loginUser, setOAuth2User, setAccessToken } from "../../store/slices/authSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { authApi, getMyInfo } from "../../api";
@@ -135,7 +135,25 @@ const LoginPage = () => {
     if (!emailValidationError && !passwordValidationError) {
       try {
         const resultAction = await dispatch(loginUser({ email: id, password }));
-        unwrapResult(resultAction);
+        const { accessToken } = unwrapResult(resultAction);
+
+        if (accessToken) {
+          try {
+            const userInfo = await getMyInfo();
+            const user = {
+              memberId: 0, // 실제 값 필요시 userInfo에서 추출
+              email: userInfo.email,
+              nickname: userInfo.nickname,
+              isEmailVerified: true,
+              socialLogin: false
+            };
+            dispatch(setOAuth2User({ accessToken, user }));
+          } catch (userInfoError) {
+            console.error('사용자 정보 가져오기 실패:', userInfoError);
+            // 사용자 정보를 가져올 수 없어도 accessToken만 저장
+            dispatch(setAccessToken(accessToken));
+          }
+        }
 
         navigate('/dashboard');
 

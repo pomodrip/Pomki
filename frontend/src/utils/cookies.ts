@@ -25,12 +25,12 @@ export const cookies = {
 
   // refreshToken 쿠키 확인 (서버에서 설정되므로 읽기만)
   hasRefreshToken: (): boolean => {
-    return cookies.get('refreshToken') !== null;
+    return cookies.get('refresh_token') !== null;
   },
 
   // 모든 인증 관련 쿠키 삭제 (로그아웃시 사용)
   clearAuthCookies: (): void => {
-    cookies.remove('refreshToken');
+    cookies.remove('refresh_token');
     // 다른 인증 관련 쿠키가 있다면 여기에 추가
   }
 };
