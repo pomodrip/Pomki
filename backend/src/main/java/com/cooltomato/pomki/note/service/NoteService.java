@@ -80,7 +80,7 @@ public class NoteService {
     }
 
     private Member getMember(Long memberId) {
-        return memberRepository.findById(memberId)
+        return memberRepository.findByIdAndIsDeletedIsFalse(memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
     }
 
