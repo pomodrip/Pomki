@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import dialogReducer from './slices/dialogSlice';
 import toastReducer from './slices/toastSlice';
+import snackbarReducer from './slices/snackbarSlice';
 import { setStoreReference } from '../api/index';
 import noteReducer from './slices/noteSlice';
 import studyReducer from './slices/studySlice';
@@ -16,6 +17,7 @@ export const store = configureStore({
     auth: authReducer,
     dialog: dialogReducer,
     toast: toastReducer,
+    snackbar: snackbarReducer,
     note: noteReducer,
     study: studyReducer,
     deck: deckReducer, // 🎯 새로운 덱 슬라이스 추가
@@ -36,6 +38,11 @@ export const store = configureStore({
 
 // 🔥 API 인터셉터에서 store에 접근할 수 있도록 참조 설정
 setStoreReference(store);
+
+// 🛠️ 개발 환경에서만 브라우저 콘솔에서 store에 접근할 수 있도록 전역 노출
+if (import.meta.env.DEV) {
+  (window as any).store = store;
+}
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

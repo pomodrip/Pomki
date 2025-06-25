@@ -6,6 +6,7 @@ import GlobalStyles from './theme/GlobalStyles';
 import AppRoutes from './routes';
 import { useUI } from './hooks/useUI';
 import GlobalNotifications from './components/common/GlobalNotifications';
+import ErrorSnackbar from './components/common/ErrorSnackbar';
 import Toast from './components/common/Toast';
 
 // UI 초기화 컴포넌트
@@ -42,6 +43,7 @@ function UIInitializer() {
       <GlobalStyles />
       <AppRoutes />
       <GlobalNotifications />
+      <ErrorSnackbar />
       <Toast />
     </ThemeProvider>
   );
