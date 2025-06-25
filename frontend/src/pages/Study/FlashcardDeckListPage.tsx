@@ -320,52 +320,57 @@ const FlashcardDeckListPage: React.FC = () => {
   const handleDeleteDeck = async (deck: EnrichedDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
-      // 먼저 fallback 덱에서 해당 덱을 찾아 삭제
+      let deletedFromFallback = false;
+      let deletedFromRedux = false;
+      
+      // 1. fallback 덱에서 삭제 시도
       const fallbackDeckIndex = fallbackDecks.findIndex(fallbackDeck => fallbackDeck.deckId === deck.deckId);
       if (fallbackDeckIndex !== -1) {
-        // fallback 덱에서 삭제
         setFallbackDecks(prev => prev.filter(fallbackDeck => fallbackDeck.deckId !== deck.deckId));
-        
-        // 클라이언트 측 정보도 삭제
+        deletedFromFallback = true;
+        console.log('✅ Fallback 덱에서 삭제 완료');
+      }
+      
+      // 2. Redux 덱에서도 삭제 시도 (fallback과 별개로)
+      const reduxDeckExists = decks.some(reduxDeck => reduxDeck.deckId === deck.deckId);
+      if (reduxDeckExists) {
+        try {
+          const result = await dispatch(deleteDeck(deck.deckId));
+          if (result.meta.requestStatus === 'fulfilled') {
+            deletedFromRedux = true;
+            console.log('✅ Redux 덱에서 삭제 완료');
+            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+            dispatch(fetchDecks());
+          } else {
+            throw new Error('Redux 덱 삭제 실패');
+          }
+        } catch (error) {
+          console.error('❌ Redux 덱 삭제 실패:', error);
+        }
+      }
+      
+      // 3. 최종 결과 처리
+      if (deletedFromFallback || deletedFromRedux) {
+        // 클라이언트 측 정보 삭제
         setClientSideInfo(prev => {
           const newInfo = { ...prev };
           delete newInfo[deck.deckId];
           return newInfo;
         });
         
+        const sourceInfo = deletedFromFallback && deletedFromRedux ? '(Fallback + Redux)' :
+                          deletedFromFallback ? '(Fallback)' :
+                          '(Redux)';
+        
         dispatch(showToast({
-          message: '덱이 성공적으로 삭제되었습니다.',
+          message: `덱이 성공적으로 삭제되었습니다. ${sourceInfo}`,
           severity: 'success'
         }));
       } else {
-        // Redux 덱 삭제 시도
-        try {
-          const result = await dispatch(deleteDeck(deck.deckId));
-          if (result.meta.requestStatus === 'fulfilled') {
-            // 클라이언트 측 정보도 삭제
-            setClientSideInfo(prev => {
-              const newInfo = { ...prev };
-              delete newInfo[deck.deckId];
-              return newInfo;
-            });
-            
-            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
-            dispatch(fetchDecks());
-            
-            dispatch(showToast({
-              message: '덱이 성공적으로 삭제되었습니다.',
-              severity: 'success'
-            }));
-          } else {
-            throw new Error('Redux 덱 삭제 실패');
-          }
-        } catch (error) {
-          console.error('덱 삭제 실패:', error);
-          dispatch(showToast({
-            message: '덱 삭제에 실패했습니다.',
-            severity: 'error'
-          }));
-        }
+        dispatch(showToast({
+          message: '덱 삭제에 실패했습니다.',
+          severity: 'error'
+        }));
       }
     }
   };
