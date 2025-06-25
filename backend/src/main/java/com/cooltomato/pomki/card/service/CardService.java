@@ -155,7 +155,7 @@ public class CardService {
             principal.getMemberId(), keyword, principal.getMemberId(), keyword);
         
         if (cards.isEmpty()) {
-            throw new IllegalArgumentException("검색 결과가 없습니다.");
+            log.info("debug >>> 검색어에 해당하는 검색 결과가 없습니다.");
         }
 
         return cards.stream().map(card -> CardResponseDto.builder()

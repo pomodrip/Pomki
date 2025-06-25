@@ -63,7 +63,7 @@ public class DeckService {
             List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(principal.getMemberId());
 
             if (decks.isEmpty()) {
-                throw new IllegalArgumentException("멤버의 덱이 존재하지 않습니다.");
+                log.info("debug >>> 멤버의 덱이 존재하지 않습니다.");
             }
 
             log.info("debug >>> 멤버별 덱 전체 조회 성공");
@@ -75,6 +75,8 @@ public class DeckService {
                     .createdAt(deck.getCreatedAt())
                     .updatedAt(deck.getUpdatedAt())
                     .cardCnt(deck.getCardCnt())
+                    .isDeleted(deck.getIsDeleted())
+                    .memberId(deck.getMemberId())
                     .build())
                     .toList();
         }
@@ -92,12 +94,13 @@ public class DeckService {
             List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
 
             if (cards.isEmpty()) {
-                throw new IllegalArgumentException("덱 안에 카드가 존재하지 않습니다.");
+                log.info("debug >>> 카드가 존재하지 않습니다.");
             }
             log.info("debug >>> 덱 안 카드 전체 조회 성공");
             
             return cards.stream().map(card -> CardResponseDto.builder()
                     .cardId(card.getCardId())
+                    .deckId(card.getDeck().getDeckId())
                     .content(card.getContent())
                     .answer(card.getAnswer())
                     .createdAt(card.getCreatedAt())
@@ -147,28 +150,23 @@ public class DeckService {
         }
 
         // 덱에서 검색어를 입력하면 덱 안에 있는 검색어가 있는 카드들이 표시됨
-        public List<CardResponseDto> searchCardsInDeckService(PrincipalMember principal, String query) {
+        public List<CardResponseDto> searchCardsInDeckService(PrincipalMember principal, String query, String deckId) {
             log.info("debug >>> DeckService searchCardsInDeck");
 
-            List<Deck> decks = deckRepository.findByMemberIdAndIsDeletedFalse(principal.getMemberId());
-            if (decks.isEmpty()) {
-                throw new IllegalArgumentException("검색 결과가 없습니다.");
+            Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
+            if (deck.get().getIsDeleted()) {
+                throw new IllegalArgumentException("삭제된 덱입니다.");
             }
 
-            List<String> deckIds = decks.stream()
-                                        .map(Deck::getDeckId)
-                                        .toList();
+            List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
 
-            List<Card> cards = cardRepository.findByDeckDeckIdInAndIsDeletedFalse(deckIds);
-
-            // 검색어가 content 또는 answer에 포함된 카드만 필터링
             List<Card> filteredCards = cards.stream()
                 .filter(card -> (card.getContent() != null && card.getContent().contains(query)) ||
                                 (card.getAnswer() != null && card.getAnswer().contains(query)))
                 .toList();
 
             if (filteredCards.isEmpty()) {
-                throw new IllegalArgumentException("검색어에 해당하는 카드가 존재하지 않습니다.");
+                log.info("debug >>> 검색어에 해당하는 카드가 존재하지 않습니다.");
             }
 
             return filteredCards.stream().map(card -> CardResponseDto.builder()
@@ -177,6 +175,7 @@ public class DeckService {
                     .answer(card.getAnswer())
                     .createdAt(card.getCreatedAt())
                     .updatedAt(card.getUpdatedAt())
+                    .deckId(card.getDeck().getDeckId())
                     .build()).toList();
         }
 

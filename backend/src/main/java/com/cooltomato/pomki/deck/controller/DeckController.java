@@ -124,9 +124,9 @@ public class DeckController {
     @GetMapping("/search/{keyword}")
     public ResponseEntity<List<CardResponseDto>> searchCardsInDeck(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal, 
-        @Parameter(description = "검색 키워드") @PathVariable("keyword") String query) {
+        @Parameter(description = "검색 키워드") @PathVariable("keyword") String query, @RequestParam("deckId") String deckId) {
         log.info("debug >>> DeckController searchCardsInDeck 덱 목록에서 카드 검색");
-        List<CardResponseDto> cards = deckService.searchCardsInDeckService(principal, query);
+        List<CardResponseDto> cards = deckService.searchCardsInDeckService(principal, query, deckId);
         return ResponseEntity.ok(cards);
     }
 }
