@@ -8,12 +8,12 @@ import {
   Container,
   Menu,
   MenuItem,
-  Checkbox,
   Chip,
   Button,
   TextField,
-  Card,
+  Card as MuiCard,
   CardContent,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { setFilters } from '../../store/slices/studySlice'; 
 import { 
   fetchCardsInDeck, 
@@ -37,6 +38,9 @@ import {
   deleteCard, 
   setCurrentDeck 
 } from '../../store/slices/deckSlice';
+import { deckApiWithFallback } from '../../api/apiWithFallback';
+import type { Card } from '../../types/card';
+import { showToast } from '../../store/slices/toastSlice';
 
 // 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
 interface Flashcard {
@@ -78,8 +82,12 @@ const FilterBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const FlashCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
+const FlashCard = styled(MuiCard)(({ theme }) => ({
+  height: '100%',
+  // minHeight: 150,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
   cursor: 'pointer',
   transition: 'all 0.2s',
   '&:hover': {
@@ -94,22 +102,18 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionBox = styled(Box)(({ theme }) => ({
+
+
+const ActionButton = styled(Button)({
+  whiteSpace: 'nowrap',
+});
+
+const SelectedTagsBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: theme.spacing(1),
-  marginTop: theme.spacing(1),
-}));
-
-const ActionButton = styled(Button)(({ theme }) => ({
-  minWidth: 'auto',
-  padding: theme.spacing(0.5, 1),
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.spacing(1),
-  '&:hover': {
-    backgroundColor: theme.palette.action.hover,
-  },
+  marginBottom: theme.spacing(2),
+  minHeight: theme.spacing(4),
+  flexWrap: 'wrap',
 }));
 
 const FlashCardListPage: React.FC = () => {
@@ -122,6 +126,10 @@ const FlashCardListPage: React.FC = () => {
   
   // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
   const { decks, currentDeckCards, loading } = useAppSelector((state) => state.deck);
+  
+  // 🎯 API Fallback을 위한 상태
+  const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
   
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
@@ -138,6 +146,9 @@ const FlashCardListPage: React.FC = () => {
     9: false,
   });
   
+  // 카드별 사용자 정의 태그 저장
+  const [customCardTags, setCustomCardTags] = useState<{[key: number]: string[]}>({});
+  
   // 수정 다이얼로그 상태
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingCardId, setEditingCardId] = useState<number | null>(null);
@@ -145,25 +156,62 @@ const FlashCardListPage: React.FC = () => {
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
 
+  // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거)
+  const allCards = useMemo(() => {
+    const combinedCards = new Map<string, Card>();
+    
+    // 1. Redux에서 가져온 카드들 추가
+    currentDeckCards.forEach(card => {
+      combinedCards.set(card.cardId.toString(), card);
+    });
+    
+    // 2. Fallback 카드들 추가 (중복 아닌 것만)
+    fallbackCards.forEach(card => {
+      if (!combinedCards.has(card.cardId.toString())) {
+        combinedCards.set(card.cardId.toString(), card);
+      }
+    });
+    
+    return Array.from(combinedCards.values());
+  }, [currentDeckCards, fallbackCards]);
+
+  // 🎯 현재 덱에 해당하는 카드들만 필터링
+  const currentDeckTitle = useMemo(() => {
+    const targetDeckId = `deck_${deckId}`;
+    
+    // 덱 이름 매핑
+    const deckTitles: { [key: string]: string } = {
+      'deck_1': '영어 단어장',
+      'deck_2': '일본어 단어장', 
+      'deck_3': '프로그래밍 용어'
+    };
+    
+    return deckTitles[targetDeckId] || `덱 ${deckId}`;
+  }, [deckId]);
+
   // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
   const mockDecks: FlashcardDeck[] = useMemo(() => {
-    // 새로운 API에서 가져온 덱 정보를 기존 구조로 변환
-    return decks.map(deck => ({
-      id: parseInt(deck.deckId.replace('deck-uuid-', '')), // deckId를 숫자로 변환
+    if (!deckId || allCards.length === 0) return [];
+    
+    return [{
+      id: parseInt(deckId),
       category: '학습',
-      title: deck.deckName,
-      isBookmarked: Math.random() > 0.5, // Mock 데이터
-      tags: [`#${deck.deckName.split(' ')[0]}`, '#학습'], // Mock 태그
-      flashcards: currentDeckCards
-        .filter(card => card.deckId === deck.deckId)
-        .map(card => ({
-          id: card.cardId,
-          front: card.content, // content -> front 변환
-          back: card.answer,   // answer -> back 변환
-          tags: [`#카드${card.cardId}`, '#학습'], // Mock 태그
-        }))
-    }));
-  }, [decks, currentDeckCards]);
+      title: currentDeckTitle,
+      isBookmarked: false,
+      tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
+      flashcards: allCards
+        .filter(card => card.deckId === `deck_${deckId}`)
+        .map(card => {
+          const cardId = parseInt(card.cardId.toString());
+          return {
+            id: cardId,
+            front: card.content || 'No content',
+            back: card.answer || 'No answer',
+            tags: customCardTags[cardId] || [`#카드${card.cardId}`, '#학습'],
+          };
+        })
+    }];
+  }, [deckId, allCards, currentDeckTitle, customCardTags]);
 
   // 🎯 현재 덱 찾기 (기존 로직 유지)
   const currentDeck = useMemo(() => {
@@ -173,10 +221,26 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
     if (deckId) {
-      // 실제 덱 ID 형식으로 변환 (숫자 -> UUID 형식)
-      const realDeckId = `deck-uuid-${deckId}`;
+      // Redux를 통한 기존 로드
+      const realDeckId = `deck_${deckId}`;
       dispatch(setCurrentDeck(realDeckId));
       dispatch(fetchCardsInDeck(realDeckId));
+      
+      // API Fallback으로 카드 데이터 로드
+      const loadCardsWithFallback = async () => {
+        setFallbackLoading(true);
+        try {
+          const fallbackData = await deckApiWithFallback.getCardsInDeck(realDeckId);
+          setFallbackCards(fallbackData);
+          console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
+        } catch (error) {
+          console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
+        } finally {
+          setFallbackLoading(false);
+        }
+      };
+
+      loadCardsWithFallback();
     }
   }, [dispatch, deckId]);
 
@@ -247,27 +311,99 @@ const FlashCardListPage: React.FC = () => {
       setEditingCardId(id);
       setEditCardFront(card.front);
       setEditCardBack(card.back);
-      setEditCardTags(card.tags.join(', '));
+      // 기존 태그에서 # 제거하여 표시 (사용자 입력 형태로)
+      setEditCardTags(card.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
       setShowEditDialog(true);
     }
   };
 
-  const handleDeleteCard = (id: number, event: React.MouseEvent) => {
+  const handleDeleteCard = async (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
     if (confirmed) {
-      // 🎯 새로운 API 호출 (실제 cardId 사용) - string으로 변환
-      dispatch(deleteCard(id.toString()));
+      // 먼저 fallback 카드에서 해당 카드를 찾아 삭제 (타입 안전하게 비교)
+      const fallbackCardIndex = fallbackCards.findIndex(card => Number(card.cardId) === Number(id));
+      if (fallbackCardIndex !== -1) {
+        // fallback 카드에서 삭제
+        setFallbackCards(prev => prev.filter(card => Number(card.cardId) !== Number(id)));
+        
+        // 해당 카드의 사용자 정의 태그도 삭제
+        setCustomCardTags(prev => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
+        
+        dispatch(showToast({
+          message: '카드가 성공적으로 삭제되었습니다.',
+          severity: 'success'
+        }));
+      } else {
+        // Redux 카드 삭제 시도
+        try {
+          const result = await dispatch(deleteCard(id.toString()));
+          if (result.meta.requestStatus === 'fulfilled') {
+            // Redux 삭제 성공 시에도 사용자 정의 태그 삭제
+            setCustomCardTags(prev => {
+              const updated = { ...prev };
+              delete updated[id];
+              return updated;
+            });
+            
+            dispatch(showToast({
+              message: '카드가 성공적으로 삭제되었습니다.',
+              severity: 'success'
+            }));
+          } else {
+            throw new Error('Redux 카드 삭제 실패');
+          }
+        } catch (error) {
+          console.error('카드 삭제 실패:', error);
+          dispatch(showToast({
+            message: '카드 삭제에 실패했습니다.',
+            severity: 'error'
+          }));
+        }
+      }
     }
   };
 
-  const handleToggleBookmark = (cardId: number, event: React.MouseEvent) => {
+  const handleToggleBookmark = async (cardId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    setCardBookmarks(prev => ({
-      ...prev,
-      [cardId]: !prev[cardId]
-    }));
+    
+    try {
+      // 클라이언트 상태 즉시 업데이트 (UI 반응성)
+      const newBookmarkState = !cardBookmarks[cardId];
+      setCardBookmarks(prev => ({
+        ...prev,
+        [cardId]: newBookmarkState
+      }));
+      
+      // 향후 API 연동 시 서버 동기화
+      // await dispatch(updateCardBookmark({ cardId, isBookmarked: newBookmarkState }));
+      
+      console.log(`📌 카드 ${cardId} 북마크 ${newBookmarkState ? '추가' : '제거'}`);
+      
+      // 성공 토스트 메시지
+      dispatch(showToast({
+        message: newBookmarkState ? '북마크에 추가되었습니다.' : '북마크에서 제거되었습니다.',
+        severity: 'success'
+      }));
+      
+    } catch (error) {
+      // 실패 시 상태 롤백
+      console.error('북마크 상태 변경 실패:', error);
+      setCardBookmarks(prev => ({
+        ...prev,
+        [cardId]: cardBookmarks[cardId] // 원래 상태로 되돌림
+      }));
+      
+      dispatch(showToast({
+        message: '북마크 상태 변경에 실패했습니다.',
+        severity: 'error'
+      }));
+    }
   };
 
   const handleEditDialogClose = () => {
@@ -278,21 +414,91 @@ const FlashCardListPage: React.FC = () => {
     setEditCardTags('');
   };
 
-  const handleEditDialogConfirm = () => {
+  const handleEditDialogConfirm = async () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
-    if (confirmed && editCardFront.trim() && editCardBack.trim() && editingCardId !== null) {
-      // 🎯 새로운 API 형식으로 업데이트 - string으로 변환
-      dispatch(updateCard({ 
-        cardId: editingCardId.toString(), 
-        data: { 
-          content: editCardFront.trim(), 
-          answer: editCardBack.trim() 
-        } 
+    if (!confirmed || !editCardFront.trim() || !editCardBack.trim() || editingCardId === null) {
+      return;
+    }
+
+    try {
+      console.log('🔍 수정 시도:', { editingCardId, fallbackCards: fallbackCards.map(c => ({ cardId: c.cardId, type: typeof c.cardId })) });
+      
+      // 태그 처리: 쉼표로 분리하고 # 자동 추가
+      const processedTags = editCardTags
+        .split(',')
+        .map(tag => {
+          const trimmed = tag.trim();
+          return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+        })
+        .filter(tag => tag.length > 1); // 빈 태그나 #만 있는 것 제거
+      
+      // 먼저 fallback 카드에서 해당 카드를 찾아 수정 (타입 안전하게 비교)
+      const fallbackCardIndex = fallbackCards.findIndex(card => 
+        Number(card.cardId) === Number(editingCardId)
+      );
+      
+      if (fallbackCardIndex !== -1) {
+        console.log('✅ Fallback 카드에서 찾음, 수정 진행');
+        // fallback 카드 업데이트
+        setFallbackCards(prev => prev.map(card => 
+          Number(card.cardId) === Number(editingCardId)
+            ? { 
+                ...card, 
+                content: editCardFront.trim(),
+                answer: editCardBack.trim()
+              }
+            : card
+        ));
+        
+        console.log('📝 Fallback 태그 업데이트:', processedTags);
+      } else {
+        console.log('⚠️ Fallback 카드에서 찾지 못함, Redux 시도');
+        // Redux 카드 수정 시도
+        const result = await dispatch(updateCard({ 
+          cardId: editingCardId.toString(), 
+          data: { 
+            content: editCardFront.trim(), 
+            answer: editCardBack.trim() 
+          } 
+        }));
+        
+        if (result.meta.requestStatus !== 'fulfilled') {
+          throw new Error('Redux 카드 수정 실패');
+        }
+        
+        console.log('📝 Redux 태그 업데이트:', processedTags);
+      }
+      
+      // 성공 시 항상 태그 업데이트 (두 시스템 모두)
+      setCustomCardTags(prev => ({
+        ...prev,
+        [editingCardId]: processedTags
       }));
       
+      dispatch(showToast({
+        message: '카드가 성공적으로 수정되었습니다.',
+        severity: 'success'
+      }));
+      
+    } catch (error) {
+      console.error('카드 수정 실패:', error);
+      dispatch(showToast({
+        message: '카드 수정에 실패했습니다.',
+        severity: 'error'
+      }));
+    } finally {
       handleEditDialogClose();
     }
   };
+
+  // 🎯 카드 수정 다이얼로그 키보드 단축키
+  useDialogKeyboardShortcuts(
+    handleEditDialogConfirm,
+    handleEditDialogClose,
+    {
+      enabled: showEditDialog
+    }
+  );
 
   // 덱이 없는 경우 (기존 로직 유지)
   if (!currentDeck) {
@@ -328,10 +534,31 @@ const FlashCardListPage: React.FC = () => {
         </Typography>
       </HeaderBox>
 
+      {/* API Fallback 정보 표시 */}
+      {fallbackCards.length > 0 && (
+        <Box
+          sx={{
+            bgcolor: '#e3f2fd',
+            border: '1px solid #2196f3',
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="#1976d2">
+            ℹ️ API Fallback이 활성화되어 Mock 데이터를 표시하고 있습니다. ({fallbackCards.length}개 카드)
+          </Typography>
+        </Box>
+      )}
+
       {/* 검색 */}
       <SearchBox>
         <TextField
           fullWidth
+          variant="outlined"
           placeholder="카드 내용 검색..."
           value={filters.searchQuery}
           onChange={handleSearchChange}
@@ -348,48 +575,32 @@ const FlashCardListPage: React.FC = () => {
       {/* 필터 */}
       <FilterBox>
         <Button
-          variant="outlined"
+          startIcon={<FilterListIcon />}
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
-          endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
         >
-          Tags {filters.selectedTags.length > 0 && `(${filters.selectedTags.length})`}
+          태그 필터 ({filters.selectedTags.length})
         </Button>
-        
         <Button
-          variant="outlined"
+          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
-          endIcon={<FilterListIcon />}
-          sx={{
-            borderRadius: 2,
-            color: 'primary.main',
-            borderColor: 'primary.main',
-            '&:hover': {
-              backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-            },
-          }}
         >
-          Bookmarked
+          북마크
         </Button>
+      </FilterBox>
 
-        {/* 선택된 태그들 표시 */}
+      {/* 선택된 태그들 표시 */}
+      <SelectedTagsBox>
         {filters.selectedTags.map((tag: string) => (
-          <TagChip
+          <Chip
             key={tag}
             label={tag}
             onDelete={() => handleTagSelect(tag)}
+            size="small"
             color="primary"
             variant="filled"
           />
         ))}
-      </FilterBox>
+      </SelectedTagsBox>
 
       {/* 태그 메뉴 */}
       <Menu
@@ -410,15 +621,10 @@ const FlashCardListPage: React.FC = () => {
         open={Boolean(bookmarkMenuAnchor)}
         onClose={() => setBookmarkMenuAnchor(null)}
       >
-        <MenuItem onClick={() => handleBookmarkFilter(false)}>
-          모든 카드
-        </MenuItem>
-        <MenuItem onClick={() => handleBookmarkFilter(true)}>
-          북마크된 카드만
-        </MenuItem>
+        <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
+        <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
       </Menu>
 
-      {/* 로딩 상태 */}
       {loading && (
         <Box display="flex" justifyContent="center" py={4}>
           <Typography>카드를 불러오는 중...</Typography>
@@ -426,85 +632,69 @@ const FlashCardListPage: React.FC = () => {
       )}
 
       {/* 카드 리스트 */}
-      {!loading && filteredCards.map((card) => (
-        <FlashCard key={card.id}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-              {/* 체크박스 */}
-              <Checkbox
-                checked={selectedCards.includes(card.id)}
-                onChange={(event) => handleCardSelect(card.id, event.target.checked)}
-                sx={{ mt: -1 }}
-              />
-              
-              {/* 카드 내용 */}
-              <Box sx={{ flex: 1 }}>
+      {!loading && (
+        <Box 
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(2, 1fr)', 
+              md: 'repeat(3, 1fr)' 
+            }, 
+            gap: 2,
+            alignItems: 'stretch'
+          }}
+        >
+          {filteredCards.map((card) => (
+            <FlashCard key={card.id}>
+              <CardContent sx={{ flexGrow: 1 }}>
                 {/* 제목(질문)과 북마크 */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      flexGrow: 1, 
-                      whiteSpace: 'nowrap', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis',
-                      minWidth: 0,
-                    }}
-                  >
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>
                     {card.front}
                   </Typography>
-                  <IconButton
-                    onClick={(event) => handleToggleBookmark(card.id, event)}
-                    size="small"
-                    sx={{ flexShrink: 0 }}
-                  >
-                    {cardBookmarks[card.id] ? <Bookmark sx={{ color: '#ff9800' }} /> : <BookmarkBorder />}
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleToggleBookmark(card.id, e); }}>
+                    {cardBookmarks[card.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
                   </IconButton>
                 </Box>
                 
-                {/* 태그들 */}
-                {card.tags.length > 0 && (
-                  <Box sx={{ mb: 1.5 }}>
-                    {card.tags.slice(0, 3).map((tag: string, index: number) => (
-                      <TagChip
-                        key={index}
-                        label={tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ))}
-                    {card.tags.length > 3 && (
-                      <TagChip
-                        label={`+${card.tags.length - 3}`}
-                        size="small"
-                        color="default"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                )}
+                {/* 카드 정보 */}
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  플래시카드
+                </Typography>
                 
-                {/* 액션 버튼들 */}
-                <ActionBox>
-                  <ActionButton
-                    onClick={(event) => handleEditCard(card.id, event)}
-                    startIcon={<EditIcon fontSize="small" />}
-                  >
-                    수정
-                  </ActionButton>
-                  <ActionButton
-                    onClick={(event) => handleDeleteCard(card.id, event)}
-                    startIcon={<DeleteIcon fontSize="small" />}
-                  >
-                    삭제
-                  </ActionButton>
-                </ActionBox>
+                {/* 태그들 */}
+                <Box 
+                  mt={1.5} 
+                  sx={{ 
+                    minHeight: 24,
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                  }}
+                >
+                  {card.tags.slice(0, 3).map((tag: string, index: number) => (
+                    <TagChip key={index} label={tag} size="small" color="primary" variant="outlined" />
+                  ))}
+                  {card.tags.length > 3 && (
+                    <TagChip label={`+${card.tags.length - 3}`} size="small" color="primary" variant="outlined" />
+                  )}
+                </Box>
+              </CardContent>
+              
+              {/* 액션 버튼들 */}
+              <Box sx={{ justifyContent: 'flex-end', display: 'flex', p: 1 }}>
+                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => { e.stopPropagation(); handleEditCard(card.id, e); }}>
+                  수정
+                </ActionButton>
+                <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id, e); }}>
+                  삭제
+                </ActionButton>
               </Box>
-            </Box>
-          </CardContent>
-        </FlashCard>
-      ))}
+            </FlashCard>
+          ))}
+        </Box>
+      )}
 
       {/* 빈 상태 */}
       {!loading && filteredCards.length === 0 && (
@@ -557,19 +747,15 @@ const FlashCardListPage: React.FC = () => {
             />
             
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              태그 (쉼표로 구분)
+              태그 (쉼표로 구분, 자동으로 # 추가)
             </Typography>
             <TextField
               fullWidth
-              placeholder="예: #React, #JavaScript, #Frontend"
+              placeholder="React, JavaScript, Frontend"
               value={editCardTags}
               onChange={(e) => setEditCardTags(e.target.value)}
-              sx={{ mb: 1 }}
+              sx={{ mb: 2 }}
             />
-            
-            <Typography variant="caption" color="text.secondary">
-              태그는 쉼표(,)로 구분하여 입력하세요
-            </Typography>
           </Box>
         </DialogContent>
         <DialogActions>

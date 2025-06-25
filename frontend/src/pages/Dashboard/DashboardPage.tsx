@@ -1,22 +1,24 @@
 import React from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled, Paper } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import Button from '../../components/ui/Button';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(4),
+  paddingBottom: theme.spacing(10),
 }));
 
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
   const location = useLocation();
+  const navigate = useNavigate();
 
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
 
@@ -25,6 +27,39 @@ const DashboardPage: React.FC = () => {
       <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
         대시보드
       </Typography>
+
+      {/* 개발자 도구 - 개발 환경에서만 표시 */}
+      {import.meta.env.DEV && (
+        <Paper sx={{ p: 3, mb: 3, backgroundColor: '#e3f2fd' }}>
+          <Typography variant="h2" gutterBottom>
+            🔧 개발자 도구
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            API Fallback 시스템을 테스트해보세요!
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/api-fallback')}
+            >
+              API Fallback 테스트
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => navigate('/ad')}
+            >
+              광고 시스템 예제
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => navigate('/study')}
+            >
+              📚 학습 페이지에서 확인
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
       {/* 오늘의 학습, 최근 활동 - 세로 배치 */}
       <Box sx={{

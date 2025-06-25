@@ -14,18 +14,24 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Card,
+  Card as MuiCard,
   Button,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   ArrowForward as ArrowForwardIcon,
   EditNote as EditNoteIcon,
   ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { useNavigationKeyboardShortcuts, useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { fetchCardsInDeck, setCurrentDeck } from '../../store/slices/deckSlice';
+import { showToast } from '../../store/slices/toastSlice';
+import { deckApiWithFallback } from '../../api/apiWithFallback';
+import type { Card } from '../../types/card';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -39,7 +45,7 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const FlashcardCard = styled(Card)(({ theme }) => ({
+const FlashcardCard = styled(MuiCard)(({ theme }) => ({
   marginBottom: theme.spacing(3),
   minHeight: 200,
   display: 'flex',
@@ -48,6 +54,7 @@ const FlashcardCard = styled(Card)(({ theme }) => ({
   cursor: 'pointer',
   padding: theme.spacing(3),
   transition: 'all 0.2s',
+  position: 'relative', // 태그를 절대 위치로 배치하기 위해
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: theme.shadows[4],
@@ -55,9 +62,12 @@ const FlashcardCard = styled(Card)(({ theme }) => ({
 }));
 
 const TagChip = styled(Chip)(({ theme }) => ({
-  fontSize: '0.75rem',
-  height: 24,
+  fontSize: '0.65rem', // 더 작은 글자 크기
+  height: 20, // 더 작은 높이
   marginRight: theme.spacing(0.5),
+  '& .MuiChip-label': {
+    padding: theme.spacing(0, 0.5), // 패딩 조정
+  },
 }));
 
 const ProgressBar = styled(Box)(({ theme }) => ({
@@ -88,6 +98,10 @@ const FlashcardPracticePage: React.FC = () => {
     (state) => state.deck
   );
 
+  // 🎯 API Fallback을 위한 상태
+  const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(null);
@@ -106,20 +120,57 @@ const FlashcardPracticePage: React.FC = () => {
     if (deckId) {
       dispatch(setCurrentDeck(deckId));
       dispatch(fetchCardsInDeck(deckId));
+      
+      // API Fallback으로 카드 데이터 로드
+      const loadCardsWithFallback = async () => {
+        setFallbackLoading(true);
+        try {
+          const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
+          setFallbackCards(fallbackData);
+          console.log('✅ API Fallback으로 카드 목록 로드:', fallbackData);
+        } catch (error) {
+          console.error('❌ API Fallback 카드 로드 실패:', error);
+        } finally {
+          setFallbackLoading(false);
+        }
+      };
+
+      loadCardsWithFallback();
     }
   }, [dispatch, deckId]);
 
+
+
+  // 🎯 Redux와 Fallback 카드를 합치기
+  const combinedCards = useMemo(() => {
+    const cardMap = new Map<number, Card>();
+    
+    // Redux 카드 추가
+    currentDeckCards.forEach(card => {
+      cardMap.set(card.cardId, card);
+    });
+    
+    // Fallback 카드 추가 (중복되지 않는 경우만)
+    fallbackCards.forEach(card => {
+      if (!cardMap.has(card.cardId)) {
+        cardMap.set(card.cardId, card);
+      }
+    });
+    
+    return Array.from(cardMap.values());
+  }, [currentDeckCards, fallbackCards]);
+
   // 🎯 API 데이터를 UI에 맞게 변환
   const flashcards = useMemo(() => {
-    if (!currentDeck) return [];
-    return currentDeckCards.map(card => ({
+    if (!currentDeck && fallbackCards.length === 0) return [];
+    return combinedCards.map(card => ({
       ...card,
       id: card.cardId,
       question: card.content, // content -> question
       answer: card.answer,   // answer -> answer
-      tags: [], // API에 태그 정보가 없으므로 임시로 빈 배열 사용
+      tags: [`#카드${card.cardId}`, '#학습'], // FlashCardListPage와 동일한 태그
     }));
-  }, [currentDeck, currentDeckCards]);
+  }, [currentDeck, combinedCards, fallbackCards.length]);
 
   const currentCard = flashcards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
@@ -151,13 +202,68 @@ const FlashcardPracticePage: React.FC = () => {
   };
 
   const handleCompletionConfirm = () => {
-    setShowCompletionDialog(false);
-    navigate('/study');
-  };
+    try {
+      setShowCompletionDialog(false);
+      
+      // 학습 완료 토스트 알림
+      dispatch(showToast({
+        message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
+        severity: 'success',
+        duration: 4000
+      }));
+      
+      // 상태 초기화
+      setCurrentCardIndex(0);
+      setShowAnswer(false);
+      setSelectedDifficulty(null);
+      setCurrentQuestionFeedback('');
+      setGlobalFeedback('');
+      setIsFeedbackOpen(false);
+      
+      console.log('학습 완료 - 덱 목록으로 이동');
+      navigate('/study');
+    } catch (error) {
+      console.error('학습 완료 처리 중 오류:', error);
+      // 에러 토스트
+      dispatch(showToast({
+        message: '학습 완료 처리 중 오류가 발생했습니다.',
+        severity: 'error'
+      }));
+      // 에러가 발생해도 기본 동작은 수행
+      navigate('/study');
+    }  };
 
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
+    
+    // 계속 학습 토스트 알림
+    dispatch(showToast({
+      message: '학습을 계속 진행합니다!',
+      severity: 'info',
+      duration: 2000
+    }));
+    
+    console.log('학습 계속 진행');
   };
+
+  // 🎯 플래시카드 네비게이션 키보드 단축키
+  useNavigationKeyboardShortcuts(
+    handlePrevious,
+    handleNext,
+    {
+      enabled: flashcards.length > 0,
+      isActive: () => !showCompletionDialog && !isFeedbackOpen
+    }
+  );
+  
+  // 🎯 학습 완료 다이얼로그 키보드 단축키
+  useDialogKeyboardShortcuts(
+    handleCompletionConfirm,
+    handleCompletionCancel,
+    {
+      enabled: showCompletionDialog
+    }
+  );
 
   const getDifficultyButtonStyle = (difficulty: Difficulty) => {
     const isSelected = selectedDifficulty === difficulty;
@@ -194,11 +300,37 @@ const FlashcardPracticePage: React.FC = () => {
         </Typography>
       </HeaderBox>
 
-      {loading && <Typography>카드를 불러오는 중...</Typography>}
+      {/* API Fallback 정보 표시 */}
+      {fallbackCards.length > 0 && (
+        <Box 
+          sx={{ 
+            mb: 2, 
+            p: 2, 
+            backgroundColor: '#e3f2fd', 
+            border: '1px solid #2196f3',
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <InfoIcon color="primary" />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              🎉 API Fallback 시스템 작동 중!
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {fallbackCards.length}개의 Mock 카드를 사용하여 학습 기능을 체험하고 있습니다.
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
-      {!loading && flashcards.length > 0 && (
+      {(loading || fallbackLoading) && <Typography>카드를 불러오는 중...</Typography>}
+
+      {!loading && !fallbackLoading && flashcards.length > 0 && (
         <>
-          {/* 진행률 */}
+          {/* 진행률: 상단에만 표시 (미니멀리즘 적용) */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
               {currentCardIndex + 1}/{flashcards.length}
@@ -210,34 +342,57 @@ const FlashcardPracticePage: React.FC = () => {
           
           {/* 플래시카드 */}
           <FlashcardCard onClick={handleCardClick}>
-            <Typography
-              variant={showAnswer ? "h4" : "h5"}
-              textAlign="center"
-              sx={{
-                lineHeight: 1.6,
-                fontWeight: showAnswer ? 700 : 500,
-              }}
-            >
-              {showAnswer ? currentCard.answer : currentCard.question}
-            </Typography>
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* 카드 내용 */}
+              <Typography
+                variant={showAnswer ? "h4" : "h5"}
+                textAlign="center"
+                sx={{
+                  lineHeight: 1.6,
+                  fontWeight: showAnswer ? 700 : 500,
+                  mb: !showAnswer ? 2 : 0,
+                }}
+              >
+                {showAnswer ? currentCard.answer : currentCard.question}
+              </Typography>
+              
+              {/* 태그들 - 카드 하단에 고정 */}
+              {!showAnswer && (
+                <Box sx={{ 
+                  position: 'absolute',
+                  bottom: theme => theme.spacing(2.5), // 카드 바닥에서 조금 더 위로
+                  left: theme => theme.spacing(3),
+                  right: theme => theme.spacing(3),
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: 0.5, 
+                  justifyContent: 'center'
+                }}>
+                  {currentCard.tags.slice(0, 3).map((tag, index) => (
+                    <TagChip 
+                      key={index} 
+                      label={tag} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  ))}
+                  {currentCard.tags.length > 3 && (
+                    <TagChip 
+                      label={`+${currentCard.tags.length - 3}`} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  )}
+                </Box>
+              )}
+            </Box>
           </FlashcardCard>
 
-          {/* 태그들 */}
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {currentCard.tags.map((tag, index) => (
-                <TagChip
-                  key={index}
-                  label={tag}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-            </Box>
-          </Box>
 
-          {/* 네비게이션(이전/다음) */}
+
+          {/* 네비게이션: 이전/다음 버튼만 (미니멀리즘 적용) */}
           <Box
             sx={{
               display: 'flex',
@@ -250,70 +405,81 @@ const FlashcardPracticePage: React.FC = () => {
             }}
           >
             {/* 이전 버튼 */}
-            <IconButton
-              onClick={handlePrevious}
-              disabled={currentCardIndex === 0}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
-                '&:disabled': {
-                  bgcolor: 'grey.300',
-                  color: 'grey.500',
-                },
-                boxShadow: 1,
-              }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
+            <Tooltip title="← 방향키: 이전 카드" arrow placement="top">
+              <span>
+                <IconButton
+                  onClick={handlePrevious}
+                  disabled={currentCardIndex === 0}
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    '&:disabled': {
+                      bgcolor: 'grey.300',
+                      color: 'grey.500',
+                    },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
 
-            {/* 중앙: 인디케이터 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* 중앙: 진행률 표시 */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              {/* 진행률 숫자 */}
               <Typography
-                variant="body1"
+                variant="body2"
                 color="primary.main"
                 fontWeight={600}
-                sx={{ minWidth: 40, textAlign: 'center', mr: 1 }}
+                sx={{ fontSize: '0.875rem' }}
               >
                 {currentCardIndex + 1}/{flashcards.length}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                {flashcards.map((_, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
-                      boxShadow: idx === currentCardIndex ? 1 : 0,
-                      transition: 'all 0.2s',
-                    }}
-                  />
-                ))}
-              </Box>
+              
+              {/* 동그라미 인디케이터 - 페이지네이션 필요 없어서 일단 주석처리 */}
+              {/* {flashcards.length <= 10 && (
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {flashcards.map((_, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
+                        boxShadow: idx === currentCardIndex ? 1 : 0,
+                        transition: 'all 0.2s',
+                      }}
+                    />
+                  ))}
+                </Box>
+              )} */}
             </Box>
 
             {/* 다음 버튼 */}
-            <IconButton
-              onClick={handleNext}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: 'primary.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'primary.dark' },
-                '&:disabled': {
-                  bgcolor: 'grey.300',
-                  color: 'grey.500',
-                },
-                boxShadow: 1,
-              }}
-            >
-              <ArrowForwardIcon />
-            </IconButton>
+            <Tooltip title="→ 방향키: 다음 카드" arrow placement="top">
+              <IconButton
+                onClick={handleNext}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                    color: 'grey.500',
+                  },
+                  boxShadow: 1,
+                }}
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
@@ -417,10 +583,10 @@ const FlashcardPracticePage: React.FC = () => {
         </>
       )}
 
-      {!loading && !flashcards.length && (
+      {!loading && !fallbackLoading && !flashcards.length && (
         <Box textAlign="center" py={5}>
           <Typography variant="h6" color="text.secondary">
-            {currentDeck
+            {currentDeck || fallbackCards.length > 0
               ? '이 덱에는 카드가 없습니다.'
               : '덱을 찾을 수 없습니다.'}
           </Typography>
