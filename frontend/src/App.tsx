@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, CircularProgress, Typography } from '@mui/material';
+import { CssBaseline, Box, CircularProgress } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import baseTheme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
@@ -10,6 +10,8 @@ import { useAuth } from './hooks/useAuth';
 import GlobalNotifications from './components/common/GlobalNotifications';
 import { validateToken } from './store/slices/authSlice';
 import type { AppDispatch } from './store/store';
+import ErrorSnackbar from './components/common/ErrorSnackbar';
+import Toast from './components/common/Toast';
 
 // 로딩 스플래시 화면 컴포넌트
 function LoadingSplash() {
@@ -70,6 +72,8 @@ function UIInitializer() {
         <>
           <AppRoutes />
           <GlobalNotifications />
+          <ErrorSnackbar />
+          <Toast />
         </>
       )}
     </ThemeProvider>

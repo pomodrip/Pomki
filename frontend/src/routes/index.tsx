@@ -19,6 +19,7 @@ import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import NoteDetailPage from '../pages/Note/NoteDetailPage';
 import DeckManagementPage from '../pages/Study/DeckManagementPage';
 import AdUsageExample from '../examples/AdUsageExample';
+import ApiWithFallbackExample from '../examples/ApiWithFallbackExample';
 // import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 // const TestPage = ({ title }: { title: string }) => {
@@ -70,6 +71,7 @@ const AppRoutes = () => {
         {/* 테스트 페이지 */}
         <Route path="study/deck-management" element={<DeckManagementPage />} />
         <Route path="ad" element={< AdUsageExample/>} />
+        <Route path="api-fallback" element={<ApiWithFallbackExample />} />
         {/* <Route path="membership" element={<MembershipUsageExample/>} /> */}
       </Route>
       

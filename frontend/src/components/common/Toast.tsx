@@ -13,7 +13,7 @@ const StyledAlert = styled(Alert)(({ theme }) => ({
 
 const Toast: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { open, message, severity, duration } = useAppSelector((state) => state.toast);
+  const { open, message, severity, duration, anchorOrigin } = useAppSelector((state) => state.toast);
 
   const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -27,10 +27,18 @@ const Toast: React.FC = () => {
       open={open}
       autoHideDuration={duration}
       onClose={handleClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      sx={{ top: '80px !important' }}
+      anchorOrigin={anchorOrigin}
+      // 위치 조정: 데스크탑에서는 헤더 아래, 모바일에서는 바텀 네비게이션 위
+      sx={{ 
+        ...(anchorOrigin.vertical === 'bottom' && {
+          bottom: { xs: '80px !important', sm: '16px !important' }
+        }),
+        ...(anchorOrigin.vertical === 'top' && {
+          top: { xs: '16px !important', sm: '80px !important' } // 데스크탑에서 헤더 아래
+        })
+      }}
     >
-      <StyledAlert onClose={handleClose} severity={severity as AlertProps['severity']} variant="filled">
+      <StyledAlert severity={severity as AlertProps['severity']} variant="filled">
         {message}
       </StyledAlert>
     </Snackbar>
