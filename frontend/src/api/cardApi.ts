@@ -3,7 +3,7 @@ import api from './index';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '../types/card';
 
 /**
- * 카드 생성
+ * 카드 생성 
  * @param deckId 카드를 추가할 덱 ID
  * @param data 생성할 카드 데이터
  */
