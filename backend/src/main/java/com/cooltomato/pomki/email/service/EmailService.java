@@ -14,7 +14,7 @@ import com.cooltomato.pomki.email.repository.EmailVerificationRepository;
 import com.cooltomato.pomki.email.util.EmailUtil;
 import com.cooltomato.pomki.email.constant.EmailVerificationCode;
 import com.cooltomato.pomki.global.exception.BadRequestException;
-import com.cooltomato.pomki.global.exception.NotFoundException;
+import com.cooltomato.pomki.global.exception.EmailVerificationNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +70,7 @@ public class EmailService {
     public EmailVerificationResponseDto verifyCode(EmailVerificationConfirmDto request) {
         EmailVerification emailVerification = emailVerificationRepository
                 .findById(request.getEmail())
-                .orElseThrow(() -> new NotFoundException("인증 요청을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EmailVerificationNotFoundException());
         
         if (!emailVerification.getVerificationCode().equals(request.getVerificationCode())) {
             throw new BadRequestException("인증코드가 일치하지 않습니다.");

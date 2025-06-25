@@ -9,7 +9,7 @@ import org.springframework.util.StringUtils;
 
 import com.cooltomato.pomki.global.constant.Role;
 import com.cooltomato.pomki.global.exception.BadRequestException;
-import com.cooltomato.pomki.global.exception.NotFoundException;
+import com.cooltomato.pomki.global.exception.MemberNotFoundException;
 import com.cooltomato.pomki.member.dto.MemberInfoResponseDto;
 import com.cooltomato.pomki.member.dto.MemberSignUpRequestDto;
 import com.cooltomato.pomki.member.dto.MemberUpdateRequestDto;
@@ -67,14 +67,14 @@ public class MemberService {
     @Transactional(readOnly = true)
     public MemberInfoResponseDto readMember(Long memberId) {
         Member member = memberRepository.findByIdAndIsDeletedIsFalse(memberId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         return MemberInfoResponseDto.from(member);
     }
 
     @Transactional
     public void softDeleteMember(Long memberId) {
         Member member = memberRepository.findByIdAndIsDeletedIsFalse(memberId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         member.setDeleted(true);
         member.setDeletedAt(LocalDateTime.now());
     }
@@ -87,7 +87,7 @@ public class MemberService {
     @Transactional
     public MemberUpdateResponseDto updateMember(Long memberId, MemberUpdateRequestDto request) {
         Member member = memberRepository.findByIdAndIsDeletedIsFalse(memberId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         
         if (StringUtils.hasText(request.getNewPassword())) {
             if (member.isSocialLogin()) {
@@ -136,7 +136,7 @@ public class MemberService {
     
     private void validateEmailChangeRequest(Long memberId, MemberEmailUpdateRequestDto request) {
         Member member = memberRepository.findByIdAndIsDeletedIsFalse(memberId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         
         if (memberRepository.existsByMemberEmail(request.getNewEmail())) {
             throw new BadRequestException("이미 사용 중인 이메일입니다.");
@@ -154,7 +154,7 @@ public class MemberService {
         }
         
         Member member = memberRepository.findByIdAndIsDeletedIsFalse(memberId)
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         
         if (memberRepository.existsByMemberEmail(request.getNewEmail())) {
             throw new BadRequestException("이미 사용 중인 이메일입니다.");
