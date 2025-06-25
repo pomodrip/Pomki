@@ -4,17 +4,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.card.repository.CardRepository;
-import com.cooltomato.pomki.deck.entity.Deck;
-import com.cooltomato.pomki.deck.repository.DeckRepository;
-import com.cooltomato.pomki.tag.dto.TagRequestDto;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.tag.dto.TagResponseDto;
 import com.cooltomato.pomki.tag.entity.Tag;
-import com.cooltomato.pomki.tag.entity.TagCard;
 import com.cooltomato.pomki.tag.repository.TagRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,74 +21,61 @@ import lombok.RequiredArgsConstructor;
 public class TagService {
     private final TagRepository tagRepository;
     private final CardRepository cardRepository; 
-    private final DeckRepository deckRepository;
+    private final MemberRepository memberRepository;
 
     public TagResponseDto createOneTagService(PrincipalMember principal, Long cardId, String tagName) {
-        // 1. Card와 Tag를 미리 조회하거나 생성
-        Card card = cardRepository.findById(cardId).orElseThrow(()-> new RuntimeException("해당하는 카드가 없습니다"));
+        Card card = cardRepository.findById(cardId)
+            .orElseThrow(() -> new RuntimeException("해당하는 카드가 없습니다"));
+    
+        // 카드의 주인 확인
+        Long memberId = card.getDeck().getMemberId();
 
-        Deck deck = deckRepository.findMemberIdByDeckId(card.getDeck().getDeckId());
-
-        if(deck.getMemberId() != principal.getMemberId()) {
-            throw new RuntimeException("해당 카드의 주인이 아닙니다: 카드의 주인 - " + deck.getMemberId() + "/" + "현재 사용자 - " + principal.getMemberId());
+        if (!memberId.equals(principal.getMemberId())) {
+            throw new RuntimeException("해당 카드의 주인이 아닙니다.");
         }
-        
+
+        // if (!card.getMember().getMemberId().equals(principal.getMemberId())) {
+        //     throw new RuntimeException("해당 카드의 주인이 아닙니다.");
+        // }
+    
+
+        Member member = memberRepository.findById(memberId).get();
+
         Tag tag = Tag.builder()
-            .memberId(principal.getMemberId())
+            .member(member)
+            .card(card)
             .tagName(tagName)
             .build();
-
-        // 2. TagCardId 생성
-        // TagCard.TagCardId tagCardId = new TagCard.TagCardId(card.getCardId(), null); // tagId는 Tag 저장 후 할당
-        TagCard.TagCardId tagCardId = TagCard.TagCardId.builder()
-                                                            .cardId(card.getCardId())
-                                                            .tagId(null) // 또는 필요시 생략
-                                                        .build();
-
-        // 3. TagCard 생성 (Tag는 아직 영속화 전이므로 tagId가 null일 수 있음)
-        TagCard tagCard = TagCard.builder()
-            .id(tagCardId)
-            .card(card)
-            .tag(tag)
-            .build();
-
-        // 4. Tag에 TagCard 추가
-        tag.getCardTags().add(tagCard);
-
-        // 5. Tag 저장 (cascade = PERSIST로 TagCard도 같이 저장됨)
+    
         tagRepository.save(tag);
-
+    
         return TagResponseDto.builder()
-                                .tagId(tag.getTagId())
-                                .tagName(tag.getTagName())
-                                .memberId(tag.getMemberId())
-                            .build() ;
-        
+            .tagId(tag.getTagId())
+            .tagName(tag.getTagName())
+            .memberId(tag.getMember().getMemberId())
+            .build();
     }
-
+    
     public void deleteOneTagService(PrincipalMember principal, Long tagId) {
-        
-        Tag tag = tagRepository.findById(tagId).orElseThrow(()-> new RuntimeException("해당하는 태그가 없습니다"));
-        
-        
-        if(tag.getMemberId() != principal.getMemberId()) {
-            throw new RuntimeException("해당 태그의 주인이 아닙니다: 태그 주인 - " + tag.getMemberId() + "/" + "현재 사용자 - " + principal.getMemberId());
+        Tag tag = tagRepository.findById(tagId)
+            .orElseThrow(() -> new RuntimeException("해당하는 태그가 없습니다"));
+    
+        if (!tag.getMember().getMemberId().equals(principal.getMemberId())) {
+            throw new RuntimeException("해당 태그의 주인이 아닙니다.");
         }
-
-        // 태그 삭제
+    
         tagRepository.deleteById(tagId);
-
     }
-
+    
     public List<TagResponseDto> searchAllTagsService(PrincipalMember principal) {
-        List<Tag> tags = tagRepository.findAllByMemberId(principal.getMemberId());
+        List<Tag> tags = tagRepository.findAllByMember_MemberId(principal.getMemberId());
         return tags.stream()
-                    .map(tag -> TagResponseDto.builder()
-                        .tagId(tag.getTagId())
-                        .tagName(tag.getTagName())
-                        .memberId(tag.getMemberId())
-                    .build())
-                    .collect(Collectors.toList());
+            .map(tag -> TagResponseDto.builder()
+                .tagId(tag.getTagId())
+                .tagName(tag.getTagName())
+                .memberId(tag.getMember().getMemberId())
+                .build())
+            .collect(Collectors.toList());
     }
 
     

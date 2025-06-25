@@ -7,18 +7,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import lombok.RequiredArgsConstructor;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
-import com.cooltomato.pomki.tag.dto.TagRequestDto;
 import com.cooltomato.pomki.tag.dto.TagResponseDto;
 import com.cooltomato.pomki.tag.service.TagService;
 
-import java.net.ResponseCache;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 
 
