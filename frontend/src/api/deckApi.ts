@@ -17,11 +17,10 @@ export const createDeck = async (data: CreateDeckRequest): Promise<CardDeck> => 
 };
 
 /**
- * 특정 회원의 모든 덱 조회
- * @param memberId 회원 ID
+ * 내 덱 목록 조회
  */
-export const getDecksByMemberId = async (memberId: number): Promise<CardDeck[]> => {
-  const response: AxiosResponse<CardDeck[]> = await api.get(`/api/decks/members/${memberId}`);
+export const getMyDecks = async (): Promise<CardDeck[]> => {
+  const response: AxiosResponse<CardDeck[]> = await api.get('/api/decks/members/my-decks');
   return response.data;
 };
 

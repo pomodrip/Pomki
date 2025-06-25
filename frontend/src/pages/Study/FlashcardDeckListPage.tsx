@@ -151,7 +151,7 @@ const FlashcardDeckListPage: React.FC = () => {
     const loadDecksWithFallback = async () => {
       setFallbackLoading(true);
       try {
-        const fallbackData = await deckApiWithFallback.getDecksByMemberId(user?.memberId || 1);
+        const fallbackData = await deckApiWithFallback.getMyDecks();
         setFallbackDecks(fallbackData);
         console.log('✅ API Fallback으로 덱 목록 로드:', fallbackData);
       } catch (error) {
