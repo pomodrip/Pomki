@@ -39,7 +39,8 @@ import {
   setCurrentDeck 
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
-import type { Card } from '../../types/card';
+import * as cardApi from '../../api/cardApi';
+import type { Card, CreateCardRequest } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
 
 // 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
@@ -192,16 +193,14 @@ const FlashCardListPage: React.FC = () => {
 
   // 🎯 현재 덱에 해당하는 카드들만 필터링
   const currentDeckTitle = useMemo(() => {
-    const targetDeckId = `deck_${deckId}`;
-    
-    // 덱 이름 매핑
+    // 덱 이름 매핑 (deckId를 그대로 사용)
     const deckTitles: { [key: string]: string } = {
-      'deck_1': '영어 단어장',
-      'deck_2': '일본어 단어장', 
-      'deck_3': '프로그래밍 용어'
+      '1': '영어 단어장',
+      '2': '일본어 단어장', 
+      '3': '프로그래밍 용어'
     };
     
-    return deckTitles[targetDeckId] || `덱 ${deckId}`;
+    return deckTitles[deckId || ''] || `덱 ${deckId}`;
   }, [deckId]);
 
   // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
@@ -215,7 +214,7 @@ const FlashCardListPage: React.FC = () => {
       isBookmarked: false,
       tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
       flashcards: allCards
-        .filter(card => card.deckId === `deck_${deckId}`)
+        .filter(card => card.deckId === deckId)
         .map(card => {
           const cardId = parseInt(card.cardId.toString());
           return {
@@ -236,16 +235,15 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
     if (deckId) {
-      // Redux를 통한 기존 로드
-      const realDeckId = `deck_${deckId}`;
-      dispatch(setCurrentDeck(realDeckId));
-      dispatch(fetchCardsInDeck(realDeckId));
+      // Redux를 통한 기존 로드 (deckId를 그대로 사용)
+      dispatch(setCurrentDeck(deckId));
+      dispatch(fetchCardsInDeck(deckId));
       
-      // API Fallback으로 카드 데이터 로드
-      const loadCardsWithFallback = async () => {
-        setFallbackLoading(true);
-        try {
-          const fallbackData = await deckApiWithFallback.getCardsInDeck(realDeckId);
+              // API Fallback으로 카드 데이터 로드
+        const loadCardsWithFallback = async () => {
+          setFallbackLoading(true);
+          try {
+            const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
           setFallbackCards(fallbackData);
           console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
         } catch (error) {
@@ -506,6 +504,72 @@ const FlashCardListPage: React.FC = () => {
     }
   };
 
+  // 🎯 임시 카드 5개 생성 함수
+  const handleCreateSampleCards = async () => {
+    if (!deckId) return;
+    
+    // API 요청에 사용할 실제 덱 ID (URL 파라미터를 그대로 사용)
+    // 사용자 제공 예시: deckId = "ea42d25e-e197-41bd-8eb0-f6572b1d4cdd"
+    const apiDeckId = deckId;
+    
+    const sampleCards: CreateCardRequest[] = [
+      {
+        deckId: apiDeckId,
+        content: "React란 무엇인가요?",
+        answer: "React는 사용자 인터페이스를 구축하기 위한 JavaScript 라이브러리입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "JSX는 무엇의 줄임말인가요?",
+        answer: "JSX는 JavaScript XML의 줄임말입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "useState Hook의 역할은?",
+        answer: "함수형 컴포넌트에서 상태를 관리할 수 있게 해주는 Hook입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "useEffect Hook은 언제 사용하나요?",
+        answer: "컴포넌트가 렌더링될 때 특정 작업(side effect)을 수행할 때 사용합니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "Props란 무엇인가요?",
+        answer: "부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다."
+      }
+    ];
+
+    try {
+      dispatch(showToast({
+        message: '카드 5개를 생성하는 중...',
+        severity: 'info'
+      }));
+
+      // 순차적으로 카드 생성
+      const createdCards = [];
+      for (const cardData of sampleCards) {
+        const createdCard = await cardApi.createCard(apiDeckId, cardData);
+        createdCards.push(createdCard);
+      }
+
+      dispatch(showToast({
+        message: `총 ${createdCards.length}개의 카드가 생성되었습니다!`,
+        severity: 'success'
+      }));
+
+      // 카드 목록 다시 로드
+      dispatch(fetchCardsInDeck(deckId));
+      
+    } catch (error) {
+      console.error('카드 생성 실패:', error);
+      dispatch(showToast({
+        message: '카드 생성에 실패했습니다.',
+        severity: 'error'
+      }));
+    }
+  };
+
   // 🎯 카드 수정 다이얼로그 키보드 단축키
   useDialogKeyboardShortcuts(
     handleEditDialogConfirm,
@@ -525,6 +589,7 @@ const FlashCardListPage: React.FC = () => {
           alignItems="center" 
           justifyContent="center"
           py={8}
+          gap={2}
         >
           <Typography variant="h6" color="text.secondary" gutterBottom>
             덱을 찾을 수 없습니다
@@ -535,6 +600,18 @@ const FlashCardListPage: React.FC = () => {
           >
             덱 목록으로 이동
           </Button>
+          <Button 
+            variant="outlined" 
+            color="primary"
+            onClick={handleCreateSampleCards}
+            sx={{ mt: 1 }}
+          >
+            임시 카드 5개 생성하기 (실제 API 호출)
+          </Button>
+          <Typography variant="caption" color="text.secondary" align="center">
+            실제 API를 호출하여 샘플 카드를 생성합니다.<br/>
+            덱 ID: {deckId}
+          </Typography>
         </Box>
       </StyledContainer>
     );
