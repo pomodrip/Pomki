@@ -21,8 +21,9 @@ import {
   CheckBoxOutlineBlank,
   CheckBox as CheckBoxIcon,
   EditNote as EditNoteIcon,
+  ArrowBackIosNew,
 } from '@mui/icons-material';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/useRedux';
 // import * as studyApi from '../../api/studyApi';
 
@@ -114,7 +115,7 @@ const sampleQuestions: QuizQuestion[] = [
 ];
 
 const FlashcardGenerationPage: React.FC = () => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { noteId } = useParams<{ noteId: string }>();
@@ -257,6 +258,10 @@ const FlashcardGenerationPage: React.FC = () => {
     }));
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   React.useEffect(() => {
     const currentFeedback = session.questionFeedbacks.find(
       f => f.questionId === currentQuestion.id
@@ -274,22 +279,40 @@ const FlashcardGenerationPage: React.FC = () => {
         overflow: 'hidden',
       }}
     >
-      {/* 컨텍스트 헤더 (제목) */}
+      {/* 컨텍스트 헤더 (뒤로가기 + 제목) */}
       <Box 
         sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'center',
           p: 2,
           height: 72,
           bgcolor: 'grey.50',
           borderBottom: '1px solid',
           borderColor: 'divider',
+          position: 'relative',
         }}
       >
-        <Typography variant="h6" fontWeight={600} noWrap>
-          {noteTitle}
-        </Typography>
+        {/* 뒤로가기 버튼 */}
+        <IconButton 
+          onClick={handleBack}
+          sx={{ 
+            position: 'absolute',
+            left: 16,
+            color: 'text.primary',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+        >
+          <ArrowBackIosNew />
+        </IconButton>
+        
+        {/* 중앙 제목 */}
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <Typography variant="h6" fontWeight={600} noWrap>
+            {noteTitle}
+          </Typography>
+        </Box>
       </Box>
 
       {/* 메인 컨텐츠 */}
