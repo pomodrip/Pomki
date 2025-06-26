@@ -13,13 +13,17 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "bookmark_note")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(BookmarkId.class)
 public class Bookmark {
     @Id
