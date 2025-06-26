@@ -1,12 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Snackbar as MuiSnackbar, Alert, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import { hideSnackbar } from '../../store/slices/snackbarSlice';
+import { useSnackbarRedirect } from '../../hooks/useSnackbarRedirect';
 import Button from '../ui/Button';
 import LoginIcon from '@mui/icons-material/Login';
-import { cookies } from '../../utils/cookies';
-import { clearAuth } from '../../store/slices/authSlice';
 
 // Toast.tsx와 동일한 스타일링 패턴 사용 + 테마 에러 색상 적용
 const StyledAlert = styled(Alert)(({ theme }) => ({
@@ -38,6 +37,9 @@ const ErrorSnackbar: React.FC = () => {
   const dispatch = useAppDispatch();
   const snackbar = useAppSelector((state) => state.snackbar);
 
+  // 🟡 React Hooks 활용 - 자동 리디렉션 로직을 커스텀 훅으로 분리
+  const { isRedirecting } = useSnackbarRedirect();
+
   const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
@@ -49,26 +51,6 @@ const ErrorSnackbar: React.FC = () => {
     navigate('/login');
     dispatch(hideSnackbar());
   };
-
-  // 🔥 401 에러 스낵바가 표시될 때 자동 리디렉션 로직
-  useEffect(() => {
-    if (snackbar.open && snackbar.action === '로그인') {
-      // 현재 페이지가 로그인 페이지가 아닌 경우에만 자동 리디렉션
-      if (window.location.pathname !== '/login') {
-        const redirectTimer = setTimeout(() => {
-          // 인증 정보 클리어
-          cookies.clearAuthCookies();
-          dispatch(clearAuth());
-          dispatch(hideSnackbar());
-          
-          // 로그인 페이지로 리디렉션
-          navigate('/login');
-        }, 2000); // 2초 후 자동 리디렉션
-
-        return () => clearTimeout(redirectTimer);
-      }
-    }
-  }, [snackbar.open, snackbar.action, navigate, dispatch]);
 
   // 401 에러 관련 스낵바만 처리 (action이 '로그인'인 경우)
   // 단, 로그인 페이지에서는 스낵바를 표시하지 않음
