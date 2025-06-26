@@ -1,6 +1,7 @@
 // import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../pages/_layout/MainLayout';
+import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../pages/Auth/LoginPage';
 import OAuth2CallbackPage from '../pages/Auth/OAuth2CallbackPage';
 import SignupPage from '../pages/Auth/SignupPage';
@@ -18,6 +19,8 @@ import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
 import DeckManagementPage from '../pages/Study/DeckManagementPage';
 import AdUsageExample from '../examples/AdUsageExample';
+import ApiWithFallbackExample from '../examples/ApiWithFallbackExample';
+import NoteDetailPage from '../pages/Note/NoteDetailPage';
 // import SimpleNoteList from '../pages/Note/SimpleNoteList';
 // import SimpleNoteCreate from '../pages/Note/SimpleNoteCreate';
 // import SimpleNoteDetail from '../pages/Note/SimpleNoteDetail';
@@ -49,29 +52,28 @@ const AppRoutes = () => {
       <Route path="/set-goal" element={<SetGoalPage />} />
       <Route path="/study/:noteId/flashcard-generation" element={<FlashcardGenerationPage />} />
       
-      {/* 메인 애플리케이션 (MainLayout 적용) */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<Navigate replace to="/dashboard" />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="timer" element={<TimerPage />} />
-        
-        {/* Note Routes */}
-        <Route path="note" element={<NoteListPage />} />
-        <Route path="note/create" element={<NoteCreatePage />} />
-        <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
+      {/* 메인 애플리케이션 (MainLayout + ProtectedRoute 적용) */}
+      <Route path="/" element={<ProtectedRoute />}>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Navigate replace to="/dashboard" />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="timer" element={<TimerPage />} />
+          <Route path="note" element={<NoteListPage  />} />
+          <Route path="note/create" element={<NoteCreatePage />} />
+          <Route path="note/:noteId" element={<NoteDetailPage />} />
+          <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
+          <Route path="study" element={<FlashcardDeckListPage />} />
+          <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />
+          <Route path="flashcards/:deckId/practice" element={<FlashcardPracticePage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/edit" element={<EditProfilePage />} />
 
-        {/* Study Routes */}
-        <Route path="study" element={<FlashcardDeckListPage />} />
-        <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />
-        <Route path="flashcards/:deckId/practice" element={<FlashcardPracticePage />} />
-        
-        {/* Profile Routes */}
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="profile/edit" element={<EditProfilePage />} />
-
-        {/* Test/Example Routes */}
-        <Route path="study/deck-management" element={<DeckManagementPage />} />
-        <Route path="ad" element={<AdUsageExample />} />
+          {/* 테스트 페이지 */}
+          <Route path="study/deck-management" element={<DeckManagementPage />} />
+          <Route path="ad" element={< AdUsageExample/>} />
+          <Route path="api-fallback" element={<ApiWithFallbackExample />} />
+          {/* <Route path="membership" element={<MembershipUsageExample/>} /> */}
+        </Route>
       </Route>
       
       {/* 404 페이지 */}

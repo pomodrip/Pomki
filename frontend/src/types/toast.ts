@@ -14,10 +14,18 @@ export interface ToastState {
   message: string;
   severity: 'success' | 'error' | 'warning' | 'info';
   duration: number;
+  anchorOrigin: {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+  };
 }
 
 export interface ShowToastPayload {
   message: string;
   severity?: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
+  anchorOrigin?: {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+  };
 }

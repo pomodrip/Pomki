@@ -373,7 +373,7 @@ const Header: React.FC<HeaderProps> = ({
               노트
             </NavButton>
             <NavButton 
-              className={isActiveRoute('/study') ? 'active' : ''}
+              className={isActiveRoute('/study') || isActiveRoute('/flashcards') ? 'active' : ''}
               onClick={() => navigate('/study')}
               disableRipple
             >

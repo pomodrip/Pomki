@@ -17,6 +17,10 @@ export interface SnackbarProps {
   severity?: 'success' | 'error' | 'warning' | 'info';
   autoHideDuration?: number;
   action?: string;
+  anchorOrigin?: {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+  };
   onClose: () => void;
   onAction?: () => void;
 }
@@ -27,6 +31,7 @@ const Snackbar: React.FC<SnackbarProps> = ({
   severity = 'info',
   autoHideDuration = 6000,
   action,
+  anchorOrigin = { vertical: 'bottom', horizontal: 'center' },
   onClose,
   onAction,
 }) => {
@@ -52,7 +57,7 @@ const Snackbar: React.FC<SnackbarProps> = ({
       open={open}
       autoHideDuration={autoHideDuration}
       onClose={handleClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      anchorOrigin={anchorOrigin}
     >
       <StyledAlert
         onClose={handleClose}

@@ -1,12 +1,41 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAppSelector } from '../hooks/useRedux';
+import { Outlet } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { RootState } from '../store/store';
+import { show401ErrorSnackbar } from '../store/slices/snackbarSlice';
+import { useEffect } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, accessToken } = useAppSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    // 🔵 Axios 간접 활용을 대신해 ProtectedRoute에서 스낵바 트리거
+    // 인증되지 않은 상태에서 보호된 페이지에 접근하려고 할 때 Redux 액션 디스패치
+    if (!isAuthenticated || !accessToken) {
+      dispatch(show401ErrorSnackbar());
+    }
+  }, [isAuthenticated, accessToken, dispatch]);
+
+  // 🟢 React Component - 인증되지 않은 경우 로딩 UI 표시
+  // 스낵바와 자동 리디렉션은 ErrorSnackbar 컴포넌트와 useSnackbarRedirect 훅에서 처리
   if (!isAuthenticated || !accessToken) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Box 
+        display="flex" 
+        flexDirection="column"
+        justifyContent="center" 
+        alignItems="center" 
+        minHeight="100vh"
+        gap={2}
+        sx={{ backgroundColor: 'background.default' }}
+      >
+        <CircularProgress />
+        <Typography variant="body2" color="text.secondary">
+          인증 확인 중...
+        </Typography>
+      </Box>
+    );
   }
 
   return <Outlet />;

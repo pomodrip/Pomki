@@ -146,11 +146,11 @@ jobs:
         echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
         if [ -d "accessibility-reports" ]; then
           aws s3 cp ./accessibility-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/axe-reports/ --recursive
-          aws s3 cp ./accessibility-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/axe-reports/ --recursive
+          aws s3 sync ./accessibility-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/axe-reports/ --delete
         fi
         if [ -d "screenshots" ]; then
           aws s3 cp ./screenshots/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/screenshots/ --recursive
-          aws s3 cp ./screenshots/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/screenshots/ --recursive
+          aws s3 sync ./screenshots/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/screenshots/ --delete
         fi
 
   lighthouse-ci-testing:
@@ -232,25 +232,14 @@ jobs:
           echo "server_available=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Run Lighthouse CI (${{ matrix.device }}) with server upload
-      if: steps.lighthouse-server-test.outputs.server_available == 'true'
+    - name: Run Lighthouse CI (${{ matrix.device }}) - local report generation
       working-directory: ${{ env.FE_DIR }}
       env:
-        LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
-      run: |
-        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI with server upload..."
-        yarn lhci autorun --config=.lighthouserc.${{ matrix.device }}.json
-      continue-on-error: true
-
-    - name: Run Lighthouse CI (${{ matrix.device }}) - local only
-      if: steps.lighthouse-server-test.outputs.server_available == 'false'
-      working-directory: ${{ env.FE_DIR }}
-      env:
-        LHCI_GITHUB_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
         LIGHTHOUSERC_DESKTOP_LOCAL_JSON: ${{ vars.LIGHTHOUSERC_DESKTOP_LOCAL_JSON }}
         LIGHTHOUSERC_MOBILE_LOCAL_JSON: ${{ vars.LIGHTHOUSERC_MOBILE_LOCAL_JSON }}
       run: |
-        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI (local only)..."
+        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Running ${{ matrix.device }} Lighthouse CI (local report generation)..."
         
         if [ "${{ matrix.device }}" == "desktop" ]; then
           echo "$LIGHTHOUSERC_DESKTOP_LOCAL_JSON" > .lighthouserc.desktop.local.json
@@ -259,7 +248,15 @@ jobs:
           echo "$LIGHTHOUSERC_MOBILE_LOCAL_JSON" > .lighthouserc.mobile.local.json
           yarn lhci autorun --config=.lighthouserc.mobile.local.json
         fi
-      continue-on-error: true
+
+    - name: Upload to Lighthouse server (if available)
+      if: steps.lighthouse-server-test.outputs.server_available == 'true'
+      working-directory: ${{ env.FE_DIR }}
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN  }}
+      run: |
+        echo "${{ matrix.device == 'desktop' && '🖥️' || '📱' }} Uploading ${{ matrix.device }} results to Lighthouse server..."
+        yarn lhci autorun --config=.lighthouserc.${{ matrix.device }}.json
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -275,10 +272,7 @@ jobs:
         echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
         
         UPLOAD_SOURCE=""
-        if [ -d ".lighthouseci" ]; then
-          UPLOAD_SOURCE=".lighthouseci"
-          echo "📁 LHCI 서버 보고서 (.lighthouseci) 업로드"
-        elif [ -d "lighthouse-reports-${{ matrix.device }}" ]; then
+        if [ -d "lighthouse-reports-${{ matrix.device }}" ]; then
           UPLOAD_SOURCE="lighthouse-reports-${{ matrix.device }}"
           echo "📁 로컬 보고서 (lighthouse-reports-${{ matrix.device }}) 업로드"
         else
@@ -287,7 +281,7 @@ jobs:
         
         if [ -n "$UPLOAD_SOURCE" ]; then
           aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/lighthouse-${{ matrix.device }}/ --recursive
-          aws s3 cp ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}/ --recursive
+          aws s3 sync ./$UPLOAD_SOURCE/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/lighthouse-${{ matrix.device }}/ --delete
           echo "✅ ${{ matrix.device }} 보고서 업로드 완료"
         fi
 
@@ -295,7 +289,6 @@ jobs:
       uses: actions/cache/save@v4
       with:
         path: |
-          ${{ env.FE_DIR }}/.lighthouseci/
           ${{ env.FE_DIR }}/lighthouse-reports-${{ matrix.device }}/
         key: lighthouse-reports-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
 
@@ -312,7 +305,6 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          ${{ env.FE_DIR }}/.lighthouseci/
           ${{ env.FE_DIR }}/lighthouse-reports-desktop/
         key: lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}
       continue-on-error: true
@@ -321,7 +313,6 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          ${{ env.FE_DIR }}/.lighthouseci/
           ${{ env.FE_DIR }}/lighthouse-reports-mobile/
         key: lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}
       continue-on-error: true
@@ -332,13 +323,6 @@ jobs:
         mkdir -p ./lighthouse-desktop ./lighthouse-mobile
         
         # Desktop reports
-        if [ -d "${{ env.FE_DIR }}/.lighthouseci" ]; then
-          echo "📁 Found .lighthouseci folder"
-          find ${{ env.FE_DIR }}/.lighthouseci -name "*.html" | head -6 | while read -r file; do
-            cp "$file" ./lighthouse-desktop/
-          done
-        fi
-        
         if [ -d "${{ env.FE_DIR }}/lighthouse-reports-desktop" ]; then
           echo "📁 Found lighthouse-reports-desktop folder"
           find ${{ env.FE_DIR }}/lighthouse-reports-desktop -name "*.html" | while read -r file; do
@@ -388,10 +372,9 @@ jobs:
         echo "📤 Uploading reports to S3..."
         echo "🔍 Target bucket: s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/"
         
-        aws s3 sync ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/ 
-        aws s3 sync ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/ 
+        aws s3 cp ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/ --recursive 
+        aws s3 sync ./combined-reports/ s3://${{ env.DEPLOY_BUCKET_NAME }}/accessibility-reports/latest/ --delete
         
-        echo "✅ 보고서 업로드 완료!"
         echo "📋 최신 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/index.html"
         echo "🕐 타임스탬프 보고서: https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/index.html"
 
@@ -403,10 +386,9 @@ jobs:
         gh cache delete "lighthouse-reports-desktop-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Desktop 캐시 삭제 실패 또는 존재하지 않음"
         gh cache delete "lighthouse-reports-mobile-${{ github.run_id }}-${{ github.run_attempt }}" --repo ${{ github.repository }} || echo "Mobile 캐시 삭제 실패 또는 존재하지 않음"
         
-        echo "✅ 캐시 정리 완료"
       env:
         GH_TOKEN: ${{ github.token }}
-      continue-on-error: true
+      continue-on-error: false
 
     - name: Notify Discord on Success
       if: success()
@@ -423,7 +405,7 @@ jobs:
           • [📋 최신 통합 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/index.html)
           • [🕐 타임스탬프 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/index.html)
           • [🌐 Lighthouse 서버 대시보드](${{ env.LIGHTHOUSE_SERVER_URL }})
-          • [🌐 axe 접근성 검사 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/latest/axe-reports/accessibility-report.html)
+          • [🌐 axe 접근성 검사 보고서](https://${{ env.DEPLOY_BUCKET_NAME }}.s3.${{ env.AWS_REGION }}.amazonaws.com/accessibility-reports/${{ env.REPORT_TIMESTAMP }}/axe-reports/accessibility-report.html)
           
           🔍 **테스트 상세:**
           • Axe 접근성 테스트: ${{ needs.axe-accessibility-testing.result }}

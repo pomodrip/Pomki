@@ -29,6 +29,12 @@ export const refreshToken = async (data: RefreshTokenRequest): Promise<RefreshTo
   return response.data;
 };
 
+// 쿠키 기반 토큰 갱신 (refreshToken이 쿠키로 자동 전송됨)
+export const refreshTokenFromCookie = async (): Promise<RefreshTokenResponse> => {
+  const response: AxiosResponse<RefreshTokenResponse> = await api.post('/api/auth/refresh', {});
+  return response.data;
+};
+
 // 회원가입
 export const signup = async (data: SignupRequest): Promise<ApiResponse> => {
   const response: AxiosResponse<ApiResponse> = await api.post('/api/members', data);
@@ -68,6 +74,7 @@ export const authApi = {
   login,
   logout,
   refreshToken,
+  refreshTokenFromCookie,
   signup,
   sendEmailVerification,
   verifyEmailCode,
