@@ -3,7 +3,6 @@ import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { RootState } from '../store/store';
 import { show401ErrorSnackbar } from '../store/slices/snackbarSlice';
 import { useEffect } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, accessToken } = useAppSelector((state: RootState) => state.auth);
@@ -17,27 +16,8 @@ const ProtectedRoute = () => {
     }
   }, [isAuthenticated, accessToken, dispatch]);
 
-  // 🟢 React Component - 인증되지 않은 경우 로딩 UI 표시
-  // 스낵바와 자동 리디렉션은 ErrorSnackbar 컴포넌트와 useSnackbarRedirect 훅에서 처리
-  if (!isAuthenticated || !accessToken) {
-    return (
-      <Box 
-        display="flex" 
-        flexDirection="column"
-        justifyContent="center" 
-        alignItems="center" 
-        minHeight="100vh"
-        gap={2}
-        sx={{ backgroundColor: 'background.default' }}
-      >
-        <CircularProgress />
-        <Typography variant="body2" color="text.secondary">
-          인증 확인 중...
-        </Typography>
-      </Box>
-    );
-  }
-
+  // 🟢 React Component - 원래 페이지를 먼저 보여주고, 
+  // 인증되지 않은 경우 백그라운드에서 스낵바와 자동 리디렉션 처리
   return <Outlet />;
 };
 
