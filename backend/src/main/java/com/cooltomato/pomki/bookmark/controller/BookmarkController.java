@@ -1,7 +1,8 @@
 package com.cooltomato.pomki.bookmark.controller;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
-import com.cooltomato.pomki.bookmark.dto.BookmarkDto;
+import com.cooltomato.pomki.bookmark.dto.BookmarkCreateRequestDto;
+import com.cooltomato.pomki.bookmark.dto.BookmarkResponseDto;
 import com.cooltomato.pomki.note.dto.NoteResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,15 +20,15 @@ public class BookmarkController {
     private final BookmarkService bookmarkService;
 
     @PostMapping
-    public ResponseEntity<Void> createBookmark(@RequestBody BookmarkDto bookmarkDto,
+    public ResponseEntity<Void> createBookmark(@RequestBody BookmarkCreateRequestDto requestDto,
                                                @AuthenticationPrincipal PrincipalMember principalMember) {
-        bookmarkService.createBookmark(bookmarkDto.getNoteId(), principalMember);
+        bookmarkService.createBookmark(requestDto.getNoteId(), principalMember);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<NoteResponseDto>> getBookmarks(@AuthenticationPrincipal PrincipalMember principalMember) {
-        List<NoteResponseDto> bookmarks = bookmarkService.getBookmarks(principalMember);
+    public ResponseEntity<List<BookmarkResponseDto>> getBookmarks(@AuthenticationPrincipal PrincipalMember principalMember) {
+        List<BookmarkResponseDto> bookmarks = bookmarkService.getBookmarks(principalMember);
         return ResponseEntity.ok(bookmarks);
     }
 

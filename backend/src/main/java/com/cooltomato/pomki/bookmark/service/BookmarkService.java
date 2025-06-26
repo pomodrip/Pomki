@@ -15,6 +15,7 @@ import com.cooltomato.pomki.note.repository.NoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.cooltomato.pomki.bookmark.dto.BookmarkResponseDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,12 +48,12 @@ public class BookmarkService {
     }
 
     @Transactional(readOnly = true)
-    public List<NoteResponseDto> getBookmarks(PrincipalMember principalMember) {
+    public List<BookmarkResponseDto> getBookmarks(PrincipalMember principalMember) {
         Member member = memberRepository.findById(principalMember.getMemberId())
                 .orElseThrow(MemberNotFoundException::new);
         List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
         return bookmarks.stream()
-                .map(bookmark -> NoteResponseDto.from(bookmark.getNote()))
+                .map(bookmark -> BookmarkResponseDto.from(bookmark.getNote()))
                 .collect(Collectors.toList());
     }
 

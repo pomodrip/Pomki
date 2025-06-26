@@ -2,11 +2,9 @@ package com.cooltomato.pomki.bookmark.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
-public class BookmarkDto {
+public class BookmarkCreateRequestDto {
     private String noteId;
 } 
