@@ -13,11 +13,13 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Data;
 
 @Entity
 @Table(name = "bookmark_note")
 @Data
+@Builder
 @IdClass(BookmarkId.class)
 public class Bookmark {
     @Id
@@ -29,4 +31,5 @@ public class Bookmark {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id")
     private Note note;
+
 } 
