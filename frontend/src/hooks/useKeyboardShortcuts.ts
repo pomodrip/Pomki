@@ -266,4 +266,42 @@ export const useNavigationKeyboardShortcuts = (
   });
 };
 
+/**
+ * 탭 네비게이션 전용 키보드 단축키 훅
+ * BottomNav, 탭 패널 등에서 사용
+ */
+export const useTabNavigationKeyboardShortcuts = (
+  onNextTab: () => void,
+  onPreviousTab: () => void,
+  options?: {
+    enabled?: boolean;
+    isActive?: () => boolean;
+    excludeInputs?: boolean; // 입력 필드가 포커스된 경우 비활성화 (기본: true)
+  }
+) => {
+  const { enabled = true, isActive, excludeInputs = true } = options || {};
+  
+  useKeyboardShortcuts({
+    onTab: onNextTab,
+    onShiftTab: onPreviousTab,
+    enabled,
+    isActive: isActive || (() => {
+      // 다이얼로그가 열려있지 않을 때만 작동
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      const dialogsOpen = dialogs.length === 0;
+      
+      if (!excludeInputs) return dialogsOpen;
+      
+      // 입력 필드에 포커스가 없을 때만 활성화
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement?.tagName === 'INPUT' || 
+                           activeElement?.tagName === 'TEXTAREA' ||
+                           activeElement?.getAttribute('contenteditable') === 'true' ||
+                           activeElement?.hasAttribute('data-slate-editor');
+      
+      return dialogsOpen && !isInputFocused;
+    })
+  });
+};
+
 export default useKeyboardShortcuts; 
