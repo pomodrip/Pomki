@@ -73,8 +73,8 @@ const DesktopNav = styled(Box)(() => ({
   display: 'none',
   gap: '16px', // 좁은 화면을 위해 간격 축소 (32px → 16px)
   
-  // 900px 이상에서만 데스크톱 네비게이션 표시
-  '@media (min-width: 900px)': {
+  // 1024px 이상에서만 데스크톱 네비게이션 표시
+  '@media (min-width: 1024px)': {
     display: 'flex',
     alignItems: 'center',
     gap: '24px', // 데스크톱에서는 더 넓은 간격
@@ -153,7 +153,7 @@ const DesktopNav = styled(Box)(() => ({
    },
    
    // 데스크톱에서는 원래 크기
-   '@media (min-width: 900px)': {
+   '@media (min-width: 1024px)': {
      fontSize: '15px',
      padding: '8px 14px',
 
