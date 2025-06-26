@@ -10,6 +10,13 @@ interface SnackbarState {
     vertical: 'top' | 'bottom';
     horizontal: 'left' | 'center' | 'right';
   };
+  // 🔴 Redux에서 리디렉션 로직 관리
+  redirectConfig?: {
+    enabled: boolean;
+    targetPath: string;
+    delay: number;
+    shouldClearAuth: boolean;
+  };
 }
 
 const initialState: SnackbarState = {
@@ -69,10 +76,18 @@ const snackbarSlice = createSlice({
         vertical: isMobile ? 'bottom' : 'top',
         horizontal: 'center'
       };
+      // 🔴 Redux에서 리디렉션 설정 관리
+      state.redirectConfig = {
+        enabled: true,
+        targetPath: '/login',
+        delay: 2000,
+        shouldClearAuth: true,
+      };
     },
     hideSnackbar: (state) => {
       state.open = false;
       state.action = undefined;
+      state.redirectConfig = undefined;
     },
   },
   });
