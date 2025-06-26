@@ -121,12 +121,13 @@ const noteSlice = createSlice({
       })
       .addCase(createNoteAsync.fulfilled, (state, action: PayloadAction<Note>) => {
         state.loading = false;
+        const now = new Date().toISOString();
         const newNote: NoteListItem = {
           noteId: action.payload.noteId,
           noteTitle: action.payload.noteTitle,
           aiEnhanced: action.payload.aiEnhanced,
-          createdAt: action.payload.createdAt,
-          updatedAt: action.payload.updatedAt,
+          createdAt: action.payload.createdAt || now,
+          updatedAt: action.payload.updatedAt || now,
         };
         state.notes.unshift(newNote);
       })
@@ -142,17 +143,21 @@ const noteSlice = createSlice({
       })
       .addCase(updateNoteAsync.fulfilled, (state, action: PayloadAction<Note>) => {
         state.loading = false;
+        const now = new Date().toISOString();
         const index = state.notes.findIndex(note => note.noteId === action.payload.noteId);
         if (index !== -1) {
           state.notes[index] = {
             ...state.notes[index],
             noteTitle: action.payload.noteTitle,
             aiEnhanced: action.payload.aiEnhanced,
-            updatedAt: action.payload.updatedAt,
+            updatedAt: action.payload.updatedAt || now,
           };
         }
         if (state.currentNote?.noteId === action.payload.noteId) {
-          state.currentNote = action.payload;
+          state.currentNote = {
+            ...action.payload,
+            updatedAt: action.payload.updatedAt || now,
+          };
         }
       })
       .addCase(updateNoteAsync.rejected, (state, action) => {

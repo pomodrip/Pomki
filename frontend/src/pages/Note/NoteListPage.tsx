@@ -48,6 +48,73 @@ const NoteListPage: React.FC = () => {
     dispatch(fetchNotes());
   }, [dispatch]);
 
+  // 날짜 포맷팅 함수 개선 - UX 향상
+  const formatDate = (createdAt: string, updatedAt: string) => {
+    // 유효하지 않은 날짜 처리
+    const getValidDate = (dateString: string) => {
+      if (!dateString || dateString === '1970-01-01T00:00:00.000Z') {
+        return null;
+      }
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
+    const createdDate = getValidDate(createdAt);
+    const updatedDate = getValidDate(updatedAt);
+    
+    // 둘 다 유효하지 않은 경우
+    if (!createdDate && !updatedDate) {
+      return '작성됨: 방금 전';
+    }
+    
+    // 생성일만 유효한 경우 (처음 생성)
+    if (createdDate && !updatedDate) {
+      return `작성됨: ${createdDate.toLocaleDateString()}`;
+    }
+    
+    // 수정일만 유효한 경우 (생성일 불명)
+    if (!createdDate && updatedDate) {
+      return `수정됨: ${updatedDate.toLocaleDateString()}`;
+    }
+    
+    // 둘 다 유효한 경우
+    if (createdDate && updatedDate) {
+      // 디버깅을 위한 로그
+      console.log('Date comparison:', {
+        createdAt: createdDate.toISOString(),
+        updatedAt: updatedDate.toISOString(),
+        createdTime: createdDate.getTime(),
+        updatedTime: updatedDate.getTime(),
+        timeDiff: Math.abs(updatedDate.getTime() - createdDate.getTime()) / 1000
+      });
+      
+      const now = new Date();
+      const isCreatedToday = createdDate.toDateString() === now.toDateString();
+      const isUpdatedToday = updatedDate.toDateString() === now.toDateString();
+      
+      // 실제 수정 여부 판단 (시간까지 비교, 1초 이상 차이나면 수정된 것으로 간주)
+      const timeDifferenceInSeconds = Math.abs(updatedDate.getTime() - createdDate.getTime()) / 1000;
+      const wasActuallyUpdated = timeDifferenceInSeconds > 1;
+      
+      // 수정되지 않은 경우 (생성일과 수정일이 거의 같음)
+      if (!wasActuallyUpdated) {
+        if (isCreatedToday) {
+          return '작성됨: 방금 전';
+        } else {
+          return `작성됨: ${createdDate.toLocaleDateString()}`;
+        }
+      } 
+      // 실제로 수정된 경우
+      else {
+        const updatedText = isUpdatedToday ? '방금 전' : updatedDate.toLocaleDateString();
+        const createdText = isCreatedToday ? '오늘' : createdDate.toLocaleDateString();
+        return `수정됨: ${updatedText} (작성: ${createdText})`;
+      }
+    }
+    
+    return '날짜 정보 없음';
+  };
+
   const handleNoteClick = (noteId: string) => {
     navigate(`/note/${noteId}/edit`);
   };
@@ -111,7 +178,7 @@ const NoteListPage: React.FC = () => {
             <NoteCard onClick={() => handleNoteClick(note.noteId)}>
               <Text variant="h6">{note.noteTitle}</Text>
               <Text variant="body2" color="textSecondary">
-                마지막 수정: {new Date(note.updatedAt).toLocaleDateString()}
+                {formatDate(note.createdAt, note.updatedAt)}
               </Text>
               <ActionBox>
                 <Button
