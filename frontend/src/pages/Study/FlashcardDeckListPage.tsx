@@ -547,7 +547,7 @@ const FlashcardDeckListPage: React.FC = () => {
   );
 
   return (
-    <StyledContainer>
+    <StyledContainer maxWidth="md">
       <HeaderBox>
         <Typography variant="h4" component="h1">플래시카드 덱</Typography>
         {/* 덱 생성 버튼 - 데스크탑에서만 표시 */}
