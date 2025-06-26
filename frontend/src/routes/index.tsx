@@ -24,6 +24,7 @@ import AdUsageExample from '../examples/AdUsageExample';
 // import SimpleNoteDetail from '../pages/Note/SimpleNoteDetail';
 
 import ApiWithFallbackExample from '../examples/ApiWithFallbackExample';
+import NoteDetailPage from '../pages/Note/NoteDetailPage';
 // import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
 // const TestPage = ({ title }: { title: string }) => {

@@ -1,3 +1,4 @@
+import { NoteListItem } from '../types/note';
 import mockData from './mockData';
 
 // 환경 변수로 Mock 모드 제어
@@ -209,42 +210,22 @@ export const noteApiWithFallback = {
       const { getNotes } = await import('./noteApi');
       return apiWithFallback(
         () => getNotes(),
-        () => ({
-          content: mockData.note.getNotes.map(note => ({
-            noteId: note.noteId,
-            memberId: note.memberId,
-            noteTitle: note.title,
-            noteContent: note.content,
-            createdAt: note.createdAt,
-            updatedAt: note.updatedAt,
-          })),
-          totalElements: mockData.note.getNotes.length,
-          totalPages: 1,
-          size: mockData.note.getNotes.length,
-          number: 0,
-          first: true,
-          last: true,
-          empty: false
-        })
-      );
-    } catch {
-      return {
-        content: mockData.note.getNotes.map(note => ({
+        () => mockData.note.getNotes.map(note => ({
           noteId: note.noteId,
-          memberId: note.memberId,
           noteTitle: note.title,
-          noteContent: note.content,
+          aiEnhanced: false,
           createdAt: note.createdAt,
           updatedAt: note.updatedAt,
-        })),
-        totalElements: mockData.note.getNotes.length,
-        totalPages: 1,
-        size: mockData.note.getNotes.length,
-        number: 0,
-        first: true,
-        last: true,
-        empty: false
-      };
+        })) as NoteListItem[]
+      );
+    } catch {
+      return mockData.note.getNotes.map(note => ({
+        noteId: note.noteId,
+        noteTitle: note.title,
+        aiEnhanced: false,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+      })) as NoteListItem[];
     }
   },
 
@@ -260,7 +241,7 @@ export const noteApiWithFallback = {
           memberId: 1,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        }
+        } as any
       );
     } catch {
       return {

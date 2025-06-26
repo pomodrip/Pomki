@@ -13,10 +13,10 @@ import {
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
-import PauseIcon from '@mui/icons-material/Pause';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import Input from '../../components/ui/Input';
+// import PauseIcon from '@mui/icons-material/Pause';
+// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+// import RestartAltIcon from '@mui/icons-material/RestartAlt';
+// import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 
 import { useTimer } from '../../hooks/useTimer';
@@ -120,14 +120,14 @@ const CircularProgress = styled('svg')(() => ({
   transform: 'translate(-50%, -50%) rotate(-90deg)', // 중앙 정렬 후 12시 방향부터 시작
 }));
 
-const BackgroundCircle = styled('circle')(() => ({
-  fill: 'none',
-  stroke: '#E5E7EB',
-  strokeWidth: '8px',
-  '@media (min-width: 600px)': {
-    strokeWidth: '12px',
-  },
-}));
+// const BackgroundCircle = styled('circle')(() => ({
+//   fill: 'none',
+//   stroke: '#E5E7EB',
+//   strokeWidth: '8px',
+//   '@media (min-width: 600px)': {
+//     strokeWidth: '12px',
+//   },
+// }));
 
 // 타이머 시간 표시 - theme 활용
 const TimerDisplay = styled(Text)(({ theme }) => ({
@@ -159,13 +159,13 @@ const ButtonContainer = styled(Box)(() => ({
 }));
 
 // 작업 입력 섹션
-const TaskInputSection = styled(Box)(() => ({
-  width: '100%',
-  maxWidth: '400px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-}));
+// const TaskInputSection = styled(Box)(() => ({
+//   width: '100%',
+//   maxWidth: '400px',
+//   display: 'flex',
+//   flexDirection: 'column',
+//   alignItems: 'center',
+// }));
 
 // 노트 섹션
 const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
@@ -615,6 +615,7 @@ const TimerPage: React.FC = () => {
       
       alert('노트가 성공적으로 저장되었습니다!');
     } catch (error) {
+      console.error('노트 저장 실패:', error);
       alert('노트 저장에 실패했습니다.');
     }
   };

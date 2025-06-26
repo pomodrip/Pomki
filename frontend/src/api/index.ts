@@ -35,7 +35,7 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log('=== API 요청 인터셉터 ===');
-    console.log('요청 URL:', config.baseURL + config.url);
+    console.log('요청 URL:', (config.baseURL || '') + (config.url || ''));
     console.log('요청 메서드:', config.method);
     console.log('요청 데이터:', config.data);
     console.log('요청 헤더:', config.headers);
