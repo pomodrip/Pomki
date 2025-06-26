@@ -30,6 +30,9 @@ interface KeyboardShortcutOptions {
   
   // 제외할 요소들 (기본적으로 input, textarea, select는 제외됨)
   excludeElements?: string[];     // 제외할 CSS 셀렉터 배열
+  
+  // 탭 네비게이션 전용 옵션
+  allowTabInInputs?: boolean;     // 입력 필드에서도 탭 키 사용자 정의 처리 허용 (기본: false)
 }
 
 /**
@@ -68,7 +71,8 @@ export const useKeyboardShortcuts = (options: KeyboardShortcutOptions) => {
     preventDefault = true,
     stopPropagation = true,
     isActive,
-    excludeElements = []
+    excludeElements = [],
+    allowTabInInputs = false
   } = options;
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -79,7 +83,13 @@ export const useKeyboardShortcuts = (options: KeyboardShortcutOptions) => {
     if (isActive && !isActive()) return;
     
     // 기본 제외 요소들 (입력 필드 등)
-    const defaultExcludeElements = ['input', 'textarea', 'select', '[contenteditable="true"]'];
+    let defaultExcludeElements = ['select', '[contenteditable="true"]'];
+    
+    // allowTabInInputs가 false인 경우에만 입력 필드를 제외
+    if (!allowTabInInputs) {
+      defaultExcludeElements = [...defaultExcludeElements, 'input', 'textarea'];
+    }
+    
     const allExcludeElements = [...defaultExcludeElements, ...excludeElements];
     
     // 현재 포커스된 요소가 제외 대상인지 확인
@@ -88,7 +98,17 @@ export const useKeyboardShortcuts = (options: KeyboardShortcutOptions) => {
       const isExcluded = allExcludeElements.some(selector => 
         activeElement.matches(selector)
       );
-      if (isExcluded) return;
+      
+      // 탭 키의 경우 특별 처리
+      const { key, shiftKey } = event;
+      const isTabKey = (key === 'Tab' && (onTab || onShiftTab));
+      
+      // 탭 키이고 allowTabInInputs가 true인 경우에는 입력 필드에서도 허용
+      if (isTabKey && allowTabInInputs && activeElement.matches('input, textarea')) {
+        // 입력 필드에서 탭 키는 허용하고 계속 진행
+      } else if (isExcluded) {
+        return;
+      }
     }
     
     const { key, ctrlKey, shiftKey } = event;
@@ -189,6 +209,7 @@ export const useKeyboardShortcuts = (options: KeyboardShortcutOptions) => {
     stopPropagation,
     isActive,
     excludeElements,
+    allowTabInInputs,
     onEnter,
     onEscape,
     onCtrlEnter,
@@ -301,6 +322,122 @@ export const useTabNavigationKeyboardShortcuts = (
       
       return dialogsOpen && !isInputFocused;
     })
+  });
+};
+
+/**
+ * 폼 저장 전용 키보드 단축키 훅
+ * 저장 버튼에 포커스가 있을 때 Enter로 저장 실행
+ */
+export const useFormSaveKeyboardShortcuts = (
+  onSave: () => void,
+  options?: {
+    enabled?: boolean;
+    saveButtonRef?: React.RefObject<HTMLButtonElement | null>; // 저장 버튼 참조
+    saveButtonSelector?: string; // 저장 버튼 CSS 셀렉터 (기본: '[data-save-button]')
+    ctrlEnterAnywhere?: boolean; // Ctrl+Enter는 어디서든 작동 (기본: true)
+  }
+) => {
+  const { 
+    enabled = true, 
+    saveButtonRef, 
+    saveButtonSelector = '[data-save-button]',
+    ctrlEnterAnywhere = true 
+  } = options || {};
+  
+  useKeyboardShortcuts({
+    onEnter: () => {
+      // Enter 키는 저장 버튼에 포커스가 있을 때만 작동
+      const activeElement = document.activeElement;
+      
+      // 버튼 참조로 확인
+      if (saveButtonRef?.current && activeElement === saveButtonRef.current) {
+        onSave();
+        return;
+      }
+      
+      // CSS 셀렉터로 확인
+      if (activeElement?.matches?.(saveButtonSelector)) {
+        onSave();
+        return;
+      }
+      
+      // 저장 버튼의 일반적인 속성들로 확인
+      if (activeElement?.tagName === 'BUTTON') {
+        const buttonText = activeElement.textContent?.toLowerCase();
+        const hasDataAttribute = activeElement.hasAttribute('data-save') || 
+                                activeElement.hasAttribute('data-submit');
+        
+        if (buttonText?.includes('저장') || buttonText?.includes('save') || hasDataAttribute) {
+          onSave();
+        }
+      }
+    },
+    onCtrlEnter: ctrlEnterAnywhere ? onSave : undefined,
+    enabled,
+    isActive: () => {
+      // 다이얼로그가 열려있지 않을 때만 작동
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      return dialogs.length === 0;
+    }
+  });
+};
+
+/**
+ * 폼 필드들 사이의 Tab 네비게이션을 제어하는 훅
+ * 지정된 요소들 사이에서만 Tab 이동이 가능하도록 함
+ */
+export const useFormTabNavigation = (
+  fieldRefs: React.RefObject<HTMLElement | null>[],
+  options?: {
+    enabled?: boolean;
+    loop?: boolean; // 마지막 요소에서 첫 번째로 순환 (기본: true)
+  }
+) => {
+  const { enabled = true, loop = true } = options || {};
+
+  const getCurrentIndex = () => {
+    const activeElement = document.activeElement;
+    return fieldRefs.findIndex(ref => ref.current === activeElement);
+  };
+
+  const focusNext = () => {
+    const currentIndex = getCurrentIndex();
+    let nextIndex = currentIndex + 1;
+    
+    if (nextIndex >= fieldRefs.length) {
+      nextIndex = loop ? 0 : fieldRefs.length - 1;
+    }
+    
+    const nextElement = fieldRefs[nextIndex]?.current;
+    if (nextElement) {
+      nextElement.focus();
+    }
+  };
+
+  const focusPrevious = () => {
+    const currentIndex = getCurrentIndex();
+    let prevIndex = currentIndex - 1;
+    
+    if (prevIndex < 0) {
+      prevIndex = loop ? fieldRefs.length - 1 : 0;
+    }
+    
+    const prevElement = fieldRefs[prevIndex]?.current;
+    if (prevElement) {
+      prevElement.focus();
+    }
+  };
+
+  useKeyboardShortcuts({
+    onTab: focusNext,
+    onShiftTab: focusPrevious,
+    enabled,
+    isActive: () => {
+      // 현재 포커스된 요소가 관리 대상 요소 중 하나일 때만 작동
+      const currentIndex = getCurrentIndex();
+      return currentIndex !== -1;
+    }
   });
 };
 
