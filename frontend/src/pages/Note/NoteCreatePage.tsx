@@ -154,6 +154,14 @@ const NoteCreatePage: React.FC = () => {
         saveButtonRef.current?.focus();
       }
     },
+    onEnter: () => {
+      const activeElement = document.activeElement;
+      
+      // 저장 버튼에 포커스가 있을 때 엔터 키로 저장 실행
+      if (activeElement === saveButtonRef.current) {
+        handleSave();
+      }
+    },
     enabled: true,
     allowTabInInputs: true, // 입력 필드에서도 탭 키 사용자 정의 처리 허용
     isActive: () => {
