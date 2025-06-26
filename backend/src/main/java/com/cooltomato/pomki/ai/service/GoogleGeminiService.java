@@ -1,7 +1,7 @@
 package com.cooltomato.pomki.ai.service;
 
-import com.cooltomato.pomki.ai.dto.gemini.GeminiRequestDto;
-import com.cooltomato.pomki.ai.dto.gemini.GeminiResponseDto;
+import com.cooltomato.pomki.ai.dto.gemini.GeminiReqDto;
+import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
 import com.cooltomato.pomki.ai.service.LLMService;
 import com.cooltomato.pomki.global.config.AiProperties;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,8 @@ implements LLMService
 
     @Override
     public Mono<String> generate(String prompt, String modelName) {
-        GeminiRequestDto request = new GeminiRequestDto(prompt);
+        GeminiReqDto request = new GeminiReqDto();
+        request.createGeminiReqDto(prompt);
 
         return webClient.post()
              .uri(uriBuilder -> uriBuilder
@@ -35,7 +36,7 @@ implements LLMService
                    .build(modelName))
              .bodyValue(request)
              .retrieve()
-             .bodyToMono(GeminiResponseDto.class)
+             .bodyToMono(GeminiResDto.class)
              .map(response -> response.getCandidates().get(0).getContent().getParts().get(0).getText());
     }
 
