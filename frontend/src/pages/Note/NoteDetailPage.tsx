@@ -1,18 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/useRedux';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import { styled } from '@mui/material/styles';
-import {
-  Container,
-  Box,
-  Button,
-  Paper,
-} from '@mui/material';
-import { Text, IconButton, Tag } from '../../components/ui';
+import { Container, Box, Button, TextField, CircularProgress } from '@mui/material';
+import { Text, IconButton } from '../../components/ui';
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon } from '@mui/icons-material';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(4),
 }));
 
@@ -23,24 +19,41 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const ContentPaper = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
-    whiteSpace: 'pre-wrap',
-    lineHeight: 1.7,
+const FormBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(3),
 }));
 
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
-  
-  const note = useAppSelector((state) => 
-    state.note.notes.find((n) => n.noteId === noteId)
-  );
+  const dispatch = useAppDispatch();
 
-  if (!note) {
+  const { currentNote, loading } = useAppSelector(state => state.note);
+
+  useEffect(() => {
+    if (noteId) {
+      dispatch(fetchNote(noteId));
+    }
+
+    return () => {
+      dispatch(clearCurrentNote());
+    };
+  }, [noteId, dispatch]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!currentNote) {
     return (
       <StyledContainer maxWidth="md">
-        <Text>Note not found.</Text>
+        <Text>노트를 찾을 수 없습니다.</Text>
       </StyledContainer>
     );
   }
@@ -48,41 +61,50 @@ const NoteDetailPage: React.FC = () => {
   return (
     <StyledContainer maxWidth="md">
       <HeaderBox>
-        <Box display="flex" alignItems="center">
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Text variant="h5" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {note.noteTitle}
+          <Text variant="h5" fontWeight="bold">
+            노트 상세 정보
           </Text>
         </Box>
         <Button
           variant="contained"
           startIcon={<EditIcon />}
-          onClick={() => navigate(`/note/${note.noteId}/edit`)}
+          onClick={() => navigate(`/note/${currentNote.noteId}/edit`)}
         >
-          Edit
+          수정
         </Button>
       </HeaderBox>
-      
-      <Box mb={2}>
-        {note.tags?.map((tag) => (
-          <Tag key={tag.tagId} label={tag.tagName} sx={{ mr: 1 }} />
-        ))}
-      </Box>
 
-      <ContentPaper variant="outlined">
-        <Text variant="body1">
-            {note.noteContent}
-        </Text>
-      </ContentPaper>
-      
-      <Box mt={2}>
+      <FormBox>
+        <TextField
+          label="제목"
+          value={currentNote.noteTitle}
+          variant="filled"
+          fullWidth
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+        <TextField
+          label="내용"
+          value={currentNote.noteContent}
+          variant="filled"
+          fullWidth
+          multiline
+          rows={15}
+          InputProps={{
+            readOnly: true,
+          }}
+        />
+      </FormBox>
+      <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Text variant="caption" color="textSecondary">
-          Last updated: {new Date(note.updatedAt).toLocaleString()}
+          최종 수정일: {new Date(currentNote.updatedAt).toLocaleString()}
         </Text>
       </Box>
-
     </StyledContainer>
   );
 };

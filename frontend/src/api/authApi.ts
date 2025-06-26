@@ -56,14 +56,14 @@ export const verifyEmailCode = async (data: VerificationCodeRequest): Promise<Ve
 // 구글 로그인 - 브라우저 리다이렉트
 export const redirectToGoogleLogin = (): void => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 
-    (import.meta.env.DEV ? '' : 'http://localhost:8088');
+    (import.meta.env.DEV ? 'http://localhost:5173' : 'http://localhost:8088');
   window.location.href = `${baseUrl}/oauth2/authorization/google`;
 };
 
 // 카카오 로그인 - 브라우저 리다이렉트
 export const redirectToKakaoLogin = (): void => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 
-    (import.meta.env.DEV ? '' : 'http://localhost:8088');
+    (import.meta.env.DEV ? 'http://localhost:5173' : 'http://localhost:8088');
   window.location.href = `${baseUrl}/oauth2/authorization/kakao`;
 };
 

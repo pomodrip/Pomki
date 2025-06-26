@@ -17,9 +17,12 @@ import NotFoundPage from '../pages/Etc/NotFoundPage';
 import TimerPage from '../pages/Timer/TimerPage';
 import NoteListPage from '../pages/Note/NoteListPage';
 import NoteCreatePage from '../pages/Note/NoteCreatePage';
-import NoteDetailPage from '../pages/Note/NoteDetailPage';
 import DeckManagementPage from '../pages/Study/DeckManagementPage';
 import AdUsageExample from '../examples/AdUsageExample';
+// import SimpleNoteList from '../pages/Note/SimpleNoteList';
+// import SimpleNoteCreate from '../pages/Note/SimpleNoteCreate';
+// import SimpleNoteDetail from '../pages/Note/SimpleNoteDetail';
+
 import ApiWithFallbackExample from '../examples/ApiWithFallbackExample';
 // import MembershipUsageExample from '../examples/MembershipUsageExample';
 // 임시 간단한 테스트 컴포넌트 (디버깅용)
