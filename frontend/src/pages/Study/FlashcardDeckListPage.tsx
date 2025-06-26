@@ -45,7 +45,8 @@ import {
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
 import Card from '../../components/ui/Card';
-import { deckApiWithFallback } from '../../api/apiWithFallback';
+// 🎯 API Fallback 비활성화
+// import { deckApiWithFallback } from '../../api/apiWithFallback';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideDeckInfo {
@@ -136,32 +137,30 @@ const FlashcardDeckListPage: React.FC = () => {
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
-  // 🎯 API Fallback을 사용한 덱 목록 로드 (초기값 빈 배열 보장)
-  const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
+  // 🎯 API Fallback 비활성화 - Redux만 사용
+  // const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
+  // const [fallbackLoading, setFallbackLoading] = useState(false);
 
-  // 🎯 컴포넌트 마운트 시 덱 목록 로드
+  // 🎯 컴포넌트 마운트 시 덱 목록 로드 - Redux만 사용
   useEffect(() => {
-    // Redux를 통한 기존 로드
-    if (user?.memberId) {
-      dispatch(fetchDecks());
-    }
-    
-    // API Fallback을 통한 추가 로드
-    const loadDecksWithFallback = async () => {
-      setFallbackLoading(true);
-      try {
-        const fallbackData = await deckApiWithFallback.getMyDecks();
-        setFallbackDecks(fallbackData);
-        console.log('✅ API Fallback으로 덱 목록 로드:', fallbackData);
-      } catch (error) {
-        console.error('❌ API Fallback 덱 로드 실패:', error);
-      } finally {
-        setFallbackLoading(false);
-      }
-    };
+    console.log("유저 이메일", user?.email);
+    dispatch(fetchDecks());
 
-    loadDecksWithFallback();
+    
+    // 🎯 API Fallback 비활성화
+    // const loadDecksWithFallback = async () => {
+    //   setFallbackLoading(true);
+    //   try {
+    //     const fallbackData = await deckApiWithFallback.getMyDecks();
+    //     setFallbackDecks(fallbackData);
+    //     console.log('✅ API Fallback으로 덱 목록 로드:', fallbackData);
+    //   } catch (error) {
+    //     console.error('❌ API Fallback 덱 로드 실패:', error);
+    //   } finally {
+    //     setFallbackLoading(false);
+    //   }
+    // };
+    // loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
 
   // // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
@@ -224,38 +223,39 @@ const FlashcardDeckListPage: React.FC = () => {
   //   }
   // }, [fallbackDecks]);
 
-  // 🎯 Redux 덱과 Fallback 덱을 합치기 (Fallback 덱 우선순위)
+  // 🎯 Redux 덱만 사용 (Fallback 비활성화)
   const combinedDecks = useMemo(() => {
-    console.log('🔍 combinedDecks useMemo 실행:', { 
-      decks: { type: typeof decks, isArray: Array.isArray(decks), value: decks },
-      fallbackDecks: { type: typeof fallbackDecks, isArray: Array.isArray(fallbackDecks), value: fallbackDecks }
-    });
-    
-    // Redux 덱과 Fallback 덱을 합치고 중복 제거 (Fallback 덱 우선)
-    const deckMap = new Map<string, CardDeck>();
-    
-    // Redux 덱을 먼저 추가 (배열인지 확인)
+    // Redux 덱만 사용 (배열인지 확인)
     if (Array.isArray(decks)) {
-      decks.forEach(deck => {
-        deckMap.set(deck.deckId, deck);
-      });
+      return decks;
     } else {
       console.warn('⚠️ decks가 배열이 아닙니다:', decks);
+      return [];
     }
+    
+    // 🎯 Fallback 로직 비활성화
+    // const deckMap = new Map<string, CardDeck>();
+    // Redux 덱을 먼저 추가 (배열인지 확인)
+    // if (Array.isArray(decks)) {
+    //   decks.forEach(deck => {
+    //     deckMap.set(deck.deckId, deck);
+    //   });
+    // } else {
+    //   console.warn('⚠️ decks가 배열이 아닙니다:', decks);
+    // }
     
     // Fallback 덱 추가 (덮어쓰기로 우선순위 적용, 배열인지 확인)
-    if (Array.isArray(fallbackDecks)) {
-      fallbackDecks.forEach(deck => {
-        deckMap.set(deck.deckId, deck);
-      });
-    } else {
-      console.warn('⚠️ fallbackDecks가 배열이 아닙니다:', fallbackDecks);
-    }
+    // if (Array.isArray(fallbackDecks)) {
+    //   fallbackDecks.forEach(deck => {
+    //     deckMap.set(deck.deckId, deck);
+    //   });
+    // } else {
+    //   console.warn('⚠️ fallbackDecks가 배열이 아닙니다:', fallbackDecks);
+    // }
     
-    const result = Array.from(deckMap.values());
-    console.log('✅ combinedDecks 결과:', result);
-    return result;
-  }, [decks, fallbackDecks]);
+    // const result = Array.from(deckMap.values());
+    // return result;
+  }, [decks]);
 
   // 🎯 필터링 및 UI 렌더링을 위한 데이터 합치기
   const enrichedDecks: EnrichedDeck[] = useMemo(() => {
@@ -332,67 +332,97 @@ const FlashcardDeckListPage: React.FC = () => {
     setEditingDeckId(deck.deckId);
     setNewDeckTitle(deck.deckName);
     // 태그에서 # 기호를 제거하여 표시
-    setNewDeckTags(deck.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
+    // setNewDeckTags(deck.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
     setShowCreateDialog(true);
   };
 
   const handleDeleteDeck = async (deck: EnrichedDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
-      let deletedFromFallback = false;
-      let deletedFromRedux = false;
-      
-      // 1. fallback 덱에서 삭제 시도 (배열인지 확인)
-      const fallbackDeckIndex = Array.isArray(fallbackDecks) 
-        ? fallbackDecks.findIndex(fallbackDeck => fallbackDeck.deckId === deck.deckId)
-        : -1;
-      if (fallbackDeckIndex !== -1) {
-        setFallbackDecks(prev => Array.isArray(prev) ? prev.filter(fallbackDeck => fallbackDeck.deckId !== deck.deckId) : []);
-        deletedFromFallback = true;
-        console.log('✅ Fallback 덱에서 삭제 완료');
-      }
-      
-      // 2. Redux 덱에서도 삭제 시도 (fallback과 별개로, 배열인지 확인)
-      const reduxDeckExists = Array.isArray(decks) && decks.some(reduxDeck => reduxDeck.deckId === deck.deckId);
-      if (reduxDeckExists) {
-        try {
-          const result = await dispatch(deleteDeck(deck.deckId));
-          if (result.meta.requestStatus === 'fulfilled') {
-            deletedFromRedux = true;
-            console.log('✅ Redux 덱에서 삭제 완료');
-            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
-            dispatch(fetchDecks());
-          } else {
-            throw new Error('Redux 덱 삭제 실패');
-          }
-        } catch (error) {
-          console.error('❌ Redux 덱 삭제 실패:', error);
+      // 🎯 Redux만 사용하도록 단순화
+      try {
+        const result = await dispatch(deleteDeck(deck.deckId));
+        if (result.meta.requestStatus === 'fulfilled') {
+          // 클라이언트 측 정보 삭제
+          setClientSideInfo(prev => {
+            const newInfo = { ...prev };
+            delete newInfo[deck.deckId];
+            return newInfo;
+          });
+          
+          // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+          dispatch(fetchDecks());
+          
+          dispatch(showToast({
+            message: '덱이 성공적으로 삭제되었습니다.',
+            severity: 'success'
+          }));
+        } else {
+          throw new Error('Redux 덱 삭제 실패');
         }
-      }
-      
-      // 3. 최종 결과 처리
-      if (deletedFromFallback || deletedFromRedux) {
-        // 클라이언트 측 정보 삭제
-        setClientSideInfo(prev => {
-          const newInfo = { ...prev };
-          delete newInfo[deck.deckId];
-          return newInfo;
-        });
-        
-        const sourceInfo = deletedFromFallback && deletedFromRedux ? '(Fallback + Redux)' :
-                          deletedFromFallback ? '(Fallback)' :
-                          '(Redux)';
-        
-        dispatch(showToast({
-          message: `덱이 성공적으로 삭제되었습니다. ${sourceInfo}`,
-          severity: 'success'
-        }));
-      } else {
+      } catch (error) {
+        console.error('❌ Redux 덱 삭제 실패:', error);
         dispatch(showToast({
           message: '덱 삭제에 실패했습니다.',
           severity: 'error'
         }));
       }
+      
+      // 🎯 Fallback 관련 로직 비활성화
+      // let deletedFromFallback = false;
+      // let deletedFromRedux = false;
+      
+      // 1. fallback 덱에서 삭제 시도 (배열인지 확인)
+      // const fallbackDeckIndex = Array.isArray(fallbackDecks) 
+      //   ? fallbackDecks.findIndex(fallbackDeck => fallbackDeck.deckId === deck.deckId)
+      //   : -1;
+      // if (fallbackDeckIndex !== -1) {
+      //   setFallbackDecks(prev => Array.isArray(prev) ? prev.filter(fallbackDeck => fallbackDeck.deckId !== deck.deckId) : []);
+      //   deletedFromFallback = true;
+      //   console.log('✅ Fallback 덱에서 삭제 완료');
+      // }
+      
+      // 2. Redux 덱에서도 삭제 시도 (fallback과 별개로, 배열인지 확인)
+      // const reduxDeckExists = Array.isArray(decks) && decks.some(reduxDeck => reduxDeck.deckId === deck.deckId);
+      // if (reduxDeckExists) {
+      //   try {
+      //     const result = await dispatch(deleteDeck(deck.deckId));
+      //     if (result.meta.requestStatus === 'fulfilled') {
+      //       deletedFromRedux = true;
+      //       console.log('✅ Redux 덱에서 삭제 완료');
+      //       // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+      //       dispatch(fetchDecks());
+      //     } else {
+      //       throw new Error('Redux 덱 삭제 실패');
+      //     }
+      //   } catch (error) {
+      //     console.error('❌ Redux 덱 삭제 실패:', error);
+      //   }
+      // }
+      
+      // 3. 최종 결과 처리
+      // if (deletedFromFallback || deletedFromRedux) {
+      //   // 클라이언트 측 정보 삭제
+      //   setClientSideInfo(prev => {
+      //     const newInfo = { ...prev };
+      //     delete newInfo[deck.deckId];
+      //     return newInfo;
+      //   });
+        
+      //   const sourceInfo = deletedFromFallback && deletedFromRedux ? '(Fallback + Redux)' :
+      //                     deletedFromFallback ? '(Fallback)' :
+      //                     '(Redux)';
+        
+      //   dispatch(showToast({
+      //     message: `덱이 성공적으로 삭제되었습니다. ${sourceInfo}`,
+      //     severity: 'success'
+      //   }));
+      // } else {
+      //   dispatch(showToast({
+      //     message: '덱 삭제에 실패했습니다.',
+      //     severity: 'error'
+      //   }));
+      // }
     }
   };
   
@@ -432,17 +462,54 @@ const FlashcardDeckListPage: React.FC = () => {
     if (!newDeckTitle.trim()) return;
 
     if (isEditMode && editingDeckId) {
-      // 먼저 fallback 덱에서 해당 덱을 찾아 수정 (배열인지 확인)
-      const fallbackDeckIndex = Array.isArray(fallbackDecks) 
-        ? fallbackDecks.findIndex(deck => deck.deckId === editingDeckId)
-        : -1;
-      if (fallbackDeckIndex !== -1) {
-        // fallback 덱 업데이트 (배열인지 확인)
-        setFallbackDecks(prev => Array.isArray(prev) ? prev.map(deck => 
-          deck.deckId === editingDeckId 
-            ? { ...deck, deckName: newDeckTitle.trim() }
-            : deck
-        ) : []);
+      let updateSuccess = false;
+      let updateSource = '';
+      
+      // 1. 실제 API를 통한 덱 수정 시도 (Redux)
+      try {
+        const result = await dispatch(updateDeck({ deckId: editingDeckId, data: { deckName: newDeckTitle.trim() } }));
+        
+        if (result.meta.requestStatus === 'fulfilled') {
+          updateSuccess = true;
+          updateSource = 'Redux API';
+          console.log('✅ Redux API를 통한 덱 수정 성공');
+          
+          // 덱 목록 다시 불러오기 (Redux 상태 동기화)
+          dispatch(fetchDecks());
+        } else {
+          throw new Error('Redux 덱 수정 실패');
+        }
+      } catch (error) {
+        console.error('❌ Redux API 덱 수정 실패, API Fallback 시도...', error);
+        
+                 // 🎯 API Fallback 비활성화
+         // 2. Redux 실패시 API Fallback으로 시도
+         // try {
+         //   await deckApiWithFallback.updateDeck(editingDeckId, {
+         //     deckName: newDeckTitle.trim(),
+         //     memberId: user?.memberId || 1
+         //   });
+         //   updateSuccess = true;
+         //   updateSource = 'API Fallback';
+         //   console.log('✅ API Fallback을 통한 덱 수정 성공');
+         // } catch (fallbackError) {
+         //   console.error('❌ API Fallback 덱 수정도 실패:', fallbackError);
+         // }
+      }
+      
+             // 3. 어떤 방식으로든 수정이 성공했다면 로컬 상태 업데이트
+       if (updateSuccess) {
+         // 🎯 Fallback 덱 업데이트 로직 비활성화
+         // const fallbackDeckIndex = Array.isArray(fallbackDecks) 
+         //   ? fallbackDecks.findIndex(deck => deck.deckId === editingDeckId)
+         //   : -1;
+         // if (fallbackDeckIndex !== -1) {
+         //   setFallbackDecks(prev => Array.isArray(prev) ? prev.map(deck => 
+         //     deck.deckId === editingDeckId 
+         //       ? { ...deck, deckName: newDeckTitle.trim() }
+         //       : deck
+         //   ) : []);
+         // }
         
         // 클라이언트 측 태그 수정
         setClientSideInfo(prev => ({
@@ -456,48 +523,15 @@ const FlashcardDeckListPage: React.FC = () => {
           }
         }));
         
-        // 덱 목록 다시 불러오기 (Redux 상태 동기화)
-        dispatch(fetchDecks());
-        
         dispatch(showToast({
-          message: '덱이 성공적으로 수정되었습니다.',
+          message: `덱이 성공적으로 수정되었습니다. (${updateSource})`,
           severity: 'success'
         }));
       } else {
-        // Redux 덱 수정 시도
-        try {
-          const result = await dispatch(updateDeck({ deckId: editingDeckId, data: { deckName: newDeckTitle.trim() } }));
-          
-          if (result.meta.requestStatus === 'fulfilled') {
-            // 성공 시 클라이언트 측 태그 수정
-            setClientSideInfo(prev => ({
-              ...prev,
-              [editingDeckId]: {
-                ...(prev[editingDeckId] || { isBookmarked: false }),
-                tags: newDeckTags.split(',').map(t => {
-                  const trimmed = t.trim();
-                  return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-                }).filter(Boolean),
-              }
-            }));
-            
-            // 덱 목록 다시 불러오기 (Redux 상태 동기화)
-            dispatch(fetchDecks());
-            
-            dispatch(showToast({
-              message: '덱이 성공적으로 수정되었습니다.',
-              severity: 'success'
-            }));
-          } else {
-            throw new Error('Redux 덱 수정 실패');
-          }
-        } catch (error) {
-          console.error('덱 수정 실패:', error);
-          dispatch(showToast({
-            message: '덱 수정에 실패했습니다.',
-            severity: 'error'
-          }));
-        }
+        dispatch(showToast({
+          message: '덱 수정에 실패했습니다.',
+          severity: 'error'
+        }));
       }
     } else {
       try {
@@ -526,40 +560,47 @@ const FlashcardDeckListPage: React.FC = () => {
           }));
         }
       } catch (error) {
-        console.log('Redux 덱 생성 실패, API Fallback 사용 시도...');
-        // Redux 실패시 API Fallback 사용
-        try {
-          const newDeck = await deckApiWithFallback.createDeck({
-            deckName: newDeckTitle.trim(),
-            memberId: user?.memberId || 1
-          });
+        console.error('Redux 덱 생성 실패:', error);
+        dispatch(showToast({
+          message: '덱 생성에 실패했습니다.',
+          severity: 'error'
+        }));
+        
+        // 🎯 API Fallback 로직 비활성화
+        // console.log('Redux 덱 생성 실패, API Fallback 사용 시도...');
+        // // Redux 실패시 API Fallback 사용
+        // try {
+        //   const newDeck = await deckApiWithFallback.createDeck({
+        //     deckName: newDeckTitle.trim(),
+        //     memberId: user?.memberId || 1
+        //   });
           
-          // fallbackDecks 상태에 추가 (배열인지 확인)
-          setFallbackDecks(prev => Array.isArray(prev) ? [...prev, newDeck] : [newDeck]);
+        //   // fallbackDecks 상태에 추가 (배열인지 확인)
+        //   setFallbackDecks(prev => Array.isArray(prev) ? [...prev, newDeck] : [newDeck]);
           
-          // 클라이언트 측 정보 추가
-          setClientSideInfo(prev => ({
-            ...prev,
-            [newDeck.deckId]: {
-              isBookmarked: false,
-              tags: newDeckTags.split(',').map(t => {
-                const trimmed = t.trim();
-                return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-              }).filter(Boolean),
-            }
-          }));
+        //   // 클라이언트 측 정보 추가
+        //   setClientSideInfo(prev => ({
+        //     ...prev,
+        //     [newDeck.deckId]: {
+        //       isBookmarked: false,
+        //       tags: newDeckTags.split(',').map(t => {
+        //         const trimmed = t.trim();
+        //         return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
+        //       }).filter(Boolean),
+        //     }
+        //   }));
           
-          dispatch(showToast({
-            message: '✅ API Fallback으로 덱이 생성되었습니다!',
-            severity: 'success'
-          }));
-        } catch (fallbackError) {
-          console.error('API Fallback 덱 생성도 실패:', fallbackError);
-          dispatch(showToast({
-            message: '덱 생성에 실패했습니다.',
-            severity: 'error'
-          }));
-        }
+        //   dispatch(showToast({
+        //     message: '✅ API Fallback으로 덱이 생성되었습니다!',
+        //     severity: 'success'
+        //   }));
+        // } catch (fallbackError) {
+        //   console.error('API Fallback 덱 생성도 실패:', fallbackError);
+        //   dispatch(showToast({
+        //     message: '덱 생성에 실패했습니다.',
+        //     severity: 'error'
+        //   }));
+        // }
       }
     }
     handleCreateDialogClose();
@@ -584,8 +625,8 @@ const FlashcardDeckListPage: React.FC = () => {
         </Fab>
       </HeaderBox>
 
-      {/* API Fallback 정보 표시 */}
-      {Array.isArray(fallbackDecks) && fallbackDecks.length > 0 && (
+      {/* 🎯 API Fallback UI 비활성화 */}
+      {/* {Array.isArray(fallbackDecks) && fallbackDecks.length > 0 && (
         <Box 
           sx={{ 
             mb: 2, 
@@ -608,7 +649,7 @@ const FlashcardDeckListPage: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-      )}
+      )} */}
 
       <SearchBox>
         <TextField
@@ -678,7 +719,7 @@ const FlashcardDeckListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
       </Menu>
 
-      {(loading || fallbackLoading) && (
+      {loading && (
         <Box display="flex" justifyContent="center" my={5}>
           <CircularProgress />
         </Box>

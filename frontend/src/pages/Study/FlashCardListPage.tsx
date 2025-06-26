@@ -53,7 +53,7 @@ interface Flashcard {
 
 // 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
 interface FlashcardDeck {
-  id: number;
+  id: string;
   category: string;
   title: string;
   isBookmarked: boolean;
@@ -125,8 +125,12 @@ const FlashCardListPage: React.FC = () => {
   // 🎯 기존 구조 유지: studySlice에서 필터만 가져오기
   const { filters } = useAppSelector((state) => state.study);
   
-  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기 (안전장치 추가)
-  const { decks = [], currentDeckCards = [], loading } = useAppSelector((state) => state.deck);
+  // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
+  const { 
+    currentDeckCards = [], 
+    selectedDeck,
+    loading 
+  } = useAppSelector((state) => state.deck);
   
   // 🎯 API Fallback을 위한 상태 (초기값 빈 배열 보장)
   const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
@@ -159,11 +163,6 @@ const FlashCardListPage: React.FC = () => {
 
   // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거)
   const allCards = useMemo(() => {
-    console.log('🔍 allCards useMemo 실행:', { 
-      currentDeckCards: { type: typeof currentDeckCards, isArray: Array.isArray(currentDeckCards), value: currentDeckCards },
-      fallbackCards: { type: typeof fallbackCards, isArray: Array.isArray(fallbackCards), value: fallbackCards }
-    });
-    
     const combinedCards = new Map<string, Card>();
     
     // 1. Redux에서 가져온 카드들 추가 (배열인지 확인)
@@ -187,32 +186,21 @@ const FlashCardListPage: React.FC = () => {
     }
     
     const result = Array.from(combinedCards.values());
-    console.log('✅ allCards 결과:', result);
     return result;
   }, [currentDeckCards, fallbackCards]);
 
-  // 🎯 현재 덱에 해당하는 카드들만 필터링
-  const currentDeckTitle = useMemo(() => {
-    // 덱 이름 매핑 (deckId를 그대로 사용)
-    const deckTitles: { [key: string]: string } = {
-      '1': '영어 단어장',
-      '2': '일본어 단어장', 
-      '3': '프로그래밍 용어'
-    };
-    
-    return deckTitles[deckId || ''] || `덱 ${deckId}`;
-  }, [deckId]);
-
   // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
   const mockDecks: FlashcardDeck[] = useMemo(() => {
-    if (!deckId || allCards.length === 0) return [];
+    if (!deckId || !selectedDeck) return [];
     
+    const deckTitle = selectedDeck.deckName || '덱 이름 없음';
+
     return [{
-      id: parseInt(deckId),
+      id: deckId,
       category: '학습',
-      title: currentDeckTitle,
+      title: deckTitle,
       isBookmarked: false,
-      tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
+      tags: [`#${deckTitle.split(' ')[0]}`, '#학습'],
       flashcards: allCards
         .filter(card => card.deckId === deckId)
         .map(card => {
@@ -225,11 +213,11 @@ const FlashCardListPage: React.FC = () => {
           };
         })
     }];
-  }, [deckId, allCards, currentDeckTitle, customCardTags]);
+  }, [deckId, allCards, selectedDeck, customCardTags]);
 
   // 🎯 현재 덱 찾기 (기존 로직 유지)
   const currentDeck = useMemo(() => {
-    return mockDecks.find(deck => deck.id === parseInt(deckId || '0'));
+    return mockDecks.find(deck => deck.id === deckId);
   }, [mockDecks, deckId]);
 
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
@@ -245,9 +233,7 @@ const FlashCardListPage: React.FC = () => {
           try {
             const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
           setFallbackCards(fallbackData);
-          console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
         } catch (error) {
-          console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
         } finally {
           setFallbackLoading(false);
         }
@@ -595,18 +581,6 @@ const FlashCardListPage: React.FC = () => {
           >
             덱 목록으로 이동
           </Button>
-          <Button 
-            variant="outlined" 
-            color="primary"
-            onClick={handleCreateSampleCards}
-            sx={{ mt: 1 }}
-          >
-            임시 카드 5개 생성하기 (실제 API 호출)
-          </Button>
-          <Typography variant="caption" color="text.secondary" align="center">
-            실제 API를 호출하여 샘플 카드를 생성합니다.<br/>
-            덱 ID: {deckId}
-          </Typography>
         </Box>
       </StyledContainer>
     );
@@ -801,6 +775,14 @@ const FlashCardListPage: React.FC = () => {
               : '첫 번째 카드를 만들어보세요!'
             }
           </Typography>
+          <Button 
+            variant="outlined" 
+            color="primary"
+            onClick={handleCreateSampleCards}
+            sx={{ mt: 1 }}
+          >
+            임시 카드 5개 생성하기 (실제 API 호출)
+          </Button>
         </Box>
       )}
 
