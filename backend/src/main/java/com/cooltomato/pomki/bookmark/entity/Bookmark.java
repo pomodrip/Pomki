@@ -29,8 +29,4 @@ public class Bookmark {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id")
     private Note note;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-    
 } 

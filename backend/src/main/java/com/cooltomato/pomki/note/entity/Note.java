@@ -6,13 +6,15 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
 import com.cooltomato.pomki.tag.entity.NoteTag;
 
 @Entity
-@Table(name = "review_note")
+@Table(name = "NOTE")
 @Data
 
 public class Note {
@@ -44,6 +46,7 @@ public class Note {
     private LocalDateTime updatedAt;
 
     @Column(name = "is_deleted")
+    @ColumnDefault("false")
     private Boolean isDeleted;
 
     // 연관관계: NOTE_IMAGE(1:N)
