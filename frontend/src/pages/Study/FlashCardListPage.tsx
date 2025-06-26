@@ -775,14 +775,14 @@ const FlashCardListPage: React.FC = () => {
               : '첫 번째 카드를 만들어보세요!'
             }
           </Typography>
-          <Button 
+          {/* <Button 
             variant="outlined" 
             color="primary"
             onClick={handleCreateSampleCards}
             sx={{ mt: 1 }}
           >
             임시 카드 5개 생성하기 (실제 API 호출)
-          </Button>
+          </Button> */}
         </Box>
       )}
 
