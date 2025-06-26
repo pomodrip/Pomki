@@ -53,9 +53,9 @@ public class Note {
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
     private List<NoteImage> noteImages;
 
-    // 연관관계: BOOKMARK_NOTE(1:N)
+    // 연관관계: NOTE_BOOKMARK(1:N)
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
-    private List<Bookmark> bookmarkNotes;
+    private List<Bookmark> noteBookmarks;
 
     // 연관관계: NOTE_TAG(1:N)
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)

@@ -29,11 +29,11 @@ public class Bookmark {
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    private Member member;
+    private Member memberId;
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id")
-    private Note note;
+    private Note noteId;
 
 } 
