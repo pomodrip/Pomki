@@ -1,11 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { deckService } from '../../services/deckService';
+import { cardService } from '../../services/cardService';
 import type {
   CardDeck,
   Card,
   CreateDeckRequest,
   UpdateDeckRequest,
+  UpdateCardRequest,
+  CreateCardRequest,
 } from '../../types/card';
 
 /**
@@ -150,25 +153,27 @@ export const fetchCardsInDeck = createAsyncThunk<
   return cards;
 });
 
-// 카드 수정 - cardService를 사용해야 하지만, 우선 deckService 패턴에 맞춰 수정
-// 이 Thunk들은 현재 페이지와 직접적 관련은 없지만, 일관성 유지를 위해 수정합니다.
+// 카드 생성
+export const createCard = createAsyncThunk<
+  Card,
+  { deckId: string; data: CreateCardRequest },
+  { state: RootState; rejectValue: string }
+>('deck/createCard', async ({ deckId, data }, { rejectWithValue }) => {
+  try {
+    return await cardService.createCard(deckId, data);
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드 수정
 export const updateCard = createAsyncThunk<
   Card,
-  { cardId: string; data: Partial<Card> },
+  { cardId: number; data: UpdateCardRequest },
   { state: RootState; rejectValue: string }
 >('deck/updateCard', async ({ cardId, data }, { rejectWithValue }) => {
   try {
-    // Mock 응답 (실제 API 구현 시 교체)
-    return { 
-      cardId: parseInt(cardId), 
-      deckId: data.deckId || '', 
-      content: data.content || '', 
-      answer: data.answer || '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isDeleted: false,
-      ...data 
-    };
+    return await cardService.updateCard(cardId, data);
   } catch (error) {
     return rejectWithValue(handleAsyncError(error));
   }
@@ -176,12 +181,12 @@ export const updateCard = createAsyncThunk<
 
 // 카드 삭제
 export const deleteCard = createAsyncThunk<
-  string,
-  string,
+  number,
+  number,
   { state: RootState; rejectValue: string }
 >('deck/deleteCard', async (cardId, { rejectWithValue }) => {
   try {
-    // Mock 응답 (실제 API 구현 시 교체)
+    await cardService.deleteCard(cardId);
     return cardId;
   } catch (error) {
     return rejectWithValue(handleAsyncError(error));
@@ -365,7 +370,20 @@ const deckSlice = createSlice({
         state.currentDeckCards = [];
       })
 
-             // 카드 수정
+       // 카드 생성
+       .addCase(createCard.fulfilled, (state, action) => {
+         state.currentDeckCards.push(action.payload);
+         // 해당 덱의 카드 수 증가
+         const deckIndex = state.decks.findIndex(deck => deck.deckId === action.payload.deckId);
+         if (deckIndex !== -1) {
+           state.decks[deckIndex].cardCnt += 1;
+         }
+         if (state.selectedDeck?.deckId === action.payload.deckId) {
+           state.selectedDeck.cardCnt += 1;
+         }
+       })
+
+       // 카드 수정
        .addCase(updateCard.fulfilled, (state, action) => {
          const index = state.currentDeckCards.findIndex(card => card.cardId === action.payload.cardId);
          if (index !== -1) {
@@ -375,7 +393,22 @@ const deckSlice = createSlice({
 
        // 카드 삭제
        .addCase(deleteCard.fulfilled, (state, action) => {
-         state.currentDeckCards = state.currentDeckCards.filter(card => card.cardId.toString() !== action.payload);
+         // 먼저 삭제될 카드 정보를 찾기
+         const deletedCard = state.currentDeckCards.find(card => card.cardId === action.payload);
+         
+         // 카드 목록에서 제거
+         state.currentDeckCards = state.currentDeckCards.filter(card => card.cardId !== action.payload);
+         
+         // 해당 덱의 카드 수 감소
+         if (deletedCard) {
+           const deckIndex = state.decks.findIndex(deck => deck.deckId === deletedCard.deckId);
+           if (deckIndex !== -1) {
+             state.decks[deckIndex].cardCnt -= 1;
+           }
+           if (state.selectedDeck?.deckId === deletedCard.deckId) {
+             state.selectedDeck.cardCnt -= 1;
+           }
+         }
        });
   },
 });
