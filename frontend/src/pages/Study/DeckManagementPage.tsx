@@ -149,7 +149,7 @@ const DeckManagementPage: React.FC = () => {
   };
 
   return (
-    <StyledContainer maxWidth="lg">
+          <StyledContainer maxWidth="md">
       {/* 헤더 */}
       <HeaderBox>
         <Box>

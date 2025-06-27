@@ -9,13 +9,13 @@ import { useTheme } from '@mui/material/styles';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsiveUI } from '../../hooks/useUI';
+import { useTabNavigationKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const { isMobile } = useResponsiveUI();
-
 
   const getActiveTab = () => {
     const pathname = location.pathname;
@@ -46,6 +46,25 @@ const BottomNav: React.FC = () => {
         break;
     }
   };
+
+  // 키보드 단축키로 탭 네비게이션
+  const handleNextTab = () => {
+    const currentTab = getActiveTab();
+    const nextTab = currentTab >= 4 ? 0 : currentTab + 1;
+    handleChange({} as React.SyntheticEvent, nextTab);
+  };
+
+  const handlePreviousTab = () => {
+    const currentTab = getActiveTab();
+    const previousTab = currentTab <= 0 ? 4 : currentTab - 1;
+    handleChange({} as React.SyntheticEvent, previousTab);
+  };
+
+  // Tab/Shift+Tab으로 네비게이션 이동 (모바일에서만 활성화)
+  useTabNavigationKeyboardShortcuts(handleNextTab, handlePreviousTab, {
+    enabled: isMobile,
+    excludeInputs: true // 입력 필드 포커스 시 비활성화
+  });
 
   const navItems = [
     { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },

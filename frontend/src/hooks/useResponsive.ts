@@ -5,15 +5,15 @@ import { useMediaQuery } from '@mui/material';
 export const useResponsive = () => {
   const theme = useTheme();
   
-  // 900px 이상: 데스크톱 (헤더 네비게이션만 표시)
-  // 900px 미만: 모바일/태블릿 (푸터 네비게이션 표시)
-  const isDesktop = useMediaQuery('(min-width: 900px)');
+  // 1024px 이상: 데스크톱 (헤더 네비게이션만 표시)
+  // 1024px 미만: 모바일/태블릿 (푸터 네비게이션 표시)
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   
   // 구체적인 구간별 분류 (필요시 사용)
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md')); // 600~899px
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg')); // 600~1023px
   
   return {
-    isMobile: !isDesktop, // 900px 미만은 모두 모바일로 취급 (푸터 표시)
+    isMobile: !isDesktop, // 1024px 미만은 모두 모바일로 취급 (푸터 표시)
     isTablet,
     isDesktop,
   };

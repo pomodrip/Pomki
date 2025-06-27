@@ -184,9 +184,9 @@ export const useUI = () => {
     } else if (width < 768) {
       screenSize = 'sm';
       isMobileView = true;
-    } else if (width < 992) {
+    } else if (width < 1024) {
       screenSize = 'md';
-      isMobileView = false;
+      isMobileView = true; // 1024px 미만은 모바일로 취급
     } else if (width < 1200) {
       screenSize = 'lg';
       isMobileView = false;

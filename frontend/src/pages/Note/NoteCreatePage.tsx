@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Container,
@@ -15,6 +15,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import { useNotifications, useUI } from '../../hooks/useUI';
+import { useFormSaveKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import type { NoteUpdateRequest } from '../../types/note';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -46,6 +48,11 @@ const NoteCreatePage: React.FC = () => {
 
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+
+  // 폼 요소들의 참조
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const contentInputRef = useRef<HTMLTextAreaElement>(null);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
 
   const isEditMode = Boolean(noteId);
 
@@ -109,6 +116,63 @@ const NoteCreatePage: React.FC = () => {
     }
   };
 
+  // 🟡 React Hooks 활용 - 키보드 단축키 설정
+  useFormSaveKeyboardShortcuts(handleSave, {
+    saveButtonRef,
+    ctrlEnterAnywhere: true // Ctrl+Enter는 어디서든 저장
+  });
+
+  // 🟡 React Hooks 활용 - 순환 Tab 네비게이션
+  useKeyboardShortcuts({
+    onTab: () => {
+      const activeElement = document.activeElement;
+      
+      // 현재 포커스된 요소에 따라 다음 요소로 이동 (순환)
+      if (activeElement === titleInputRef.current) {
+        contentInputRef.current?.focus();
+      } else if (activeElement === contentInputRef.current) {
+        saveButtonRef.current?.focus();
+      } else if (activeElement === saveButtonRef.current) {
+        titleInputRef.current?.focus(); // 순환: 저장 버튼 -> 제목
+      } else {
+        // 다른 요소에 포커스가 있을 때는 제목부터 시작
+        titleInputRef.current?.focus();
+      }
+    },
+    onShiftTab: () => {
+      const activeElement = document.activeElement;
+      
+      // Shift+Tab으로 역순 이동 (순환)
+      if (activeElement === titleInputRef.current) {
+        saveButtonRef.current?.focus(); // 역순 순환: 제목 -> 저장 버튼
+      } else if (activeElement === contentInputRef.current) {
+        titleInputRef.current?.focus();
+      } else if (activeElement === saveButtonRef.current) {
+        contentInputRef.current?.focus();
+      } else {
+        // 다른 요소에 포커스가 있을 때는 저장 버튼부터 시작
+        saveButtonRef.current?.focus();
+      }
+    },
+    onEnter: () => {
+      const activeElement = document.activeElement;
+      
+      // 저장 버튼에 포커스가 있을 때 엔터 키로 저장 실행
+      if (activeElement === saveButtonRef.current) {
+        handleSave();
+      }
+    },
+    enabled: true,
+    allowTabInInputs: true, // 입력 필드에서도 탭 키 사용자 정의 처리 허용
+    isActive: () => {
+      // 관리 대상 요소 중 하나에 포커스가 있을 때만 작동
+      const activeElement = document.activeElement;
+      return activeElement === titleInputRef.current || 
+             activeElement === contentInputRef.current || 
+             activeElement === saveButtonRef.current;
+    }
+  });
+
   if (noteLoading && isEditMode) {
     return <Box>Loading...</Box>; // Or a spinner
   }
@@ -118,14 +182,24 @@ const NoteCreatePage: React.FC = () => {
       {/* 헤더 */}
       <HeaderBox>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
+          <IconButton 
+            onClick={() => navigate(-1)} 
+            sx={{ mr: 1 }}
+            tabIndex={-1} // Tab 순서에서 제외
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Text variant="h5" fontWeight="bold">
+          <Text variant="h5" fontWeight="bold" tabIndex={-1}>
             {isEditMode ? '노트 수정' : '새 노트 작성'}
           </Text>
         </Box>
-        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave}>
+        <Button 
+          ref={saveButtonRef}
+          variant="contained" 
+          startIcon={<SaveIcon />} 
+          onClick={handleSave}
+          data-save-button // 키보드 단축키를 위한 식별자
+        >
           {isEditMode ? '수정' : '저장'}
         </Button>
       </HeaderBox>
@@ -134,6 +208,7 @@ const NoteCreatePage: React.FC = () => {
       <FormBox>
         {/* 제목 입력 */}
         <TextField
+          inputRef={titleInputRef}
           fullWidth
           label="제목"
           value={noteTitle}
@@ -144,6 +219,7 @@ const NoteCreatePage: React.FC = () => {
 
         {/* 내용 입력 */}
         <TextField
+          inputRef={contentInputRef}
           fullWidth
           label="내용"
           value={noteContent}
