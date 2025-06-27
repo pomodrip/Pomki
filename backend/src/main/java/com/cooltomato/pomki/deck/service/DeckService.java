@@ -83,15 +83,15 @@ public class DeckService {
 
         // 덱 안 카드 전체 조회
         // 삭제되지 않은 덱에 소속된 삭제되지 않은 카드만 조회되어야 함
-        public List<CardResponseDto> readAllCardsService(PrincipalMember principal, String deckId) {
+        public List<CardResponseDto> readAllCardsService(PrincipalMember principal, String deckName) {
             log.info("debug >>> DeckService readAllCards");
             // 덱 생존/삭제 여부 조회
-            Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
+            Optional<Deck> deck = deckRepository.findByMemberIdAndDeckNameAndIsDeletedFalse(principal.getMemberId(), deckName) ;
             if (deck.get().getIsDeleted()) {
                 throw new IllegalArgumentException("삭제된 덱입니다.");
             }
 
-            List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
+            List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deck.get().getDeckId());
 
             if (cards.isEmpty()) {
                 log.info("debug >>> 카드가 존재하지 않습니다.");

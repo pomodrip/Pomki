@@ -73,12 +73,12 @@ public class DeckController {
         @ApiResponse(responseCode = "401", description = "인증 실패"),
         @ApiResponse(responseCode = "404", description = "덱을 찾을 수 없음")
     })
-    @GetMapping("/{deckId}/cards")
+    @GetMapping("/{deckName}/cards")
     public ResponseEntity<List<CardResponseDto>> readCardsInAdeck(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal, 
-        @Parameter(description = "덱 ID") @PathVariable("deckId") String deckId) {
+        @Parameter(description = "덱 ID") @PathVariable("deckName") String deckName) {
         log.info("debug >>> DeckController readCardsInAdeck");
-        List<CardResponseDto> cardsInDeck = deckService.readAllCardsService(principal, deckId);
+        List<CardResponseDto> cardsInDeck = deckService.readAllCardsService(principal, deckName);
         return ResponseEntity.ok(cardsInDeck);
     }
 
