@@ -10,7 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.cooltomato.pomki.deck.entity.Deck;
-import com.cooltomato.pomki.tag.entity.Tag;
+// import com.cooltomato.pomki.tag.entity.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -55,9 +55,9 @@ public class Card {
     )
     private Deck deck;
 
-    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    // @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @Builder.Default
+    // private List<Tag> tags = new ArrayList<>();
 
     
 

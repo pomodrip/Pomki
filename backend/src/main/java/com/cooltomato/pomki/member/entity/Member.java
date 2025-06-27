@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
-import com.cooltomato.pomki.tag.entity.Tag;
+// import com.cooltomato.pomki.tag.entity.Tag;
 
 @Entity
 @Table(name = "MEMBER", uniqueConstraints = {
@@ -86,9 +86,9 @@ public class Member {
 
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    // @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @Builder.Default
+    // private List<Tag> tags = new ArrayList<>();
 
     @Builder
     public Member(String memberEmail, String currentEmail, String memberNickname,
