@@ -1,7 +1,7 @@
 package com.cooltomato.pomki.ai.service;
 
-import com.cooltomato.pomki.ai.dto.gemini.GeminiRequestDto;
-import com.cooltomato.pomki.ai.dto.gemini.GeminiResponseDto;
+import com.cooltomato.pomki.ai.dto.gemini.GeminiReqDto;
+import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
 import com.cooltomato.pomki.ai.service.LLMService;
 import com.cooltomato.pomki.global.config.AiProperties;
 import org.springframework.stereotype.Service;
@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service("googleGeminiService")
-public class GoogleGeminiService implements LLMService {
+public class GoogleGeminiService 
+implements LLMService 
+{
 
     private final WebClient webClient;
     private final String apiKey;

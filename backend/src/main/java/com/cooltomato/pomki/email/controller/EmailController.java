@@ -37,7 +37,13 @@ public class EmailController {
     @PostMapping("/verification")
     public ResponseEntity<EmailVerificationResponseDto> sendVerificationCode(
             @Valid @RequestBody EmailVerificationRequestDto request) {
-        EmailVerificationResponseDto response = emailService.sendVerificationCode(request);
+        emailService.sendVerificationCode(request);
+        
+        EmailVerificationResponseDto response = EmailVerificationResponseDto.builder()
+                .success(true)
+                .message("인증코드 발송이 요청되었습니다.")
+                .build();
+        
         return ResponseEntity.ok(response);
     }
     

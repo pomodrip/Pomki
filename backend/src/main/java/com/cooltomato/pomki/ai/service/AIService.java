@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AIService {
 
-    private final AIPromptRepository aiPromptRepository;
+    // private final AIPromptRepository aiPromptRepository;
     private final MemberRepository memberRepository;
     private final MemberAiHistoryService memberAiHistoryService;
     private final RestTemplate restTemplate = new RestTemplate();

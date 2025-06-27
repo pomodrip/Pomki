@@ -90,4 +90,5 @@ public class PrincipalMember implements UserDetails, OAuth2User {
     public boolean isSocialUser() {
         return memberInfo.isSocialLogin();
     }
+
 } 

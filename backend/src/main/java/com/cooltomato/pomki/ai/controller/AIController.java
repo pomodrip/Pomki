@@ -3,7 +3,7 @@ package com.cooltomato.pomki.ai.controller;
 import com.cooltomato.pomki.ai.dto.NotePolishRequestDto;
 import com.cooltomato.pomki.ai.dto.NotePolishResponseDto;
 import com.cooltomato.pomki.ai.service.AIService;
-import com.cooltomato.pomki.note.dto.NoteDto;
+// import com.cooltomato.pomki.note.dto.NoteDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.service.NoteService;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
@@ -35,10 +35,10 @@ public class AIController {
         
         try {
             // 노트 조회 및 권한 확인
-            NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), request.getNoteId());
+            // NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), request.getNoteId());
             
             // AI 폴리싱 실행
-            String originalContent = noteResponse.getNoteContent();
+            // String originalContent = noteResponse.getNoteContent();
             String customPrompt = request.getCustomPrompt();
             String prompt = (customPrompt != null && !customPrompt.trim().isEmpty()) 
                 ? customPrompt : request.getStyle();
