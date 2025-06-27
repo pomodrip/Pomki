@@ -34,23 +34,18 @@ export const api = axios.create({
 // 🔥 요청 인터셉터 - store에서 토큰 가져오기
 api.interceptors.request.use(
   (config) => {
-    console.log('=== API 요청 인터셉터 ===');
-    console.log('요청 URL:', (config.baseURL || '') + (config.url || ''));
-    console.log('요청 메서드:', config.method);
-    console.log('요청 데이터:', config.data);
-    console.log('요청 헤더:', config.headers);
     
     // Redux store에서 토큰 가져오기
     if (store) {
       const state = store.getState();
       const accessToken = state.auth?.accessToken;
       
-      console.log('Store 상태:', !!store);
-      console.log('AccessToken 존재:', !!accessToken);
+      // console.log('Store 상태:', !!store);
+      // console.log('AccessToken 존재:', !!accessToken);
       
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
-        console.log('Authorization 헤더 설정됨');
+        //console.log('Authorization 헤더 설정됨');
       } else {
         console.log('AccessToken이 없음 - 인증 없이 요청');
       }

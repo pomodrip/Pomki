@@ -7,6 +7,7 @@ export interface ICardService {
   createCard(deckId: string, data: CreateCardRequest): Promise<Card>;
   updateCard(cardId: number, data: UpdateCardRequest): Promise<Card>;
   deleteCard(cardId: number): Promise<void>;
+  searchCards(keyword: string): Promise<Card[]>;
 }
 
 // 🎭 Mock 카드 서비스 구현
@@ -87,6 +88,18 @@ class MockCardService implements ICardService {
       this.cards[cardIndex].updatedAt = new Date().toISOString();
     }
   }
+
+  async searchCards(keyword: string): Promise<Card[]> {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const filteredCards = this.cards.filter(card => 
+      !card.isDeleted && 
+      (card.content.toLowerCase().includes(keyword.toLowerCase()) || 
+       card.answer.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    
+    return filteredCards;
+  }
 }
 
 // 🌐 실제 API 카드 서비스 구현
@@ -126,6 +139,16 @@ class RealCardService implements ICardService {
     } catch (error) {
       console.warn('⚠️ Real API (deleteCard) 실패! Mock 동작으로 대체합니다.', error);
       return this.mockService.deleteCard(cardId);
+    }
+  }
+
+  async searchCards(keyword: string): Promise<Card[]> {
+    try {
+      return await cardApi.searchCards(keyword);
+    } catch (error) {
+      console.warn('⚠️ Real API (searchCards) 실패!', error);
+      console.log(`🔍 검색 키워드: "${keyword}" - API 호출 실패로 인해 빈 배열을 반환합니다.`);
+      return [];
     }
   }
 }

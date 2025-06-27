@@ -27,6 +27,15 @@ export const getCard = async (cardId: number): Promise<Card> => {
 };
 
 /**
+ * 카드 검색
+ * @param keyword 검색 키워드
+ */
+export const searchCards = async (keyword: string): Promise<Card[]> => {
+  const response: AxiosResponse<Card[]> = await api.get(`/api/card/search/${keyword}`);
+  return response.data;
+};
+
+/**
  * 카드 수정
  * @param cardId 카드 ID
  * @param data 수정할 카드 데이터

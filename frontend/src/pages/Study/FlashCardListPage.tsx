@@ -3,7 +3,6 @@ import { styled } from '@mui/material/styles'; // alpha
 import { 
   Box, 
   Typography, 
-  IconButton, 
   InputAdornment,
   Container,
   Menu,
@@ -11,8 +10,6 @@ import {
   Chip,
   Button,
   TextField,
-  Card as MuiCard,
-  CardContent,
   // CircularProgress,
   Dialog,
   DialogTitle,
@@ -24,8 +21,6 @@ import {
   FilterList as FilterListIcon,
   BookmarkBorder,
   Bookmark,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   //ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -42,14 +37,7 @@ import { deckApiWithFallback } from '../../api/apiWithFallback';
 import * as cardApi from '../../api/cardApi';
 import type { Card, CreateCardRequest } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
-
-// 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
-interface Flashcard {
-  id: number;
-  front: string;
-  back: string;
-  tags?: string[];
-}
+import { FlashCard, type FlashCardData } from '../../components/ui';
 
 // 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
 interface FlashcardDeck {
@@ -58,7 +46,7 @@ interface FlashcardDeck {
   title: string;
   isBookmarked: boolean;
   tags: string[];
-  flashcards: Flashcard[];
+  flashcards: FlashCardData[];
 }
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -83,31 +71,7 @@ const FilterBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-const FlashCard = styled(MuiCard)(({ theme }) => ({
-  height: '100%',
-  // minHeight: 150,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  cursor: 'pointer',
-  transition: 'all 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
 
-const TagChip = styled(Chip)(({ theme }) => ({
-  fontSize: '0.75rem',
-  height: 24,
-  marginRight: theme.spacing(0.5),
-}));
-
-
-
-const ActionButton = styled(Button)({
-  whiteSpace: 'nowrap',
-});
 
 const SelectedTagsBox = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -706,52 +670,16 @@ const FlashCardListPage: React.FC = () => {
           }}
         >
           {filteredCards.map((card) => (
-            <FlashCard key={card.id}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                {/* 제목(질문)과 북마크 */}
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>
-                    {card.front}
-                  </Typography>
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleToggleBookmark(card.id, e); }}>
-                    {cardBookmarks[card.id] ? <Bookmark color="primary" /> : <BookmarkBorder />}
-                  </IconButton>
-                </Box>
-                
-                {/* 카드 정보 */}
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  플래시카드
-                </Typography>
-                
-                {/* 태그들 */}
-                <Box 
-                  mt={1.5} 
-                  sx={{ 
-                    minHeight: 24,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 0.5,
-                  }}
-                >
-                  {card.tags.slice(0, 3).map((tag: string, index: number) => (
-                    <TagChip key={index} label={tag} size="small" color="primary" variant="outlined" />
-                  ))}
-                  {card.tags.length > 3 && (
-                    <TagChip label={`+${card.tags.length - 3}`} size="small" color="primary" variant="outlined" />
-                  )}
-                </Box>
-              </CardContent>
-              
-              {/* 액션 버튼들 */}
-              <Box sx={{ justifyContent: 'flex-end', display: 'flex', p: 1 }}>
-                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => { e.stopPropagation(); handleEditCard(card.id, e); }}>
-                  수정
-                </ActionButton>
-                <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id, e); }}>
-                  삭제
-                </ActionButton>
-              </Box>
-            </FlashCard>
+            <FlashCard
+              key={card.id}
+              card={card}
+              isBookmarked={cardBookmarks[card.id]}
+              onToggleBookmark={handleToggleBookmark}
+              onEdit={handleEditCard}
+              onDelete={handleDeleteCard}
+              maxTagsDisplay={3}
+              showActions={true}
+            />
           ))}
         </Box>
       )}
@@ -774,14 +702,14 @@ const FlashCardListPage: React.FC = () => {
               : '첫 번째 카드를 만들어보세요!'
             }
           </Typography>
-          {/* <Button 
+          <Button 
             variant="outlined" 
             color="primary"
             onClick={handleCreateSampleCards}
             sx={{ mt: 1 }}
           >
             임시 카드 5개 생성하기 (실제 API 호출)
-          </Button> */}
+          </Button>
         </Box>
       )}
 
