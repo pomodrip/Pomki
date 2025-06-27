@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/ai/test")
 @RequiredArgsConstructor
-public class AITestController {
+public class AIController {
 
     private final AILLMService aiService;
 

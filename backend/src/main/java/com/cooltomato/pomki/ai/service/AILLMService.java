@@ -7,6 +7,7 @@ import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.history.service.MemberAiHistoryService; // 비용 로깅 서비스
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import java.util.List;
@@ -24,10 +25,12 @@ public class AILLMService {
 
     private final RestTemplate geminiRestTemplate;
     private final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=";
-    private final String GEMINI_API_KEY = "AIzaSyD-9tSrQWZ_y6714m1AyxFXgo60WdXIAY8";
+
+    @Value("${pomki.ai.gemini-api-key}")
+    private String geminiApiKey;
 
     public GeminiResDto getAIDescription(String productName){
-        String geminiURL = GEMINI_URL + GEMINI_API_KEY;
+        String geminiURL = GEMINI_URL + geminiApiKey;
         String requestText = productName + "에 대한 상품 설명을 50자 이내로 작성해줘.";
         GeminiReqDto request = new GeminiReqDto();
         request.createGeminiReqDto(requestText);
@@ -36,14 +39,15 @@ public class AILLMService {
             GeminiResDto response = geminiRestTemplate.postForObject(geminiURL, request, GeminiResDto.class);
             if (response != null && response.getCandidates() != null && !response.getCandidates().isEmpty()) {
                 description = response.getCandidates().get(0).getContent().getParts().get(0).getText();
+                return new GeminiResDto(description);
             } else {
                 description = "응답을 받을 수 없습니다.";
+                return new GeminiResDto(description);
             }
         }catch (Exception e){
             log.error("Gemini API 호출 중 오류 발생: {}", e.getMessage(), e);
-            description = "오류가 발생했습니다: " + e.getMessage();
+            throw new RuntimeException("Gemini API 호출 중 오류 발생: " + e.getMessage(), e);
         }
-        return new GeminiResDto(description);
     }
 
     private String substituteVariables(String template, Map<String, String> variables) {
