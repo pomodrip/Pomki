@@ -12,7 +12,7 @@ import com.cooltomato.pomki.noteimage.entity.NoteImage;
 import com.cooltomato.pomki.tag.entity.NoteTag;
 
 @Entity
-@Table(name = "review_note")
+@Table(name = "note")
 @Data
 
 public class Note {
