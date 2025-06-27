@@ -100,10 +100,7 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-//액션 버튼 스타일
-const ActionButton = styled(Button)({
-  whiteSpace: 'nowrap',
-});
+
 
 const SelectedTagsBox = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -780,16 +777,35 @@ const FlashcardDeckListPage: React.FC = () => {
                 </Box>
               </CardContent>
               {/* 액션 버튼들 */}
-              <CardActions sx={{ justifyContent: 'flex-end' }}>
-                <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
-                  수정
-                </ActionButton>
-                <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
-                  삭제
-                </ActionButton>
-                <ActionButton size="small" startIcon={<SchoolIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+              <CardActions sx={{ justifyContent: 'flex-end', gap: '8px' }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<SchoolIcon />}
+                  onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
                   학습하기
-                </ActionButton>
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={(e) => handleEditDeck(deck, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e) => handleDeleteDeck(deck, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  삭제
+                </Button>
               </CardActions>
             </DeckCard>
           ))}
