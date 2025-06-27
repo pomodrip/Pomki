@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { styled } from '@mui/material/styles';
-import { Container, Box, Fab, CircularProgress, Grid, Button } from '@mui/material';
+import { Container, Box, Fab, CircularProgress, Button } from '@mui/material';
 import { Text } from '../../components/ui';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Quiz as QuizIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +33,7 @@ const NoteCard = styled(Box)(({ theme }) => ({
 
 const ActionBox = styled(Box)({
   display: 'flex',
-  justifyContent: 'flex-end',
+  justifyContent: 'flex-start',
   gap: '8px',
   marginTop: '8px',
 });
@@ -172,51 +172,59 @@ const NoteListPage: React.FC = () => {
         </Fab>
       </HeaderBox>
 
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+          },
+          gap: 2,
+        }}
+      >
         {notes.map(note => (
-          <Grid item xs={12} sm={6} md={4} key={note.noteId}>
-            <NoteCard onClick={() => handleNoteClick(note.noteId)}>
-              <Text variant="h6">{note.noteTitle}</Text>
-              <Text variant="body2" color="textSecondary">
-                {formatDate(note.createdAt, note.updatedAt)}
-              </Text>
-              <ActionBox>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<QuizIcon />}
-                  onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  퀴즈 생성
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  수정
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    handleDeleteNote(note.noteId, e);
-                  }}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  삭제
-                </Button>
-              </ActionBox>
-            </NoteCard>
-          </Grid>
+          <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
+            <Text variant="h6">{note.noteTitle}</Text>
+            <Text variant="body2" color="textSecondary">
+              {formatDate(note.createdAt, note.updatedAt)}
+            </Text>
+            <ActionBox>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<QuizIcon />}
+                onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                퀴즈 생성
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                수정
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleDeleteNote(note.noteId, e);
+                }}
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                삭제
+              </Button>
+            </ActionBox>
+          </NoteCard>
         ))}
-      </Grid>
+      </Box>
     </StyledContainer>
   );
 };

@@ -12,8 +12,6 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  CardActions,
-  CardContent,
   Button,
   IconButton,
   Menu,
@@ -44,7 +42,6 @@ import {
 } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
-import Card from '../../components/ui/Card';
 // 🎯 API Fallback 비활성화
 // import { deckApiWithFallback } from '../../api/apiWithFallback';
 
@@ -79,16 +76,13 @@ const FilterBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),
 }));
 
-//덱 카드 컨테이너 스타일
-const DeckCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
+//덱 카드 컨테이너 스타일 - 노트와 동일하게 수정
+const DeckCard = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  border: `1px solid ${theme.palette.divider}`,
+  borderRadius: theme.shape.borderRadius,
   cursor: 'pointer',
-  transition: 'all 0.2s',
   '&:hover': {
-    transform: 'translateY(-2px)',
     boxShadow: theme.shadows[4],
   },
 }));
@@ -99,6 +93,14 @@ const TagChip = styled(Chip)(({ theme }) => ({
   height: 24,
   marginRight: theme.spacing(0.5),
 }));
+
+// 노트와 동일한 액션 박스 스타일
+const ActionBox = styled(Box)({
+  display: 'flex',
+  justifyContent: 'flex-start',
+  gap: '8px',
+  marginTop: '8px',
+});
 
 
 
@@ -352,7 +354,8 @@ const FlashcardDeckListPage: React.FC = () => {
           
           dispatch(showToast({
             message: '덱이 성공적으로 삭제되었습니다.',
-            severity: 'success'
+            severity: 'success',
+            duration: 2000
           }));
         } else {
           throw new Error('Redux 덱 삭제 실패');
@@ -521,8 +524,9 @@ const FlashcardDeckListPage: React.FC = () => {
         }));
         
         dispatch(showToast({
-          message: `덱이 성공적으로 수정되었습니다. (${updateSource})`,
-          severity: 'success'
+          message: '덱이 성공적으로 수정되었습니다.',
+          severity: 'success',
+          duration: 2000
         }));
       } else {
         dispatch(showToast({
@@ -733,51 +737,49 @@ const FlashcardDeckListPage: React.FC = () => {
       {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
       
       {!loading && !error && (
-        <Box 
-          sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: { 
-              xs: '1fr', 
-              sm: 'repeat(2, 1fr)', 
-              md: 'repeat(3, 1fr)' 
-            }, 
-            gap: 2 
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
           }}
         >
           {filteredDecks.map((deck) => (
             <DeckCard key={deck.deckId} onClick={() => handleDeckClick(deck.deckId)}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                {/*  덱 이름과 북마크 버튼 */}
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
-                  <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
-                    {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
-                  </IconButton>
-                </Box>
-                {/* 카드 개수 */}
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  카드 {deck.cardCnt}개
-                </Typography>
-                {/* 태그들 */}
-                <Box 
-                  mt={1.5} 
-                  sx={{ 
-                    minHeight: 24,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 0.5,
-                  }}
-                >
-                  {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
-                    <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
-                  ))}
-                  {isMobile && deck.tags.length > 5 && (
-                    <TagChip label={`+${deck.tags.length - 5}`} size="small" color="primary" variant="outlined" />
-                  )}
-                </Box>
-              </CardContent>
-              {/* 액션 버튼들 */}
-              <CardActions sx={{ justifyContent: 'flex-end', gap: '8px' }}>
+              {/* 덱 이름과 북마크 버튼 */}
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
+                <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
+                  {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                </IconButton>
+              </Box>
+              {/* 카드 개수 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                카드 {deck.cardCnt}개
+              </Typography>
+              {/* 태그들 */}
+              <Box 
+                mt={1.5} 
+                sx={{ 
+                  minHeight: 24,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0.5,
+                }}
+              >
+                {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
+                  <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
+                ))}
+                {isMobile && deck.tags.length > 5 && (
+                  <TagChip label={`+${deck.tags.length - 5}`} size="small" color="primary" variant="outlined" />
+                )}
+              </Box>
+              {/* 액션 버튼들 - 노트와 동일한 구조 */}
+              <ActionBox>
                 <Button
                   variant="outlined"
                   size="small"
@@ -806,11 +808,11 @@ const FlashcardDeckListPage: React.FC = () => {
                 >
                   삭제
                 </Button>
-              </CardActions>
+              </ActionBox>
             </DeckCard>
           ))}
         </Box>
-              )}
+      )}
 
       {/* 빈 상태 */}
       {!loading && !error && filteredDecks.length === 0 && (
