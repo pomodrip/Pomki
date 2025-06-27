@@ -13,10 +13,10 @@ import type { ApiResponse } from '../types/api';
 // 🔥 현재 로그인한 사용자의 덱 리스트 조회 (백엔드 API에 맞게 수정)
 export const getDecks = async (): Promise<CardDeck[]> => {
   // 먼저 현재 사용자 정보를 가져와서 memberId를 얻어야 함
-  const userResponse = await api.get('/api/members/my');
-  const memberId = userResponse.data.memberId || userResponse.data.id;
+  // const userResponse = await api.get('/api/members/my');
+  // const memberId = userResponse.data.memberId || userResponse.data.id;
   
-  const response: AxiosResponse<CardDeck[]> = await api.get(`/api/decks/members/${memberId}`);
+  const response: AxiosResponse<CardDeck[]> = await api.get(`/api/decks/members/my-decks`);
   return response.data;
 };
 

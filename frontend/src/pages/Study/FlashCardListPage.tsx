@@ -39,7 +39,8 @@ import {
   setCurrentDeck 
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
-import type { Card } from '../../types/card';
+import * as cardApi from '../../api/cardApi';
+import type { Card, CreateCardRequest } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
 
 // 🎯 기존 구조 유지: Flashcard 인터페이스 (원본과 동일)
@@ -52,7 +53,7 @@ interface Flashcard {
 
 // 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
 interface FlashcardDeck {
-  id: number;
+  id: string;
   category: string;
   title: string;
   isBookmarked: boolean;
@@ -125,9 +126,13 @@ const FlashCardListPage: React.FC = () => {
   const { filters } = useAppSelector((state) => state.study);
   
   // 🎯 새로운 덱 시스템에서 실제 데이터 가져오기
-  const { currentDeckCards, loading } = useAppSelector((state) => state.deck);
+  const { 
+    currentDeckCards = [], 
+    selectedDeck,
+    loading 
+  } = useAppSelector((state) => state.deck);
   
-  // 🎯 API Fallback을 위한 상태
+  // 🎯 API Fallback을 위한 상태 (초기값 빈 배열 보장)
   const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
   
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
@@ -158,47 +163,44 @@ const FlashCardListPage: React.FC = () => {
   const allCards = useMemo(() => {
     const combinedCards = new Map<string, Card>();
     
-    // 1. Redux에서 가져온 카드들 추가
-    currentDeckCards.forEach(card => {
-      combinedCards.set(card.cardId.toString(), card);
-    });
+    // 1. Redux에서 가져온 카드들 추가 (배열인지 확인)
+    if (Array.isArray(currentDeckCards)) {
+      currentDeckCards.forEach(card => {
+        combinedCards.set(card.cardId.toString(), card);
+      });
+    } else {
+      console.warn('⚠️ currentDeckCards가 배열이 아닙니다:', currentDeckCards);
+    }
     
     // 2. Fallback 카드들 추가 (중복 아닌 것만)
-    fallbackCards.forEach(card => {
-      if (!combinedCards.has(card.cardId.toString())) {
-        combinedCards.set(card.cardId.toString(), card);
-      }
-    });
+    if (Array.isArray(fallbackCards)) {
+      fallbackCards.forEach(card => {
+        if (!combinedCards.has(card.cardId.toString())) {
+          combinedCards.set(card.cardId.toString(), card);
+        }
+      });
+    } else {
+      console.warn('⚠️ fallbackCards가 배열이 아닙니다:', fallbackCards);
+    }
     
-    return Array.from(combinedCards.values());
+    const result = Array.from(combinedCards.values());
+    return result;
   }, [currentDeckCards, fallbackCards]);
-
-  // 🎯 현재 덱에 해당하는 카드들만 필터링
-  const currentDeckTitle = useMemo(() => {
-    const targetDeckId = `deck_${deckId}`;
-    
-    // 덱 이름 매핑
-    const deckTitles: { [key: string]: string } = {
-      'deck_1': '영어 단어장',
-      'deck_2': '일본어 단어장', 
-      'deck_3': '프로그래밍 용어'
-    };
-    
-    return deckTitles[targetDeckId] || `덱 ${deckId}`;
-  }, [deckId]);
 
   // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
   const mockDecks: FlashcardDeck[] = useMemo(() => {
-    if (!deckId || allCards.length === 0) return [];
+    if (!deckId || !selectedDeck) return [];
     
+    const deckTitle = selectedDeck.deckName || '덱 이름 없음';
+
     return [{
-      id: parseInt(deckId),
+      id: deckId,
       category: '학습',
-      title: currentDeckTitle,
+      title: deckTitle,
       isBookmarked: false,
-      tags: [`#${currentDeckTitle.split(' ')[0]}`, '#학습'],
+      tags: [`#${deckTitle.split(' ')[0]}`, '#학습'],
       flashcards: allCards
-        .filter(card => card.deckId === `deck_${deckId}`)
+        .filter(card => card.deckId === deckId)
         .map(card => {
           const cardId = parseInt(card.cardId.toString());
           return {
@@ -209,27 +211,27 @@ const FlashCardListPage: React.FC = () => {
           };
         })
     }];
-  }, [deckId, allCards, currentDeckTitle, customCardTags]);
+  }, [deckId, allCards, selectedDeck, customCardTags]);
 
   // 🎯 현재 덱 찾기 (기존 로직 유지)
   const currentDeck = useMemo(() => {
-    return mockDecks.find(deck => deck.id === parseInt(deckId || '0'));
+    return mockDecks.find(deck => deck.id === deckId);
   }, [mockDecks, deckId]);
 
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
     if (deckId) {
-      // Redux를 통한 기존 로드
-      const realDeckId = `deck_${deckId}`;
-      dispatch(setCurrentDeck(realDeckId));
-      dispatch(fetchCardsInDeck(realDeckId));
+      // Redux를 통한 기존 로드 (deckId를 그대로 사용)
+      dispatch(setCurrentDeck(deckId));
+      dispatch(fetchCardsInDeck(deckId));
       
-      // API Fallback으로 카드 데이터 로드
-      const loadCardsWithFallback = async () => {
-        try {
-          const fallbackData = await deckApiWithFallback.getCardsInDeck(realDeckId);
+              // API Fallback으로 카드 데이터 로드
+        const loadCardsWithFallback = async () => {
+          //setFallbackLoading(true);
+          console.log("setFallbackLoading(true); 주석처리함.");
+          try {
+            const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
           setFallbackCards(fallbackData);
-          console.log('✅ FlashCardListPage API Fallback으로 카드 목록 로드:', fallbackData);
         } catch (error) {
           console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
         }
@@ -318,27 +320,9 @@ const FlashCardListPage: React.FC = () => {
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
     if (confirmed) {
-      // 먼저 fallback 카드에서 해당 카드를 찾아 삭제 (타입 안전하게 비교)
-      const fallbackCardIndex = fallbackCards.findIndex(card => Number(card.cardId) === Number(id));
-      if (fallbackCardIndex !== -1) {
-        // fallback 카드에서 삭제
-        setFallbackCards(prev => prev.filter(card => Number(card.cardId) !== Number(id)));
-        
-        // 해당 카드의 사용자 정의 태그도 삭제
-        setCustomCardTags(prev => {
-          const updated = { ...prev };
-          delete updated[id];
-          return updated;
-        });
-        
-        dispatch(showToast({
-          message: '카드가 성공적으로 삭제되었습니다.',
-          severity: 'success'
-        }));
-      } else {
         // Redux 카드 삭제 시도
         try {
-          const result = await dispatch(deleteCard(id.toString()));
+          const result = await dispatch(deleteCard(id));
           if (result.meta.requestStatus === 'fulfilled') {
             // Redux 삭제 성공 시에도 사용자 정의 태그 삭제
             setCustomCardTags(prev => {
@@ -346,6 +330,24 @@ const FlashCardListPage: React.FC = () => {
               delete updated[id];
               return updated;
             });
+            
+            // 카드 목록 다시 로드
+            if (deckId) {
+              dispatch(fetchCardsInDeck(deckId));
+              
+              // API Fallback으로도 카드 데이터 다시 로드
+              const loadCardsWithFallback = async () => {
+                try {
+                  const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
+                  setFallbackCards(fallbackData);
+                  console.log('✅ 카드 삭제 후 API Fallback으로 카드 목록 재로드:', fallbackData);
+                } catch (error) {
+                  console.error('❌ 카드 삭제 후 API Fallback 카드 재로드 실패:', error);
+                }
+              };
+              
+              loadCardsWithFallback();
+            }
             
             dispatch(showToast({
               message: '카드가 성공적으로 삭제되었습니다.',
@@ -361,7 +363,6 @@ const FlashCardListPage: React.FC = () => {
             severity: 'error'
           }));
         }
-      }
     }
   };
 
@@ -417,8 +418,6 @@ const FlashCardListPage: React.FC = () => {
     }
 
     try {
-      console.log('🔍 수정 시도:', { editingCardId, fallbackCards: fallbackCards.map(c => ({ cardId: c.cardId, type: typeof c.cardId })) });
-      
       // 태그 처리: 쉼표로 분리하고 # 자동 추가
       const processedTags = editCardTags
         .split(',')
@@ -428,53 +427,51 @@ const FlashCardListPage: React.FC = () => {
         })
         .filter(tag => tag.length > 1); // 빈 태그나 #만 있는 것 제거
       
-      // 먼저 fallback 카드에서 해당 카드를 찾아 수정 (타입 안전하게 비교)
-      const fallbackCardIndex = fallbackCards.findIndex(card => 
-        Number(card.cardId) === Number(editingCardId)
-      );
+      // 🎯 Redux로 실제 API 호출 시도 (우선순위)
+      const result = await dispatch(updateCard({ 
+        cardId: editingCardId, 
+        data: { 
+          content: editCardFront.trim(), 
+          answer: editCardBack.trim() 
+        } 
+      }));
       
-      if (fallbackCardIndex !== -1) {
-        console.log('✅ Fallback 카드에서 찾음, 수정 진행');
-        // fallback 카드 업데이트
-        setFallbackCards(prev => prev.map(card => 
-          Number(card.cardId) === Number(editingCardId)
-            ? { 
-                ...card, 
-                content: editCardFront.trim(),
-                answer: editCardBack.trim()
-              }
-            : card
-        ));
+      if (result.meta.requestStatus === 'fulfilled') {
+        console.log('✅ Redux API 호출 성공');
         
-        console.log('📝 Fallback 태그 업데이트:', processedTags);
-      } else {
-        console.log('⚠️ Fallback 카드에서 찾지 못함, Redux 시도');
-        // Redux 카드 수정 시도
-        const result = await dispatch(updateCard({ 
-          cardId: editingCardId.toString(), 
-          data: { 
-            content: editCardFront.trim(), 
-            answer: editCardBack.trim() 
-          } 
+        // 성공 시 태그 업데이트
+        setCustomCardTags(prev => ({
+          ...prev,
+          [editingCardId]: processedTags
         }));
         
-        if (result.meta.requestStatus !== 'fulfilled') {
-          throw new Error('Redux 카드 수정 실패');
+
+        // 카드 목록 다시 로드
+        if (deckId) {
+          dispatch(fetchCardsInDeck(deckId));
+          
+          // API Fallback으로도 카드 데이터 다시 로드
+          const loadCardsWithFallback = async () => {
+            try {
+              const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
+              setFallbackCards(fallbackData);
+              console.log('✅ 카드 삭제 후 API Fallback으로 카드 목록 재로드:', fallbackData);
+            } catch (error) {
+              console.error('❌ 카드 삭제 후 API Fallback 카드 재로드 실패:', error);
+            }
+          };
+          
+          loadCardsWithFallback();
         }
+
+        dispatch(showToast({
+          message: '카드가 성공적으로 수정되었습니다.',
+          severity: 'success'
+        }));
         
-        console.log('📝 Redux 태그 업데이트:', processedTags);
+      } else {
+        throw new Error('API 호출 실패');
       }
-      
-      // 성공 시 항상 태그 업데이트 (두 시스템 모두)
-      setCustomCardTags(prev => ({
-        ...prev,
-        [editingCardId]: processedTags
-      }));
-      
-      dispatch(showToast({
-        message: '카드가 성공적으로 수정되었습니다.',
-        severity: 'success'
-      }));
       
     } catch (error) {
       console.error('카드 수정 실패:', error);
@@ -484,6 +481,72 @@ const FlashCardListPage: React.FC = () => {
       }));
     } finally {
       handleEditDialogClose();
+    }
+  };
+
+  // 🎯 임시 카드 5개 생성 함수
+  const handleCreateSampleCards = async () => {
+    if (!deckId) return;
+    
+    // API 요청에 사용할 실제 덱 ID (URL 파라미터를 그대로 사용)
+    // 사용자 제공 예시: deckId = "ea42d25e-e197-41bd-8eb0-f6572b1d4cdd"
+    const apiDeckId = deckId;
+    
+    const sampleCards: CreateCardRequest[] = [
+      {
+        deckId: apiDeckId,
+        content: "React란 무엇인가요?",
+        answer: "React는 사용자 인터페이스를 구축하기 위한 JavaScript 라이브러리입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "JSX는 무엇의 줄임말인가요?",
+        answer: "JSX는 JavaScript XML의 줄임말입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "useState Hook의 역할은?",
+        answer: "함수형 컴포넌트에서 상태를 관리할 수 있게 해주는 Hook입니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "useEffect Hook은 언제 사용하나요?",
+        answer: "컴포넌트가 렌더링될 때 특정 작업(side effect)을 수행할 때 사용합니다."
+      },
+      {
+        deckId: apiDeckId,
+        content: "Props란 무엇인가요?",
+        answer: "부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다."
+      }
+    ];
+
+    try {
+      dispatch(showToast({
+        message: '카드 5개를 생성하는 중...',
+        severity: 'info'
+      }));
+
+      // 순차적으로 카드 생성
+      const createdCards = [];
+      for (const cardData of sampleCards) {
+        const createdCard = await cardApi.createCard(apiDeckId, cardData);
+        createdCards.push(createdCard);
+      }
+
+      dispatch(showToast({
+        message: `총 ${createdCards.length}개의 카드가 생성되었습니다!`,
+        severity: 'success'
+      }));
+
+      // 카드 목록 다시 로드
+      dispatch(fetchCardsInDeck(deckId));
+      
+    } catch (error) {
+      console.error('카드 생성 실패:', error);
+      dispatch(showToast({
+        message: '카드 생성에 실패했습니다.',
+        severity: 'error'
+      }));
     }
   };
 
@@ -506,13 +569,14 @@ const FlashCardListPage: React.FC = () => {
           alignItems="center" 
           justifyContent="center"
           py={8}
+          gap={2}
         >
           <Typography variant="h6" color="text.secondary" gutterBottom>
             덱을 찾을 수 없습니다
           </Typography>
           <Button 
             variant="contained" 
-            onClick={() => navigate('/flashcards')}
+            onClick={() => navigate('/study')}
           >
             덱 목록으로 이동
           </Button>
@@ -710,6 +774,14 @@ const FlashCardListPage: React.FC = () => {
               : '첫 번째 카드를 만들어보세요!'
             }
           </Typography>
+          {/* <Button 
+            variant="outlined" 
+            color="primary"
+            onClick={handleCreateSampleCards}
+            sx={{ mt: 1 }}
+          >
+            임시 카드 5개 생성하기 (실제 API 호출)
+          </Button> */}
         </Box>
       )}
 

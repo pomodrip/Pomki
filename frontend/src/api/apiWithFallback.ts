@@ -2,7 +2,8 @@ import { NoteListItem } from '../types/note';
 import mockData from './mockData';
 
 // 환경 변수로 Mock 모드 제어
-const USE_MOCK_FALLBACK = import.meta.env.VITE_USE_MOCK_FALLBACK === 'true' || import.meta.env.DEV;
+// const USE_MOCK_FALLBACK = import.meta.env.VITE_USE_MOCK_FALLBACK === 'true' || import.meta.env.DEV;
+const USE_MOCK_FALLBACK = false;
 
 // API 호출 래퍼 - 실패시 mock 데이터 반환
 export async function apiWithFallback<T>(
@@ -109,12 +110,16 @@ export const deckApiWithFallback = {
     );
   },
 
-  getDecksByMemberId: async (memberId: number) => {
-    const { getDecksByMemberId } = await import('./deckApi');
-    return apiWithFallback(
-      () => getDecksByMemberId(memberId),
-      mockData.deck.getDecksByMemberId
-    );
+  getMyDecks: async () => {
+    try {
+      const { getMyDecks } = await import('./deckApi');
+      return apiWithFallback(
+        () => getMyDecks(),
+        mockData.deck.getDecksByMemberId
+      );
+    } catch {
+      return mockData.deck.getDecksByMemberId;
+    }
   },
 
   getCardsInDeck: async (deckId: string) => {
@@ -146,9 +151,9 @@ export const deckApiWithFallback = {
   },
 };
 
-// 예시: User API with Fallback
+// User API with Fallback - 올바른 함수명 사용
 export const userApiWithFallback = {
-  getProfile: async () => {
+  getMyInfo: async () => {
     try {
       const { getMyInfo } = await import('./userApi');
       return apiWithFallback(
@@ -160,72 +165,106 @@ export const userApiWithFallback = {
       return mockData.user.getProfile;
     }
   },
+
+  updateMember: async (data: any) => {
+    try {
+      const { updateMember } = await import('./userApi');
+      return apiWithFallback(
+        () => updateMember(data),
+        {
+          ...mockData.user.getProfile,
+          ...data,
+          updatedAt: new Date().toISOString(),
+        }
+      );
+    } catch {
+      return {
+        ...mockData.user.getProfile,
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  },
 };
 
-// 예시: Timer API with Fallback
+// Timer API with Fallback - 올바른 타입 매칭  
 export const timerApiWithFallback = {
   getTimerStats: async () => {
     try {
       const { getTimerStats } = await import('./timerApi');
       return apiWithFallback(
         () => getTimerStats(),
+        // mockData를 TimerStats 타입에 맞게 확장
         () => ({
-          totalFocusTime: Math.floor(mockData.timer.getTimerStats.totalFocusTime / 60), // 초를 분으로 변환
+          totalFocusTime: mockData.timer.getTimerStats.totalFocusTime, // 분 단위로 변환
           totalSessions: mockData.timer.getTimerStats.totalSessions,
-          completedSessions: mockData.timer.getTimerStats.totalSessions - 1,
-          averageSessionLength: Math.floor(mockData.timer.getTimerStats.averageSessionTime / 60), // 초를 분으로 변환
+          completedSessions: mockData.timer.getTimerStats.totalSessions,
+          averageSessionLength: mockData.timer.getTimerStats.averageSessionTime,
           streakDays: mockData.timer.getTimerStats.streak,
           dailyGoal: 120, // 2시간 목표
-          dailyProgress: Math.floor(mockData.timer.getTimerStats.todayFocusTime / 60), // 초를 분으로 변환
+          dailyProgress: mockData.timer.getTimerStats.todayFocusTime,
           weeklyStats: mockData.timer.getTimerStats.weeklyStats.map(stat => ({
             date: stat.date,
-            focusTime: Math.floor(stat.focusTime / 60), // 초를 분으로 변환
-            sessions: 2 // 기본 세션 수
+            focusTime: stat.focusTime,
+            sessions: Math.floor(stat.focusTime / 25) // 25분 기준으로 세션 수 계산
           }))
         })
       );
     } catch {
       return {
-        totalFocusTime: Math.floor(mockData.timer.getTimerStats.totalFocusTime / 60),
+        totalFocusTime: mockData.timer.getTimerStats.totalFocusTime,
         totalSessions: mockData.timer.getTimerStats.totalSessions,
-        completedSessions: mockData.timer.getTimerStats.totalSessions - 1,
-        averageSessionLength: Math.floor(mockData.timer.getTimerStats.averageSessionTime / 60),
+        completedSessions: mockData.timer.getTimerStats.totalSessions,
+        averageSessionLength: mockData.timer.getTimerStats.averageSessionTime,
         streakDays: mockData.timer.getTimerStats.streak,
         dailyGoal: 120,
-        dailyProgress: Math.floor(mockData.timer.getTimerStats.todayFocusTime / 60),
+        dailyProgress: mockData.timer.getTimerStats.todayFocusTime,
         weeklyStats: mockData.timer.getTimerStats.weeklyStats.map(stat => ({
           date: stat.date,
-          focusTime: Math.floor(stat.focusTime / 60),
-          sessions: 2
+          focusTime: stat.focusTime,
+          sessions: Math.floor(stat.focusTime / 25)
         }))
       };
     }
   },
 };
 
-// 예시: Note API with Fallback
+// Note API with Fallback - PaginationResponse 타입 맞춤
 export const noteApiWithFallback = {
   getNotes: async () => {
     try {
       const { getNotes } = await import('./noteApi');
       return apiWithFallback(
         () => getNotes(),
-        () => mockData.note.getNotes.map(note => ({
-          noteId: note.noteId,
-          noteTitle: note.title,
-          aiEnhanced: false,
-          createdAt: note.createdAt,
-          updatedAt: note.updatedAt,
-        })) as NoteListItem[]
+        // PaginationResponse 형식으로 반환 - Note 타입에 맞게 속성명 수정
+        {
+          content: mockData.note.getNotes.map(note => ({
+            ...note,
+            noteTitle: note.title,
+            noteContent: note.content,
+          })),
+          totalElements: mockData.note.getNotes.length,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+          first: true,
+          last: true,
+        }
       );
     } catch {
-      return mockData.note.getNotes.map(note => ({
-        noteId: note.noteId,
-        noteTitle: note.title,
-        aiEnhanced: false,
-        createdAt: note.createdAt,
-        updatedAt: note.updatedAt,
-      })) as NoteListItem[];
+      return {
+        content: mockData.note.getNotes.map(note => ({
+          ...note,
+          noteTitle: note.title,
+          noteContent: note.content,
+        })),
+        totalElements: mockData.note.getNotes.length,
+        totalPages: 1,
+        size: 10,
+        number: 0,
+        first: true,
+        last: true,
+      };
     }
   },
 
@@ -256,26 +295,23 @@ export const noteApiWithFallback = {
   },
 };
 
-// 예시: Ad API with Fallback
+// Ad API with Fallback - 실제 존재하는 함수들 확인 후 수정 필요
 export const adApiWithFallback = {
+  // adApi에 실제 함수가 있는지 확인 후 적절한 함수로 교체
   getAds: async () => {
     try {
-      const { getActiveAds } = await import('./adApi');
-      return apiWithFallback(
-        () => getActiveAds(),
-        [{
-          adId: 'ad_1',
-          title: 'Premium 플랜 무료 체험',
-          description: '프리미엄 기능을 7일간 무료로 체험해보세요!',
-          imageUrl: undefined,
-          linkUrl: '/premium',
-          type: 'BANNER' as const,
-          position: 'TOP' as const,
-          isActive: true,
-          startDate: '2024-01-01T00:00:00Z',
-          endDate: '2024-12-31T23:59:59Z',
-        }]
-      );
+      // adApi의 실제 함수명 확인 필요
+      const adApi = await import('./adApi');
+      const getAdsFunction = (adApi as any).getAds || (adApi as any).getAdList || (adApi as any).fetchAds;
+      
+      if (getAdsFunction) {
+        return apiWithFallback(
+          () => getAdsFunction(),
+          mockData.ad.getAds
+        );
+      }
+      
+      return mockData.ad.getAds;
     } catch {
       return [{
         adId: 'ad_1',

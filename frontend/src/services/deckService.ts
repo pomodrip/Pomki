@@ -218,7 +218,7 @@ class RealDeckService implements IDeckService {
 
   async getDecks(memberId: number): Promise<CardDeck[]> {
     try {
-      return await deckApi.getDecksByMemberId(memberId);
+      return await deckApi.getMyDecks();
     } catch (error) {
       console.warn('⚠️ Real API (getDecks) 실패! Mock 데이터로 대체합니다.', error);
       return this.mockService.getDecks(memberId);
