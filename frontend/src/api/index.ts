@@ -5,7 +5,7 @@ import type { EnhancedStore } from '@reduxjs/toolkit';
 // API 기본 URL 설정 - 개발 환경에서는 프록시(/api), 운영에서는 실제 도메인
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? 'http://localhost:8080' : 'https://api.pomkist.com');
+  (import.meta.env.DEV ? 'http://localhost:8088' : 'https://api.pomkist.com');
 
 console.log('=== API 기본 설정 ===');
 console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
