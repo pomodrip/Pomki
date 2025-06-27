@@ -175,7 +175,7 @@ public class DeckService {
                     .answer(card.getAnswer())
                     .createdAt(card.getCreatedAt())
                     .updatedAt(card.getUpdatedAt())
-                    .deckId(card.getDeck().getDeckId())
+                    .deckId(card.getDeck().getDeckName())
                     .build()).toList();
         }
 
