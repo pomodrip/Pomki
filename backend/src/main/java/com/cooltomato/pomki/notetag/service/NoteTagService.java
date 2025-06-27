@@ -5,6 +5,7 @@ import java.security.Principal;
 import org.springframework.stereotype.Service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.notetag.dto.NoteTagRequestDto;
 import com.cooltomato.pomki.notetag.dto.NoteTagResponseDto;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
@@ -24,15 +25,20 @@ public class NoteTagService {
     private final NoteTagRepository noteTagRepository ;
     private final TagRepository tagRepository ;
     
-    public NoteTagResponseDto createNoteTagService(PrincipalMember principal, String tagName) {
+    public NoteTagResponseDto createNoteTagService(PrincipalMember principal, NoteTagRequestDto request) {
         NoteTag entity = NoteTag.builder()
+                                    .noteId(request.getNoteId())
                                     .memberId(principal.getMemberId())
-                                    .tagName(tagName)
+                                    .tagName(request.getTagName())
                                 .build();
         
         noteTagRepository.save(entity) ;
         
-        return null ;
+        return NoteTagResponseDto.builder()
+                                .noteId(request.getNoteId())
+                                .memberId(principal.getMemberId())
+                                .tagName(request.getTagName())
+                                .build() ;
        
     }
 

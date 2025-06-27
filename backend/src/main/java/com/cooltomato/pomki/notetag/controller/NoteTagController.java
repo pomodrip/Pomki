@@ -1,21 +1,16 @@
 package com.cooltomato.pomki.notetag.controller;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.note.dto.NoteResponseDto;
 import com.cooltomato.pomki.notetag.dto.NoteTagRequestDto;
 import com.cooltomato.pomki.notetag.dto.NoteTagResponseDto;
 import com.cooltomato.pomki.notetag.service.NoteTagService;
-import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RestController
@@ -28,10 +23,9 @@ public class NoteTagController {
 
     //노트에 태그 추가
     @PostMapping
-    public String createNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("tagName") String tagName) {
-        service.createNoteTagService(principal, tagName) ;
-
-        return null ;
+    public ResponseEntity<NoteTagResponseDto> createNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
+        NoteTagResponseDto response = service.createNoteTagService(principal, request) ;
+        return ResponseEntity.ok(response) ;
     }
     
 
