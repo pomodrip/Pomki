@@ -162,7 +162,7 @@ public class CardService {
                 .cardId(card.getCardId())
                 .content(card.getContent())
                 .answer(card.getAnswer())
-                .deckId(card.getDeck().getDeckId())
+                .deckId(card.getDeck().getDeckName())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .isDeleted(card.getIsDeleted())
