@@ -57,7 +57,7 @@ export default function ApiWithFallbackExample() {
   const handleGetDecks = async () => {
     setLoading(true);
     try {
-      const result = await deckApiWithFallback.getDecksByMemberId(1);
+      const result = await deckApiWithFallback.getMyDecks();
       setResult(`덱 목록: ${JSON.stringify(result, null, 2)}`);
     } catch (error) {
       setResult(`덱 조회 에러: ${error}`);

@@ -237,34 +237,22 @@ export const noteApiWithFallback = {
       return apiWithFallback(
         () => getNotes(),
         // PaginationResponse 형식으로 반환 - Note 타입에 맞게 속성명 수정
-        {
-          content: mockData.note.getNotes.map(note => ({
-            ...note,
-            noteTitle: note.title,
-            noteContent: note.content,
-          })),
-          totalElements: mockData.note.getNotes.length,
-          totalPages: 1,
-          size: 10,
-          number: 0,
-          first: true,
-          last: true,
-        }
+        mockData.note.getNotes.map(note => ({
+          noteId: note.noteId,
+          noteTitle: note.title,
+          aiEnhanced: false,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+        })),
       );
     } catch {
-      return {
-        content: mockData.note.getNotes.map(note => ({
-          ...note,
-          noteTitle: note.title,
-          noteContent: note.content,
-        })),
-        totalElements: mockData.note.getNotes.length,
-        totalPages: 1,
-        size: 10,
-        number: 0,
-        first: true,
-        last: true,
-      };
+      return mockData.note.getNotes.map(note => ({
+        noteId: note.noteId,
+        noteTitle: note.title,
+        aiEnhanced: false,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+      }));
     }
   },
 
