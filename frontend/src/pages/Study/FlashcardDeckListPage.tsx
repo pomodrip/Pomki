@@ -69,6 +69,8 @@ const HeaderBox = styled(Box)(({ theme }) => ({
 
 const SearchBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
+  width: '100%',
+  maxWidth: '100%',
 }));
 
 const FilterBox = styled(Box)(({ theme }) => ({
@@ -82,6 +84,7 @@ const DeckCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
+  backgroundColor: 'white',
   cursor: 'pointer',
   '&:hover': {
     boxShadow: theme.shadows[4],
@@ -665,11 +668,11 @@ const FlashcardDeckListPage: React.FC = () => {
 
       <SearchBox>
         <TextField
-          fullWidth
           variant="outlined"
           placeholder="덱 이름으로 검색..."
           value={filters.searchQuery}
           onChange={handleSearchChange}
+          sx={{ width: '100%' }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -777,11 +780,12 @@ const FlashcardDeckListPage: React.FC = () => {
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<SchoolIcon />}
-                    onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={(e) => handleDeleteDeck(deck, e)}
                     sx={{ whiteSpace: 'nowrap' }}
                   >
-                    학습하기
+                    삭제
                   </Button>
                   <Button
                     variant="outlined"
@@ -795,12 +799,11 @@ const FlashcardDeckListPage: React.FC = () => {
                   <Button
                     variant="outlined"
                     size="small"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={(e) => handleDeleteDeck(deck, e)}
+                    startIcon={<SchoolIcon />}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
                     sx={{ whiteSpace: 'nowrap' }}
                   >
-                    삭제
+                    학습하기
                   </Button>
                 </ActionBox>
               </DeckCard>
