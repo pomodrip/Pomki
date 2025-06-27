@@ -56,7 +56,6 @@ const AppRoutes = () => {
         <Route path="note/create" element={<NoteCreatePage />} />
         <Route path="note/:noteId" element={<NoteDetailPage />} />
         <Route path="note/:noteId/edit" element={<NoteCreatePage />} />
-        <Route path="study" element={<FlashcardDeckListPage />} />
         <Route path="flashcards/:deckId/cards" element={<FlashCardListPage />} />
         <Route path="flashcards/:deckId/practice" element={<FlashcardPracticePage />} />
         {/* <Route path="study" element={<StudyPage title="학습 페이지" />} />

@@ -37,7 +37,7 @@ export const loginUser = createAsyncThunk<
     state: RootState;
     rejectValue: string;
   }
->('auth/loginUser', async (credentials, { rejectWithValue }) => {
+>('auth/loginUser', async (credentials,  { rejectWithValue }) => {
   try {
     const response = await authApi.login(credentials);
     
@@ -45,6 +45,9 @@ export const loginUser = createAsyncThunk<
     // refreshToken은 서버에서 쿠키로 설정됨
     // accessToken만 메모리(Redux store)에 저장
     
+
+       
+
     return response;
   } catch (error: any) {
     return rejectWithValue(

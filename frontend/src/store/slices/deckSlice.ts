@@ -279,6 +279,7 @@ const deckSlice = createSlice({
         state.error = action.payload || '덱 목록을 불러오는데 실패했습니다.';
       })
       
+      
       // 단일 덱 조회
       .addCase(fetchDeck.pending, (state) => {
         state.loading = true;

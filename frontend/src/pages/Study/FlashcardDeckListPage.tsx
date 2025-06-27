@@ -145,7 +145,7 @@ const FlashcardDeckListPage: React.FC = () => {
   useEffect(() => {
     console.log("유저 이메일", user?.email);
     dispatch(fetchDecks());
-
+    console.log("유저", user);
     
     // 🎯 API Fallback 비활성화
     // const loadDecksWithFallback = async () => {

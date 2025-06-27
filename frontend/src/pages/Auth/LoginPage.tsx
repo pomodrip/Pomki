@@ -11,6 +11,8 @@ import { loginUser, setOAuth2User } from "../../store/slices/authSlice";
 import type { AppDispatch, RootState } from "../../store/store";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { authApi, getMyInfo } from "../../api";
+import { LoginResponse } from "../../types/api";
+
 
 const SocialButton = styled(Button)(({ theme }) => ({
   height: '45px',
@@ -61,6 +63,8 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const [error, setError] = React.useState<string | null>(null);
+
   const { status, error: loginError } = useSelector((state: RootState) => state.auth);
   const isLoading = status === 'loading';
 
@@ -135,10 +139,27 @@ const LoginPage = () => {
     if (!emailValidationError && !passwordValidationError) {
       try {
         const resultAction = await dispatch(loginUser({ email: id, password }));
-        unwrapResult(resultAction);
+        const loginResponse = resultAction.payload as LoginResponse;
+        const accessToken = loginResponse.accessToken;
+        console.log("엑세스태ㅓㅐㅓㄷㄹ허",accessToken);
+          // 토큰으로 사용자 정보 가져오기
+          const userInfo = await getMyInfo();
 
-        navigate('/dashboard');
+          // MyInfoResponse를 User 타입으로 변환
+          const user = {
+            memberId: 0, // OAuth2에서는 실제 ID를 받아야 함
+            email: userInfo.email,
+            nickname: userInfo.nickname,
+            isEmailVerified: true, // OAuth2는 이미 인증된 것으로 간주
+            socialLogin: true
+          };
+          dispatch(setOAuth2User({
+            accessToken,
+            user
+          }));
 
+          navigate('/dashboard');
+          
       } catch (err: unknown) {
         // unwrapResult가 에러를 throw하므로 여기서 별도 처리가 필요 없습니다.
         // 에러 메시지는 authSlice의 state.error에서 자동으로 처리됩니다.
