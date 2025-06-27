@@ -13,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class NoteImageController {
     @Operation(summary = "노트 이미지 목록 조회", description = "특정 노트의 모든 이미지를 조회합니다.")
     public ResponseEntity<List<NoteImageResponseDto>> getImagesByNoteId(
             @Parameter(description = "노트 ID", required = true)
-            @PathVariable @NotBlank(message = "노트 ID는 필수입니다.") String noteId) {
+            @PathVariable("noteId") @NotBlank(message = "노트 ID는 필수입니다.") String noteId) {
 
         List<NoteImageResponseDto> images = noteImageService.readImagesByNoteId(noteId);
         return ResponseEntity.ok(images);
@@ -58,7 +57,7 @@ public class NoteImageController {
     @Operation(summary = "노트 이미지 전체 삭제", description = "특정 노트의 모든 이미지를 삭제합니다.")
     public ResponseEntity<Void> deleteImagesByNoteId(
             @Parameter(description = "노트 ID", required = true)
-            @PathVariable @NotBlank(message = "노트 ID는 필수입니다.") String noteId) {
+            @PathVariable("noteId") @NotBlank(message = "노트 ID는 필수입니다.") String noteId) {
 
         noteImageService.deleteImagesByNoteId(noteId);
         return ResponseEntity.noContent().build();
