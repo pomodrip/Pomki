@@ -74,6 +74,8 @@ public class CardService {
                                 .createdAt(aCard.getCreatedAt())
                                 .updatedAt(aCard.getUpdatedAt())
                                 .isDeleted(aCard.getIsDeleted())
+                                .deckId(aCard.getDeck().getDeckId())
+                                .deckName(aCard.getDeck().getDeckName())
                                 .build() ;
             }
             
@@ -104,6 +106,8 @@ public class CardService {
                                     .createdAt(aCardOp.get().getCreatedAt())
                                     .updatedAt(aCardOp.get().getUpdatedAt())
                                     .isDeleted(aCardOp.get().getIsDeleted())
+                                    .deckId(aCardOp.get().getDeck().getDeckId())
+                                    .deckName(aCardOp.get().getDeck().getDeckName())
                                     .build() ;
             
         }
@@ -140,6 +144,8 @@ public class CardService {
                                     .createdAt(aCardOp.get().getCreatedAt())
                                     .updatedAt(aCardOp.get().getUpdatedAt())
                                     .isDeleted(aCardOp.get().getIsDeleted())
+                                    .deckId(aCardOp.get().getDeck().getDeckId())
+                                    .deckName(aCardOp.get().getDeck().getDeckName())
                                     .build() ;
 
         }
@@ -162,7 +168,8 @@ public class CardService {
                 .cardId(card.getCardId())
                 .content(card.getContent())
                 .answer(card.getAnswer())
-                .deckId(card.getDeck().getDeckName())
+                .deckId(card.getDeck().getDeckId())
+                .deckName(card.getDeck().getDeckName())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .isDeleted(card.getIsDeleted())
