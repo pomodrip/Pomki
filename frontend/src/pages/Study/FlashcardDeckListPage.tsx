@@ -115,7 +115,7 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
 const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isMobile } = useResponsive();
+  const { isMobile, isDesktop } = useResponsive();
 
   // 🎯 Redux 상태 선택 (안전장치 추가)
   const { decks = [], loading, error } = useAppSelector((state) => state.deck);
@@ -620,18 +620,18 @@ const FlashcardDeckListPage: React.FC = () => {
     <StyledContainer maxWidth="md">
       <HeaderBox>
         <Typography variant="h4" component="h1">플래시카드 덱</Typography>
-        {/* 덱 생성 버튼 - 데스크탑에서만 표시 */}
-        <Fab 
-          color="primary" 
-          aria-label="add" 
-          onClick={() => setShowCreateDialog(true)} 
-          size="medium"
-          sx={{
-            display: { xs: 'none', md: 'flex' } // 모바일에서는 숨김, 데스크탑에서만 표시
-          }}
-        >
-          <AddIcon />
-        </Fab>
+        {/* 덱 생성 버튼 - 1024px 이상(데스크톱)에서만 표시 */}
+        {isDesktop && (
+          <Fab 
+            color="primary" 
+            aria-label="add" 
+            onClick={() => setShowCreateDialog(true)} 
+            size="medium"
+          >
+            <AddIcon />
+          </Fab>
+        )}
+
       </HeaderBox>
 
       {/* 🎯 API Fallback UI 비활성화 */}
@@ -871,39 +871,44 @@ const FlashcardDeckListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 덱 생성 버튼 - 모바일에서만 하단 플로팅 */}
-      <Fab 
-        color="primary" 
-        aria-label="새로운 플래시카드 덱 만들기" 
-        onClick={() => setShowCreateDialog(true)} 
-        size={isMobile ? "small" : "medium"} 
-        sx={{ 
-          display: { xs: 'flex', md: 'none' }, // 모바일에서만 표시, 데스크탑에서는 숨김
-          position: 'fixed', 
-          bottom: isMobile ? 80 : 16, 
-          right: 16, 
-          zIndex: 1000,
-          // 📱 접근성 및 UX 개선
-          '&:hover': {
-            transform: 'scale(1.1)',
-            transition: 'transform 0.2s ease-in-out',
-          },
-          // 🎯 포커스 가시성 향상
-          '&:focus': {
-            outline: '2px solid',
-            outlineColor: 'primary.main',
-            outlineOffset: '2px',
-          },
-          // 📱 터치 디바이스 최적화
-          '@media (hover: none)': {
+      {/* 덱 생성 버튼 - 1024px 미만(모바일/태블릿)에서 하단 플로팅 */}
+      {isMobile && (
+        <Fab 
+          color="primary" 
+          aria-label="새로운 플래시카드 덱 만들기" 
+          onClick={() => setShowCreateDialog(true)} 
+          size="medium"
+          sx={{ 
+            position: 'fixed', 
+            bottom: 80, // 바텀네비 위에 위치
+            right: { 
+              xs: 16, // 모바일: 화면 가장자리에서 16px
+              sm: 'calc((100vw - 900px) / 2 + 16px)', // 태블릿: 컨테이너 가장자리 + 16px 
+              md: 'calc((100vw - 900px) / 2 + 16px)'  // md 컨테이너 기준으로 정렬
+            },
+            zIndex: 1000,
+            // 📱 접근성 및 UX 개선
             '&:hover': {
-              transform: 'none',
+              transform: 'scale(1.1)',
+              transition: 'transform 0.2s ease-in-out',
+            },
+            // 🎯 포커스 가시성 향상
+            '&:focus': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: '2px',
+            },
+            // 📱 터치 디바이스 최적화
+            '@media (hover: none)': {
+              '&:hover': {
+                transform: 'none',
+              }
             }
-          }
-        }}
-      >
-        <AddIcon />
-      </Fab>
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
     </StyledContainer>
   );
 };
