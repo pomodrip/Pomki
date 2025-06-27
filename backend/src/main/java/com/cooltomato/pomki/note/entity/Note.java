@@ -1,52 +1,60 @@
 package com.cooltomato.pomki.note.entity;
 
-import com.cooltomato.pomki.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.noteimage.entity.NoteImage;
+import com.cooltomato.pomki.tag.entity.NoteTag;
 
 @Entity
-@Table(name = "NOTE")
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "review_note")
+@Data
+
 public class Note {
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
-    @Column(name = "note_id", length = 50)
+    @Column(name = "note_id", length = 50, nullable = false)
     private String noteId;
 
+    // FK: member_id → member 테이블
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id")
     private Member member;
 
-    @Column(name = "note_title", length = 200, nullable = false)
+    @Column(name = "note_title", length = 255)
     private String noteTitle;
 
-    @Column(name = "note_content", length = 5000, nullable = false)
+    @Column(name = "note_content", columnDefinition = "LONGTEXT", nullable = false)
     private String noteContent;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "ai_enhanced")
+    private Boolean aiEnhanced;
+
+    @Column(name = "original_content", columnDefinition = "LONGTEXT")
+    private String originalContent;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
-    public void updateNote(String noteTitle, String noteContent) {
-        this.noteTitle = noteTitle;
-        this.noteContent = noteContent;
-    }
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
+
+    // 연관관계: NOTE_IMAGE(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<NoteImage> noteImages;
+
+    // 연관관계: BOOKMARK_NOTE(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<Bookmark> bookmarkNotes;
+
+    // 연관관계: NOTE_TAG(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<NoteTag> noteTags;
 } 
