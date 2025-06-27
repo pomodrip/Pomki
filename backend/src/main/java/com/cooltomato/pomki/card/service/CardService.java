@@ -157,7 +157,7 @@ public class CardService {
 
     @Transactional(readOnly = true)
     public List<CardResponseDto> searchCardsByKeywordService(PrincipalMember principal, String keyword) {
-        List<Card> cards = cardRepository.findByDeck_MemberIdAndContentContainingIgnoreCaseOrDeck_MemberIdAndAnswerContainingIgnoreCaseAndIsDeletedFalse(
+        List<Card> cards = cardRepository.findByDeck_MemberIdAndIsDeletedFalseAndContentContainingIgnoreCaseOrDeck_MemberIdAndIsDeletedFalseAndAnswerContainingIgnoreCase(
             principal.getMemberId(), keyword, principal.getMemberId(), keyword);
         
         if (cards.isEmpty()) {
