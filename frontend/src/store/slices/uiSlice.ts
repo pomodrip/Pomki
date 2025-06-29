@@ -113,8 +113,9 @@ export interface UIState {
   fab: {
     visible: boolean;
     position: {
-      bottom: number;
+      bottom: number | string;
       right: number | string;
+      top?: number | string;
     };
     size: 'small' | 'medium' | 'large';
     variant: 'circular' | 'extended';
@@ -537,6 +538,8 @@ const uiSlice = createSlice({
       }
     },
 
+
+
     // 접근성 설정
     setHighContrast: (state, action: PayloadAction<boolean>) => {
       state.settings.accessibility.highContrast = action.payload;
@@ -603,16 +606,19 @@ const uiSlice = createSlice({
     adjustFabForScreenSize: (state, action: PayloadAction<{ isMobile: boolean; hasBottomNav: boolean }>) => {
       const { isMobile, hasBottomNav } = action.payload;
       
-      // 위치만 조정하고, visible 상태는 페이지에서 제어하도록 변경
-      if (isMobile) {
-        // 모바일/태블릿: 바텀네비 위치에 맞춰 조정
-        state.fab.position.bottom = hasBottomNav ? 80 : 16;
-        state.fab.position.right = 16;
-      } else {
-        // 데스크톱: 기본 위치
-        state.fab.position.bottom = 16;
-        state.fab.position.right = 16;
-      }
+              if (isMobile) {
+          // 1024px 미만: 모바일 바텀네비 위 하단 오른쪽 (fixed 기준)
+          state.fab.position.bottom = hasBottomNav ? 80 : 16; // 바텀네비 높이(64px) + 여백(16px)
+          state.fab.position.right = 16; // 화면 기준
+          state.fab.position.top = 'initial';
+          state.fab.size = 'medium';
+        } else {
+          // 1024px 이상: 컨테이너 기준 상단 오른쪽 (absolute 기준)
+          state.fab.position.top = 16; // 컨테이너 기준 여백
+          state.fab.position.right = 16; // 컨테이너 기준 여백
+          state.fab.position.bottom = 'initial';
+          state.fab.size = 'medium';
+        }
       
       console.log('🔴 adjustFabForScreenSize:', {
         isMobile,

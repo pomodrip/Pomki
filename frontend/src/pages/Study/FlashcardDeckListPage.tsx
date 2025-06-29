@@ -41,6 +41,11 @@ import {
   updateDeck,
   deleteDeck,
 } from '../../store/slices/deckSlice';
+import {
+  adjustFabForScreenSize,
+  setFabVisible,
+  selectFab,
+} from '../../store/slices/uiSlice';
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
 // 🎯 API Fallback 비활성화
@@ -58,6 +63,7 @@ type EnrichedDeck = CardDeck & ClientSideDeckInfo;
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
+  position: 'relative', // 플로팅 버튼의 기준점 설정
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -122,6 +128,8 @@ const FlashcardDeckListPage: React.FC = () => {
   const { decks = [], loading, error } = useAppSelector((state) => state.deck);
   const { filters } = useAppSelector((state) => state.study);
   const { user } = useAppSelector((state) => state.auth);
+  const fab = useAppSelector(selectFab);
+  const { bottomNavVisible } = useAppSelector((state) => state.ui);
 
   // 🎯 클라이언트 측 상태 (북마크, 태그)
   const [clientSideInfo, setClientSideInfo] = useState<{ [deckId: string]: ClientSideDeckInfo }>({});
@@ -162,6 +170,21 @@ const FlashcardDeckListPage: React.FC = () => {
     // };
     // loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
+
+  // 🎯 반응형 FAB 위치 관리
+  useEffect(() => {
+    // 페이지 로드 시 FAB 표시 및 위치 설정
+    dispatch(setFabVisible(true));
+    dispatch(adjustFabForScreenSize({ 
+      isMobile, 
+      hasBottomNav: bottomNavVisible 
+    }));
+
+    // 컴포넌트 언마운트 시 FAB 숨기기
+    return () => {
+      dispatch(setFabVisible(false));
+    };
+  }, [dispatch, isMobile, bottomNavVisible]);
 
   // // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
   // useEffect(() => {
@@ -626,18 +649,6 @@ const FlashcardDeckListPage: React.FC = () => {
     <StyledContainer maxWidth="md">
       <HeaderBox>
         <Typography variant="h4" component="h1">플래시카드 덱</Typography>
-        {/* 덱 생성 버튼 - 데스크탑에서만 표시 */}
-        <Fab 
-          color="primary" 
-          aria-label="add" 
-          onClick={() => setShowCreateDialog(true)} 
-          size="medium"
-          sx={{
-            display: { xs: 'none', md: 'flex' } // 모바일에서는 숨김, 데스크탑에서만 표시
-          }}
-        >
-          <AddIcon />
-        </Fab>
       </HeaderBox>
 
       {/* 🎯 API Fallback UI 비활성화 */}
@@ -869,39 +880,44 @@ const FlashcardDeckListPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 덱 생성 버튼 - 모바일에서만 하단 플로팅 */}
-      <Fab 
-        color="primary" 
-        aria-label="새로운 플래시카드 덱 만들기" 
-        onClick={() => setShowCreateDialog(true)} 
-        size={isMobile ? "small" : "medium"} 
-        sx={{ 
-          display: { xs: 'flex', md: 'none' }, // 모바일에서만 표시, 데스크탑에서는 숨김
-          position: 'fixed', 
-          bottom: isMobile ? 80 : 16, 
-          right: 16, 
-          zIndex: 1000,
-          // 📱 접근성 및 UX 개선
-          '&:hover': {
-            transform: 'scale(1.1)',
-            transition: 'transform 0.2s ease-in-out',
-          },
-          // 🎯 포커스 가시성 향상
-          '&:focus': {
-            outline: '2px solid',
-            outlineColor: 'primary.main',
-            outlineOffset: '2px',
-          },
-          // 📱 터치 디바이스 최적화
-          '@media (hover: none)': {
+      {/* 덱 생성 버튼 - 반응형 위치 (Redux 기반, 컨테이너 기준) */}
+      {fab.visible && (
+        <Fab 
+          color="primary" 
+          aria-label="새로운 플래시카드 덱 만들기" 
+          onClick={() => setShowCreateDialog(true)} 
+          size={fab.size}
+          disabled={fab.disabled}
+          sx={{ 
+            position: isMobile ? 'fixed' : 'absolute', // 모바일은 fixed, 데스크톱은 absolute
+            bottom: isMobile ? fab.position.bottom : 'initial',
+            top: isMobile ? 'initial' : fab.position.top,
+            right: isMobile ? (theme) => theme.spacing(2) : (theme) => theme.spacing(2), // 컨테이너 기준 16px
+            zIndex: (theme) => theme.zIndex.fab || 1000,
+            // 📱 접근성 및 UX 개선 - theme 기반
+            transition: (theme) => theme.transitions.create(['transform'], {
+              duration: theme.transitions.duration.short,
+            }),
             '&:hover': {
-              transform: 'none',
+              transform: 'scale(1.1)',
+            },
+            // 🎯 포커스 가시성 향상 - theme 기반
+            '&:focus': {
+              outline: '2px solid',
+              outlineColor: (theme) => theme.palette.primary.main,
+              outlineOffset: (theme) => theme.spacing(0.25),
+            },
+            // 📱 터치 디바이스 최적화
+            '@media (hover: none)': {
+              '&:hover': {
+                transform: 'none',
+              }
             }
-          }
-        }}
-      >
-        <AddIcon />
-      </Fab>
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
     </StyledContainer>
   );
 };
