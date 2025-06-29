@@ -19,6 +19,7 @@ import com.cooltomato.pomki.note.entity.Note;
 @Table(name = "note_tag")
 @IdClass(NoteTagId.class)
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder

@@ -16,6 +16,7 @@ import java.io.Serializable;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 public class Tag implements Serializable {
     @Id
     @Column(name = "tag_name", nullable = false, length = 50)

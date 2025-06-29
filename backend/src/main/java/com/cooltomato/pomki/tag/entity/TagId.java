@@ -8,6 +8,7 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TagId implements Serializable {
     private String tagName;
     private Long memberId;

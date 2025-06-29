@@ -7,6 +7,9 @@ import com.cooltomato.pomki.notetag.dto.NoteTagResponseDto;
 import com.cooltomato.pomki.notetag.service.NoteTagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,47 +24,39 @@ public class NoteTagController {
 
     private final NoteTagService service;
 
+    // 노트에 대한 태그 전체 조회 (카드에 대한 태그 표시 X)
+    @GetMapping
+    public ResponseEntity<List<NoteTagResponseDto>> readAllNoteTag(@AuthenticationPrincipal PrincipalMember principal) {
+        List<NoteTagResponseDto> response = service.readAllNoteTagService(principal) ;
+        return ResponseEntity.ok(response) ;
+    }
+
     //노트에 태그 추가
     @PostMapping
     public ResponseEntity<NoteTagResponseDto> createNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
         NoteTagResponseDto response = service.createNoteTagService(principal, request) ;
         return ResponseEntity.ok(response) ;
     }
-    
 
-    // // 노트에 태그 추가
-    // @PostMapping
-    // public ResponseEntity<NoteTagResponseDto> createNoteTag(@Valid @RequestBody NoteTagRequestDto noteTagRequestDto,
-    //                                                        @AuthenticationPrincipal PrincipalMember memberInfoDto) {
-    //     NoteTagResponseDto responseDto = noteTagService.createNoteTag(noteTagRequestDto, memberInfoDto);
-    //     return ResponseEntity.created(URI.create("/api/note-tag/" + responseDto.getNoteTagId()))
-    //             .body(responseDto);
+    // 노트에서 태그 삭제
+    @DeleteMapping
+    public ResponseEntity<Void> deleteNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
+        service.deleteNoteTagService(principal, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    // // 특정 노트에 대한 태그 선택시 원본 노트 조회
+    // @GetMapping("/{noteId}")
+    // public ResponseEntity<NoteResponseDto> readNoteByNoteTag(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String noteId) {
+    //     NoteResponseDto response = service.readNoteByNoteTagService(principal, noteId) ;
+    //     return ResponseEntity.ok(response) ;
     // }
 
-    // // 노트의 모든 태그 조회
-    // @GetMapping("/note/{noteId}")
-    // public ResponseEntity<List<NoteTagResponseDto>> getNoteTagsByNoteId(@Parameter(name = "noteId", example = "1", description = "노트 고유 아이디", required = true)
-    //                                                                     @PathVariable("noteId") String noteId,
-    //                                                                     @AuthenticationPrincipal PrincipalMember memberInfoDto) {
-    //     List<NoteTagResponseDto> responseDto = noteTagService.getNoteTagsByNoteId(noteId, memberInfoDto);
-    //     return ResponseEntity.ok(responseDto);
-    // }
+    // 특정 태그 선택시 태그에 해당하는 모든 노트 조회
+    @GetMapping("/{tagName}")
+    public ResponseEntity<List<NoteResponseDto>> readNoteByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String tagName) {
+        List<NoteResponseDto> response = service.readNoteByTagNameService(principal, tagName) ;
+        return ResponseEntity.ok(response) ;
+    }
 
-    // // 특정 노트 태그 조회
-    // @GetMapping("/{id}")
-    // public ResponseEntity<NoteTagResponseDto> getNoteTagById(@Parameter(name = "id", example = "1", description = "노트 태그 고유 아이디", required = true)
-    //                                                         @PathVariable("id") String id,
-    //                                                         @AuthenticationPrincipal PrincipalMember memberInfoDto) {
-    //     NoteTagResponseDto responseDto = noteTagService.getNoteTagById(id, memberInfoDto);
-    //     return ResponseEntity.ok(responseDto);
-    // }
-
-    // // 노트 태그 삭제
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity<Void> deleteNoteTag(@Parameter(name = "id", example = "1", description = "노트 태그 고유 아이디", required = true)
-    //                                          @PathVariable("id") String id,
-    //                                          @AuthenticationPrincipal PrincipalMember memberInfoDto) {
-    //     noteTagService.deleteNoteTag(id, memberInfoDto);
-    //     return ResponseEntity.noContent().build();
-    // }
 }
