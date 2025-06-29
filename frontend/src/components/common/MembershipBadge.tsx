@@ -16,10 +16,10 @@ const PremiumBadge = styled(Tag)({
   '& .MuiSvgIcon-root': {
     color: '#000',
   },
-  '&:hover': {
-    backgroundColor: '#FFD700',
-    color: '#000',
-  },
+  // '&:hover': {
+  //   backgroundColor: '#FFD700',
+  //   color: '#000',
+  // },
 });
 
 const FreeBadge = styled(Tag)(({ theme }) => ({
