@@ -61,7 +61,21 @@ import Toast from '../../components/common/Toast';
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
-  position: 'relative', // FAB 기준점
+  position: 'relative',
+  width: '100%',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  paddingLeft: theme.spacing(1),
+  paddingRight: theme.spacing(1),
+  [theme.breakpoints.up('sm')]: {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
+  [theme.breakpoints.up('md')]: {
+    paddingLeft: theme.spacing(3),
+    paddingRight: theme.spacing(3),
+  },
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -75,6 +89,10 @@ const SearchBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   width: '100%',
   maxWidth: '100%',
+  '& .MuiTextField-root': {
+    width: '100%',
+    maxWidth: '100%',
+  },
 }));
 
 const FilterBox = styled(Box)(({ theme }) => ({
@@ -90,6 +108,14 @@ const DeckCard = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   backgroundColor: 'white',
   cursor: 'pointer',
+  width: '100%',
+  maxWidth: '100%',
+  minWidth: 0,
+  boxSizing: 'border-box',
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 120, // 모든 화면에서 동일한 최소 높이
   '&:hover': {
     boxShadow: theme.shadows[4],
   },
@@ -102,12 +128,39 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionBox = styled(Box)({
+const ActionBox = styled(Box)(({ theme }) => ({
   display: 'flex',
-  justifyContent: 'flex-end',
-  gap: '8px',
+  justifyContent: 'space-between',
+  gap: '6px',
   marginTop: '8px',
-});
+  width: '100%',
+  maxWidth: '100%',
+  overflow: 'hidden', // 카드 안에서만 버튼 위치
+  boxSizing: 'border-box',
+  paddingLeft: theme.spacing(0.5), // 왼쪽 여백 추가
+  paddingRight: theme.spacing(0.5), // 오른쪽 여백 추가
+  '& .MuiButton-root': {
+    flex: 1, // 버튼들이 균등하게 공간 차지
+    whiteSpace: 'nowrap',
+    minWidth: 'auto',
+    flexShrink: 1, // 필요시 버튼 크기 축소 허용
+    maxWidth: 'calc(33.33% - 4px)', // 3개 버튼이 들어갈 수 있도록 최대 너비 제한
+    fontSize: '0.75rem', // 모든 화면에서 동일한 폰트 크기
+    padding: theme.spacing(1, 1), // 위아래 패딩 증가 (0.75 → 1)
+  },
+  [theme.breakpoints.down('sm')]: {
+    justifyContent: 'space-between', // 모바일에서도 균등 분산
+    gap: '4px',
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
+    '& .MuiButton-root': {
+      flex: 1, // 모바일에서도 균등하게 공간 차지
+      maxWidth: 'calc(33.33% - 3px)', // 모바일에서도 3개 버튼이 한 줄에 들어가도록
+      fontSize: '0.7rem', // 모바일에서는 약간 작은 폰트
+      padding: theme.spacing(0.75, 0.75), // 모바일에서도 위아래 패딩 증가 (0.5 → 0.75)
+    },
+  },
+}));
 
 const SelectedTagsBox = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -121,7 +174,7 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
 const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
   position: isMobile ? 'fixed' : 'absolute',
   zIndex: theme.zIndex.fab || 1201,
-  right: theme.spacing(4),
+  right: theme.spacing(2),
   ...(isMobile
     ? { bottom: 80 }
     : { top: theme.spacing(2) }),
@@ -501,10 +554,13 @@ const FlashcardDeckListPage: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
+              sm: 'repeat(auto-fit, minmax(280px, 1fr))',
+              md: 'repeat(auto-fit, minmax(300px, 1fr))',
             },
-            gap: 2,
+            gap: { xs: 1, sm: 2 },
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'hidden',
           }}
         >
           {decks.map((deck) => (
@@ -517,7 +573,7 @@ const FlashcardDeckListPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 카드 {deck.cardCnt}개
               </Typography>
-              {/* 액션 버튼들 */}
+              {/* 액션 버튼들 - 카드 안에서만 위치 */}
               <ActionBox>
                 <Button
                   variant="outlined"
@@ -525,7 +581,6 @@ const FlashcardDeckListPage: React.FC = () => {
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={(e) => handleDeleteDeck(deck, e)}
-                  sx={{ whiteSpace: 'nowrap' }}
                 >
                   삭제
                 </Button>
@@ -534,7 +589,6 @@ const FlashcardDeckListPage: React.FC = () => {
                   size="small"
                   startIcon={<EditIcon />}
                   onClick={(e) => handleEditDeck(deck, e)}
-                  sx={{ whiteSpace: 'nowrap' }}
                 >
                   수정
                 </Button>
@@ -543,7 +597,6 @@ const FlashcardDeckListPage: React.FC = () => {
                   size="small"
                   startIcon={<SchoolIcon />}
                   onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
-                  sx={{ whiteSpace: 'nowrap' }}
                 >
                   학습하기
                 </Button>
