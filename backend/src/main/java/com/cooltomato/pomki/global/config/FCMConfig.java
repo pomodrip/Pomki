@@ -2,7 +2,8 @@ package com.cooltomato.pomki.global.config;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -10,21 +11,28 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
-@Configurable
+@Configuration
+@Slf4j
 public class FCMConfig {
+    
     private FirebaseApp firebaseApp;
 
     @PostConstruct
-    public FirebaseApp initializeFcm() throws IOException {
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.getApplicationDefault())
-                .build();
-        firebaseApp = FirebaseApp.initializeApp(options);
-        return firebaseApp;
+    public void initializeFcm() throws IOException {
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .build();
+            firebaseApp = FirebaseApp.initializeApp(options);
+        } else {
+            firebaseApp = FirebaseApp.getInstance();
+        }
     }
 
-    public FirebaseMessaging initFirebaseMessaging() {
+    @Bean
+    public FirebaseMessaging firebaseMessaging() {
         return FirebaseMessaging.getInstance(firebaseApp);
     }
 }
