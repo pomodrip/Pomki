@@ -33,6 +33,12 @@ import { showToast, hideToast } from '../../store/slices/toastSlice';
 import { setFilters } from '../../store/slices/studySlice';
 import type { Note } from '../../types/note';
 import { useResponsive } from '../../hooks/useResponsive';
+import Toast from '../../components/common/Toast';
+import {
+  adjustFabForScreenSize,
+  setFabVisible,
+  selectFab,
+} from '../../store/slices/uiSlice';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
@@ -46,6 +52,7 @@ type EnrichedNote = Note & ClientSideNoteInfo;
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
+  position: 'relative', // FAB 기준점
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -100,6 +107,17 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
   flexWrap: 'wrap',
 }));
 
+// FAB 반응형 위치 스타일
+const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+  position: isMobile ? 'fixed' : 'absolute',
+  zIndex: theme.zIndex.fab || 1201,
+  right: theme.spacing(4),
+  ...(isMobile
+    ? { bottom: 80 } // 바텀네비 위
+    : { top: theme.spacing(2) }), // 컨테이너 상단
+  boxShadow: theme.shadows[4],
+}));
+
 const NoteListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -107,6 +125,8 @@ const NoteListPage: React.FC = () => {
   const { filters } = useAppSelector((state) => state.study);
   const { showConfirmDialog } = useDialog();
   const { isMobile } = useResponsive();
+  const fab = useAppSelector(selectFab);
+  const { bottomNavVisible } = useAppSelector((state) => state.ui);
 
   // 🎯 클라이언트 측 상태 (북마크, 태그)
   const [clientSideInfo, setClientSideInfo] = useState<{ [noteId: string]: ClientSideNoteInfo }>({});
@@ -326,6 +346,18 @@ const NoteListPage: React.FC = () => {
     navigate(`/study/${noteId}/flashcard-generation`);
   }; 
 
+  // FAB 위치/표시 Redux 관리 (덱과 동일)
+  React.useEffect(() => {
+    dispatch(setFabVisible(true));
+    dispatch(adjustFabForScreenSize({
+      isMobile,
+      hasBottomNav: bottomNavVisible,
+    }));
+    return () => {
+      dispatch(setFabVisible(false));
+    };
+  }, [dispatch, isMobile, bottomNavVisible]);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -339,15 +371,27 @@ const NoteListPage: React.FC = () => {
   }
 
   return (
-    <StyledContainer maxWidth="lg">
+    <StyledContainer maxWidth="md">
+      {/* Toast 위치: 중앙 상단/바텀네비 위 */}
+      <Toast />
       <HeaderBox>
         <Text variant="h4" fontWeight="bold">
           My Notes
         </Text>
-        <Fab color="primary" aria-label="add" onClick={() => navigate('/note/create')}>
-          <AddIcon />
-        </Fab>
       </HeaderBox>
+      {/* 반응형 플로팅 FAB */}
+      {fab.visible && (
+        <FloatingFab
+          color="primary"
+          aria-label="add"
+          isMobile={isMobile}
+          onClick={() => navigate('/note/create')}
+          size={fab.size}
+          disabled={fab.disabled}
+        >
+          <AddIcon />
+        </FloatingFab>
+      )}
 
       <SearchBox>
         <TextField
