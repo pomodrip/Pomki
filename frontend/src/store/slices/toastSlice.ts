@@ -37,7 +37,7 @@ const toastSlice = createSlice({
         id: generateToastId(),
         message: action.payload.message,
         severity: action.payload.severity || 'info',
-        duration: action.payload.duration || 4000,
+        duration: action.payload.duration || 2000,
         createdAt: Date.now(),
         progress: 100, // 시작할 때는 100%
       };
