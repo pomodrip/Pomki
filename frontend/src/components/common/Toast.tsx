@@ -1,47 +1,209 @@
-import React from 'react';
-import { Snackbar, Alert, AlertProps, styled } from '@mui/material';
+import React, { useEffect, useRef } from 'react';
+import { Box, Typography, IconButton, LinearProgress, styled } from '@mui/material';
+import { Close as CloseIcon, CheckCircle, Error, Warning, Info } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
-import { hideToast } from '../../store/slices/toastSlice';
+import { hideToast, updateToastProgress } from '../../store/slices/toastSlice';
+import { useResponsive } from '../../hooks/useResponsive';
+import type { ToastItem } from '../../store/slices/toastSlice';
 
-const StyledAlert = styled(Alert)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.12)',
-  '& .MuiAlert-message': {
-    fontSize: theme.typography.body2.fontSize,
-  },
+// maxWidth="md" 기준 중앙 정렬을 위한 Wrapper
+const CenterWrapper = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  width: '100%',
+  maxWidth: theme.breakpoints.values.md, // md(900px) 기준 중앙 정렬
+  zIndex: theme.zIndex.snackbar,
+  pointerEvents: 'none',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
 }));
 
-const Toast: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { open, message, severity, duration, anchorOrigin } = useAppSelector((state) => state.toast);
+const ToastContainer = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+  width: 320,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(1),
+  pointerEvents: 'none',
+  // 위치 조건부 적용
+  ...(isMobile
+    ? {
+        bottom: 80,
+        top: 'auto',
+        position: 'fixed',
+      }
+    : {
+        top: 80,
+        bottom: 'auto',
+        position: 'fixed',
+      }),
+}));
 
-  const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
+type SeverityType = 'success' | 'error' | 'warning' | 'info';
+
+const ToastItemBox = styled(Box)<{ severity: SeverityType }>(({ theme, severity }) => {
+  const severityColors: Record<SeverityType, string> = {
+    success: theme.palette.success.main,
+    error: theme.palette.error.main,
+    warning: theme.palette.warning.main,
+    info: theme.palette.info.main,
+  };
+  return {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.5),
+    paddingTop: theme.spacing(1),
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: theme.shape.borderRadius,
+    border: `1px solid ${severityColors[severity]}`,
+    boxShadow: theme.shadows[4],
+    pointerEvents: 'auto',
+    cursor: 'default',
+    transition: theme.transitions.create(['transform', 'opacity'], {
+      duration: theme.transitions.duration.short,
+    }),
+    '&:hover': {
+      transform: 'translateX(-4px)',
+    },
+  };
+});
+
+const ProgressBar = styled(LinearProgress)<{ severity: SeverityType }>(({ theme, severity }) => {
+  const severityColors: Record<SeverityType, string> = {
+    success: theme.palette.success.main,
+    error: theme.palette.error.main,
+    warning: theme.palette.warning.main,
+    info: theme.palette.info.main,
+  };
+  return {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
+    '& .MuiLinearProgress-bar': {
+      backgroundColor: severityColors[severity],
+    },
+    '& .MuiLinearProgress-root': {
+      backgroundColor: 'transparent',
+    },
+  };
+});
+
+const IconContainer = styled(Box)<{ severity: SeverityType }>(({ theme, severity }) => {
+  const severityColors: Record<SeverityType, string> = {
+    success: theme.palette.success.main,
+    error: theme.palette.error.main,
+    warning: theme.palette.warning.main,
+    info: theme.palette.info.main,
+  };
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 20,
+    height: 20,
+    marginTop: theme.spacing(0.25),
+    '& svg': {
+      fontSize: '1.25rem',
+      color: severityColors[severity],
+    },
+  };
+});
+
+const MessageContainer = styled(Box)(({ theme }) => ({
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  fontFamily: theme.typography.fontFamily,
+}));
+
+const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
+  const dispatch = useAppDispatch();
+  const intervalRef = useRef<number | null>(null);
+
+  const getSeverityIcon = (severity: SeverityType) => {
+    switch (severity) {
+      case 'success': return <CheckCircle />;
+      case 'error': return <Error />;
+      case 'warning': return <Warning />;
+      case 'info': return <Info />;
+      default: return <Info />;
     }
-    dispatch(hideToast());
   };
 
+  const handleClose = () => {
+    dispatch(hideToast(toast.id));
+  };
+
+  useEffect(() => {
+    if (toast.duration > 0) {
+      const interval = 50; // 50ms마다 업데이트
+      const decrement = (100 / toast.duration) * interval;
+      intervalRef.current = setInterval(() => {
+        dispatch(updateToastProgress({ 
+          id: toast.id, 
+          progress: Math.max(0, toast.progress - decrement) 
+        }));
+        if (toast.progress <= 0) {
+          handleClose();
+        }
+      }, interval);
+    }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [toast.id, toast.duration, toast.progress, dispatch]);
+
   return (
-    <Snackbar
-      open={open}
-      autoHideDuration={duration}
-      onClose={handleClose}
-      anchorOrigin={anchorOrigin}
-      // 위치 조정: 데스크탑에서는 헤더 아래, 모바일에서는 바텀 네비게이션 위
-      sx={{ 
-        ...(anchorOrigin.vertical === 'bottom' && {
-          bottom: { xs: '80px !important', sm: '16px !important' }
-        }),
-        ...(anchorOrigin.vertical === 'top' && {
-          top: { xs: '16px !important', sm: '80px !important' } // 데스크탑에서 헤더 아래
-        })
-      }}
-    >
-      <StyledAlert severity={severity as AlertProps['severity']} variant="filled">
-        {message}
-      </StyledAlert>
-    </Snackbar>
+    <ToastItemBox severity={toast.severity}>
+      <IconContainer severity={toast.severity}>
+        {getSeverityIcon(toast.severity)}
+      </IconContainer>
+      <MessageContainer>
+        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+          {toast.message}
+        </Typography>
+      </MessageContainer>
+      <IconButton
+        size="small"
+        onClick={handleClose}
+        sx={{ 
+          padding: 0.25,
+          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+      <ProgressBar 
+        variant="determinate" 
+        value={toast.progress} 
+        severity={toast.severity}
+      />
+    </ToastItemBox>
+  );
+};
+
+const Toast: React.FC = () => {
+  const { toasts } = useAppSelector((state) => state.toast);
+  const { isMobile } = useResponsive();
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <CenterWrapper>
+      <ToastContainer isMobile={isMobile}>
+        {toasts.map((toast) => (
+          <ToastComponent key={toast.id} toast={toast} />
+        ))}
+      </ToastContainer>
+    </CenterWrapper>
   );
 };
 
