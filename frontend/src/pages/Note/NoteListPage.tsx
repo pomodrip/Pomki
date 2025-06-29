@@ -14,7 +14,7 @@ import {
   Chip,
   Typography
 } from '@mui/material';
-import { Text } from '../../components/ui';
+
 import { 
   Add as AddIcon, 
   Edit as EditIcon, 
@@ -31,14 +31,14 @@ import { deleteNoteAsync, fetchNotes } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
 import { showToast, hideToast } from '../../store/slices/toastSlice';
 import { setFilters } from '../../store/slices/studySlice';
-import type { Note } from '../../types/note';
-import { useResponsive } from '../../hooks/useResponsive';
-import Toast from '../../components/common/Toast';
 import {
   adjustFabForScreenSize,
   setFabVisible,
   selectFab,
 } from '../../store/slices/uiSlice';
+import type { Note } from '../../types/note';
+import { useResponsive } from '../../hooks/useResponsive';
+import Toast from '../../components/common/Toast';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
@@ -52,7 +52,21 @@ type EnrichedNote = Note & ClientSideNoteInfo;
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
-  position: 'relative', // FAB 기준점
+  position: 'relative',
+  width: '100%',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  paddingLeft: theme.spacing(1),
+  paddingRight: theme.spacing(1),
+  [theme.breakpoints.up('sm')]: {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
+  [theme.breakpoints.up('md')]: {
+    paddingLeft: theme.spacing(3),
+    paddingRight: theme.spacing(3),
+  },
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -92,12 +106,21 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionBox = styled(Box)({
+const ActionBox = styled(Box)(({ theme }) => ({
   display: 'flex',
-  justifyContent: 'flex-end',
+  justifyContent: 'space-between',
   gap: '8px',
   marginTop: '24px',
-});
+  paddingLeft: theme.spacing(0.5),
+  paddingRight: theme.spacing(0.5),
+  '& .MuiButton-root': {
+    flex: 1, // 버튼들이 균등하게 공간 차지
+    whiteSpace: 'nowrap',
+    minWidth: 'auto',
+    padding: theme.spacing(1, 1.5), // 위아래 패딩 추가
+    fontSize: '0.75rem', // 폰트 크기 설정
+  },
+}));
 
 const SelectedTagsBox = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -107,14 +130,14 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
   flexWrap: 'wrap',
 }));
 
-// FAB 반응형 위치 스타일
+// 🔹 반응형 플로팅 FAB 스타일
 const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
   position: isMobile ? 'fixed' : 'absolute',
   zIndex: theme.zIndex.fab || 1201,
-  right: theme.spacing(4),
+  right: theme.spacing(2),
   ...(isMobile
-    ? { bottom: 80 } // 바텀네비 위
-    : { top: theme.spacing(2) }), // 컨테이너 상단
+    ? { bottom: 80 }
+    : { top: theme.spacing(2) }),
   boxShadow: theme.shadows[4],
 }));
 
@@ -138,6 +161,18 @@ const NoteListPage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchNotes());
   }, [dispatch]);
+
+  // 🔹 반응형 FAB 위치 관리
+  useEffect(() => {
+    dispatch(setFabVisible(true));
+    dispatch(adjustFabForScreenSize({
+      isMobile,
+      hasBottomNav: bottomNavVisible,
+    }));
+    return () => {
+      dispatch(setFabVisible(false));
+    };
+  }, [dispatch, isMobile, bottomNavVisible]);
 
   // 🎯 Mock 데이터로 클라이언트 측 정보 초기화
   useEffect(() => {
@@ -346,44 +381,23 @@ const NoteListPage: React.FC = () => {
     navigate(`/study/${noteId}/flashcard-generation`);
   }; 
 
-  // FAB 위치/표시 Redux 관리 (덱과 동일)
-  React.useEffect(() => {
-    dispatch(setFabVisible(true));
-    dispatch(adjustFabForScreenSize({
-      isMobile,
-      hasBottomNav: bottomNavVisible,
-    }));
-    return () => {
-      dispatch(setFabVisible(false));
-    };
-  }, [dispatch, isMobile, bottomNavVisible]);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return <Box>Error: {error}</Box>;
-  }
 
   return (
     <StyledContainer maxWidth="md">
       {/* Toast 위치: 중앙 상단/바텀네비 위 */}
       <Toast />
+      {/* 🔹 헤더 영역 */}
       <HeaderBox>
-        <Text variant="h4" fontWeight="bold">
+        <Typography variant="h4" fontWeight="bold">
           My Notes
-        </Text>
+        </Typography>
       </HeaderBox>
-      {/* 반응형 플로팅 FAB */}
+      {/* 🔹 반응형 플로팅 FAB */}
       {fab.visible && (
         <FloatingFab
           color="primary"
-          aria-label="add"
+          aria-label="노트 생성"
           isMobile={isMobile}
           onClick={() => navigate('/note/create')}
           size={fab.size}
@@ -393,6 +407,7 @@ const NoteListPage: React.FC = () => {
         </FloatingFab>
       )}
 
+      {/* 🔹 검색창 */}
       <SearchBox>
         <TextField
           variant="outlined"
@@ -409,7 +424,7 @@ const NoteListPage: React.FC = () => {
           }}
         />
       </SearchBox>
-      
+      {/* 🔹 필터 영역 */}
       <FilterBox>
         <Button
           startIcon={<FilterListIcon />}
@@ -462,88 +477,121 @@ const NoteListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
       </Menu>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-          },
-          gap: 2,
-        }}
-      >
-        {filteredNotes.map(note => (
-          <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
-            {/* 노트 이름과 북마크 버튼 */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{note.noteTitle}</Typography>
-              <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)}>
-                {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
-              </IconButton>
-            </Box>
-            
-            {/* 날짜 정보 */}
-            <Text variant="body2" color="textSecondary">
-              {formatDate(note.createdAt, note.updatedAt)}
-            </Text>
-            
-            {/* 태그들 */}
-            <Box 
-              mt={1.5}
-              mb={1}
-              sx={{ 
-                minHeight: 24,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 0.5,
-              }}
-            >
-              {(isMobile ? note.tags.slice(0, 5) : note.tags).map(tag => (
-                <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
-              ))}
-              {isMobile && note.tags.length > 5 && (
-                <TagChip label={`+${note.tags.length - 5}`} size="small" color="primary" variant="outlined" />
-              )}
-            </Box>
-            
-            {/* 액션 버튼들 */}
-            <ActionBox>
-              <Button
-                variant="outlined"
-                size="small"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  handleDeleteNote(note.noteId, e);
+      {/* 🔹 로딩/에러 상태 */}
+      {loading && (
+        <Box display="flex" justifyContent="center" my={5}>
+          <CircularProgress />
+        </Box>
+      )}
+      {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
+      
+      {/* 🔹 노트 목록 그리드 렌더링 */}
+      {!loading && !error && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(auto-fit, minmax(280px, 1fr))',
+              md: 'repeat(auto-fit, minmax(300px, 1fr))',
+            },
+            gap: { xs: 1, sm: 2 },
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          {filteredNotes.map(note => (
+            <NoteCard key={note.noteId} onClick={() => handleNoteClick(note.noteId)}>
+              {/* 노트 이름과 북마크 버튼 */}
+              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ minHeight: 40 }}>
+                <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{note.noteTitle}</Typography>
+                <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)}>
+                  {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                </IconButton>
+              </Box>
+              
+              {/* 날짜 정보 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {formatDate(note.createdAt, note.updatedAt)}
+              </Typography>
+              
+              {/* 태그들 */}
+              <Box 
+                mt={1.5}
+                mb={1}
+                sx={{ 
+                  minHeight: 24,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0.5,
                 }}
-                sx={{ whiteSpace: 'nowrap' }}
               >
-                삭제
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<EditIcon />}
-                onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                수정
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<QuizIcon />}
-                onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                퀴즈 생성
-              </Button>
-            </ActionBox>
-          </NoteCard>
-        ))}
-      </Box>
+                {(isMobile ? note.tags.slice(0, 5) : note.tags).map(tag => (
+                  <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
+                ))}
+                {isMobile && note.tags.length > 5 && (
+                  <TagChip label={`+${note.tags.length - 5}`} size="small" color="primary" variant="outlined" />
+                )}
+              </Box>
+              
+              {/* 액션 버튼들 */}
+              <ActionBox>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e: React.MouseEvent) => handleDeleteNote(note.noteId, e)}
+                >
+                  삭제
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<QuizIcon />}
+                  onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
+                >
+                  퀴즈 생성
+                </Button>
+              </ActionBox>
+            </NoteCard>
+          ))}
+        </Box>
+      )}
+      
+      {/* 🔹 빈 상태 안내 */}
+      {!loading && !error && filteredNotes.length === 0 && (
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          alignItems="center" 
+          justifyContent="center"
+          py={8}
+        >
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            노트가 없습니다
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            첫 번째 노트를 만들어보세요!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/note/create')}
+          >
+            노트 만들기
+          </Button>
+        </Box>
+      )}
     </StyledContainer>
   );
 };
