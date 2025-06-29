@@ -1,3 +1,8 @@
+// =========================
+// 플래시카드 덱 목록 페이지
+// =========================
+
+// 🔹 라이브러리 및 훅 import
 import React, { useState, useMemo, useEffect } from 'react';
 import { styled } from '@mui/material/styles';
 import {
@@ -48,22 +53,15 @@ import {
 } from '../../store/slices/uiSlice';
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
+import Toast from '../../components/common/Toast';
 // 🎯 API Fallback 비활성화
 // import { deckApiWithFallback } from '../../api/apiWithFallback';
 
-// 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
-interface ClientSideDeckInfo {
-  isBookmarked: boolean;
-  tags: string[];
-}
-
-// 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입 
-type EnrichedDeck = CardDeck & ClientSideDeckInfo;
-
+// 🔹 스타일 컴포넌트 정의 (NoteListPage와 통일)
 const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
-  position: 'relative', // 플로팅 버튼의 기준점 설정
+  position: 'relative', // FAB 기준점
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -119,29 +117,51 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
   flexWrap: 'wrap',
 }));
 
+// 🔹 반응형 플로팅 FAB 스타일
+const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+  position: isMobile ? 'fixed' : 'absolute',
+  zIndex: theme.zIndex.fab || 1201,
+  right: theme.spacing(4),
+  ...(isMobile
+    ? { bottom: 80 }
+    : { top: theme.spacing(2) }),
+  boxShadow: theme.shadows[4],
+}));
+
+// 🔹 타입 정의 (클라이언트 전용 정보)
+interface ClientSideDeckInfo {
+  isBookmarked: boolean;
+  tags: string[];
+}
+
+// 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입 
+type EnrichedDeck = CardDeck & ClientSideDeckInfo;
+
+// =========================
+// 메인 컴포넌트
+// =========================
 const FlashcardDeckListPage: React.FC = () => {
+  // 🔹 라우팅, Redux, 반응형 훅
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useResponsive();
-
-  // 🎯 Redux 상태 선택 (안전장치 추가)
   const { decks = [], loading, error } = useAppSelector((state) => state.deck);
   const { filters } = useAppSelector((state) => state.study);
   const { user } = useAppSelector((state) => state.auth);
   const fab = useAppSelector(selectFab);
   const { bottomNavVisible } = useAppSelector((state) => state.ui);
 
-  // 🎯 클라이언트 측 상태 (북마크, 태그)
+  // 🔹 클라이언트 전용 상태 (북마크, 태그)
   const [clientSideInfo, setClientSideInfo] = useState<{ [deckId: string]: ClientSideDeckInfo }>({});
 
-  // 🎯 다이얼로그 상태
+  // 🔹 덱 생성/수정 다이얼로그 상태
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newDeckTags, setNewDeckTags] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   
-  // 🎯 메뉴 상태
+  // 🔹 메뉴(태그, 북마크) 상태
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -149,7 +169,7 @@ const FlashcardDeckListPage: React.FC = () => {
   // const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
   // const [fallbackLoading, setFallbackLoading] = useState(false);
 
-  // 🎯 컴포넌트 마운트 시 덱 목록 로드 - Redux만 사용
+  // 🔹 컴포넌트 마운트 시 덱 목록 로드 - Redux만 사용
   useEffect(() => {
     console.log("유저 이메일", user?.email);
     dispatch(fetchDecks());
@@ -171,80 +191,45 @@ const FlashcardDeckListPage: React.FC = () => {
     // loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
 
-  // 🎯 반응형 FAB 위치 관리
+  // 🔹 반응형 FAB 위치 관리
   useEffect(() => {
-    // 페이지 로드 시 FAB 표시 및 위치 설정
     dispatch(setFabVisible(true));
-    dispatch(adjustFabForScreenSize({ 
-      isMobile, 
-      hasBottomNav: bottomNavVisible 
+    dispatch(adjustFabForScreenSize({
+      isMobile,
+      hasBottomNav: bottomNavVisible,
     }));
-
-    // 컴포넌트 언마운트 시 FAB 숨기기
     return () => {
       dispatch(setFabVisible(false));
     };
   }, [dispatch, isMobile, bottomNavVisible]);
 
-  // // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
-  // useEffect(() => {
-  //   if (decks.length > 0) {
-  //     setClientSideInfo(prevInfo => {
-  //       const newInfo = { ...prevInfo };
-  //       decks.forEach((deck, index) => {
-  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-  //           // 덱별로 다양한 태그 생성
-  //           const tagSets = [
-  //             ['#영어', '#단어', '#기초'],
-  //             ['#일본어', '#회화', '#중급'],
-  //             ['#프로그래밍', '#개발', '#CS'],
-  //             ['#수학', '#공식', '#고등'],
-  //             ['#과학', '#물리', '#화학'],
-  //             ['#역사', '#한국사', '#근현대'],
-  //             ['#문학', '#고전', '#현대'],
-  //             ['#경제', '#금융', '#투자'],
-  //           ];
-            
-  //           newInfo[deck.deckId] = {
-  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
-  //             tags: tagSets[index % tagSets.length], // Mock 데이터
-  //           };
-  //         }
-  //       });
-  //       return newInfo;
-  //     });
-  //   }
-  // }, [decks]);
-
-  // // 🎯 Fallback 덱이 로드될 때도 클라이언트 측 정보 초기화
-  // useEffect(() => {
-  //   if (fallbackDecks.length > 0) {
-  //     setClientSideInfo(prevInfo => {
-  //       const newInfo = { ...prevInfo };
-  //       fallbackDecks.forEach((deck, index) => {
-  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-  //           // 덱별로 다양한 태그 생성
-  //           const tagSets = [
-  //             ['#영어', '#단어', '#기초'],
-  //             ['#일본어', '#회화', '#중급'],
-  //             ['#프로그래밍', '#개발', '#CS'],
-  //             ['#수학', '#공식', '#고등'],
-  //             ['#과학', '#물리', '#화학'],
-  //             ['#역사', '#한국사', '#근현대'],
-  //             ['#문학', '#고전', '#현대'],
-  //             ['#경제', '#금융', '#투자'],
-  //           ];
-            
-  //           newInfo[deck.deckId] = {
-  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
-  //             tags: tagSets[index % tagSets.length], // Mock 데이터
-  //           };
-  //         }
-  //       });
-  //       return newInfo;
-  //     });
-  //   }
-  // }, [fallbackDecks]);
+  // 🔹 클라이언트 전용 정보 초기화 (북마크, 태그)
+  useEffect(() => {
+    if (decks.length > 0) {
+      setClientSideInfo(prevInfo => {
+        const newInfo = { ...prevInfo };
+        decks.forEach((deck, index) => {
+          if (!newInfo[deck.deckId]) {
+            const tagSets = [
+              ['#영어', '#단어', '#기초'],
+              ['#일본어', '#회화', '#중급'],
+              ['#프로그래밍', '#개발', '#CS'],
+              ['#수학', '#문제', '#풀이'],
+              ['#역사', '#세계사', '#한국사'],
+              ['#과학', '#실험', '#이론'],
+              ['#예술', '#음악', '#미술'],
+              ['#기타', '#잡학', '#상식'],
+            ];
+            newInfo[deck.deckId] = {
+              isBookmarked: Math.random() > 0.5,
+              tags: tagSets[index % tagSets.length],
+            };
+          }
+        });
+        return newInfo;
+      });
+    }
+  }, [decks]);
 
   // 🎯 Redux 덱만 사용 (Fallback 비활성화)
   const combinedDecks = useMemo(() => {
@@ -314,6 +299,9 @@ const FlashcardDeckListPage: React.FC = () => {
     });
   }, [filters, enrichedDecks]);
 
+  // =========================
+  // 주요 핸들러 함수들
+  // =========================
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilters({ searchQuery: event.target.value }));
   };
@@ -354,8 +342,7 @@ const FlashcardDeckListPage: React.FC = () => {
     setIsEditMode(true);
     setEditingDeckId(deck.deckId);
     setNewDeckTitle(deck.deckName);
-    // 태그에서 # 기호를 제거하여 표시
-    // setNewDeckTags(deck.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
+    setNewDeckTags(deck.tags.join(', ').replace(/#/g, ''));
     setShowCreateDialog(true);
   };
 
@@ -645,38 +632,33 @@ const FlashcardDeckListPage: React.FC = () => {
     }
   );
 
+  // =========================
+  // 렌더링
+  // =========================
   return (
     <StyledContainer maxWidth="md">
+      {/* Toast 위치: 중앙 상단/바텀네비 위 */}
+      <Toast />
+      {/* 🔹 헤더 영역 */}
       <HeaderBox>
-        <Typography variant="h4" component="h1">플래시카드 덱</Typography>
+        <Typography variant="h4" fontWeight="bold">
+          나의 덱
+        </Typography>
       </HeaderBox>
-
-      {/* 🎯 API Fallback UI 비활성화 */}
-      {/* {Array.isArray(fallbackDecks) && fallbackDecks.length > 0 && (
-        <Box 
-          sx={{ 
-            mb: 2, 
-            p: 2, 
-            backgroundColor: '#e3f2fd', 
-            border: '1px solid #2196f3',
-            borderRadius: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}
+      {/* 🔹 반응형 플로팅 FAB */}
+      {fab.visible && (
+        <FloatingFab
+          color="primary"
+          aria-label="덱 생성"
+          isMobile={isMobile}
+          onClick={() => setShowCreateDialog(true)}
+          size={fab.size}
+          disabled={fab.disabled}
         >
-          <InfoIcon color="primary" />
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-              🎉 API Fallback 시스템 작동 중!
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              실제 API 호출 실패시 자동으로 Mock 데이터({fallbackDecks.length}개 덱)를 표시하고 있습니다.
-            </Typography>
-          </Box>
-        </Box>
-      )} */}
-
+          <AddIcon />
+        </FloatingFab>
+      )}
+      {/* 🔹 검색창 */}
       <SearchBox>
         <TextField
           variant="outlined"
@@ -693,6 +675,7 @@ const FlashcardDeckListPage: React.FC = () => {
           }}
         />
       </SearchBox>
+      {/* 🔹 필터 버튼 영역 */}
       <FilterBox>
         <Button
           startIcon={<FilterListIcon />}
@@ -707,8 +690,7 @@ const FlashcardDeckListPage: React.FC = () => {
           북마크
         </Button>
       </FilterBox>
-
-      {/* 선택된 태그들 표시 */}
+      {/* 🔹 선택된 태그들 표시 */}
       <SelectedTagsBox>
         {filters.selectedTags.map((tag: string) => (
           <Chip
@@ -721,8 +703,7 @@ const FlashcardDeckListPage: React.FC = () => {
           />
         ))}
       </SelectedTagsBox>
-
-      {/* 태그 메뉴 */}
+      {/* 🔹 태그 메뉴 */}
       <Menu
         anchorEl={tagMenuAnchor}
         open={Boolean(tagMenuAnchor)}
@@ -734,8 +715,7 @@ const FlashcardDeckListPage: React.FC = () => {
           </MenuItem>
         ))}
       </Menu>
-
-      {/* 북마크 메뉴 */}
+      {/* 🔹 북마크 메뉴 */}
       <Menu
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
@@ -744,86 +724,92 @@ const FlashcardDeckListPage: React.FC = () => {
         <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
       </Menu>
-
+      {/* 🔹 로딩/에러 상태 */}
       {loading && (
         <Box display="flex" justifyContent="center" my={5}>
           <CircularProgress />
         </Box>
       )}
-
       {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
-      
+      {/* 🔹 덱 목록 그리드 렌더링 */}
       {!loading && !error && (
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
           {filteredDecks.map((deck) => (
-            <Grid item xs={12} sm={6} md={4} key={deck.deckId}>
-              <DeckCard onClick={() => handleDeckClick(deck.deckId)}>
-                {/*  덱 이름과 북마크 버튼 */}
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
-                  <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
-                    {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
-                  </IconButton>
-                </Box>
-                {/* 카드 개수 */}
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  카드 {deck.cardCnt}개
-                </Typography>
-                {/* 태그들 */}
-                <Box 
-                  mt={1.5} 
-                  sx={{ 
-                    minHeight: 24,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 0.5,
-                  }}
+            <DeckCard key={deck.deckId} onClick={() => handleDeckClick(deck.deckId)}>
+              {/*  덱 이름과 북마크 버튼 */}
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{deck.deckName}</Typography>
+                <IconButton size="small" onClick={(e) => handleToggleBookmark(deck.deckId, e)}>
+                  {deck.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                </IconButton>
+              </Box>
+              {/* 카드 개수 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                카드 {deck.cardCnt}개
+              </Typography>
+              {/* 태그들 */}
+              <Box 
+                mt={1.5} 
+                sx={{ 
+                  minHeight: 24,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0.5,
+                }}
+              >
+                {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
+                  <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
+                ))}
+                {isMobile && deck.tags.length > 5 && (
+                  <TagChip label={`+${deck.tags.length - 5}`} size="small" color="primary" variant="outlined" />
+                )}
+              </Box>
+              {/* 액션 버튼들 */}
+              <ActionBox>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e) => handleDeleteDeck(deck, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
                 >
-                  {(isMobile ? deck.tags.slice(0, 5) : deck.tags).map(tag => (
-                    <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
-                  ))}
-                  {isMobile && deck.tags.length > 5 && (
-                    <TagChip label={`+${deck.tags.length - 5}`} size="small" color="primary" variant="outlined" />
-                  )}
-                </Box>
-                {/* 액션 버튼들 */}
-                <ActionBox>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={(e) => handleDeleteDeck(deck, e)}
-                    sx={{ whiteSpace: 'nowrap' }}
-                  >
-                    삭제
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={(e) => handleEditDeck(deck, e)}
-                    sx={{ whiteSpace: 'nowrap' }}
-                  >
-                    수정
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<SchoolIcon />}
-                    onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
-                    sx={{ whiteSpace: 'nowrap' }}
-                  >
-                    학습하기
-                  </Button>
-                </ActionBox>
-              </DeckCard>
-            </Grid>
+                  삭제
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={(e) => handleEditDeck(deck, e)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<SchoolIcon />}
+                  onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  학습하기
+                </Button>
+              </ActionBox>
+            </DeckCard>
           ))}
-        </Grid>
+        </Box>
       )}
-
-      {/* 빈 상태 */}
+      {/* 🔹 빈 상태 안내 */}
       {!loading && !error && filteredDecks.length === 0 && (
         <Box 
           display="flex" 
@@ -847,8 +833,7 @@ const FlashcardDeckListPage: React.FC = () => {
           </Button>
         </Box>
       )}
-
-      {/* 덱 생성/수정 다이얼로그 */}
+      {/* 🔹 덱 생성/수정 다이얼로그 */}
       <Dialog open={showCreateDialog} onClose={handleCreateDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>{isEditMode ? '덱 수정' : '덱 생성'}</DialogTitle>
         <DialogContent>
@@ -879,45 +864,6 @@ const FlashcardDeckListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* 덱 생성 버튼 - 반응형 위치 (Redux 기반, 컨테이너 기준) */}
-      {fab.visible && (
-        <Fab 
-          color="primary" 
-          aria-label="새로운 플래시카드 덱 만들기" 
-          onClick={() => setShowCreateDialog(true)} 
-          size={fab.size}
-          disabled={fab.disabled}
-          sx={{ 
-            position: isMobile ? 'fixed' : 'absolute', // 모바일은 fixed, 데스크톱은 absolute
-            bottom: isMobile ? fab.position.bottom : 'initial',
-            top: isMobile ? 'initial' : fab.position.top,
-            right: isMobile ? (theme) => theme.spacing(2) : (theme) => theme.spacing(2), // 컨테이너 기준 16px
-            zIndex: (theme) => theme.zIndex.fab || 1000,
-            // 📱 접근성 및 UX 개선 - theme 기반
-            transition: (theme) => theme.transitions.create(['transform'], {
-              duration: theme.transitions.duration.short,
-            }),
-            '&:hover': {
-              transform: 'scale(1.1)',
-            },
-            // 🎯 포커스 가시성 향상 - theme 기반
-            '&:focus': {
-              outline: '2px solid',
-              outlineColor: (theme) => theme.palette.primary.main,
-              outlineOffset: (theme) => theme.spacing(0.25),
-            },
-            // 📱 터치 디바이스 최적화
-            '@media (hover: none)': {
-              '&:hover': {
-                transform: 'none',
-              }
-            }
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      )}
     </StyledContainer>
   );
 };
