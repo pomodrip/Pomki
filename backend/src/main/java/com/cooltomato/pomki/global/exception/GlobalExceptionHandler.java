@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.google.firebase.messaging.FirebaseMessagingException;
+
 import java.sql.SQLException;
 
 @Hidden
@@ -158,5 +160,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleImageException(ImageException exception) {
         log.error("ImageException: ", exception);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(FirebaseMessagingException.class)
+    public ResponseEntity<String> handleFirebaseMessagingException(FirebaseMessagingException exception) {
+        log.error("FirebaseMessagingException: ", exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("알림 전송 오류");
+    }
+
+    @ExceptionHandler(TokenNotFoundException.class)
+    public ResponseEntity<String> handleTokenNotFoundException(TokenNotFoundException exception) {
+        log.error("TokenNotFoundException: ", exception);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
     }
 }
