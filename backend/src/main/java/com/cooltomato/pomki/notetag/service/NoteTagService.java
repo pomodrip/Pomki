@@ -50,10 +50,21 @@ public class NoteTagService {
     
     public NoteTagResponseDto createNoteTagService(PrincipalMember principal, NoteTagRequestDto request) {
         log.info("debug >>> 노트에 태그 추가 시작") ;
+        
+        // Validate that the note exists and belongs to the member
+        Note note = noteRepository.findById(request.getNoteId())
+            .orElseThrow(() -> new RuntimeException("Note not found with id: " + request.getNoteId()));
+        
+        // Optional: Check if the note belongs to the current member
+        if (!note.getMember().getMemberId().equals(principal.getMemberId())) {
+            throw new RuntimeException("Note does not belong to the current member");
+        }
+        
         NoteTag entity = NoteTag.builder()
                                     .noteId(request.getNoteId())
                                     .memberId(principal.getMemberId())
                                     .tagName(request.getTagName())
+                                    .note(note)  // Set the note for @MapsId relationship
                                 .build();
                                 
         
