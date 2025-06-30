@@ -63,6 +63,8 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { useDispatch, useSelector } from 'react-redux';
 import { FlashCard, type FlashCardData } from '../../components/ui';
 import Toast from '../../components/common/Toast';
+import { RootState } from '../../store/store';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 // 🔹 스타일 컴포넌트 정의
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -156,11 +158,14 @@ const FlashcardDeckListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useResponsive();
-  const { decks = [], loading, error } = useAppSelector((state) => state.deck);
-  const { filters } = useAppSelector((state) => state.study);
-  const { user } = useAppSelector((state) => state.auth);
+  const decks = useAppSelector((state: RootState) => state.deck.decks);
+  const loading = useAppSelector((state: RootState) => state.deck.loading);
+  const error = useAppSelector((state: RootState) => state.deck.error);
+  const totalElements = useAppSelector((state: RootState) => state.deck.totalElements);
+  const filters = useAppSelector((state: RootState) => state.study.filters);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const fab = useAppSelector(selectFab);
-  const { bottomNavVisible } = useAppSelector((state) => state.ui);
+  const { bottomNavVisible } = useAppSelector((state: RootState) => state.ui);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
@@ -291,11 +296,18 @@ const FlashcardDeckListPage: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleCreateDialogConfirm();
+    }
+  };
+
   useDialogKeyboardShortcuts(
     handleCreateDialogConfirm,
     handleCreateDialogClose,
     {
-      enabled: showCreateDialog
+      enabled: false
     }
   );
 
@@ -472,12 +484,15 @@ const FlashcardDeckListPage: React.FC = () => {
           <TextField
             autoFocus
             margin="dense"
-            label="덱 이름"
+            id="name"
+            label={isEditMode ? "덱 이름 수정" : "새 덱 이름"}
+            type="text"
             fullWidth
             variant="outlined"
             value={newDeckTitle}
-            onChange={(e) => setNewDeckTitle(e.target.value)}
-            sx={{ mb: 2 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewDeckTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
           />
         </DialogContent>
         <DialogActions>
