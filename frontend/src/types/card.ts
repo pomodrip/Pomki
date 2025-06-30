@@ -28,6 +28,22 @@ export interface Card {
   updatedAt: string;
 }
 
+
+/**
+ * 카드 검색 응답 DTO
+ * API: /api/card/search/{keyword}
+ */
+export interface SearchCard {
+  cardId: number;
+  content: string;
+  answer: string;
+  deckId: string;
+  deckName: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /**
  * 덱 생성 요청 DTO
  * API: POST /api/decks

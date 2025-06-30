@@ -16,6 +16,7 @@ export { default as IconButton } from './IconButton';
 export { default as Checkbox } from './Checkbox';
 export { default as FilterButton } from './FilterButton';
 export { Menu, MenuItem } from './Menu';
+export { default as FlashCard } from './FlashCard';
 
 // 타입 export
 export type { TextProps } from './Text';
@@ -23,4 +24,5 @@ export type { FlexProps } from './Flex';
 export type { IconButtonProps } from './IconButton';
 export type { CheckboxProps } from './Checkbox';
 export type { MenuProps, MenuItemProps } from './Menu';
-export type { TagProps } from './Tag'; 
+export type { TagProps } from './Tag';
+export type { FlashCardProps, FlashCardData } from './FlashCard'; 
