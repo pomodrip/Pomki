@@ -45,6 +45,7 @@ import {
   selectSearchLoading,
   selectSearchResults,
   searchCards,
+  clearSearchResults,
 } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -153,6 +154,12 @@ const FlashcardDeckListPage: React.FC = () => {
   // 🎯 API Fallback 비활성화 - Redux만 사용
   // const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
   // const [fallbackLoading, setFallbackLoading] = useState(false);
+
+
+  // 다시 들어오면 검색 결과 초기화
+  useEffect(() => {
+    dispatch(clearSearchResults());
+  }, [dispatch]);
 
   // 🎯 컴포넌트 마운트 시 덱 목록 로드 - Redux만 사용
   useEffect(() => {
@@ -312,7 +319,9 @@ const FlashcardDeckListPage: React.FC = () => {
   };
 
   const handleSearchSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter')
+       {
+        dispatch(clearSearchResults());
       console.log("검색");
       dispatch(searchCards(searchInput));
     }
@@ -794,12 +803,13 @@ const FlashcardDeckListPage: React.FC = () => {
             }}
           >
             {searchResults.map((result) => {
-              // Card 타입을 FlashCardData 타입으로 변환
+              // SearchCard 타입을 FlashCardData 타입으로 변환
               const cardData: FlashCardData = {
                 id: parseInt(result.cardId.toString()),
                 front: result.content || '질문 없음',
                 back: result.answer || '답변 없음',
                 tags: [`#카드${result.cardId}`, '#검색결과'],
+                deckName: result.deckName,
               };
 
               return (

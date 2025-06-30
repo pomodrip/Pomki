@@ -22,6 +22,7 @@ export interface FlashCardData {
   front: string;
   back: string;
   tags?: string[];
+  deckName?: string;
 }
 
 export interface FlashCardProps {
@@ -111,11 +112,6 @@ const FlashCard: React.FC<FlashCardProps> = ({
           )}
         </Box>
         
-        {/* 카드 정보 */}
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          플래시카드
-        </Typography>
-        
         {/* 태그들 */}
         {card.tags && card.tags.length > 0 && (
           <Box 
@@ -146,6 +142,15 @@ const FlashCard: React.FC<FlashCardProps> = ({
             )}
           </Box>
         )}
+
+        
+        {/* 카드 정보 */}
+        {card.deckName && (
+        <Typography variant="body2" color="text.secondary" sx={{ mr: 1,mt: 0.5, textAlign: 'right' }}>
+          '{card.deckName}'로 이동
+        </Typography>
+        )}
+
       </CardContent>
       
       {/* 액션 버튼들 */}

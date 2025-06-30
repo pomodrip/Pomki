@@ -1,4 +1,4 @@
-import type { Card, CreateCardRequest, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest } from '../types/card';
 import * as cardApi from '../api/cardApi';
 
 // 🎯 카드 서비스 인터페이스 정의
@@ -7,7 +7,7 @@ export interface ICardService {
   createCard(deckId: string, data: CreateCardRequest): Promise<Card>;
   updateCard(cardId: number, data: UpdateCardRequest): Promise<Card>;
   deleteCard(cardId: number): Promise<void>;
-  searchCards(keyword: string): Promise<Card[]>;
+  searchCards(keyword: string): Promise<SearchCard[]>;
 }
 
 // 🎭 Mock 카드 서비스 구현
@@ -33,6 +33,12 @@ class MockCardService implements ICardService {
     }
   ];
   private nextCardId = 10;
+
+  // Mock 덱 데이터 (deckName을 가져오기 위해)
+  private mockDecks = [
+    { deckId: 'deck-uuid-1', deckName: 'JavaScript 기초' },
+    { deckId: 'deck-uuid-2', deckName: 'React 심화' },
+  ];
 
   async getCard(cardId: number): Promise<Card> {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -89,7 +95,7 @@ class MockCardService implements ICardService {
     }
   }
 
-  async searchCards(keyword: string): Promise<Card[]> {
+  async searchCards(keyword: string): Promise<SearchCard[]> {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const filteredCards = this.cards.filter(card => 
@@ -98,7 +104,14 @@ class MockCardService implements ICardService {
        card.answer.toLowerCase().includes(keyword.toLowerCase()))
     );
     
-    return filteredCards;
+    // Card를 SearchCard로 변환
+    return filteredCards.map(card => {
+      const deck = this.mockDecks.find(d => d.deckId === card.deckId);
+      return {
+        ...card,
+        deckName: deck?.deckName || '알 수 없는 덱'
+      };
+    });
   }
 }
 
@@ -142,13 +155,12 @@ class RealCardService implements ICardService {
     }
   }
 
-  async searchCards(keyword: string): Promise<Card[]> {
+  async searchCards(keyword: string): Promise<SearchCard[]> {
     try {
       return await cardApi.searchCards(keyword);
     } catch (error) {
-      console.warn('⚠️ Real API (searchCards) 실패!', error);
-      console.log(`🔍 검색 키워드: "${keyword}" - API 호출 실패로 인해 빈 배열을 반환합니다.`);
-      return [];
+      console.warn('⚠️ Real API (searchCards) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.searchCards(keyword);
     }
   }
 }

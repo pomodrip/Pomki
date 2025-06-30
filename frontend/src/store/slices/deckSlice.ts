@@ -9,6 +9,7 @@ import type {
   UpdateDeckRequest,
   UpdateCardRequest,
   CreateCardRequest,
+  SearchCard,
 } from '../../types/card';
 
 /**
@@ -29,7 +30,7 @@ interface DeckState {
   decks: CardDeck[];
   selectedDeck: CardDeck | null;
   currentDeckCards: Card[]; // 현재 덱의 카드들
-  searchResults: Card[]; // 검색 결과 카드들
+  searchResults: SearchCard[]; // 검색 결과 카드들
   
   // 상태
   loading: boolean;
@@ -199,7 +200,7 @@ export const deleteCard = createAsyncThunk<
 
 // 카드 검색
 export const searchCards = createAsyncThunk<
-  Card[],
+  SearchCard[],
   string,
   { state: RootState; rejectValue: string }
 >('deck/searchCards', async (keyword, { rejectWithValue }) => {

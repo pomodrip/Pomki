@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import api from './index';
-import type { Card, CreateCardRequest, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest } from '../types/card';
 
 /**
  * 카드 생성 
@@ -30,8 +30,8 @@ export const getCard = async (cardId: number): Promise<Card> => {
  * 카드 검색
  * @param keyword 검색 키워드
  */
-export const searchCards = async (keyword: string): Promise<Card[]> => {
-  const response: AxiosResponse<Card[]> = await api.get(`/api/card/search/${keyword}`);
+export const searchCards = async (keyword: string): Promise<SearchCard[]> => {
+  const response: AxiosResponse<SearchCard[]> = await api.get(`/api/card/search/${keyword}`);
   return response.data;
 };
 
