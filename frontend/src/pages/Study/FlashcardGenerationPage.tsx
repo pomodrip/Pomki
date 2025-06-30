@@ -23,105 +23,63 @@ import {
   EditNote as EditNoteIcon,
   ArrowBackIosNew,
 } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/useRedux';
+import type { QuizItem } from '../../types/quiz';
 // import * as studyApi from '../../api/studyApi';
 
 // ======================================================================
 // 타입 정의: 이 페이지에서만 사용되는 로컬 타입
 // ======================================================================
-interface QuizQuestion {
-  id: string;
-  title: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
-
 interface QuestionFeedback {
   questionId: string;
   feedback: string;
 }
 
 interface FlashcardGenerationSession {
-  id:string;
-  questions: QuizQuestion[];
+  id: string;
+  questions: QuizItem[]; // QuizItem 타입 사용
   currentQuestionIndex: number;
-  userAnswers: Record<string, number>;
+  userAnswers: Record<string, string>; // 문자열 답변 저장을 위해 string으로 변경
   selectedQuestions: Set<string>;
   feedback: string;
   questionFeedbacks: QuestionFeedback[];
   isCompleted: boolean;
 }
 
-// 품질 개선된 퀴즈 데이터
-const sampleQuestions: QuizQuestion[] = [
-  {
-    id: '1',
-    title: 'React 이해도',
-    question: 'React의 자료적 인터페이스를 구성하는 단위는 무엇인가?',
-    options: ['컴포넌트', '자식', '프롭스', '스테이트'],
-    correctAnswer: 0,
-  },
-  
-  {
-    id: '2', 
-    title: 'React 이해도',
-    question: 'React의 작동 방식에 대한 설명 중 가장 올바른 것은 무엇인가요?',
-    options: [
-      '상태를 이용하여 UI를 동적으로 변경하고 이벤트를 핸들링합니다.',
-      '상태를 이용하여 UI를 정적으로 변경하고 이벤트를 핸들링합니다.',
-      '상태를 이용하여 UI를 동적으로 변경하고 이벤트를 핸들링하지 않습니다.',
-      '상태를 이용하지 않고 UI를 동적으로 변경하고 이벤트를 핸들링합니다.',
-    ],
-    correctAnswer: 0,
-  },
-  {
-    id: '3',
-    title: 'React 이해도',
-    question: '아래 중 가상 DOM에 대한 설명으로 올바른 것은 무엇인가?',
-    options: [
-      '가상 DOM은 현재 화면에 보이는 요소에 대한 자바스크립트 객체의 복사본입니다.',
-      '가상 DOM은 실제 DOM을 직접 조작하여 화면을 갱신합니다.',
-      '가상 DOM은 실제 DOM의 변경을 감지하여 화면을 갱신합니다.',
-      '가상 DOM은 실제 DOM과 독립적으로 유지하여 화면을 갱신합니다.',
-    ],
-    correctAnswer: 0,
-  },
-  {
-    id: '4',
-    title: 'React 이해도',
-    question: '이벤트 핸들링에 대한 설명으로 올바른 것은?',
-    options: [
-      '이벤트 핸들러는 이벤트가 발생했을 때 호출되는 함수입니다.',
-      '이벤트 핸들러는 항상 이벤트의 전파를 막습니다.',
-      '이벤트 핸들러는 DOM 요소에 직접 바인딩해야 합니다.',
-      '이벤트 핸들러는 HTML 속성으로만 정의할 수 있습니다.',
-    ],
-    correctAnswer: 0,
-  },
-  {
-    id: '5',
-    title: 'React 이해도',
-    question: 'React Hook을 사용할 때 주의사항으로 올바른 것은?',
-    options: [
-      'Hook은 함수 컴포넌트의 최상위에서만 호출해야 합니다.',
-      'Hook은 클래스 컴포넌트에서도 사용할 수 있습니다.',
-      'Hook은 조건문 안에서 호출해도 문제없습니다.',
-      'Hook은 반복문 안에서 자유롭게 사용할 수 있습니다.',
-    ],
-    correctAnswer: 0,
-  },
-];
-
 const FlashcardGenerationPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { noteId } = useParams<{ noteId: string }>();
   const { notes } = useAppSelector((state) => state.note);
   const [noteTitle, setNoteTitle] = useState('플래시카드 생성');
   
+  // 이전 페이지에서 전달받은 데이터 사용
+  const receivedQuizzes: QuizItem[] = location.state?.quizzes || [];
+  const receivedNoteTitle: string = location.state?.noteTitle || '플래시카드 생성';
+  
+  // 퀴즈에 임시 ID 부여 (상태 관리용)
+  const quizzesWithId = React.useMemo(() => 
+    receivedQuizzes.map((q, index) => ({
+      ...q,
+      id: q.id || `temp-id-${index}`,
+    })), [receivedQuizzes]);
+
+  const [session, setSession] = useState<FlashcardGenerationSession>({
+    id: `session-${noteId || new Date().getTime()}`,
+    questions: quizzesWithId,
+    currentQuestionIndex: 0,
+    userAnswers: {},
+    selectedQuestions: new Set<string>(),
+    feedback: '',
+    questionFeedbacks: [],
+    isCompleted: false,
+  });
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
+
   useEffect(() => {
     if (noteId) {
       const currentNote = notes.find(note => note.noteId === noteId);
@@ -131,38 +89,50 @@ const FlashcardGenerationPage: React.FC = () => {
     }
   }, [noteId, notes]);
 
-  const [session, setSession] = useState<FlashcardGenerationSession>({
-    id: 'session-1',
-    questions: sampleQuestions,
-    currentQuestionIndex: 0,
-    userAnswers: {},
-    selectedQuestions: new Set<string>(),
-    feedback: '',
-    questionFeedbacks: [],
-    isCompleted: false, 
-  });
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
+  useEffect(() => {
+    // 퀴즈 데이터가 없으면 노트 목록 페이지로 리다이렉트
+    if (!receivedQuizzes || receivedQuizzes.length === 0) {
+      console.warn('퀴즈 데이터가 없어 노트 목록 페이지로 돌아갑니다.');
+      navigate('/note');
+    }
+  }, [receivedQuizzes, navigate]);
 
   const currentQuestion = session.questions[session.currentQuestionIndex];
   const isLastQuestion = session.currentQuestionIndex === session.questions.length - 1;
   const isFirstQuestion = session.currentQuestionIndex === 0;
   
   const selectedQuestionsCount = session.selectedQuestions.size;
-  const isCurrentQuestionSelected = session.selectedQuestions.has(currentQuestion.id);
+  const isCurrentQuestionSelected = currentQuestion && session.selectedQuestions.has(currentQuestion.id as string);
 
-  const handleAnswerSelect = (answerIndex: number) => {
-    setSelectedAnswer(answerIndex);
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
+    if (!currentQuestion?.id) return; // 방어 코드
     setSession(prev => ({
       ...prev,
       userAnswers: {
         ...prev.userAnswers,
-        [currentQuestion.id]: answerIndex,
+        [currentQuestion.id as string]: answer,
       },
     }));
   };
 
+  const handleQuestionSelect = (index: number) => {
+    setSession(prev => ({
+      ...prev,
+      currentQuestionIndex: index,
+      isCompleted: false,
+    }));
+    
+    const nextQuestionId = session.questions[index].id as string;
+    const nextAnswer = session.userAnswers[nextQuestionId];
+    const nextFeedback = session.questionFeedbacks.find(f => f.questionId === nextQuestionId)?.feedback || '';
+    
+    setSelectedAnswer(nextAnswer !== undefined ? nextAnswer : null);
+    setCurrentQuestionFeedback(nextFeedback);
+  };
+
   const handleNext = () => {
+    if (!currentQuestion?.id) return; // 방어 코드
     const nextIndex = isLastQuestion ? 0 : session.currentQuestionIndex + 1;
     setSession(prev => ({
       ...prev,
@@ -170,7 +140,7 @@ const FlashcardGenerationPage: React.FC = () => {
       isCompleted: false,
     }));
     
-    const nextQuestionId = session.questions[nextIndex].id;
+    const nextQuestionId = session.questions[nextIndex].id as string;
     const nextAnswer = session.userAnswers[nextQuestionId];
     const nextFeedback = session.questionFeedbacks.find(f => f.questionId === nextQuestionId)?.feedback || '';
     
@@ -186,7 +156,7 @@ const FlashcardGenerationPage: React.FC = () => {
       isCompleted: false,
     }));
     
-    const prevQuestionId = session.questions[prevIndex].id;
+    const prevQuestionId = session.questions[prevIndex].id as string;
     const previousAnswer = session.userAnswers[prevQuestionId];
     const previousFeedback = session.questionFeedbacks.find(f => f.questionId === prevQuestionId)?.feedback || '';
     
@@ -197,10 +167,11 @@ const FlashcardGenerationPage: React.FC = () => {
   const handleQuestionSelection = () => {
     setSession(prev => {
       const newSelectedQuestions = new Set(prev.selectedQuestions);
+      const questionId = currentQuestion.id as string;
       if (isCurrentQuestionSelected) {
-        newSelectedQuestions.delete(currentQuestion.id);
+        newSelectedQuestions.delete(questionId);
       } else {
-        newSelectedQuestions.add(currentQuestion.id);
+        newSelectedQuestions.add(questionId);
       }
       return {
         ...prev,
@@ -213,6 +184,7 @@ const FlashcardGenerationPage: React.FC = () => {
     const newFeedback = event.target.value;
     setCurrentQuestionFeedback(newFeedback);
     
+    if (!currentQuestion?.id) return; // 방어 코드
     setSession(prev => {
       const existingFeedbackIndex = prev.questionFeedbacks.findIndex(
         f => f.questionId === currentQuestion.id
@@ -222,13 +194,13 @@ const FlashcardGenerationPage: React.FC = () => {
       if (existingFeedbackIndex >= 0) {
         newQuestionFeedbacks = [...prev.questionFeedbacks];
         newQuestionFeedbacks[existingFeedbackIndex] = {
-          questionId: currentQuestion.id,
+          questionId: currentQuestion.id as string,
           feedback: newFeedback
         };
       } else {
         newQuestionFeedbacks = [
           ...prev.questionFeedbacks,
-          { questionId: currentQuestion.id, feedback: newFeedback }
+          { questionId: currentQuestion.id as string, feedback: newFeedback }
         ];
       }
       
@@ -240,7 +212,6 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const generateFlashcards = async () => {
-    // TODO: API 스펙 확인 및 수정 필요. 현재는 studyApi에 createFlashcardsFromQuiz가 없음.
     console.log("플래시카드 생성 기능은 현재 비활성화되어 있습니다.", {
       sessionId: session.id,
       answers: session.userAnswers,
@@ -248,7 +219,22 @@ const FlashcardGenerationPage: React.FC = () => {
       questionFeedbacks: session.questionFeedbacks,
     });
     alert("플래시카드 생성 기능은 현재 개발 중입니다.");
-    // navigate('/study/flashcard-decks'); // 임시로 비활성화
+    // const selectedQuizData = session.questions
+    //   .filter(q => session.selectedQuestions.has(q.id))
+    //   .map(q => ({
+    //     ...q,
+    //     userAnswer: session.userAnswers[q.id],
+    //     userFeedback: session.questionFeedbacks.find(f => f.questionId === q.id)?.feedback || ''
+    //   }));
+    
+    // try {
+    //   // TODO: API 스펙에 맞게 payload 구성
+    //   // await studyApi.createFlashcardsFromQuiz(payload);
+    //   navigate(`/study`); // 혹은 생성된 덱 상세 페이지로 이동
+    // } catch (error) {
+    //   console.error('플래시카드 생성 실패:', error);
+    //   alert('플래시카드 생성에 실패했습니다.');
+    // }
   };
 
   const handleGlobalFeedbackChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -310,7 +296,7 @@ const FlashcardGenerationPage: React.FC = () => {
         {/* 중앙 제목 */}
         <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           <Typography variant="h6" fontWeight={600} noWrap>
-            {noteTitle}
+            {receivedNoteTitle}
           </Typography>
         </Box>
       </Box>
@@ -363,7 +349,7 @@ const FlashcardGenerationPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
                     {session.questions.map((question, index) => {
-                      const isSelected = session.selectedQuestions.has(question.id);
+                      const isSelected = session.selectedQuestions.has(question.id as string);
                       const isCurrent = index === session.currentQuestionIndex;
                       
                       return (
@@ -401,92 +387,95 @@ const FlashcardGenerationPage: React.FC = () => {
                 </IconButton>
               </Box>
 
-              {/* 질문 */}
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  mb: 2, 
-                  fontWeight: 600, 
-                  lineHeight: 1.4,
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
-                  textAlign: 'center',
-                  color: 'text.primary',
-                }}
-              >
-                {currentQuestion.question}
+              {/* 현재 진행도 */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
+                {session.currentQuestionIndex + 1} / {session.questions.length}
               </Typography>
 
-              {/* 플래시카드 선택 버튼 */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: { xs: 1.5, sm: 2 } }}>
-                <Button
-                  variant={isCurrentQuestionSelected ? 'contained' : 'outlined'}
-                  onClick={handleQuestionSelection}
-                  size="small"
-                  startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
-                  sx={{ borderRadius: '20px', px: 2, textTransform: 'none', fontSize: '0.8rem' }}
+              {/* 질문 */}
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 4, textAlign: 'center' }}>
+                {currentQuestion?.question}
+              </Typography>
+
+              {/* ======================================= */}
+              {/* 퀴즈 유형별 렌더링                   */}
+              {/* ======================================= */}
+              
+              {/* MULTIPLE_CHOICE */}
+              {currentQuestion?.type === 'MULTIPLE_CHOICE' && (
+                <RadioGroup
+                  value={selectedAnswer || ''}
+                  onChange={(e) => handleAnswerSelect(e.target.value)}
+                  sx={{ mb: 3 }}
                 >
-                  {isCurrentQuestionSelected ? '선택됨' : '이 문제 선택'}
-                </Button>
-              </Box>
-
-              {/* 선택지 */}
-              <RadioGroup 
-                value={selectedAnswer?.toString() || ''} 
-                onChange={(e) => handleAnswerSelect(Number(e.target.value))}
-                sx={{ mb: 3 }}
-              >
-                {currentQuestion.options.map((option, index) => (
-                  <Paper
-                    key={index}
-                    elevation={selectedAnswer === index ? 2 : 0}
-                    sx={{
-                      mb: 1.5,
-                      border: '2px solid',
-                      borderColor: selectedAnswer === index ? 'primary.main' : 'grey.200',
-                      borderRadius: 2,
-                      bgcolor: selectedAnswer === index ? 'primary.50' : 'background.paper',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: selectedAnswer === index ? 'primary.100' : 'primary.25',
-                        transform: 'translateY(-1px)',
-                        boxShadow: 1,
-                      }
-                    }}
-                    onClick={() => handleAnswerSelect(index)}
-                  >
-                    <FormControlLabel
-                      value={index.toString()}
-                      control={
-                        <Radio 
-                          size="small"
-                          sx={{ 
-                            color: selectedAnswer === index ? 'primary.main' : 'grey.400',
-                            '&.Mui-checked': {
-                              color: 'primary.main',
-                            }
-                          }} 
-                        />
-                      }
-                      label={option}
+                  {currentQuestion.options.map((option, index) => (
+                    <Paper
+                      key={index}
+                      elevation={selectedAnswer === option ? 3 : 1}
                       sx={{
-                        m: 0,
-                        p: 1.5,
-                        width: '100%',
-                        '& .MuiFormControlLabel-label': {
-                          fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                          lineHeight: 1.4,
-                          color: selectedAnswer === index ? 'primary.main' : 'text.primary',
-                          fontWeight: selectedAnswer === index ? 500 : 400,
-                        },
+                        mb: 1.5,
+                        border: '2px solid',
+                        borderColor: selectedAnswer === option ? 'primary.main' : 'grey.200',
+                        borderRadius: 2,
+                        bgcolor: selectedAnswer === option ? 'primary.50' : 'background.paper',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: selectedAnswer === option ? 'primary.100' : 'primary.25',
+                          transform: 'translateY(-1px)',
+                          boxShadow: 2,
+                        }
                       }}
-                    />
-                  </Paper>
-                ))}
-              </RadioGroup>
+                      onClick={() => handleAnswerSelect(option)}
+                    >
+                      <FormControlLabel
+                        value={option}
+                        control={
+                          <Radio
+                            size="small"
+                            sx={{
+                              color: selectedAnswer === option ? 'primary.main' : 'grey.400',
+                              '&.Mui-checked': {
+                                color: 'primary.main',
+                              },
+                            }}
+                          />
+                        }
+                        label={
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                              lineHeight: 1.4,
+                              color: selectedAnswer === option ? 'text.primary' : 'text.secondary',
+                              fontWeight: selectedAnswer === option ? 600 : 400,
+                            }
+                          }
+                          >
+                            {option}
+                          </Typography>
+                        }
+                        sx={{ p: 1.5, pl: 2, width: '100%', m: 0 }}
+                      />
+                    </Paper>
+                  ))}
+                </RadioGroup>
+              )}
 
-              {/* 피드백 섹션 */}
+              {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
+              {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                  value={selectedAnswer || ''}
+                  onChange={(e) => handleAnswerSelect(e.target.value)}
+                  sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
+                />
+              )}
+              
+              {/* 피드백 입력란 */}
               <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                   <EditNoteIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
@@ -587,7 +576,7 @@ const FlashcardGenerationPage: React.FC = () => {
               {selectedQuestionsCount > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1.5, gap: 1, flexWrap: 'wrap' }}>
                   {session.questions.map((question, index) => {
-                    const isSelected = session.selectedQuestions.has(question.id);
+                    const isSelected = session.selectedQuestions.has(question.id as string);
                     return isSelected ? (
                       <Chip
                         key={index}
@@ -652,7 +641,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       {session.questions.map((question, index) => {
-                        const isSelected = session.selectedQuestions.has(question.id);
+                        const isSelected = session.selectedQuestions.has(question.id as string);
                         const isCurrent = index === session.currentQuestionIndex;
                         
                         return (
@@ -691,91 +680,93 @@ const FlashcardGenerationPage: React.FC = () => {
                   </IconButton>
                 </Box>
 
-                {/* 질문 */}
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    mb: 4, 
-                    fontWeight: 600, 
-                    lineHeight: 1.4,
-                    textAlign: 'center',
-                    color: 'text.primary',
-                  }}
-                >
-                  {currentQuestion.question}
+                {/* 현재 진행도 */}
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
+                  {session.currentQuestionIndex + 1} / {session.questions.length}
                 </Typography>
 
-                {/* 플래시카드 선택 버튼 */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: 4 }}>
-                  <Button
-                    variant={isCurrentQuestionSelected ? 'contained' : 'outlined'}
-                    size="large"
-                    onClick={handleQuestionSelection}
-                    startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
-                    sx={{ borderRadius: '20px', px: 4, py: 1, textTransform: 'none' }}
-                  >
-                    {isCurrentQuestionSelected ? '선택됨' : '이 문제 선택'}
-                  </Button>
-                </Box>
+                {/* 질문 */}
+                <Typography variant="h5" fontWeight={600} sx={{ mb: 4, textAlign: 'center' }}>
+                  {currentQuestion?.question}
+                </Typography>
 
-                {/* 선택지 - 스크롤 가능 */}
-                <Box sx={{ flex: 1, overflow: 'auto', pr: 2 }}>
-                  <RadioGroup 
-                    value={selectedAnswer?.toString() || ''} 
-                    onChange={(e) => handleAnswerSelect(Number(e.target.value))}
+                {/* ======================================= */}
+                {/* 퀴즈 유형별 렌더링                   */}
+                {/* ======================================= */}
+                
+                {/* MULTIPLE_CHOICE */}
+                {currentQuestion?.type === 'MULTIPLE_CHOICE' && (
+                  <RadioGroup
+                    value={selectedAnswer || ''}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    sx={{ mb: 3 }}
                   >
-                    <Stack spacing={2}>
-                      {currentQuestion.options.map((option, index) => (
-                        <Paper
-                          key={index}
-                          elevation={selectedAnswer === index ? 3 : 1}
-                          sx={{
-                            border: '3px solid',
-                            borderColor: selectedAnswer === index ? 'primary.main' : 'grey.200',
-                            borderRadius: 3,
-                            bgcolor: selectedAnswer === index ? 'primary.50' : 'background.paper',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              borderColor: 'primary.main',
-                              bgcolor: selectedAnswer === index ? 'primary.100' : 'primary.25',
-                              transform: 'translateY(-2px)',
-                              boxShadow: 4,
+                    {currentQuestion.options.map((option, index) => (
+                      <Paper
+                        key={index}
+                        elevation={selectedAnswer === option ? 3 : 1}
+                        sx={{
+                          mb: 1.5,
+                          border: '2px solid',
+                          borderColor: selectedAnswer === option ? 'primary.main' : 'grey.200',
+                          borderRadius: 2,
+                          bgcolor: selectedAnswer === option ? 'primary.50' : 'background.paper',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            bgcolor: selectedAnswer === option ? 'primary.100' : 'primary.25',
+                            transform: 'translateY(-1px)',
+                            boxShadow: 2,
+                          }
+                        }}
+                        onClick={() => handleAnswerSelect(option)}
+                      >
+                        <FormControlLabel
+                          value={option}
+                          control={
+                            <Radio
+                              size="small"
+                              sx={{
+                                color: selectedAnswer === option ? 'primary.main' : 'grey.400',
+                                '&.Mui-checked': {
+                                  color: 'primary.main',
+                                },
+                              }}
+                            />
+                          }
+                          label={
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                                lineHeight: 1.4,
+                                color: selectedAnswer === option ? 'text.primary' : 'text.secondary',
+                                fontWeight: selectedAnswer === option ? 600 : 400,
+                              }
                             }
-                          }}
-                          onClick={() => handleAnswerSelect(index)}
-                        >
-                          <FormControlLabel
-                            value={index.toString()}
-                            control={
-                              <Radio 
-                                size="medium"
-                                sx={{ 
-                                  color: selectedAnswer === index ? 'primary.main' : 'grey.400',
-                                  '&.Mui-checked': {
-                                    color: 'primary.main',
-                                  }
-                                }} 
-                              />
-                            }
-                            label={option}
-                            sx={{
-                              m: 0,
-                              p: 3,
-                              width: '100%',
-                              '& .MuiFormControlLabel-label': {
-                                fontSize: '1.1rem',
-                                lineHeight: 1.5,
-                                color: selectedAnswer === index ? 'primary.main' : 'text.primary',
-                                fontWeight: selectedAnswer === index ? 600 : 400,
-                              },
-                            }}
-                          />
-                        </Paper>
-                      ))}
-                    </Stack>
+                            >
+                              {option}
+                            </Typography>
+                          }
+                          sx={{ p: 1.5, pl: 2, width: '100%', m: 0 }}
+                        />
+                      </Paper>
+                    ))}
                   </RadioGroup>
-                </Box>
+                )}
+
+                {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
+                {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                    value={selectedAnswer || ''}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
+                  />
+                )}
               </Box>
 
               {/* 오른쪽 컬럼: 피드백 및 생성 버튼 */}
@@ -900,7 +891,7 @@ const FlashcardGenerationPage: React.FC = () => {
                       flexWrap: 'wrap' 
                     }}>
                       {session.questions.map((question, index) => {
-                        const isSelected = session.selectedQuestions.has(question.id);
+                        const isSelected = session.selectedQuestions.has(question.id as string);
                         return isSelected ? (
                           <Chip
                             key={index}
