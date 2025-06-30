@@ -139,8 +139,6 @@ const FlashcardPracticePage: React.FC = () => {
     }
   }, [dispatch, deckId]);
 
-
-
   // 🎯 Redux와 Fallback 카드를 합치기
   const combinedCards = useMemo(() => {
     const cardMap = new Map<number, Card>();
@@ -186,64 +184,42 @@ const FlashcardPracticePage: React.FC = () => {
   const handlePrevious = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1);
-      setShowAnswer(false);
-      setSelectedDifficulty(null);
+    } else {
+      // 첫 번째 카드에서 이전 버튼 클릭 시 마지막 카드로 이동
+      setCurrentCardIndex(flashcards.length - 1);
     }
   };
 
   const handleNext = () => {
     if (currentCardIndex < flashcards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
-      setShowAnswer(false);
-      setSelectedDifficulty(null);
     } else {
       setShowCompletionDialog(true);
     }
   };
 
-  const handleCompletionConfirm = () => {
-    try {
-      setShowCompletionDialog(false);
-      
-      // 학습 완료 토스트 알림
-      dispatch(showToast({
-        message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
-        severity: 'success',
-        duration: 4000
-      }));
-      
-      // 상태 초기화
-      setCurrentCardIndex(0);
-      setShowAnswer(false);
-      setSelectedDifficulty(null);
-      setCurrentQuestionFeedback('');
-      setGlobalFeedback('');
-      setIsFeedbackOpen(false);
-      
-      console.log('학습 완료 - 덱 목록으로 이동');
-      navigate('/study');
-    } catch (error) {
-      console.error('학습 완료 처리 중 오류:', error);
-      // 에러 토스트
-      dispatch(showToast({
-        message: '학습 완료 처리 중 오류가 발생했습니다.',
-        severity: 'error'
-      }));
-      // 에러가 발생해도 기본 동작은 수행
-      navigate('/study');
-    }  };
-
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
+    // 계속 학습 시 첫 번째 카드로 이동
+    setCurrentCardIndex(0);
     
-    // 계속 학습 토스트 알림
     dispatch(showToast({
       message: '학습을 계속 진행합니다!',
       severity: 'info',
       duration: 2000
     }));
+  };
+
+  const handleCompletionConfirm = () => {
+    setShowCompletionDialog(false);
     
-    console.log('학습 계속 진행');
+    dispatch(showToast({
+      message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
+      severity: 'success',
+      duration: 4000
+    }));
+    
+    navigate('/study');
   };
 
   // 🎯 플래시카드 네비게이션 키보드 단축키
@@ -255,15 +231,21 @@ const FlashcardPracticePage: React.FC = () => {
       isActive: () => !showCompletionDialog && !isFeedbackOpen
     }
   );
-  
-  // 🎯 학습 완료 다이얼로그 키보드 단축키
-  useDialogKeyboardShortcuts(
-    handleCompletionConfirm,
-    handleCompletionCancel,
-    {
-      enabled: showCompletionDialog
+
+  // 학습 완료 다이얼로그의 버튼별 키보드 이벤트 핸들러
+  const handleContinueKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCompletionCancel();
     }
-  );
+  };
+
+  const handleFinishKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCompletionConfirm();
+    }
+  };
 
   const getDifficultyButtonStyle = (difficulty: Difficulty) => {
     const isSelected = selectedDifficulty === difficulty;
@@ -289,6 +271,14 @@ const FlashcardPracticePage: React.FC = () => {
       default:
         return {};
     }
+  };
+
+  const handleDeckLoad = (deck: { deckId: string; deckName: string }) => {
+    // ... existing code ...
+  };
+
+  const handleCardUpdate = (card: Card) => {
+    // ... existing code ...
   };
 
   return (
@@ -390,8 +380,6 @@ const FlashcardPracticePage: React.FC = () => {
             </Box>
           </FlashcardCard>
 
-
-
           {/* 네비게이션: 이전/다음 버튼만 (미니멀리즘 적용) */}
           <Box
             sx={{
@@ -406,30 +394,23 @@ const FlashcardPracticePage: React.FC = () => {
           >
             {/* 이전 버튼 */}
             <Tooltip title="← 방향키: 이전 카드" arrow placement="top">
-              <span>
-                <IconButton
-                  onClick={handlePrevious}
-                  disabled={currentCardIndex === 0}
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' },
-                    '&:disabled': {
-                      bgcolor: 'grey.300',
-                      color: 'grey.500',
-                    },
-                    boxShadow: 1,
-                  }}
-                >
-                  <ArrowBackIcon />
-                </IconButton>
-              </span>
+              <IconButton
+                onClick={handlePrevious}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  boxShadow: 1,
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
             </Tooltip>
 
             {/* 중앙: 진행률 표시 */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box>
               {/* 진행률 숫자 */}
               <Typography
                 variant="body2"
@@ -439,25 +420,6 @@ const FlashcardPracticePage: React.FC = () => {
               >
                 {currentCardIndex + 1}/{flashcards.length}
               </Typography>
-              
-              {/* 동그라미 인디케이터 - 페이지네이션 필요 없어서 일단 주석처리 */}
-              {/* {flashcards.length <= 10 && (
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {flashcards.map((_, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        bgcolor: idx === currentCardIndex ? 'primary.main' : 'grey.300',
-                        boxShadow: idx === currentCardIndex ? 1 : 0,
-                        transition: 'all 0.2s',
-                      }}
-                    />
-                  ))}
-                </Box>
-              )} */}
             </Box>
 
             {/* 다음 버튼 */}
@@ -470,10 +432,6 @@ const FlashcardPracticePage: React.FC = () => {
                   bgcolor: 'primary.main',
                   color: 'white',
                   '&:hover': { bgcolor: 'primary.dark' },
-                  '&:disabled': {
-                    bgcolor: 'grey.300',
-                    color: 'grey.500',
-                  },
                   boxShadow: 1,
                 }}
               >
@@ -601,18 +559,30 @@ const FlashcardPracticePage: React.FC = () => {
       )}
 
       {/* 학습 완료 다이얼로그 */}
-      <Dialog open={showCompletionDialog} onClose={handleCompletionCancel}>
-        <DialogTitle>
-          학습 완료
-        </DialogTitle>
+      <Dialog
+        open={showCompletionDialog}
+        onClose={handleCompletionCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>학습 완료</DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
-            학습이 완료되었습니다. 덱 목록으로 이동하시겠습니까?
+          <Typography>
+            마지막 카드입니다. 계속 학습하시겠습니까?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCompletionCancel}>계속 학습</Button>
-          <Button onClick={handleCompletionConfirm} variant="contained">
+          <Button
+            onClick={handleCompletionCancel}
+            onKeyDown={handleContinueKeyDown}
+            autoFocus
+          >
+            계속 학습
+          </Button>
+          <Button
+            onClick={handleCompletionConfirm}
+            onKeyDown={handleFinishKeyDown}
+          >
             덱 목록으로
           </Button>
         </DialogActions>
