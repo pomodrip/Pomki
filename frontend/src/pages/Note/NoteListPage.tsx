@@ -115,11 +115,18 @@ const ActionBox = styled(Box)(({ theme }) => ({
   paddingLeft: theme.spacing(0.5),
   paddingRight: theme.spacing(0.5),
   '& .MuiButton-root': {
-    flex: 1, // 버튼들이 균등하게 공간 차지
+    flex: 1,
     whiteSpace: 'nowrap',
     minWidth: 'auto',
-    padding: theme.spacing(1, 1.5), // 위아래 패딩 추가
-    fontSize: '0.75rem', // 폰트 크기 설정
+    padding: theme.spacing(0.5, 1),
+    fontSize: '0.8rem',
+    '&.MuiButton-containedPrimary': {
+      color: theme.palette.common.white,
+    },
+    '&.MuiButton-outlinedError': {
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+    },
   },
 }));
 
@@ -516,7 +523,14 @@ const NoteListPage: React.FC = () => {
               {/* 액션 버튼들 */}
               <ActionBox>
                 <Button variant="outlined" startIcon={<EditIcon />} onClick={(e) => handleEditNote(note.noteId, e)}>수정</Button>
-                <Button variant="outlined" startIcon={<DeleteIcon />} onClick={(e) => handleDeleteNote(note.noteId, e)}>삭제</Button>
+                <Button 
+                  variant="outlined"
+                  startIcon={<DeleteIcon />}
+                  onClick={(e) => handleDeleteNote(note.noteId, e)}
+                  color="error"
+                >
+                  삭제
+                </Button>
                 <Button
                   variant="contained"
                   color="primary"
