@@ -28,14 +28,14 @@ public class CardTagController {
     }
 
     @PostMapping
-    public ResponseEntity<CardTagResponseDto> createCardTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody CardTagRequestDto request) {
-        CardTagResponseDto response = service.createCardTagService(principal, request);
+    public ResponseEntity<List<CardTagResponseDto>> createCardTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody CardTagRequestDto request) {
+        List<CardTagResponseDto> response = service.createCardTagService(principal, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteCardTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody CardTagRequestDto request) {
-        service.deleteCardTagService(principal, request);
+    public ResponseEntity<Void> deleteCardTag(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("cardId") Long cardId, @RequestParam("tagName") String tagName) {
+        service.deleteCardTagService(principal, cardId, tagName);
         return ResponseEntity.noContent().build();
     }
 

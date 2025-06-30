@@ -19,4 +19,7 @@ public interface CardTagRepository extends JpaRepository<CardTag, CardTagId> {
     List<CardTag> findByMemberIdAndTagName(Long memberId, String tagName);
 
     List<CardTag> findAllCardIdByMemberIdAndTagName(Long memberId, String tagName);
+
+    
+    List<CardTag> findByCard_CardId(Long cardId);
 } 

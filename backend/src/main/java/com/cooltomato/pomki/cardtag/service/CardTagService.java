@@ -2,8 +2,10 @@ package com.cooltomato.pomki.cardtag.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
@@ -18,11 +20,9 @@ import com.cooltomato.pomki.tag.entity.Tag;
 import com.cooltomato.pomki.tag.entity.TagId;
 import com.cooltomato.pomki.tag.repository.TagRepository;
 
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Builder
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -42,56 +42,67 @@ public class CardTagService {
                 .collect(Collectors.toList());
     }
 
-    public CardTagResponseDto createCardTagService(PrincipalMember principal, CardTagRequestDto request) {
+    public List<CardTagResponseDto> createCardTagService(PrincipalMember principal, CardTagRequestDto request) {
         log.info("debug >>> 카드에 태그 추가 시작");
         Card card = cardRepository.findById(request.getCardId())
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getCardId()));
         if (!card.getDeck().getMemberId().equals(principal.getMemberId())) {
-            throw new RuntimeException("Card does not belong to the current member");
+            throw new RuntimeException("사용자의 카드가 아닙니다.");
         }
-        CardTag entity = CardTag.builder()
-                .cardId(request.getCardId())
-                .memberId(principal.getMemberId())
-                .tagName(request.getTagName())
-                .card(card)
-                .build();
-        if (!cardTagRepository.findById(CardTagId.builder()
-                .cardId(request.getCardId())
-                .memberId(principal.getMemberId())
-                .tagName(request.getTagName())
-                .build()).isPresent()) {
-            cardTagRepository.save(entity);
-            log.info("debug >>> 카드에 태그 추가 완료");
-        }
-        if (!tagRepository.findById(TagId.builder()
-                .tagName(request.getTagName())
-                .memberId(principal.getMemberId())
-                .build()).isPresent()) {
-            tagRepository.save(Tag.builder()
-                    .tagName(request.getTagName())
+
+        List<CardTagResponseDto> createdTags = new ArrayList<>();
+
+        // 리스트로 입력한 태그 하나하나를 카드태그로 저장
+        for (String tagName : request.getTagNames()) {
+            CardTag entity = CardTag.builder()
+                    .cardId(request.getCardId())
                     .memberId(principal.getMemberId())
-                    .build());
-            log.info("debug >>> Tag에 추가 완료");
+                    .tagName(tagName)
+                    .card(card)
+                    .build();
+
+            if (!cardTagRepository.findById(CardTagId.builder()
+                    .cardId(request.getCardId())
+                    .memberId(principal.getMemberId())
+                    .tagName(tagName)
+                    .build()).isPresent()) {
+                cardTagRepository.save(entity);
+                log.info("debug >>> 카드에 태그 추가 완료: " + tagName);
+                
+                createdTags.add(CardTagResponseDto.builder()
+                        .cardId(request.getCardId())
+                        .memberId(principal.getMemberId())
+                        .tagName(tagName)
+                        .build());
+            }
+            
+            if (!tagRepository.findById(TagId.builder()
+                    .tagName(tagName)
+                    .memberId(principal.getMemberId())
+                    .build()).isPresent()) {
+                tagRepository.save(Tag.builder()
+                        .tagName(tagName)
+                        .memberId(principal.getMemberId())
+                        .build());
+                log.info("debug >>> Tag에 추가 완료: " + tagName);
+            }
         }
-        return CardTagResponseDto.builder()
-                .cardId(request.getCardId())
-                .memberId(principal.getMemberId())
-                .tagName(request.getTagName())
-                .build();
+        
+        return createdTags;
     }
 
-    public void deleteCardTagService(PrincipalMember principal, CardTagRequestDto request) {
+    public void deleteCardTagService(PrincipalMember principal, @RequestParam("cardId") Long cardId, @RequestParam("tagName") String tagName) {
         CardTagId cardTagIdEntity = CardTagId.builder()
-                .cardId(request.getCardId())
+                .cardId(cardId)
                 .memberId(principal.getMemberId())
-                .tagName(request.getTagName())
+                .tagName(tagName)
                 .build();
         cardTagRepository.deleteById(cardTagIdEntity);
         Long remainingCardTagCount = cardTagRepository.countByTagNameAndMemberId(
-                request.getTagName(), principal.getMemberId());
+                tagName, principal.getMemberId());
         if (remainingCardTagCount == 0) {
             TagId tagIdEntity = TagId.builder()
-                    .tagName(request.getTagName())
+                    .tagName(tagName)
                     .memberId(principal.getMemberId())
                     .build();
             tagRepository.deleteById(tagIdEntity);
@@ -105,7 +116,15 @@ public class CardTagService {
                 .map(CardTag::getCardId)
                 .collect(Collectors.toList()));
         return cardsWithTagName.stream()
-                .map(CardResponseDto::from)
+                .map(card -> CardResponseDto.builder()
+                        .cardId(card.getCardId())
+                        .deckId(card.getDeck().getDeckId())
+                        .deckName(card.getDeck().getDeckName())
+                        .content(card.getContent())
+                        .answer(card.getAnswer())
+                        .createdAt(card.getCreatedAt())
+                        .updatedAt(card.getUpdatedAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 }

@@ -45,13 +45,6 @@ public class NoteTagController {
         return ResponseEntity.noContent().build();
     }
 
-    // // 특정 노트에 대한 태그 선택시 원본 노트 조회
-    // @GetMapping("/{noteId}")
-    // public ResponseEntity<NoteResponseDto> readNoteByNoteTag(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String noteId) {
-    //     NoteResponseDto response = service.readNoteByNoteTagService(principal, noteId) ;
-    //     return ResponseEntity.ok(response) ;
-    // }
-
     // 특정 태그 선택시 태그에 해당하는 모든 노트 조회
     @GetMapping("/{tagName}")
     public ResponseEntity<List<NoteResponseDto>> readNoteByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String tagName) {

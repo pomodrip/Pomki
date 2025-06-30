@@ -8,12 +8,17 @@ import com.cooltomato.pomki.deck.dto.DeckResponseDto;
 import com.cooltomato.pomki.deck.entity.Deck;
 import com.cooltomato.pomki.deck.repository.DeckRepository;
 import com.cooltomato.pomki.card.repository.CardRepository;
+import com.cooltomato.pomki.cardtag.entity.CardTag;
+import com.cooltomato.pomki.cardtag.repository.CardTagRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +31,7 @@ public class DeckService {
 
         private final DeckRepository deckRepository;
         private final CardRepository cardRepository;
+        private final CardTagRepository cardTagRepository;
     
         @Transactional
         public DeckResponseDto createOneDeckService(Long memberId, DeckRequestDto request) {
@@ -98,15 +104,27 @@ public class DeckService {
             }
             log.info("debug >>> 덱 안 카드 전체 조회 성공");
             
-            return cards.stream().map(card -> CardResponseDto.builder()
-                    .cardId(card.getCardId())
-                    .deckId(card.getDeck().getDeckId())
-                    .deckName(card.getDeck().getDeckName())
-                    .content(card.getContent())
-                    .answer(card.getAnswer())
-                    .createdAt(card.getCreatedAt())
-                    .updatedAt(card.getUpdatedAt())
-                    .build()).toList();
+            List<CardResponseDto> result = new ArrayList<>();
+            for (Card card : cards) {
+                List<CardTag> cardTags = cardTagRepository.findByCard_CardId(card.getCardId());
+                List<String> tags = cardTags.stream()
+                        .map(CardTag::getTagName)
+                        .collect(Collectors.toList());
+
+                CardResponseDto dto = CardResponseDto.builder()
+                        .cardId(card.getCardId())
+                        .deckId(card.getDeck().getDeckId())
+                        .deckName(card.getDeck().getDeckName())
+                        .content(card.getContent())
+                        .answer(card.getAnswer())
+                        .createdAt(card.getCreatedAt())
+                        .updatedAt(card.getUpdatedAt())
+                        .tags(tags)
+                        .build();
+                result.add(dto);
+            }
+            return result;
+            
         }
 
         @Transactional
@@ -143,10 +161,18 @@ public class DeckService {
             if (!cards.isEmpty()) {
                 cards.forEach(card -> card.setIsDeleted(true));
                 cardRepository.saveAll(cards);
+                log.info("debug >>> 덱 안 카드 삭제 성공");
             }
 
-            log.info("debug >>> 덱 안 카드 삭제 성공");
+            for(Card card:cards) {
+                List<CardTag> cardTags = cardTagRepository.findByCard_CardId(card.getCardId());
+                cardTags.forEach(cardTag -> cardTagRepository.delete(cardTag));
+                log.info("debug >>> 덱 안 카드 태그 삭제 성공");
+            }
 
+            log.info("debug >>> 덱 안 카드 태그 삭제 성공");
+
+            
             
         }
 
@@ -170,15 +196,27 @@ public class DeckService {
                 log.info("debug >>> 검색어에 해당하는 카드가 존재하지 않습니다.");
             }
 
-            return filteredCards.stream().map(card -> CardResponseDto.builder()
-                    .cardId(card.getCardId())
-                    .content(card.getContent())
-                    .answer(card.getAnswer())
-                    .createdAt(card.getCreatedAt())
-                    .updatedAt(card.getUpdatedAt())
-                    .deckId(card.getDeck().getDeckId())
-                    .deckName(card.getDeck().getDeckName())
-                    .build()).toList();
+            List<CardResponseDto> result = new ArrayList<>();
+            for (Card card : filteredCards) {
+                List<CardTag> cardTags = cardTagRepository.findByCard_CardId(card.getCardId());
+                List<String> tags = cardTags.stream()
+                        .map(CardTag::getTagName)
+                        .collect(Collectors.toList());
+            
+            CardResponseDto dto = CardResponseDto.builder()
+                        .cardId(card.getCardId())
+                        .content(card.getContent())
+                        .answer(card.getAnswer())
+                        .createdAt(card.getCreatedAt())
+                        .updatedAt(card.getUpdatedAt())
+                        .deckId(card.getDeck().getDeckId())
+                        .deckName(card.getDeck().getDeckName())
+                        .tags(tags)
+                        .build();
+                result.add(dto);
+            }
+            return result;
+
         }
 
         // 덱 이름 수정
