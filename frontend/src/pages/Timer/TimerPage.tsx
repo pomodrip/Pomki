@@ -1610,9 +1610,28 @@ const TimerPage: React.FC = () => {
       <Modal
         open={showSettings}
         onClose={handleCancelSettings}
-        title="타이머 설정"
+        title=""
         actions={settingsActions}
       >
+        {/* 커스텀 제목 헤더 */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'baseline', 
+          gap: '8px', 
+          marginBottom: '16px'
+        }}>
+          <Text sx={{ fontSize: '1.25rem', fontWeight: 600 }}>
+            타이머 설정
+          </Text>
+          <Text sx={{ 
+            fontSize: '0.75rem', 
+            fontWeight: 400, 
+            color: '#6B7280'
+          }}>
+            (휠 또는 터치로 조정 가능)
+          </Text>
+        </Box>
+        
         <SettingsContainer>
           <SettingsRow>
             <WheelTimeAdjuster
