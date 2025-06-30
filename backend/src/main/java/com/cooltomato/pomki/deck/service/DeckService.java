@@ -91,7 +91,7 @@ public class DeckService {
                 throw new IllegalArgumentException("삭제된 덱입니다.");
             }
 
-            List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deckId);
+            List<Card> cards = cardRepository.findByDeckDeckIdAndIsDeletedFalse(deck.get().getDeckId());
 
             if (cards.isEmpty()) {
                 log.info("debug >>> 카드가 존재하지 않습니다.");
@@ -101,6 +101,7 @@ public class DeckService {
             return cards.stream().map(card -> CardResponseDto.builder()
                     .cardId(card.getCardId())
                     .deckId(card.getDeck().getDeckId())
+                    .deckName(card.getDeck().getDeckName())
                     .content(card.getContent())
                     .answer(card.getAnswer())
                     .createdAt(card.getCreatedAt())
@@ -176,6 +177,7 @@ public class DeckService {
                     .createdAt(card.getCreatedAt())
                     .updatedAt(card.getUpdatedAt())
                     .deckId(card.getDeck().getDeckId())
+                    .deckName(card.getDeck().getDeckName())
                     .build()).toList();
         }
 
