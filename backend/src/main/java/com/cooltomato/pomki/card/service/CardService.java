@@ -74,6 +74,8 @@ public class CardService {
                                 .createdAt(aCard.getCreatedAt())
                                 .updatedAt(aCard.getUpdatedAt())
                                 .isDeleted(aCard.getIsDeleted())
+                                .deckId(aCard.getDeck().getDeckId())
+                                .deckName(aCard.getDeck().getDeckName())
                                 .build() ;
             }
             
@@ -104,6 +106,8 @@ public class CardService {
                                     .createdAt(aCardOp.get().getCreatedAt())
                                     .updatedAt(aCardOp.get().getUpdatedAt())
                                     .isDeleted(aCardOp.get().getIsDeleted())
+                                    .deckId(aCardOp.get().getDeck().getDeckId())
+                                    .deckName(aCardOp.get().getDeck().getDeckName())
                                     .build() ;
             
         }
@@ -140,6 +144,8 @@ public class CardService {
                                     .createdAt(aCardOp.get().getCreatedAt())
                                     .updatedAt(aCardOp.get().getUpdatedAt())
                                     .isDeleted(aCardOp.get().getIsDeleted())
+                                    .deckId(aCardOp.get().getDeck().getDeckId())
+                                    .deckName(aCardOp.get().getDeck().getDeckName())
                                     .build() ;
 
         }
@@ -151,7 +157,7 @@ public class CardService {
 
     @Transactional(readOnly = true)
     public List<CardResponseDto> searchCardsByKeywordService(PrincipalMember principal, String keyword) {
-        List<Card> cards = cardRepository.findByDeck_MemberIdAndContentContainingIgnoreCaseOrDeck_MemberIdAndAnswerContainingIgnoreCaseAndIsDeletedFalse(
+        List<Card> cards = cardRepository.findByDeck_MemberIdAndIsDeletedFalseAndContentContainingIgnoreCaseOrDeck_MemberIdAndIsDeletedFalseAndAnswerContainingIgnoreCase(
             principal.getMemberId(), keyword, principal.getMemberId(), keyword);
         
         if (cards.isEmpty()) {
@@ -163,6 +169,7 @@ public class CardService {
                 .content(card.getContent())
                 .answer(card.getAnswer())
                 .deckId(card.getDeck().getDeckId())
+                .deckName(card.getDeck().getDeckName())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .isDeleted(card.getIsDeleted())
