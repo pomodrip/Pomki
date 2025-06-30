@@ -13,6 +13,7 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowForward,
@@ -26,6 +27,10 @@ import {
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/useRedux';
 import type { QuizItem } from '../../types/quiz';
+import * as cardApi from '../../api/cardApi';
+import type { CardDeck } from '../../types/card';
+import DeckSelectionDialog from '../../components/deck/DeckSelectionDialog';
+import { useSnackbar } from '../../hooks/useSnackbar';
 // import * as studyApi from '../../api/studyApi';
 
 // ======================================================================
@@ -55,6 +60,9 @@ const FlashcardGenerationPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const { notes } = useAppSelector((state) => state.note);
   const [noteTitle, setNoteTitle] = useState('플래시카드 생성');
+  
+  const [isDeckDialogOpen, setDeckDialogOpen] = useState(false);
+  const showSnackbar = useSnackbar();
   
   // 이전 페이지에서 전달받은 데이터 사용
   const receivedQuizzes: QuizItem[] = location.state?.quizzes || [];
@@ -212,29 +220,47 @@ const FlashcardGenerationPage: React.FC = () => {
   };
 
   const generateFlashcards = async () => {
-    console.log("플래시카드 생성 기능은 현재 비활성화되어 있습니다.", {
-      sessionId: session.id,
-      answers: session.userAnswers,
-      globalFeedback: session.feedback,
-      questionFeedbacks: session.questionFeedbacks,
-    });
-    alert("플래시카드 생성 기능은 현재 개발 중입니다.");
-    // const selectedQuizData = session.questions
-    //   .filter(q => session.selectedQuestions.has(q.id))
-    //   .map(q => ({
-    //     ...q,
-    //     userAnswer: session.userAnswers[q.id],
-    //     userFeedback: session.questionFeedbacks.find(f => f.questionId === q.id)?.feedback || ''
-    //   }));
-    
-    // try {
-    //   // TODO: API 스펙에 맞게 payload 구성
-    //   // await studyApi.createFlashcardsFromQuiz(payload);
-    //   navigate(`/study`); // 혹은 생성된 덱 상세 페이지로 이동
-    // } catch (error) {
-    //   console.error('플래시카드 생성 실패:', error);
-    //   alert('플래시카드 생성에 실패했습니다.');
-    // }
+    if (session.selectedQuestions.size === 0) {
+      showSnackbar('플래시카드로 만들 문제를 선택해주세요.', 'warning');
+      return;
+    }
+    setDeckDialogOpen(true);
+  };
+
+  const handleDeckSelected = async (deck: CardDeck) => {
+    setDeckDialogOpen(false);
+
+    const selectedQuizData = session.questions
+      .filter(q => session.selectedQuestions.has(q.id as string))
+      .map(q => ({
+        content: q.question,
+        answer: q.answer,
+      }));
+
+    if (selectedQuizData.length === 0) {
+      showSnackbar('선택된 문제가 없습니다.', 'warning');
+      return;
+    }
+
+    try {
+      // Promise.all을 사용하여 여러 카드를 병렬로 생성
+      await Promise.all(
+        selectedQuizData.map(cardData =>
+          cardApi.createCard(deck.deckId, {
+            deckId: deck.deckId,
+            ...cardData,
+          })
+        )
+      );
+      
+      showSnackbar(`${deck.deckName} 덱에 ${selectedQuizData.length}개의 카드가 생성되었습니다.`, 'success');
+      // TODO: 생성된 덱 상세 페이지로 이동할 지 결정
+      // navigate(`/study/deck/${deck.deckId}`);
+      navigate('/study');
+    } catch (error) {
+      console.error('플래시카드 생성 실패:', error);
+      showSnackbar('플래시카드 생성에 실패했습니다.', 'error');
+    }
   };
 
   const handleGlobalFeedbackChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,12 +274,13 @@ const FlashcardGenerationPage: React.FC = () => {
     navigate(-1);
   };
 
-  React.useEffect(() => {
-    const currentFeedback = session.questionFeedbacks.find(
-      f => f.questionId === currentQuestion.id
-    )?.feedback || '';
+  useEffect(() => {
+    const currentFeedback =
+      session.questionFeedbacks.find(
+        (f) => f.questionId === (currentQuestion?.id ?? '')
+      )?.feedback || '';
     setCurrentQuestionFeedback(currentFeedback);
-  }, [session.currentQuestionIndex, session.questionFeedbacks, currentQuestion.id]);
+  }, [session.currentQuestionIndex, session.questionFeedbacks, currentQuestion?.id]);
 
   return (
     <Box 
@@ -948,6 +975,12 @@ const FlashcardGenerationPage: React.FC = () => {
           </Box>
         )}
       </Box>
+
+      <DeckSelectionDialog
+        open={isDeckDialogOpen}
+        onClose={() => setDeckDialogOpen(false)}
+        onDeckSelected={handleDeckSelected}
+      />
     </Box>
   );
 };
