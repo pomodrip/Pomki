@@ -27,7 +27,7 @@ interface UiState {
   sidebarOpen: boolean;
   theme: 'light' | 'dark';
   layout: 'compact' | 'comfortable';
-  notifications: boolean;
+  notifications: boolean; 
   language: 'ko' | 'en';
 // 포모도로 타이머, 집중 세션 관리
 interface TimerState {
