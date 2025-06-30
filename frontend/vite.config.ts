@@ -56,6 +56,9 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['react-quill'],
+  },
   server: {
     proxy: {
       '/api': {

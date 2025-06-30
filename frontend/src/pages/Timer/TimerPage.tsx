@@ -18,9 +18,8 @@ import CompressIcon from '@mui/icons-material/CloseFullscreen';
 // import RestartAltIcon from '@mui/icons-material/RestartAlt';
 // import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-// 임시로 React-Quill 주석처리
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
 // import theme from '../../theme/theme';
@@ -259,36 +258,83 @@ const NotesTitle = styled(Text)(() => ({
   color: '#1A1A1A',
 }));
 
-const NotesTextArea = styled('textarea')<{ 
+const QuillEditor = styled(ReactQuill)<{ 
   expanded: boolean; 
   disabled?: boolean; 
   animate?: boolean 
 }>(({ expanded, disabled, animate }) => ({
   width: '100%',
-  minHeight: expanded ? '60vh' : '120px',
-  padding: '16px',
-  border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
-  borderRadius: '8px',
-  fontSize: '14px',
-  fontFamily: "'Pretendard', sans-serif",
-  color: disabled ? '#9CA3AF' : '#1A1A1A',
-  backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
-  resize: 'vertical',
-  outline: 'none',
-  transition: 'all 0.3s ease, box-shadow 0.6s ease',
   flex: expanded ? 1 : 'none',
-  cursor: disabled ? 'not-allowed' : 'text',
-  boxShadow: animate ? '0 0 0 4px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
+  transition: 'all 0.3s ease, box-shadow 0.6s ease',
   transform: animate ? 'translateY(-2px)' : 'translateY(0)',
   
-  '&:focus': {
-    borderColor: disabled ? '#E5E7EB' : '#2563EB',
-    boxShadow: disabled ? 'none' : '0 0 0 3px rgba(37, 99, 235, 0.1)',
+  '& .ql-container': {
+    minHeight: expanded ? '60vh' : '120px',
+    border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
+    borderRadius: '0 0 8px 8px',
+    fontFamily: "'Pretendard', sans-serif",
+    fontSize: '14px',
+    color: disabled ? '#9CA3AF' : '#1A1A1A',
+    backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
+    cursor: disabled ? 'not-allowed' : 'text',
+    boxShadow: animate ? '0 0 0 4px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
   },
   
-  '&::placeholder': {
-    color: disabled ? '#D1D5DB' : '#9CA3AF',
-    fontStyle: disabled ? 'italic' : 'normal',
+  '& .ql-toolbar': {
+    border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
+    borderRadius: '8px 8px 0 0',
+    backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
+    borderBottom: 'none',
+  },
+  
+  '& .ql-editor': {
+    padding: '16px',
+    minHeight: expanded ? 'calc(60vh - 42px)' : '88px',
+    
+    '&.ql-blank::before': {
+      color: disabled ? '#D1D5DB' : '#9CA3AF',
+      fontStyle: disabled ? 'italic' : 'normal',
+    },
+  },
+  
+  '& .ql-toolbar .ql-formats': {
+    marginRight: '8px',
+  },
+  
+  '& .ql-toolbar .ql-picker-label': {
+    color: disabled ? '#9CA3AF' : '#374151',
+  },
+  
+  '& .ql-toolbar .ql-stroke': {
+    stroke: disabled ? '#9CA3AF' : '#374151',
+  },
+  
+  '& .ql-toolbar .ql-fill': {
+    fill: disabled ? '#9CA3AF' : '#374151',
+  },
+  
+  '& .ql-toolbar button:hover': {
+    color: disabled ? '#9CA3AF' : '#2563EB',
+  },
+  
+  '& .ql-toolbar button:hover .ql-stroke': {
+    stroke: disabled ? '#9CA3AF' : '#2563EB',
+  },
+  
+  '& .ql-toolbar button:hover .ql-fill': {
+    fill: disabled ? '#9CA3AF' : '#2563EB',
+  },
+  
+  '& .ql-toolbar button.ql-active': {
+    color: '#2563EB',
+  },
+  
+  '& .ql-toolbar button.ql-active .ql-stroke': {
+    stroke: '#2563EB',
+  },
+  
+  '& .ql-toolbar button.ql-active .ql-fill': {
+    fill: '#2563EB',
   },
 }));
 
@@ -416,21 +462,21 @@ interface TimerSettings {
   breakMinutes: number;
 }
 
-// 나중에 React-Quill 재추가 시 사용할 설정 (주석처리)
-// const editorModules = {
-//   toolbar: [
-//     [{ 'header': [1, 2, 3, false] }],
-//     ['bold', 'italic', 'underline'],
-//     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-//     ['link'],
-//     ['clean']
-//   ],
-// };
+// React-Quill 에디터 설정
+const editorModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link'],
+    ['clean']
+  ],
+};
 
-// const editorFormats = [
-//   'header', 'bold', 'italic', 'underline',
-//   'list', 'bullet', 'link'
-// ];
+const editorFormats = [
+  'header', 'bold', 'italic', 'underline',
+  'list', 'bullet', 'link'
+];
 
 const TimerPage: React.FC = () => {
   const {
@@ -511,16 +557,15 @@ const TimerPage: React.FC = () => {
     }, 1000) as unknown as number;
   }, [autoSaveEnabled, saveNotesLogic]);
 
-  // 텍스트에어리어 변경 핸들러
-  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const content = e.target.value;
+  // 에디터 내용 변경 핸들러 (useCallback 적용)
+  const handleEditorChange = useCallback((content: string) => {
     setNotes(content);
     
     // 자동저장이 활성화된 경우 디바운싱된 저장 실행
     if (autoSaveEnabled && content.trim()) {
       debouncedAutoSave(content);
     }
-  };
+  }, [autoSaveEnabled, debouncedAutoSave]);
 
   // 컴포넌트 언마운트 시 timeout 정리
   useEffect(() => {
@@ -825,25 +870,26 @@ const TimerPage: React.FC = () => {
         </Box>
       </NotesHeader>
 
-
-
       {/* 통합된 작업 입력 영역 */}
-              <TaskInput
-          type="text"
-          value={taskName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
-          disabled={!isRunning}
-          placeholder={
-            isRunning
-              ? "현재 집중 중인 작업을 수정할 수 있습니다"
-              : "타이머를 시작하면 입력할 수 있습니다"
-          }
-          aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
-          style={{ marginBottom: '12px' }}
-        />
+      <TaskInput
+        type="text"
+        value={taskName}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+        disabled={!isRunning}
+        placeholder={
+          isRunning
+            ? "현재 집중 중인 작업을 수정할 수 있습니다"
+            : "타이머를 시작하면 입력할 수 있습니다"
+        }
+        aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
+        style={{ marginBottom: '12px' }}
+      />
       
-      {/* 노트 텍스트 영역 */}
-      <NotesTextArea
+      {/* 노트 에디터 영역 */}
+      <QuillEditor
+        theme="snow"
+        modules={editorModules}
+        formats={editorFormats}
         expanded={true}
         disabled={!isRunning}
         animate={noteImpact}
@@ -853,7 +899,7 @@ const TimerPage: React.FC = () => {
             : "타이머를 시작하면 입력할 수 있습니다"
         }
         value={notes}
-        onChange={handleTextAreaChange}
+        onChange={handleEditorChange}
         readOnly={!isRunning}
       />
 
@@ -1120,8 +1166,6 @@ const TimerPage: React.FC = () => {
             </Box>
           </NotesHeader>
 
-
-
           {/* 통합된 작업 입력 영역 */}
           <TaskInput
             type="text"
@@ -1137,7 +1181,11 @@ const TimerPage: React.FC = () => {
             style={{ marginBottom: '12px' }}
           />
           
-          <NotesTextArea
+          {/* 노트 에디터 영역 */}
+          <QuillEditor
+            theme="snow"
+            modules={editorModules}
+            formats={editorFormats}
             expanded={false}
             disabled={!isRunning}
             animate={noteImpact}
@@ -1147,7 +1195,8 @@ const TimerPage: React.FC = () => {
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             value={notes}
-            onChange={handleTextAreaChange}
+            onChange={handleEditorChange}
+            readOnly={!isRunning}
           />
           
           {/* 하단 버튼 섹션 */}
