@@ -123,19 +123,27 @@ const DeckCard = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(Button)(({ theme }) => ({
+const ActionBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '8px',
+  marginTop: '24px',
+  paddingLeft: theme.spacing(0.5),
+  paddingRight: theme.spacing(0.5),
+  '& .MuiButton-root': {
     flex: 1,
     whiteSpace: 'nowrap',
     minWidth: 'auto',
-    flexShrink: 1,
-    maxWidth: 'calc(33.33% - 4px)',
-    fontSize: '0.75rem',
-    padding: theme.spacing(1, 1),
-    [theme.breakpoints.down('sm')]: {
-      maxWidth: 'calc(33.33% - 3px)',
-      fontSize: '0.7rem',
-      padding: theme.spacing(0.75, 0.75),
+    padding: theme.spacing(0.5, 1),
+    fontSize: '0.8rem',
+    '&.MuiButton-containedPrimary': {
+      color: theme.palette.common.white,
     },
+    '&.MuiButton-outlinedError': {
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+    },
+  },
 }));
 
 const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
@@ -436,17 +444,31 @@ const FlashcardDeckListPage: React.FC = () => {
                   </Typography>
                   <Box mt={1.5} sx={{ minHeight: 24 }} />
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
+                <ActionBox>
+                  <Button
+                    variant="outlined"
+                    startIcon={<EditIcon />}
+                    onClick={(e) => handleEditDeck(deck, e)}
+                  >
                     수정
-                  </ActionButton>
-                  <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={(e) => handleDeleteDeck(deck, e)}
+                  >
                     삭제
-                  </ActionButton>
-                  <ActionButton size="small" startIcon={<SchoolIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<SchoolIcon />}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
+                  >
                     학습하기
-                  </ActionButton>
-                </CardActions>
+                  </Button>
+                </ActionBox>
               </DeckCard>
             ))}
           </Box>
