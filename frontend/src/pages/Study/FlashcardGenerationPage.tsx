@@ -475,6 +475,23 @@ const FlashcardGenerationPage: React.FC = () => {
                 />
               )}
               
+              {/* 문제 선택 버튼 */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <Button
+                  variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
+                  startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
+                  onClick={handleQuestionSelection}
+                  sx={{
+                    borderRadius: '20px',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                  }}
+                >
+                  {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택'}
+                </Button>
+              </Box>
+              
               {/* 피드백 입력란 */}
               <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -764,9 +781,26 @@ const FlashcardGenerationPage: React.FC = () => {
                     label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
                     value={selectedAnswer || ''}
                     onChange={(e) => handleAnswerSelect(e.target.value)}
-                    sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
+                    sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}
                   />
                 )}
+                {/* 문제 선택 버튼 */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  <Button
+                    variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
+                    startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
+                    onClick={handleQuestionSelection}
+                    sx={{
+                      borderRadius: '20px',
+                      fontWeight: 600,
+                      px: 4,
+                      py: 1.5,
+                      fontSize: '1rem',
+                    }}
+                  >
+                    {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택하기'}
+                  </Button>
+                </Box>
               </Box>
 
               {/* 오른쪽 컬럼: 피드백 및 생성 버튼 */}
