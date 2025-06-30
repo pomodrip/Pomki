@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   styled,
   Box,
@@ -18,6 +18,9 @@ import CompressIcon from '@mui/icons-material/CloseFullscreen';
 // import RestartAltIcon from '@mui/icons-material/RestartAlt';
 // import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+// 임시로 React-Quill 주석처리
+// import ReactQuill from 'react-quill';
+// import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
 // import theme from '../../theme/theme';
@@ -413,6 +416,22 @@ interface TimerSettings {
   breakMinutes: number;
 }
 
+// 나중에 React-Quill 재추가 시 사용할 설정 (주석처리)
+// const editorModules = {
+//   toolbar: [
+//     [{ 'header': [1, 2, 3, false] }],
+//     ['bold', 'italic', 'underline'],
+//     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+//     ['link'],
+//     ['clean']
+//   ],
+// };
+
+// const editorFormats = [
+//   'header', 'bold', 'italic', 'underline',
+//   'list', 'bullet', 'link'
+// ];
+
 const TimerPage: React.FC = () => {
   const {
     isRunning,
@@ -452,6 +471,65 @@ const TimerPage: React.FC = () => {
     focusMinutes: settings.focusTime,
     breakMinutes: settings.shortBreakTime,
   });
+
+  // 자동저장을 위한 디바운싱 ref
+  const autoSaveTimeoutRef = useRef<number | null>(null);
+
+  // 저장 로직 함수
+  const saveNotesLogic = useCallback(async () => {
+    if (!notes.trim() && !taskName.trim()) {
+      return;
+    }
+
+    try {
+      const saveData = {
+        taskName,
+        notes,
+        sessionId: `session-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        autoSaveEnabled,
+        hasAIGenerated: hasGeneratedAI,
+      };
+
+      console.log('저장될 데이터:', saveData);
+      // TODO: API 연동 - 노트 저장
+    } catch (error) {
+      console.error('노트 저장 실패:', error);
+    }
+  }, [notes, taskName, autoSaveEnabled, hasGeneratedAI]);
+
+  // 디바운싱된 자동저장 함수
+  const debouncedAutoSave = useCallback((content: string) => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      if (autoSaveEnabled && content.trim()) {
+        saveNotesLogic();
+      }
+    }, 1000) as unknown as number;
+  }, [autoSaveEnabled, saveNotesLogic]);
+
+  // 텍스트에어리어 변경 핸들러
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const content = e.target.value;
+    setNotes(content);
+    
+    // 자동저장이 활성화된 경우 디바운싱된 저장 실행
+    if (autoSaveEnabled && content.trim()) {
+      debouncedAutoSave(content);
+    }
+  };
+
+  // 컴포넌트 언마운트 시 timeout 정리
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 총 시간 계산
   const totalTime = settings.focusTime * 60;
@@ -592,27 +670,15 @@ const TimerPage: React.FC = () => {
     }, 2000);
   };
 
-  // 노트 저장 핸들러
+  // 노트 수동 저장 핸들러
   const handleSaveNotes = async () => {
     if (!notes.trim() && !taskName.trim()) {
       alert('저장할 내용이 없습니다.');
       return;
     }
 
-    // 임시 저장 로직 (실제로는 API 호출)
     try {
-      // TODO: API 연동 - 노트 저장
-      const saveData = {
-        taskName,
-        notes,
-        sessionId: `session-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        autoSaveEnabled,
-        hasAIGenerated: hasGeneratedAI,
-      };
-
-      console.log('저장될 데이터:', saveData);
-      
+      await saveNotesLogic();
       alert('노트가 성공적으로 저장되었습니다!');
     } catch (error) {
       console.error('노트 저장 실패:', error);
@@ -730,56 +796,51 @@ const TimerPage: React.FC = () => {
         </IconButton>
       </ExpandedTimerBar>
 
-      {/* 노트 제목과 작업명 */}
+      {/* 노트 제목과 자동저장 토글 */}
       <NotesHeader>
         <Box>
           <NotesTitle>
             📝 집중 노트
           </NotesTitle>
         </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
+              자동저장
+            </Text>
+            <Switch
+              checked={autoSaveEnabled}
+              onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+              size="small"
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#10B981',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#10B981',
+                },
+              }}
+            />
+          </Box>
+        </Box>
       </NotesHeader>
 
-      {/* 자동 저장 토글 */}
-      <AutoSaveSection>
-        <ToggleContainer>
-          <ToggleLabel sx={{ color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-            자동 저장
-          </ToggleLabel>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={autoSaveEnabled}
-                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#10B981',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#10B981',
-                  },
-                }}
-              />
-            }
-            label=""
-          />
-        </ToggleContainer>
-      </AutoSaveSection>
+
 
       {/* 통합된 작업 입력 영역 */}
-      <TaskInput
-        type="text"
-        value={taskName}
-        onChange={(e) => setTaskName(e.target.value)}
-        disabled={!isRunning}
-        placeholder={
-          isRunning
-            ? "현재 집중 중인 작업을 수정할 수 있습니다"
-            : "타이머를 시작하면 입력할 수 있습니다"
-        }
-        aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
-        style={{ marginBottom: '12px' }}
-      />
+              <TaskInput
+          type="text"
+          value={taskName}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+          disabled={!isRunning}
+          placeholder={
+            isRunning
+              ? "현재 집중 중인 작업을 수정할 수 있습니다"
+              : "타이머를 시작하면 입력할 수 있습니다"
+          }
+          aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
+          style={{ marginBottom: '12px' }}
+        />
       
       {/* 노트 텍스트 영역 */}
       <NotesTextArea
@@ -792,9 +853,8 @@ const TimerPage: React.FC = () => {
             : "타이머를 시작하면 입력할 수 있습니다"
         }
         value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        aria-disabled={!isRunning}
-        aria-label={isRunning ? "확장된 집중 노트 입력" : "타이머 시작 후 사용 가능한 확장된 노트 입력"}
+        onChange={handleTextAreaChange}
+        readOnly={!isRunning}
       />
 
       {/* 확장된 기능들 */}
@@ -1027,55 +1087,46 @@ const TimerPage: React.FC = () => {
                 📝 집중 노트
               </NotesTitle>
             </Box>
-            <IconButton 
-              size="small" 
-              sx={{ 
-                color: '#6B7280',
-                backgroundColor: '#F3F4F6',
-                '&:hover': {
-                  backgroundColor: '#E5E7EB',
-                },
-              }}
-              onClick={() => setNotesExpanded(true)}
-            >
-              <ExpandIcon fontSize="small" />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
+                자동저장
+              </Text>
+              <Switch
+                checked={autoSaveEnabled}
+                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                size="small"
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#10B981',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#10B981',
+                  },
+                }}
+              />
+              <IconButton 
+                size="small" 
+                sx={{ 
+                  color: '#6B7280',
+                  backgroundColor: '#F3F4F6',
+                  '&:hover': {
+                    backgroundColor: '#E5E7EB',
+                  },
+                }}
+                onClick={() => setNotesExpanded(true)}
+              >
+                <ExpandIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </NotesHeader>
 
-                    {/* 자동 저장 토글 */}
-          {isRunning && (
-            <AutoSaveSection>
-              <ToggleContainer>
-                <ToggleLabel sx={{ color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-                  자동 저장
-                </ToggleLabel>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={autoSaveEnabled}
-                      onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                      size="small"
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#10B981',
-                        },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                          backgroundColor: '#10B981',
-                        },
-                      }}
-                    />
-                  }
-                  label=""
-                />
-              </ToggleContainer>
-              </AutoSaveSection>
-            )}
+
 
           {/* 통합된 작업 입력 영역 */}
           <TaskInput
             type="text"
             value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
             disabled={!isRunning}
             placeholder={
               isRunning
@@ -1096,9 +1147,7 @@ const TimerPage: React.FC = () => {
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            aria-disabled={!isRunning}
-            aria-label={isRunning ? "집중 노트 입력" : "타이머 시작 후 사용 가능한 노트 입력"}
+            onChange={handleTextAreaChange}
           />
           
           {/* 하단 버튼 섹션 */}
