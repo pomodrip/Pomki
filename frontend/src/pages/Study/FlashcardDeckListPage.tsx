@@ -42,15 +42,11 @@ import {
   createDeck,
   updateDeck,
   deleteDeck,
-  selectSearchLoading,
-  selectSearchResults,
-  searchCards,
-  clearSearchResults,
 } from '../../store/slices/deckSlice';
-import type { CardDeck } from '../../types/card';
+import type { CardDeck, SearchCard } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
 import Card from '../../components/ui/Card';
-import { useDispatch, useSelector } from 'react-redux';
+import { cardService } from '../../services/cardService';
 import { FlashCard, type FlashCardData } from '../../components/ui';
 // 🎯 API Fallback 비활성화
 // import { deckApiWithFallback } from '../../api/apiWithFallback';
@@ -121,10 +117,6 @@ const SelectedTagsBox = styled(Box)(({ theme }) => ({
 }));
 
 const FlashcardDeckListPage: React.FC = () => {
-
-  const searchResults = useSelector(selectSearchResults);
-  const searchLoading = useSelector(selectSearchLoading);
-
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useResponsive();
@@ -133,6 +125,10 @@ const FlashcardDeckListPage: React.FC = () => {
   const { decks = [], loading, error } = useAppSelector((state) => state.deck);
   const { filters } = useAppSelector((state) => state.study);
   const { user } = useAppSelector((state) => state.auth);
+
+  // 🎯 로컬 검색 상태
+  const [searchResults, setSearchResults] = useState<SearchCard[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // 🎯 클라이언트 측 상태 (북마크, 태그)
   const [clientSideInfo, setClientSideInfo] = useState<{ [deckId: string]: ClientSideDeckInfo }>({});
@@ -155,93 +151,17 @@ const FlashcardDeckListPage: React.FC = () => {
   // const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
   // const [fallbackLoading, setFallbackLoading] = useState(false);
 
-
   // 다시 들어오면 검색 결과 초기화
   useEffect(() => {
-    dispatch(clearSearchResults());
-  }, [dispatch]);
+    setSearchResults([]);
+  }, []);
 
-  // 🎯 컴포넌트 마운트 시 덱 목록 로드 - Redux만 사용
+  // �� 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
     console.log("유저 이메일", user?.email);
     dispatch(fetchDecks());
     console.log("유저", user);
-    
-    // 🎯 API Fallback 비활성화
-    // const loadDecksWithFallback = async () => {
-    //   setFallbackLoading(true);
-    //   try {
-    //     const fallbackData = await deckApiWithFallback.getMyDecks();
-    //     setFallbackDecks(fallbackData);
-    //     console.log('✅ API Fallback으로 덱 목록 로드:', fallbackData);
-    //   } catch (error) {
-    //     console.error('❌ API Fallback 덱 로드 실패:', error);
-    //   } finally {
-    //     setFallbackLoading(false);
-    //   }
-    // };
-    // loadDecksWithFallback();
   }, [dispatch, user?.memberId]);
-
-  // // 🎯 API로부터 덱 데이터를 받으면 클라이언트 측 정보 초기화 (Mock 데이터 기반)
-  // useEffect(() => {
-  //   if (decks.length > 0) {
-  //     setClientSideInfo(prevInfo => {
-  //       const newInfo = { ...prevInfo };
-  //       decks.forEach((deck, index) => {
-  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-  //           // 덱별로 다양한 태그 생성
-  //           const tagSets = [
-  //             ['#영어', '#단어', '#기초'],
-  //             ['#일본어', '#회화', '#중급'],
-  //             ['#프로그래밍', '#개발', '#CS'],
-  //             ['#수학', '#공식', '#고등'],
-  //             ['#과학', '#물리', '#화학'],
-  //             ['#역사', '#한국사', '#근현대'],
-  //             ['#문학', '#고전', '#현대'],
-  //             ['#경제', '#금융', '#투자'],
-  //           ];
-            
-  //           newInfo[deck.deckId] = {
-  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
-  //             tags: tagSets[index % tagSets.length], // Mock 데이터
-  //           };
-  //         }
-  //       });
-  //       return newInfo;
-  //     });
-  //   }
-  // }, [decks]);
-
-  // // 🎯 Fallback 덱이 로드될 때도 클라이언트 측 정보 초기화
-  // useEffect(() => {
-  //   if (fallbackDecks.length > 0) {
-  //     setClientSideInfo(prevInfo => {
-  //       const newInfo = { ...prevInfo };
-  //       fallbackDecks.forEach((deck, index) => {
-  //         if (!newInfo[deck.deckId]) { // 기존 정보가 없을 때만 초기화
-  //           // 덱별로 다양한 태그 생성
-  //           const tagSets = [
-  //             ['#영어', '#단어', '#기초'],
-  //             ['#일본어', '#회화', '#중급'],
-  //             ['#프로그래밍', '#개발', '#CS'],
-  //             ['#수학', '#공식', '#고등'],
-  //             ['#과학', '#물리', '#화학'],
-  //             ['#역사', '#한국사', '#근현대'],
-  //             ['#문학', '#고전', '#현대'],
-  //             ['#경제', '#금융', '#투자'],
-  //           ];
-            
-  //           newInfo[deck.deckId] = {
-  //             isBookmarked: Math.random() > 0.5, // Mock 데이터
-  //             tags: tagSets[index % tagSets.length], // Mock 데이터
-  //           };
-  //         }
-  //       });
-  //       return newInfo;
-  //     });
-  //   }
-  // }, [fallbackDecks]);
 
   // 🎯 Redux 덱만 사용 (Fallback 비활성화)
   const combinedDecks = useMemo(() => {
@@ -314,21 +234,32 @@ const FlashcardDeckListPage: React.FC = () => {
   const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
     if (event.target.value === '') {
-      dispatch(searchCards(''));
+      setSearchResults([]);
     }
   };
 
-  const handleSearchSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter')
-       {
-        dispatch(clearSearchResults());
-      console.log("검색");
-      dispatch(searchCards(searchInput));
+  const handleSearchSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && searchInput.trim()) {
+      setSearchLoading(true);
+      try {
+        const results = await cardService.searchCards(searchInput.trim());
+        setSearchResults(results);
+      } catch (error) {
+        console.error('검색 실패:', error);
+        setSearchResults([]);
+        dispatch(showToast({
+          message: '검색에 실패했습니다.',
+          severity: 'error'
+        }));
+      } finally {
+        setSearchLoading(false);
+      }
     }
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
+    setSearchResults([]);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -781,10 +712,16 @@ const FlashcardDeckListPage: React.FC = () => {
 
       {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
       
-
+      {/* 검색 로딩 표시 */}
+      {searchLoading && (
+        <Box display="flex" justifyContent="center" my={2}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" sx={{ ml: 1 }}>검색 중...</Typography>
+        </Box>
+      )}
 
       {/* 검색 결과 - 카드로 표시 */}
-      {!loading && !error && searchInput && searchResults.length > 0 && (
+      {!searchLoading && !loading && !error && searchInput && searchResults.length > 0 && (
         <Box>
           <Typography variant="h6" sx={{ mb: 2 }}>
             검색 결과 ({searchResults.length}개 카드)
@@ -834,7 +771,7 @@ const FlashcardDeckListPage: React.FC = () => {
 
 
       {/* 덱 리스트 - 검색어가 없거나 검색 결과가 없을 때 표시 */}
-      {!loading && !error && (!searchInput || searchResults.length === 0) && (
+      {!searchLoading && !loading && !error && (!searchInput || searchResults.length === 0) && (
         <Box>
           <Box 
             sx={{ 
@@ -898,7 +835,7 @@ const FlashcardDeckListPage: React.FC = () => {
       )}
 
       {/* 빈 상태 */}
-      {!loading && !error && (!searchInput || searchResults.length === 0) && filteredDecks.length === 0 && (
+      {!searchLoading && !loading && !error && (!searchInput || searchResults.length === 0) && filteredDecks.length === 0 && (
         <Box 
           display="flex" 
           flexDirection="column" 
