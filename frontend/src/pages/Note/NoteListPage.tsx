@@ -27,9 +27,9 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { deleteNoteAsync, fetchNotes } from '../../store/slices/noteSlice';
+import { deleteNoteAsync, fetchNotes, fetchNote } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
-import { showToast, hideToast } from '../../store/slices/toastSlice';
+import { showToast } from '../../store/slices/toastSlice';
 import { setFilters } from '../../store/slices/studySlice';
 import {
   adjustFabForScreenSize,
@@ -39,6 +39,7 @@ import {
 import type { Note } from '../../types/note';
 import { useResponsive } from '../../hooks/useResponsive';
 import Toast from '../../components/common/Toast';
+import { generateQuizPreview } from '../../api/quizApi';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
@@ -151,8 +152,9 @@ const NoteListPage: React.FC = () => {
   const fab = useAppSelector(selectFab);
   const { bottomNavVisible } = useAppSelector((state) => state.ui);
 
-  // 🎯 클라이언트 측 상태 (북마크, 태그)
+  // 🎯 클라이언트 측 상태 (북마크, 태그) 및 퀴즈 생성 로딩 상태
   const [clientSideInfo, setClientSideInfo] = useState<{ [noteId: string]: ClientSideNoteInfo }>({});
+  const [generatingQuizId, setGeneratingQuizId] = useState<string | null>(null);
   
   // 🎯 메뉴 상태
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
@@ -251,6 +253,10 @@ const NoteListPage: React.FC = () => {
     setTagMenuAnchor(null);
   };
 
+  const handleClearTags = () => {
+    dispatch(setFilters({ selectedTags: [] }));
+  };
+
   const handleBookmarkFilter = (showBookmarkedValue: boolean) => {
     dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
@@ -258,97 +264,40 @@ const NoteListPage: React.FC = () => {
 
   const handleToggleBookmark = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const currentBookmarkStatus = clientSideInfo[noteId]?.isBookmarked;
-    const newBookmarkStatus = !currentBookmarkStatus;
-    
     setClientSideInfo(prev => ({
       ...prev,
       [noteId]: {
-        ...(prev[noteId] || { tags: [] }),
-        isBookmarked: newBookmarkStatus,
-      }
+        ...prev[noteId],
+        isBookmarked: !prev[noteId]?.isBookmarked,
+      },
     }));
-
-    // 기존 토스트 숨기고 새 토스트 표시
-    dispatch(hideToast());
-    setTimeout(() => {
-      dispatch(showToast({
-        message: newBookmarkStatus ? '북마크가 추가되었습니다.' : '북마크가 해제되었습니다.',
-        severity: 'success',
-        duration: 1500
-      }));
-    }, 100);
+    dispatch(showToast({
+      message: clientSideInfo[noteId]?.isBookmarked ? '북마크에서 제거했습니다.' : '북마크에 추가했습니다.',
+      severity: 'success',
+    }));
   };
 
-  // 날짜 포맷팅 함수 개선 - UX 향상
   const formatDate = (createdAt: string, updatedAt: string) => {
-    // 유효하지 않은 날짜 처리
     const getValidDate = (dateString: string) => {
-      if (!dateString || dateString === '1970-01-01T00:00:00.000Z') {
-        return null;
-      }
       const date = new Date(dateString);
       return isNaN(date.getTime()) ? null : date;
     };
 
     const createdDate = getValidDate(createdAt);
     const updatedDate = getValidDate(updatedAt);
-    
-    // 둘 다 유효하지 않은 경우
-    if (!createdDate && !updatedDate) {
-      return '작성됨: 방금 전';
+
+    if (!createdDate) {
+      return '날짜 정보 없음';
     }
-    
-    // 생성일만 유효한 경우 (처음 생성)
-    if (createdDate && !updatedDate) {
-      return `작성됨: ${createdDate.toLocaleDateString()}`;
+
+    if (updatedDate && updatedDate.getTime() > createdDate.getTime() + 60000) { // 1분 이상 차이
+      return `${updatedDate.toLocaleDateString('ko-KR')} 수정됨`;
     }
-    
-    // 수정일만 유효한 경우 (생성일 불명)
-    if (!createdDate && updatedDate) {
-      return `수정됨: ${updatedDate.toLocaleDateString()}`;
-    }
-    
-    // 둘 다 유효한 경우
-    if (createdDate && updatedDate) {
-      // 디버깅을 위한 로그
-      console.log('Date comparison:', {
-        createdAt: createdDate.toISOString(),
-        updatedAt: updatedDate.toISOString(),
-        createdTime: createdDate.getTime(),
-        updatedTime: updatedDate.getTime(),
-        timeDiff: Math.abs(updatedDate.getTime() - createdDate.getTime()) / 1000
-      });
-      
-      const now = new Date();
-      const isCreatedToday = createdDate.toDateString() === now.toDateString();
-      const isUpdatedToday = updatedDate.toDateString() === now.toDateString();
-      
-      // 실제 수정 여부 판단 (시간까지 비교, 1초 이상 차이나면 수정된 것으로 간주)
-      const timeDifferenceInSeconds = Math.abs(updatedDate.getTime() - createdDate.getTime()) / 1000;
-      const wasActuallyUpdated = timeDifferenceInSeconds > 1;
-      
-      // 수정되지 않은 경우 (생성일과 수정일이 거의 같음)
-      if (!wasActuallyUpdated) {
-        if (isCreatedToday) {
-          return '작성됨: 방금 전';
-        } else {
-          return `작성됨: ${createdDate.toLocaleDateString()}`;
-        }
-      } 
-      // 실제로 수정된 경우
-      else {
-        const updatedText = isUpdatedToday ? '방금 전' : updatedDate.toLocaleDateString();
-        const createdText = isCreatedToday ? '오늘' : createdDate.toLocaleDateString();
-        return `수정됨: ${updatedText} (작성: ${createdText})`;
-      }
-    }
-    
-    return '날짜 정보 없음';
+    return `${createdDate.toLocaleDateString('ko-KR')} 작성됨`;
   };
 
   const handleNoteClick = (noteId: string) => {
-    navigate(`/note/${noteId}/edit`);
+    navigate(`/note/${noteId}`);
   };
 
   const handleEditNote = (noteId: string, event: React.MouseEvent) => {
@@ -358,7 +307,6 @@ const NoteListPage: React.FC = () => {
 
   const handleDeleteNote = async (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    
     const confirmed = await showConfirmDialog({
       title: '노트 삭제',
       message: '정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
@@ -368,20 +316,50 @@ const NoteListPage: React.FC = () => {
       try {
         await dispatch(deleteNoteAsync(noteId)).unwrap();
         dispatch(showToast({ message: '노트가 삭제되었습니다.', severity: 'success' }));
-        // 삭제 후 목록을 다시 불러올 필요 없이 슬라이스에서 처리됩니다.
-      } catch (err) {
-        dispatch(showToast({ message: '노트 삭제에 실패했습니다.', severity: 'error' }));
-        console.error('Failed to delete note: ', err);
+      } catch (e: any) {
+        dispatch(showToast({ message: e.message || '노트 삭제에 실패했습니다.', severity: 'error' }));
       }
     }
   };
   
-  const handleGenerateFlashcards = (noteId: string, event: React.MouseEvent) => {
+  const handleGenerateFlashcards = async (note: EnrichedNote, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/study/${noteId}/flashcard-generation`);
-  }; 
+    setGeneratingQuizId(note.noteId);
+    try {
+      // 1. 노트의 상세 정보 (noteContent 포함) 가져오기
+      const fullNote = await dispatch(fetchNote(note.noteId)).unwrap();
 
+      if (!fullNote.noteContent || fullNote.noteContent.trim() === '') {
+        dispatch(showToast({
+          message: '노트 내용이 비어있어 퀴즈를 생성할 수 없습니다.',
+          severity: 'warning',
+        }));
+        setGeneratingQuizId(null);
+        return;
+      }
 
+      // 2. API를 호출하여 퀴즈 생성
+      const quizzes = await generateQuizPreview({
+        noteTitle: fullNote.noteTitle,
+        noteContent: fullNote.noteContent,
+      });
+
+      // 3. 퀴즈 생성 페이지로 이동 (생성된 퀴즈 데이터와 함께)
+      navigate(`/study/${note.noteId}/flashcard-generation`, {
+        state: { quizzes, noteTitle: fullNote.noteTitle },
+      });
+
+    } catch (err) {
+      const error = err as Error;
+      console.error('퀴즈 생성 실패:', error);
+      dispatch(showToast({
+        message: error.message || '퀴즈 생성에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        severity: 'error',
+      }));
+    } finally {
+      setGeneratingQuizId(null);
+    }
+  };
 
   return (
     <StyledContainer maxWidth="md">
@@ -537,30 +515,16 @@ const NoteListPage: React.FC = () => {
               
               {/* 액션 버튼들 */}
               <ActionBox>
+                <Button variant="outlined" startIcon={<EditIcon />} onClick={(e) => handleEditNote(note.noteId, e)}>수정</Button>
+                <Button variant="outlined" startIcon={<DeleteIcon />} onClick={(e) => handleDeleteNote(note.noteId, e)}>삭제</Button>
                 <Button
-                  variant="outlined"
-                  size="small"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={(e: React.MouseEvent) => handleDeleteNote(note.noteId, e)}
+                  variant="contained"
+                  color="primary"
+                  startIcon={generatingQuizId === note.noteId ? <CircularProgress size={20} color="inherit" /> : <QuizIcon />}
+                  onClick={(e) => handleGenerateFlashcards(note, e)}
+                  disabled={generatingQuizId === note.noteId}
                 >
-                  삭제
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={(e: React.MouseEvent) => handleEditNote(note.noteId, e)}
-                >
-                  수정
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<QuizIcon />}
-                  onClick={(e: React.MouseEvent) => handleGenerateFlashcards(note.noteId, e)}
-                >
-                  퀴즈 생성
+                  {generatingQuizId === note.noteId ? '생성중...' : '퀴즈 생성'}
                 </Button>
               </ActionBox>
             </NoteCard>
