@@ -170,11 +170,15 @@ const ButtonContainer = styled(Box)(() => ({
 // }));
 
 // 노트 섹션
-const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
+const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded, theme }) => ({
   width: '100%',
   maxWidth: expanded ? 'none' : '400px',
   marginTop: '32px',
   transition: 'all 0.3s ease',
+  padding: expanded ? 0 : '0 8px',
+  [theme.breakpoints.up('sm')]: {
+    padding: 0,
+  },
   ...(expanded && {
     position: 'fixed',
     top: 0,
@@ -184,10 +188,8 @@ const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded }) => ({
     backgroundColor: '#FFFFFF',
     zIndex: 9999,
     margin: 0,
-    padding: '24px',
-    overflow: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
+    padding: 0,
+    overflow: 'hidden',
   }),
 }));
 
@@ -338,17 +340,7 @@ const QuillEditor = styled(ReactQuill)<{
   },
 }));
 
-// 확장된 노트 기능들
-const ExpandedNotesFeatures = styled(Box)(() => ({
-  marginTop: '16px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '16px',
-  backgroundColor: '#F9FAFB',
-  borderRadius: '8px',
-  border: '1px solid #E5E7EB',
-}));
+
 
 const StudyModeSection = styled(Box)(() => ({
   display: 'flex',
@@ -805,6 +797,14 @@ const TimerPage: React.FC = () => {
   // 확장된 노트 렌더링 함수
   const renderExpandedNotes = () => (
     <NotesSection expanded={true}>
+      <Box sx={{
+        padding: { xs: '16px', sm: '48px' },
+        paddingTop: { xs: '16px', sm: '32px' },
+        height: '100%',
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
       {/* 모바일 상단 타이머 바 */}
       <Box sx={{ 
         display: { xs: 'block', sm: 'none' },  // 모바일에서만 표시
@@ -962,20 +962,6 @@ const TimerPage: React.FC = () => {
           <ExpandedProgressBar>
             <ExpandedProgressFill progress={isRunning ? progress : 0} />
           </ExpandedProgressBar>
-          
-          <IconButton 
-            size="small" 
-            sx={{ 
-              color: '#6B7280',
-              backgroundColor: '#F3F4F6',
-              '&:hover': {
-                backgroundColor: '#E5E7EB',
-              },
-            }}
-            onClick={() => setNotesExpanded(false)}
-          >
-            <CompressIcon fontSize="small" />
-          </IconButton>
         </ExpandedTimerBar>
       </Box>
 
@@ -1059,13 +1045,22 @@ const TimerPage: React.FC = () => {
         onChange={handleEditorChange}
         readOnly={!isRunning}
         sx={{
-          paddingBottom: { xs: '100px', sm: '0' }, // 모바일에서 하단 툴바 공간 확보
+          marginBottom: { xs: '120px', sm: '16px' }, // 모바일에서 하단 툴바 공간 확보
         }}
       />
 
       {/* 데스크톱 확장된 기능들 */}
       <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-        <ExpandedNotesFeatures>
+        <Box sx={{
+          marginTop: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px',
+          backgroundColor: '#F9FAFB',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+        }}>
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -1164,7 +1159,7 @@ const TimerPage: React.FC = () => {
           >
             저장
           </Button>
-        </ExpandedNotesFeatures>
+        </Box>
       </Box>
 
       {/* 모바일 하단 툴바 */}
@@ -1174,12 +1169,11 @@ const TimerPage: React.FC = () => {
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
+        backgroundColor: '#FFFFFF',
         borderTop: '1px solid #E5E7EB',
-        padding: '16px',
+        padding: '16px 16px 20px 16px',
         zIndex: 10000,
-        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
       }}>
         <Box sx={{ 
           display: 'flex', 
@@ -1198,7 +1192,7 @@ const TimerPage: React.FC = () => {
               displayEmpty
               sx={{
                 backgroundColor: '#FFFFFF',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#E5E7EB',
                 },
@@ -1286,6 +1280,7 @@ const TimerPage: React.FC = () => {
             저장
           </Button>
         </Box>
+      </Box>
       </Box>
     </NotesSection>
   );
@@ -1494,17 +1489,20 @@ const TimerPage: React.FC = () => {
           
           {/* 하단 버튼 섹션 */}
           <Box sx={{ 
-            marginTop: '16px',
+            marginTop: '20px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: { xs: '8px', sm: '12px' },
             minHeight: '40px',
-            padding: '0 1px', // 미세 조정으로 정렬 맞춤
+            padding: { xs: '8px 4px', sm: '16px' },
+            backgroundColor: { xs: 'transparent', sm: '#F9FAFB' },
+            borderRadius: { xs: '0', sm: '8px' },
+            border: { xs: 'none', sm: '1px solid #E5E7EB' },
           }}>
             <FormControl size="small" variant="outlined" sx={{ 
-              minWidth: '120px',
+              minWidth: { xs: '80px', sm: '120px' },
               flex: 1,
-              maxWidth: '160px',
+              maxWidth: { xs: '100px', sm: '160px' },
             }}>
               <Select
                 value={summaryStyle}
@@ -1512,19 +1510,20 @@ const TimerPage: React.FC = () => {
                 displayEmpty
                 sx={{
                   backgroundColor: '#FFFFFF',
-                  borderRadius: '8px',
+                  borderRadius: { xs: '6px', sm: '8px' },
                   '& .MuiOutlinedInput-notchedOutline': {
                     borderColor: '#E5E7EB',
+                    display: { xs: 'block', sm: 'block' },
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#D1D5DB',
+                    borderColor: { xs: '#D1D5DB', sm: '#D1D5DB' },
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: '#2563EB',
                   },
                   '& .MuiSelect-select': {
-                    padding: '10px 14px',
-                    fontSize: '14px',
+                    padding: { xs: '8px 10px', sm: '10px 14px' },
+                    fontSize: { xs: '12px', sm: '14px' },
                     fontWeight: 500,
                   },
                 }}
@@ -1551,9 +1550,9 @@ const TimerPage: React.FC = () => {
                 },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: '100px',
-                fontSize: '14px',
-                padding: '10px 20px',
+                minWidth: { xs: '70px', sm: '100px' },
+                fontSize: { xs: '12px', sm: '14px' },
+                padding: { xs: '8px 12px', sm: '10px 20px' },
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
@@ -1565,10 +1564,14 @@ const TimerPage: React.FC = () => {
               {isGeneratingAI ? (
                 <>
                   <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
-                  생성 중
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>생성 중</Box>
+                  <Box sx={{ display: { xs: 'block', sm: 'none' } }}>생성</Box>
                 </>
               ) : (
-                'AI 노트 생성'
+                <>
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>AI 노트 생성</Box>
+                  <Box sx={{ display: { xs: 'block', sm: 'none' } }}>AI생성</Box>
+                </>
               )}
             </Button>
             
@@ -1590,9 +1593,9 @@ const TimerPage: React.FC = () => {
                 },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: '60px',
-                fontSize: '14px',
-                padding: '10px 16px',
+                minWidth: { xs: '50px', sm: '60px' },
+                fontSize: { xs: '12px', sm: '14px' },
+                padding: { xs: '8px 12px', sm: '10px 16px' },
                 borderRadius: '8px',
                 whiteSpace: 'nowrap',
               }}
