@@ -408,18 +408,28 @@ const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled }) => ({
 }));
 
 // 설정 다이얼로그 스타일
-const SettingsContainer = styled(Box)(() => ({
+const SettingsContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
   minWidth: '300px',
+  
+  [theme.breakpoints.down('sm')]: {
+    minWidth: 'auto',
+    width: '100%',
+  },
 }));
 
-const SettingsRow = styled(Box)(() => ({
+const SettingsRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: '16px',
+  
+  [theme.breakpoints.down('sm')]: {
+    gap: '4px', // 모바일에서 간격 더 줄임
+    justifyContent: 'space-around', // 균등 분배
+  },
 }));
 
 const PresetsSection = styled(Box)(() => ({
