@@ -1069,10 +1069,9 @@ const TimerPage: React.FC = () => {
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '12px',
+            gap: '16px',
             flex: 1,
           }}>
-            <StudyModeLabel>요약 스타일</StudyModeLabel>
             <FormControl size="small" variant="outlined">
               <Select
                 value={summaryStyle}
@@ -1081,6 +1080,7 @@ const TimerPage: React.FC = () => {
                 sx={{
                   minWidth: '150px',
                   backgroundColor: '#FFFFFF',
+                  borderRadius: '8px',
                   '& .MuiOutlinedInput-notchedOutline': {
                     borderColor: '#E5E7EB',
                   },
@@ -1089,6 +1089,11 @@ const TimerPage: React.FC = () => {
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: '#2563EB',
+                  },
+                  '& .MuiSelect-select': {
+                    padding: '10px 14px',
+                    fontSize: '14px',
+                    fontWeight: 500,
                   },
                 }}
               >
@@ -1100,7 +1105,7 @@ const TimerPage: React.FC = () => {
             
             <Button
               variant="contained"
-              size="small"
+              size="medium"
               onClick={handleGenerateAI}
               disabled={!canGenerateAI}
               sx={{
@@ -1114,26 +1119,29 @@ const TimerPage: React.FC = () => {
                 },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: '100px',
+                minWidth: '120px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '8px',
+                whiteSpace: 'nowrap',
               }}
             >
               {isGeneratingAI ? (
                 <>
                   <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
-                  생성 중...
+                  생성 중
                 </>
               ) : (
-                'AI 생성'
+                'AI 노트 생성'
               )}
             </Button>
           </Box>
           
           <Button
             variant="outlined"
-            size="small"
+            size="medium"
             onClick={handleSaveNotes}
             disabled={!canSave}
             sx={{
@@ -1150,6 +1158,8 @@ const TimerPage: React.FC = () => {
               fontWeight: 600,
               textTransform: 'none',
               minWidth: '70px',
+              borderRadius: '8px',
+              whiteSpace: 'nowrap',
             }}
           >
             저장
@@ -1174,51 +1184,46 @@ const TimerPage: React.FC = () => {
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: '12px',
+          gap: '16px',
           justifyContent: 'space-between',
         }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
+          <FormControl size="small" variant="outlined" sx={{ 
+            minWidth: '120px',
             flex: 1,
+            maxWidth: '160px',
           }}>
-            <Text sx={{ 
-              fontSize: '14px', 
-              fontWeight: 500, 
-              color: '#6B7280',
-              minWidth: '60px',
-            }}>
-              요약 스타일
-            </Text>
-            <FormControl size="small" variant="outlined" sx={{ flex: 1, maxWidth: '140px' }}>
-              <Select
-                value={summaryStyle}
-                onChange={(e) => setSummaryStyle(e.target.value as string)}
-                displayEmpty
-                sx={{
-                  backgroundColor: '#FFFFFF',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#E5E7EB',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#D1D5DB',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#2563EB',
-                  },
-                }}
-              >
-                <MenuItem value="concept">Concept-focused</MenuItem>
-                <MenuItem value="detail">상세 분석</MenuItem>
-                <MenuItem value="summary">핵심 요약</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+            <Select
+              value={summaryStyle}
+              onChange={(e) => setSummaryStyle(e.target.value as string)}
+              displayEmpty
+              sx={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '8px',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#E5E7EB',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#D1D5DB',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#2563EB',
+                },
+                '& .MuiSelect-select': {
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                },
+              }}
+            >
+              <MenuItem value="concept">개념 정리</MenuItem>
+              <MenuItem value="detail">상세 분석</MenuItem>
+              <MenuItem value="summary">핵심 요약</MenuItem>
+            </Select>
+          </FormControl>
           
           <Button
             variant="contained"
-            size="small"
+            size="medium"
             onClick={handleGenerateAI}
             disabled={!canGenerateAI}
             sx={{
@@ -1232,22 +1237,53 @@ const TimerPage: React.FC = () => {
               },
               fontWeight: 600,
               textTransform: 'none',
-              minWidth: '80px',
+              minWidth: '100px',
               fontSize: '14px',
-              padding: '8px 16px',
+              padding: '10px 20px',
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              justifyContent: 'center',
+              gap: '8px',
+              whiteSpace: 'nowrap',
             }}
           >
             {isGeneratingAI ? (
               <>
-                <MuiCircularProgress size={14} sx={{ color: '#FFFFFF' }} />
+                <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
                 생성 중
               </>
             ) : (
-              'AI 생성'
+              'AI 노트 생성'
             )}
+          </Button>
+          
+          <Button
+            variant="outlined"
+            size="medium"
+            onClick={handleSaveNotes}
+            disabled={!canSave}
+            sx={{
+              borderColor: '#2563EB',
+              color: '#2563EB',
+              '&:hover': {
+                borderColor: '#1D4ED8',
+                backgroundColor: 'rgba(37, 99, 235, 0.05)',
+              },
+              '&:disabled': {
+                borderColor: '#D1D5DB',
+                color: '#9CA3AF',
+              },
+              fontWeight: 600,
+              textTransform: 'none',
+              minWidth: '60px',
+              fontSize: '14px',
+              padding: '10px 16px',
+              borderRadius: '8px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            저장
           </Button>
         </Box>
       </Box>
@@ -1463,18 +1499,33 @@ const TimerPage: React.FC = () => {
             alignItems: 'center',
             gap: '12px',
             minHeight: '40px',
+            padding: '0 1px', // 미세 조정으로 정렬 맞춤
           }}>
-            <FormControl size="small">
+            <FormControl size="small" variant="outlined" sx={{ 
+              minWidth: '120px',
+              flex: 1,
+              maxWidth: '160px',
+            }}>
               <Select
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
+                displayEmpty
                 sx={{
-                  minWidth: '120px',
-                  height: '32px',
-                  
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '8px',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#E5E7EB',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#D1D5DB',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#2563EB',
+                  },
                   '& .MuiSelect-select': {
-                    padding: '6px 12px',
+                    padding: '10px 14px',
                     fontSize: '14px',
+                    fontWeight: 500,
                   },
                 }}
               >
@@ -1485,40 +1536,48 @@ const TimerPage: React.FC = () => {
             </FormControl>
             
             <Button
-              variant="outlined"
-              size="small"
+              variant="contained"
+              size="medium"
               onClick={handleGenerateAI}
               disabled={!canGenerateAI}
-              sx={{ 
-                minWidth: '100px',
-                height: '32px',
-                fontSize: '14px',
+              sx={{
                 backgroundColor: '#10B981',
-                color: '#FFFFFF',
-                borderColor: '#10B981',
                 '&:hover': {
                   backgroundColor: '#059669',
-                  borderColor: '#059669',
                 },
                 '&:disabled': {
                   backgroundColor: '#D1D5DB',
                   color: '#9CA3AF',
-                  borderColor: '#D1D5DB',
                 },
+                fontWeight: 600,
+                textTransform: 'none',
+                minWidth: '100px',
+                fontSize: '14px',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                whiteSpace: 'nowrap',
               }}
             >
-              {isGeneratingAI ? '생성 중...' : 'AI 노트 생성'}
+              {isGeneratingAI ? (
+                <>
+                  <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
+                  생성 중
+                </>
+              ) : (
+                'AI 노트 생성'
+              )}
             </Button>
             
             <Button
               variant="outlined"
-              size="small"
+              size="medium"
               onClick={handleSaveNotes}
               disabled={!canSave}
-              sx={{ 
-                minWidth: '60px',
-                height: '32px',
-                fontSize: '14px',
+              sx={{
                 borderColor: '#2563EB',
                 color: '#2563EB',
                 '&:hover': {
@@ -1529,6 +1588,13 @@ const TimerPage: React.FC = () => {
                   borderColor: '#D1D5DB',
                   color: '#9CA3AF',
                 },
+                fontWeight: 600,
+                textTransform: 'none',
+                minWidth: '60px',
+                fontSize: '14px',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                whiteSpace: 'nowrap',
               }}
             >
               저장
