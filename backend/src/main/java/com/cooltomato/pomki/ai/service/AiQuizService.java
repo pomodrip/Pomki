@@ -23,7 +23,7 @@ public class AiQuizService {
 
     public List<GeneratedQuizDto> generateQuizPreview(QuizGenerationRequestDto requestDto) {
         try {
-            String promptTemplate = loadPrompt("classpath:com/cooltomato/pomki/ai/prompt/QuizGenerationv2.txt");
+            String promptTemplate = loadPrompt("classpath:prompts/QuizGenerationv2.txt");
 
             String title = requestDto.getNoteTitle() != null ? requestDto.getNoteTitle() : "";
             String content = requestDto.getNoteContent();
