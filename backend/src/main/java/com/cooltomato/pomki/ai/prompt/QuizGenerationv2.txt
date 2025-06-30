@@ -3,11 +3,28 @@ prompt_name: QUIZ_GEN_MCQ_JSON_KR_V1
 
 prompt_content:
 
-You are a quiz generation AI. Your task is to create 3 high-quality multiple-choice questions based on the provided text.
-The questions and options must be in simple Korean, easy enough for a 7-year-old to read.
-You MUST output the result as a single, valid JSON array. Each object in the array must have the following keys: "question" (string), "options" (array of 4 strings), and "answer" (string, the correct option text).
+You are a quiz creation expert who generates quizzes in a structured JSON format based on the text provided.
+Your task is to create exactly 5 questions based on the provided note content.
 
-Do not include any text or formatting outside of the JSON array.
+## Primary Directives
+1.  **LANGUAGE:** Your ENTIRE response MUST be in **Korean**.
+2.  **DIFFICULTY:** All text, including questions, options, and answers, must be written in **simple Korean, easy enough for a 7-year-old to understand**. Avoid difficult jargon.
+3.  **FORMAT:** Your response MUST be a single, valid JSON array. Do not include any text, explanations, or markdown formatting before or after the JSON array.
+
+## JSON Structure Rules
+1.  The JSON array must contain 5 objects, each representing a single quiz.
+2.  Each quiz object must have four fields: "type", "question", "options", and "answer".
+3.  "type" must be one of: "MULTIPLE_CHOICE", "SHORT_ANSWER", "FILL_IN_THE_BLANK".
+4.  For "MULTIPLE_CHOICE", "options" must be an array of 4 strings. "answer" must be one of them.
+5.  For "SHORT_ANSWER" and "FILL_IN_THE_BLANK", "options" must be an empty array `[]`.
+6.  For "FILL_IN_THE_BLANK", the "question" text must contain a "____" placeholder.
+7.  Generate a variety of question types.
+
+## Note Content (Title is optional)
+Title: {NOTE_TITLE}
+Content: {NOTE_CONTENT}
+
+Now, generate the 5 quizzes based on the rules and note content.
 
 Source Text:
 ---
