@@ -805,41 +805,179 @@ const TimerPage: React.FC = () => {
   // 확장된 노트 렌더링 함수
   const renderExpandedNotes = () => (
     <NotesSection expanded={true}>
-      {/* 타이머 바 */}
-      <ExpandedTimerBar>
-        <ExpandedTimerInfo>
-          <ExpandedTimerDisplay>
+      {/* 모바일 상단 타이머 바 */}
+      <Box sx={{ 
+        display: { xs: 'block', sm: 'none' },  // 모바일에서만 표시
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        backgroundColor: '#FFFFFF',
+        padding: '12px 16px',
+        marginBottom: '16px',
+      }}>
+        {/* 상단 행: 타이머, 버튼들, 세션 정보, 닫기 버튼 */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          marginBottom: '12px',
+        }}>
+          <Text sx={{ 
+            fontSize: '20px', 
+            fontWeight: 700, 
+            color: '#1A1A1A',
+            fontFamily: "'Pretendard', monospace",
+            minWidth: '70px',
+          }}>
             {formatTime(minutes, seconds)}
-          </ExpandedTimerDisplay>
-          {isRunning ? (
-            <ExpandedSessionInfo>
-              세션 {sessionProgress.current + 1}/{sessionProgress.target}
-            </ExpandedSessionInfo>
-          ) : (
-            <ExpandedSessionInfo>
-              세션 {sessionProgress.current + 1}/{sessionProgress.target} • 준비됨
-            </ExpandedSessionInfo>
-          )}
-        </ExpandedTimerInfo>
-        
-        <ExpandedProgressBar>
-          <ExpandedProgressFill progress={isRunning ? progress : 0} />
-        </ExpandedProgressBar>
-        
-        <IconButton 
-          size="small" 
-          sx={{ 
+          </Text>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: '#FFFFFF',
+                backgroundColor: '#EF4444',
+                '&:hover': {
+                  backgroundColor: '#DC2626',
+                },
+                width: '32px',
+                height: '32px',
+              }}
+              onClick={isRunning ? pause : handleStart}
+            >
+              {isRunning ? (
+                <Box sx={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                }}>
+                  <Box sx={{ 
+                    width: '3px', 
+                    height: '12px', 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '0.5px',
+                  }} />
+                  <Box sx={{ 
+                    width: '3px', 
+                    height: '12px', 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '0.5px',
+                  }} />
+                </Box>
+              ) : (
+                <Box sx={{ 
+                  width: 0,
+                  height: 0,
+                  borderLeft: '6px solid #FFFFFF',
+                  borderTop: '4px solid transparent',
+                  borderBottom: '4px solid transparent',
+                  marginLeft: '1px',
+                }} />
+              )}
+            </IconButton>
+            
+            <IconButton 
+              size="small" 
+              sx={{ 
+                color: '#6B7280',
+                backgroundColor: '#F3F4F6',
+                '&:hover': {
+                  backgroundColor: '#E5E7EB',
+                },
+                width: '32px',
+                height: '32px',
+              }}
+              onClick={handleReset}
+            >
+              <Box sx={{ 
+                width: '12px', 
+                height: '12px', 
+                border: '2px solid currentColor',
+                borderRadius: '50%',
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: '-1px',
+                  right: '1px',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '3px solid transparent',
+                  borderRight: '3px solid transparent',
+                  borderBottom: '4px solid currentColor',
+                },
+              }} />
+            </IconButton>
+          </Box>
+          
+          <Text sx={{ 
+            fontSize: '14px', 
+            fontWeight: 500, 
             color: '#6B7280',
-            backgroundColor: '#F3F4F6',
-            '&:hover': {
-              backgroundColor: '#E5E7EB',
-            },
-          }}
-          onClick={() => setNotesExpanded(false)}
-        >
-          <CompressIcon fontSize="small" />
-        </IconButton>
-      </ExpandedTimerBar>
+            textAlign: 'center',
+            minWidth: '60px',
+          }}>
+            세션 {sessionProgress.current + 1}/{sessionProgress.target}
+          </Text>
+        </Box>
+        
+        {/* 프로그레스 바 */}
+        <Box sx={{ 
+          width: '100%',
+          height: '6px',
+          backgroundColor: '#F3F4F6',
+          borderRadius: '3px',
+          overflow: 'hidden',
+          border: '1px solid #E5E7EB',
+        }}>
+          <Box sx={{ 
+            width: `${isRunning ? progress : 0}%`,
+            height: '100%',
+            backgroundColor: '#2563EB',
+            transition: 'width 0.3s ease',
+            borderRadius: '3px',
+          }} />
+        </Box>
+      </Box>
+
+      {/* 데스크톱 타이머 바 */}
+      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <ExpandedTimerBar>
+          <ExpandedTimerInfo>
+            <ExpandedTimerDisplay>
+              {formatTime(minutes, seconds)}
+            </ExpandedTimerDisplay>
+            {isRunning ? (
+              <ExpandedSessionInfo>
+                세션 {sessionProgress.current + 1}/{sessionProgress.target}
+              </ExpandedSessionInfo>
+            ) : (
+              <ExpandedSessionInfo>
+                세션 {sessionProgress.current + 1}/{sessionProgress.target} • 준비됨
+              </ExpandedSessionInfo>
+            )}
+          </ExpandedTimerInfo>
+          
+          <ExpandedProgressBar>
+            <ExpandedProgressFill progress={isRunning ? progress : 0} />
+          </ExpandedProgressBar>
+          
+          <IconButton 
+            size="small" 
+            sx={{ 
+              color: '#6B7280',
+              backgroundColor: '#F3F4F6',
+              '&:hover': {
+                backgroundColor: '#E5E7EB',
+              },
+            }}
+            onClick={() => setNotesExpanded(false)}
+          >
+            <CompressIcon fontSize="small" />
+          </IconButton>
+        </ExpandedTimerBar>
+      </Box>
 
       {/* 노트 제목과 자동저장 토글 */}
       <NotesHeader>
@@ -848,7 +986,11 @@ const TimerPage: React.FC = () => {
             📝 집중 노트
           </NotesTitle>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Box sx={{ 
+          display: 'flex',
+          alignItems: 'center', 
+          gap: '16px' 
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
               자동저장
@@ -867,6 +1009,21 @@ const TimerPage: React.FC = () => {
               }}
             />
           </Box>
+          <IconButton 
+            size="small" 
+            sx={{ 
+              color: '#6B7280',
+              backgroundColor: '#F3F4F6',
+              '&:hover': {
+                backgroundColor: '#E5E7EB',
+              },
+              width: '28px',
+              height: '28px',
+            }}
+            onClick={() => setNotesExpanded(false)}
+          >
+            <CompressIcon fontSize="small" />
+          </IconButton>
         </Box>
       </NotesHeader>
 
@@ -878,7 +1035,7 @@ const TimerPage: React.FC = () => {
         disabled={!isRunning}
         placeholder={
           isRunning
-            ? "현재 집중 중인 작업을 수정할 수 있습니다"
+            ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
             : "타이머를 시작하면 입력할 수 있습니다"
         }
         aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -901,41 +1058,163 @@ const TimerPage: React.FC = () => {
         value={notes}
         onChange={handleEditorChange}
         readOnly={!isRunning}
+        sx={{
+          paddingBottom: { xs: '100px', sm: '0' }, // 모바일에서 하단 툴바 공간 확보
+        }}
       />
 
-      {/* 확장된 기능들 */}
-      <ExpandedNotesFeatures>
+      {/* 데스크톱 확장된 기능들 */}
+      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <ExpandedNotesFeatures>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            flex: 1,
+          }}>
+            <StudyModeLabel>요약 스타일</StudyModeLabel>
+            <FormControl size="small" variant="outlined">
+              <Select
+                value={summaryStyle}
+                onChange={(e) => setSummaryStyle(e.target.value as string)}
+                displayEmpty
+                sx={{
+                  minWidth: '150px',
+                  backgroundColor: '#FFFFFF',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#E5E7EB',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#D1D5DB',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#2563EB',
+                  },
+                }}
+              >
+                <MenuItem value="concept">개념 정리</MenuItem>
+                <MenuItem value="detail">상세 분석</MenuItem>
+                <MenuItem value="summary">핵심 요약</MenuItem>
+              </Select>
+            </FormControl>
+            
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleGenerateAI}
+              disabled={!canGenerateAI}
+              sx={{
+                backgroundColor: '#10B981',
+                '&:hover': {
+                  backgroundColor: '#059669',
+                },
+                '&:disabled': {
+                  backgroundColor: '#D1D5DB',
+                  color: '#9CA3AF',
+                },
+                fontWeight: 600,
+                textTransform: 'none',
+                minWidth: '100px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {isGeneratingAI ? (
+                <>
+                  <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
+                  생성 중...
+                </>
+              ) : (
+                'AI 생성'
+              )}
+            </Button>
+          </Box>
+          
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleSaveNotes}
+            disabled={!canSave}
+            sx={{
+              borderColor: '#2563EB',
+              color: '#2563EB',
+              '&:hover': {
+                borderColor: '#1D4ED8',
+                backgroundColor: 'rgba(37, 99, 235, 0.05)',
+              },
+              '&:disabled': {
+                borderColor: '#D1D5DB',
+                color: '#9CA3AF',
+              },
+              fontWeight: 600,
+              textTransform: 'none',
+              minWidth: '70px',
+            }}
+          >
+            저장
+          </Button>
+        </ExpandedNotesFeatures>
+      </Box>
+
+      {/* 모바일 하단 툴바 */}
+      <Box sx={{ 
+        display: { xs: 'block', sm: 'none' },  // 모바일에서만 표시
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid #E5E7EB',
+        padding: '16px',
+        zIndex: 10000,
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
+      }}>
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: '12px',
-          flex: 1,
+          justifyContent: 'space-between',
         }}>
-          <StudyModeLabel>요약 스타일</StudyModeLabel>
-          <FormControl size="small" variant="outlined">
-            <Select
-              value={summaryStyle}
-              onChange={(e) => setSummaryStyle(e.target.value as string)}
-              displayEmpty
-              sx={{
-                minWidth: '150px',
-                backgroundColor: '#FFFFFF',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#E5E7EB',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#D1D5DB',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#2563EB',
-                },
-              }}
-            >
-              <MenuItem value="concept">개념 정리</MenuItem>
-              <MenuItem value="detail">상세 분석</MenuItem>
-              <MenuItem value="summary">핵심 요약</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            flex: 1,
+          }}>
+            <Text sx={{ 
+              fontSize: '14px', 
+              fontWeight: 500, 
+              color: '#6B7280',
+              minWidth: '60px',
+            }}>
+              요약 스타일
+            </Text>
+            <FormControl size="small" variant="outlined" sx={{ flex: 1, maxWidth: '140px' }}>
+              <Select
+                value={summaryStyle}
+                onChange={(e) => setSummaryStyle(e.target.value as string)}
+                displayEmpty
+                sx={{
+                  backgroundColor: '#FFFFFF',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#E5E7EB',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#D1D5DB',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#2563EB',
+                  },
+                }}
+              >
+                <MenuItem value="concept">Concept-focused</MenuItem>
+                <MenuItem value="detail">상세 분석</MenuItem>
+                <MenuItem value="summary">핵심 요약</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
           
           <Button
             variant="contained"
@@ -953,47 +1232,25 @@ const TimerPage: React.FC = () => {
               },
               fontWeight: 600,
               textTransform: 'none',
-              minWidth: '100px',
+              minWidth: '80px',
+              fontSize: '14px',
+              padding: '8px 16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
             }}
           >
             {isGeneratingAI ? (
               <>
-                <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
-                생성 중...
+                <MuiCircularProgress size={14} sx={{ color: '#FFFFFF' }} />
+                생성 중
               </>
             ) : (
               'AI 생성'
             )}
           </Button>
         </Box>
-        
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleSaveNotes}
-          disabled={!canSave}
-          sx={{
-            borderColor: '#2563EB',
-            color: '#2563EB',
-            '&:hover': {
-              borderColor: '#1D4ED8',
-              backgroundColor: 'rgba(37, 99, 235, 0.05)',
-            },
-            '&:disabled': {
-              borderColor: '#D1D5DB',
-              color: '#9CA3AF',
-            },
-            fontWeight: 600,
-            textTransform: 'none',
-            minWidth: '70px',
-          }}
-        >
-          저장
-        </Button>
-      </ExpandedNotesFeatures>
+      </Box>
     </NotesSection>
   );
 
