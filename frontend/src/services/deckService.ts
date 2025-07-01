@@ -1,4 +1,4 @@
-import type { CardDeck, Card, CreateDeckRequest, UpdateDeckRequest } from '../types/card';
+import type { CardDeck, Card, CreateDeckRequest, UpdateDeckRequest, SearchCard } from '../types/card';
 import * as deckApi from '../api/deckApi';
 
 // 🎯 덱 서비스 인터페이스 정의
@@ -8,6 +8,7 @@ export interface IDeckService {
   updateDeck(deckId: string, data: UpdateDeckRequest): Promise<CardDeck>;
   deleteDeck(deckId: string): Promise<void>;
   getCardsInDeck(deckId: string): Promise<Card[]>;
+  searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]>;
 }
 
 // 🎭 Mock 데이터 (기존 데이터 활용)
@@ -210,6 +211,34 @@ class MockDeckService implements IDeckService {
     await new Promise(resolve => setTimeout(resolve, 300));
     return this.cards[deckId] || [];
   }
+
+  async searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]> {
+    console.log('🎭 MockDeckService: searchCardsInDeck 호출', { keyword, deckId });
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const deckCards = this.cards[deckId] || [];
+    const deck = this.decks.find(d => d.deckId === deckId);
+    const deckName = deck?.deckName || 'Unknown Deck';
+    
+    const searchResults: SearchCard[] = deckCards
+      .filter(card => 
+        card.content.toLowerCase().includes(keyword.toLowerCase()) ||
+        card.answer.toLowerCase().includes(keyword.toLowerCase())
+      )
+      .map(card => ({
+        cardId: card.cardId,
+        content: card.content,
+        answer: card.answer,
+        deckId: card.deckId,
+        deckName: deckName,
+        isDeleted: card.isDeleted,
+        createdAt: card.createdAt,
+        updatedAt: card.updatedAt
+      }));
+    
+    console.log('🎭 MockDeckService: searchCardsInDeck 결과', searchResults);
+    return searchResults;
+  }
 }
 
 // 🌐 실제 API 서비스 구현
@@ -258,6 +287,15 @@ class RealDeckService implements IDeckService {
     } catch (error) {
       console.warn('⚠️ Real API (getCardsInDeck) 실패! Mock 데이터로 대체합니다.', error);
       return this.mockService.getCardsInDeck(deckId);
+    }
+  }
+
+  async searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]> {
+    try {
+      return await deckApi.searchCardsInDeck(keyword, deckId);
+    } catch (error) {
+      console.warn('⚠️ Real API (searchCardsInDeck) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.searchCardsInDeck(keyword, deckId);
     }
   }
 }

@@ -8,7 +8,6 @@ import {
   Menu,
   MenuItem,
   Chip,
-  Button,
   TextField,
   // CircularProgress,
   Dialog,
@@ -35,9 +34,11 @@ import {
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
 import * as cardApi from '../../api/cardApi';
-import type { Card, CreateCardRequest } from '../../types/card';
+import type { Card, CreateCardRequest, SearchCard } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
 import { FlashCard, type FlashCardData } from '../../components/ui';
+import { deckService } from '../../services/deckService';
+import Button from '../../components/ui/Button';
 
 // 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
 interface FlashcardDeck {
@@ -98,6 +99,11 @@ const FlashCardListPage: React.FC = () => {
   
   // 🎯 API Fallback을 위한 상태 (초기값 빈 배열 보장)
   const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
+  
+  // 🔍 검색 관련 상태
+  const [searchResults, setSearchResults] = useState<SearchCard[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
@@ -223,24 +229,68 @@ const FlashCardListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [flashCards]);
 
-  // 필터링된 카드 목록 (기존 로직 유지)
+  // 🔍 검색 결과를 FlashCard 형태로 변환
+  const convertSearchResultsToFlashCards = useMemo(() => {
+    return searchResults.map(searchCard => ({
+      id: searchCard.cardId,
+      front: searchCard.content,
+      back: searchCard.answer,
+      tags: [`#${searchCard.deckName}`, '#검색결과']
+    }));
+  }, [searchResults]);
+
+  // 필터링된 카드 목록 - 검색 결과가 있으면 검색 결과 사용, 없으면 전체 카드 사용
   const filteredCards = useMemo(() => {
-    return flashCards.filter((card) => {
+    const cardsToFilter = searchResults.length > 0 ? convertSearchResultsToFlashCards : flashCards;
+    
+    return cardsToFilter.filter((card) => {
       const matchesTags = filters.selectedTags.length === 0 || 
                          filters.selectedTags.some((tag: string) => card.tags.includes(tag));
       
       const matchesBookmark = !filters.showBookmarked || cardBookmarks[card.id];
 
-      const matchesSearch = filters.searchQuery.trim() === '' || 
-                            card.front.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                            card.back.toLowerCase().includes(filters.searchQuery.toLowerCase());
-
-      return matchesTags && matchesBookmark && matchesSearch;
+      return matchesTags && matchesBookmark;
     });
-  }, [filters, flashCards, cardBookmarks]);
+  }, [filters.selectedTags, filters.showBookmarked, flashCards, cardBookmarks, convertSearchResultsToFlashCards, searchResults]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFilters({ searchQuery: event.target.value }));
+    setSearchQuery(event.target.value);
+  };
+
+  // 🔍 검색 함수
+  const handleSearch = async () => {
+    if (!deckId || !searchQuery.trim()) {
+      // 검색어가 없으면 검색 결과 초기화
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      console.log('🔍 카드 검색 시작:', { keyword: searchQuery, deckId });
+      const results = await deckService.searchCardsInDeck(searchQuery.trim(), deckId);
+      setSearchResults(results);
+      console.log('✅ 카드 검색 완료:', results);
+      
+      dispatch(showToast({
+        message: `${results.length}개의 카드를 찾았습니다.`,
+        severity: 'info'
+      }));
+    } catch (error) {
+      console.error('❌ 카드 검색 실패:', error);
+      dispatch(showToast({
+        message: '검색에 실패했습니다.',
+        severity: 'error'
+      }));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 🔄 검색 초기화
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -580,20 +630,53 @@ const FlashCardListPage: React.FC = () => {
 
       {/* 검색 */}
       <SearchBox>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="카드 내용 검색..."
-          value={filters.searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="카드 검색..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            disabled={isSearching}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={isSearching}
+            sx={{ minWidth: 80, height: 56 }}
+          >
+            검색
+          </Button>
+          {searchResults.length > 0 && (
+            <Button
+              variant="outlined"
+              onClick={handleClearSearch}
+              disabled={isSearching}
+              sx={{ minWidth: 80, height: 56 }}
+            >
+              초기화
+            </Button>
+          )}
+        </Box>
+        {isSearching && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              검색 중...
+            </Typography>
+          </Box>
+        )}
       </SearchBox>
 
       {/* 필터 */}
@@ -625,6 +708,26 @@ const FlashCardListPage: React.FC = () => {
           />
         ))}
       </SelectedTagsBox>
+
+      {/* 검색 결과 정보 */}
+      {searchResults.length > 0 && (
+        <Box
+          sx={{
+            bgcolor: '#e8f5e8',
+            border: '1px solid #4caf50',
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="#2e7d32">
+            🔍 검색 결과: "{searchQuery}" 키워드로 {searchResults.length}개의 카드를 찾았습니다.
+          </Typography>
+        </Box>
+      )}
 
       {/* 태그 메뉴 */}
       <Menu
