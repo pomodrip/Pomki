@@ -1662,6 +1662,7 @@ const TimerPage: React.FC = () => {
               min={5}
               max={120}
               step={5}
+              boxWidth={100}
             />
             <WheelTimeAdjuster
               value={tempSettings.breakMinutes}
