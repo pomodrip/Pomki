@@ -314,17 +314,15 @@ const NoteListPage: React.FC = () => {
 
   const handleDeleteNote = async (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const confirmed = await showConfirmDialog({
-      title: '노트 삭제',
-      message: '정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
-    });
 
-    if (confirmed) {
+    // 📌 기본 confirm 다이얼로그 사용 (Deck 삭제 방식과 동일)
+    if (window.confirm('정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
       try {
         await dispatch(deleteNoteAsync(noteId)).unwrap();
-        dispatch(showToast({ message: '노트가 삭제되었습니다.', severity: 'success' }));
-      } catch (e: any) {
-        dispatch(showToast({ message: e.message || '노트 삭제에 실패했습니다.', severity: 'error' }));
+        dispatch(showToast({ message: '노트가 성공적으로 삭제되었습니다.', severity: 'success' }));
+      } catch (err) {
+        const error = err as Error;
+        dispatch(showToast({ message: error.message || '노트 삭제에 실패했습니다.', severity: 'error' }));
       }
     }
   };
