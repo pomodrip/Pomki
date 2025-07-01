@@ -9,20 +9,24 @@ interface WheelTimeAdjusterProps {
   min?: number;
   max?: number;
   step?: number;
+  boxWidth?: number; // 데스크톱 기준 네모 너비(선택)
 }
 
 // 컨테이너 스타일
-const AdjusterContainer = styled(Box)(() => ({
+const AdjusterContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   flex: 1,
+  margin: '0 8px',
+
+  [theme.breakpoints.down('sm')]: {
+    margin: '0 2px', // 모바일에서 간격 축소
+  },
 }));
 
 // 휠 조절 영역 스타일
-const WheelArea = styled(Box)(({ theme }) => ({
-  width: '80px',
-  height: '80px',
+const WheelAreaBase = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   backgroundColor: '#F3F4F6',
   display: 'flex',
@@ -35,12 +39,6 @@ const WheelArea = styled(Box)(({ theme }) => ({
   cursor: 'pointer',
   userSelect: 'none',
   fontFamily: theme.typography.fontFamily, // KoddiUD 폰트 적용
-  
-  [theme.breakpoints.down('sm')]: {
-    width: '65px', // 모바일에서 너비 줄임
-    height: '65px', // 모바일에서 높이 줄임
-    fontSize: '24px', // 모바일에서 폰트 크기 줄임
-  },
 }));
 
 // 라벨 스타일
@@ -61,10 +59,23 @@ const Arrow = styled('div')({
   lineHeight: 1,
 });
 
+// 화살표 컨테이너 (오른쪽 고정)
+const ArrowContainer = styled(Box)({
+  position: 'absolute',
+  right: '6px',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  userSelect: 'none',
+});
+
 // 숫자 표시 스타일
 const ValueText = styled('span')(() => ({
   fontSize: '32px',
   fontWeight: 700,
+  paddingRight: '20px', // 화살표 영역 확보
 }));
 
 const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
@@ -74,6 +85,7 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
   min = 1,
   max = 120,
   step = 1,
+  boxWidth,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -189,12 +201,18 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
     }
   };
 
+  // 동적 크기 계산
+  const defaultDesktopW = 90;
+  const defaultMobileW = 70;
+  const currentWidth = boxWidth ?? (isMobile ? defaultMobileW : defaultDesktopW);
+  const currentHeight = isMobile ? 60 : 85;
+
   return (
     <AdjusterContainer>
       {/* <HelperText>
         휠/드래그로 조절
       </HelperText> */}
-      <WheelArea
+      <WheelAreaBase
         onWheel={isEditing ? undefined : handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -207,6 +225,7 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
         aria-valuenow={value}
         aria-valuemin={min}
         aria-valuemax={max}
+        sx={{ width: currentWidth, height: currentHeight, fontSize: isMobile ? '24px' : '32px' }}
       >
         {isEditing ? (
           <InputBase
@@ -232,24 +251,21 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
           />
         ) : (
           <Box sx={{ 
+            position: 'relative',
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
             height: '100%',
-            gap: '4px' // 숫자와 화살표 사이 간격
+            width: '100%',
           }}>
             <ValueText>{value}</ValueText>
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}>
+            <ArrowContainer sx={{ display: isEditing ? 'none' : 'flex' }}>
               <Arrow aria-hidden>▲</Arrow>
               <Arrow aria-hidden>▼</Arrow>
-            </Box>
+            </ArrowContainer>
           </Box>
         )}
-      </WheelArea>
+      </WheelAreaBase>
       <AdjusterLabel>
         {label}
       </AdjusterLabel>
