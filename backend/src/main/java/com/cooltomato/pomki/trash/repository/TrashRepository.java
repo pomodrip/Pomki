@@ -1,5 +1,6 @@
 package com.cooltomato.pomki.trash.repository;
 
+import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.trash.entity.Trash;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

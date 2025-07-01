@@ -24,12 +24,14 @@ public class Trash {
     @Column(name = "trash_id", length = 50, nullable = false)
     private String trashId;
     
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
-    
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", insertable = false, updatable = false)
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
+    
+    // 편의 메서드
+    public Long getMemberId() {
+        return member != null ? member.getMemberId() : null;
+    }
     
     @CreationTimestamp
     @Column(name = "deleted_at", nullable = false, updatable = false)

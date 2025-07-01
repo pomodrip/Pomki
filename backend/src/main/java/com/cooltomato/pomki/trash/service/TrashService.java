@@ -6,6 +6,8 @@ import com.cooltomato.pomki.card.repository.CardRepository;
 import com.cooltomato.pomki.deck.entity.Deck;
 import com.cooltomato.pomki.deck.repository.DeckRepository;
 import com.cooltomato.pomki.global.exception.NotFoundException;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
 import com.cooltomato.pomki.trash.dto.TrashItemDto;
@@ -35,6 +37,7 @@ public class TrashService {
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;
     private final NoteRepository noteRepository;
+    private final MemberRepository memberRepository;
     
     /**
      * 사용자의 쓰레기통 목록 조회
@@ -47,7 +50,7 @@ public class TrashService {
         
         for (Trash trash : trashList) {
             // 덱 확인
-            List<TrashDeck> trashDecks = trashDeckRepository.findByTrashId(trash.getTrashId());
+            List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trash.getTrashId());
             for (TrashDeck trashDeck : trashDecks) {
                 Optional<Deck> deck = deckRepository.findById(trashDeck.getDeckId());
                 if (deck.isPresent()) {
@@ -63,7 +66,7 @@ public class TrashService {
             }
             
             // 카드 확인
-            List<TrashCard> trashCards = trashCardRepository.findByTrashId(trash.getTrashId());
+            List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trash.getTrashId());
             for (TrashCard trashCard : trashCards) {
                 Optional<Card> card = cardRepository.findById(trashCard.getCardId());
                 if (card.isPresent()) {
@@ -79,7 +82,7 @@ public class TrashService {
             }
             
             // 노트 확인
-            List<TrashNote> trashNotes = trashNoteRepository.findByTrashId(trash.getTrashId());
+            List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trash.getTrashId());
             for (TrashNote trashNote : trashNotes) {
                 Optional<Note> note = noteRepository.findById(trashNote.getNoteId());
                 if (note.isPresent()) {
@@ -113,16 +116,20 @@ public class TrashService {
         Deck deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(memberId, deckId)
                 .orElseThrow(() -> new NotFoundException("덱을 찾을 수 없습니다."));
         
+        // Member 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
+        
         // 쓰레기통 엔트리 생성
         Trash trash = Trash.builder()
-                .memberId(memberId)
+                .member(member)
                 .build();
         trashRepository.save(trash);
         
         // 쓰레기통 덱 엔트리 생성
+        TrashDeckId trashDeckId = new TrashDeckId(deckId, trash.getTrashId());
         TrashDeck trashDeck = TrashDeck.builder()
-                .deckId(deckId)
-                .trashId(trash.getTrashId())
+                .id(trashDeckId)
                 .build();
         trashDeckRepository.save(trashDeck);
         
@@ -149,16 +156,20 @@ public class TrashService {
             throw new NotFoundException("카드에 대한 권한이 없습니다.");
         }
         
+        // Member 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
+        
         // 쓰레기통 엔트리 생성
         Trash trash = Trash.builder()
-                .memberId(memberId)
+                .member(member)
                 .build();
         trashRepository.save(trash);
         
         // 쓰레기통 카드 엔트리 생성
+        TrashCardId trashCardId = new TrashCardId(cardId, trash.getTrashId());
         TrashCard trashCard = TrashCard.builder()
-                .cardId(cardId)
-                .trashId(trash.getTrashId())
+                .id(trashCardId)
                 .build();
         trashCardRepository.save(trashCard);
         
@@ -185,16 +196,20 @@ public class TrashService {
             throw new NotFoundException("노트에 대한 권한이 없습니다.");
         }
         
+        // Member 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("회원을 찾을 수 없습니다."));
+        
         // 쓰레기통 엔트리 생성
         Trash trash = Trash.builder()
-                .memberId(memberId)
+                .member(member)
                 .build();
         trashRepository.save(trash);
         
         // 쓰레기통 노트 엔트리 생성
+        TrashNoteId trashNoteId = new TrashNoteId(noteId, trash.getTrashId());
         TrashNote trashNote = TrashNote.builder()
-                .noteId(noteId)
-                .trashId(trash.getTrashId())
+                .id(trashNoteId)
                 .build();
         trashNoteRepository.save(trashNote);
         
@@ -220,7 +235,7 @@ public class TrashService {
         }
         
         // 덱 복원
-        List<TrashDeck> trashDecks = trashDeckRepository.findByTrashId(trashId);
+        List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trashId);
         for (TrashDeck trashDeck : trashDecks) {
             Optional<Deck> deck = deckRepository.findById(trashDeck.getDeckId());
             if (deck.isPresent()) {
@@ -230,7 +245,7 @@ public class TrashService {
         }
         
         // 카드 복원
-        List<TrashCard> trashCards = trashCardRepository.findByTrashId(trashId);
+        List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trashId);
         for (TrashCard trashCard : trashCards) {
             Optional<Card> card = cardRepository.findById(trashCard.getCardId());
             if (card.isPresent()) {
@@ -240,7 +255,7 @@ public class TrashService {
         }
         
         // 노트 복원
-        List<TrashNote> trashNotes = trashNoteRepository.findByTrashId(trashId);
+        List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trashId);
         for (TrashNote trashNote : trashNotes) {
             Optional<Note> note = noteRepository.findById(trashNote.getNoteId());
             if (note.isPresent()) {
@@ -250,9 +265,9 @@ public class TrashService {
         }
         
         // 쓰레기통에서 제거
-        trashDeckRepository.deleteByTrashId(trashId);
-        trashCardRepository.deleteByTrashId(trashId);
-        trashNoteRepository.deleteByTrashId(trashId);
+        trashDeckRepository.deleteByIdTrashId(trashId);
+        trashCardRepository.deleteByIdTrashId(trashId);
+        trashNoteRepository.deleteByIdTrashId(trashId);
         trashRepository.delete(trash);
         
         log.info("쓰레기통에서 복원되었습니다. trashId: {}, memberId: {}", trashId, memberId);
@@ -273,27 +288,27 @@ public class TrashService {
         }
         
         // 덱 영구 삭제
-        List<TrashDeck> trashDecks = trashDeckRepository.findByTrashId(trashId);
+        List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trashId);
         for (TrashDeck trashDeck : trashDecks) {
             deckRepository.deleteById(trashDeck.getDeckId());
         }
         
         // 카드 영구 삭제
-        List<TrashCard> trashCards = trashCardRepository.findByTrashId(trashId);
+        List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trashId);
         for (TrashCard trashCard : trashCards) {
             cardRepository.deleteById(trashCard.getCardId());
         }
         
         // 노트 영구 삭제
-        List<TrashNote> trashNotes = trashNoteRepository.findByTrashId(trashId);
+        List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trashId);
         for (TrashNote trashNote : trashNotes) {
             noteRepository.deleteById(trashNote.getNoteId());
         }
         
         // 쓰레기통에서 제거
-        trashDeckRepository.deleteByTrashId(trashId);
-        trashCardRepository.deleteByTrashId(trashId);
-        trashNoteRepository.deleteByTrashId(trashId);
+        trashDeckRepository.deleteByIdTrashId(trashId);
+        trashCardRepository.deleteByIdTrashId(trashId);
+        trashNoteRepository.deleteByIdTrashId(trashId);
         trashRepository.delete(trash);
         
         log.info("쓰레기통에서 영구 삭제되었습니다. trashId: {}, memberId: {}", trashId, memberId);
@@ -311,7 +326,32 @@ public class TrashService {
                 .toList();
         
         for (Trash trash : oldTrashItems) {
-            permanentDelete(trash.getTrashId(), null); // 시스템에서 호출하므로 principal null
+            // 시스템에서 직접 삭제 (권한 체크 없이)
+            String trashId = trash.getTrashId();
+            
+            // 덱 영구 삭제
+            List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trashId);
+            for (TrashDeck trashDeck : trashDecks) {
+                deckRepository.deleteById(trashDeck.getDeckId());
+            }
+            
+            // 카드 영구 삭제
+            List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trashId);
+            for (TrashCard trashCard : trashCards) {
+                cardRepository.deleteById(trashCard.getCardId());
+            }
+            
+            // 노트 영구 삭제
+            List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trashId);
+            for (TrashNote trashNote : trashNotes) {
+                noteRepository.deleteById(trashNote.getNoteId());
+            }
+            
+            // 쓰레기통에서 제거
+            trashDeckRepository.deleteByIdTrashId(trashId);
+            trashCardRepository.deleteByIdTrashId(trashId);
+            trashNoteRepository.deleteByIdTrashId(trashId);
+            trashRepository.delete(trash);
         }
         
         log.info("30일 이상 된 쓰레기통 항목 {} 개가 자동 삭제되었습니다.", oldTrashItems.size());
