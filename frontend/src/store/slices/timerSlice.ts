@@ -325,26 +325,27 @@ const timerSlice = createSlice({
         state.isRunning = false;
         state.status = 'COMPLETED';
         
-        // 세션 완료 처리
-        if (state.mode === 'FOCUS') {
+        // 다음 세션 모드 결정 및 세션 카운트 업데이트
+        const upcomingMode = getNextMode(state.mode);
+
+        if (upcomingMode === 'FOCUS') {
+          // 휴식이 끝나고 집중으로 돌아올 때 세션 카운트 +1
           state.completedSessions += 1;
         }
         
-        // 다음 세션 자동 시작
-        const nextMode = getNextMode(state.mode);
-        state.mode = nextMode;
+        state.mode = upcomingMode;
 
         // 두 번째 세션 이후 완료 여부 확인
-        if (state.completedSessions >= state.targetSessions && nextMode === 'FOCUS') {
+        if (state.completedSessions >= state.targetSessions && upcomingMode === 'FOCUS') {
           state.status = 'IDLE';
           return;
         }
 
         // 새 세션 객체 생성하여 즉시 시작
-        const duration = getDurationForMode(nextMode, state.settings);
+        const duration = getDurationForMode(upcomingMode, state.settings);
         state.currentSession = {
           sessionId: `session_${Date.now()}`,
-          mode: nextMode,
+          mode: upcomingMode,
           duration,
           remainingTime: duration,
           timeEntries: [createTimeEntry(Date.now())],
