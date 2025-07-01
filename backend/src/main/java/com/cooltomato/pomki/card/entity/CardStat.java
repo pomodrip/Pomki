@@ -14,13 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "CARD_STAT",
-       uniqueConstraints = {
-           @UniqueConstraint(
-               name = "UK_card_member",
-               columnNames = {"card_id", "member_id"}
-           )
-       })
+@Table(name = "CARD_STAT")
 @Getter
 @Builder
 @NoArgsConstructor
