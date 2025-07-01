@@ -996,7 +996,7 @@ const TimerPage: React.FC = () => {
             </Text>
             <Switch
               checked={autoSaveEnabled}
-              onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
               size="small"
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
@@ -1440,7 +1440,7 @@ const TimerPage: React.FC = () => {
               </Text>
               <Switch
                 checked={autoSaveEnabled}
-                onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
                 size="small"
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {

@@ -144,14 +144,9 @@ const getTotalElapsedMs = (timeEntries: TimeEntry[]): number => {
   }, 0);
 };
 
-// 다음 모드 결정
-const getNextMode = (currentMode: TimerMode, completedSessions: number, settings: TimerSettings): TimerMode => {
-  if (currentMode === 'FOCUS') {
-    // 포커스 완료 후 휴식 결정
-    return (completedSessions + 1) % settings.longBreakInterval === 0 ? 'LONG_BREAK' : 'SHORT_BREAK';
-  }
-  // 휴식 완료 후 포커스
-  return 'FOCUS';
+// 다음 모드 결정 – 간단히 집중 ↔ 휴식 반복
+const getNextMode = (currentMode: TimerMode): TimerMode => {
+  return currentMode === 'FOCUS' ? 'SHORT_BREAK' : 'FOCUS';
 };
 
 // 모드별 시간 가져오기
@@ -335,17 +330,29 @@ const timerSlice = createSlice({
           state.completedSessions += 1;
         }
         
-        // 자동 전환 처리
-        const nextMode = getNextMode(state.mode, state.completedSessions, state.settings);
-        const shouldAutoStart = (nextMode !== 'FOCUS' && state.settings.autoStartBreaks) ||
-                              (nextMode === 'FOCUS' && state.settings.autoStartPomodoros);
-        
-        if (shouldAutoStart) {
-          state.mode = nextMode;
-          // 자동 시작은 별도 액션으로 처리 (UI에서 startTimer 호출)
-        } else {
-          state.mode = nextMode;
+        // 다음 세션 자동 시작
+        const nextMode = getNextMode(state.mode);
+        state.mode = nextMode;
+
+        // 두 번째 세션 이후 완료 여부 확인
+        if (state.completedSessions >= state.targetSessions && nextMode === 'FOCUS') {
+          state.status = 'IDLE';
+          return;
         }
+
+        // 새 세션 객체 생성하여 즉시 시작
+        const duration = getDurationForMode(nextMode, state.settings);
+        state.currentSession = {
+          sessionId: `session_${Date.now()}`,
+          mode: nextMode,
+          duration,
+          remainingTime: duration,
+          timeEntries: [createTimeEntry(Date.now())],
+          status: 'RUNNING',
+          createdAt: new Date().toISOString(),
+        };
+        state.isRunning = true;
+        state.status = 'RUNNING';
       }
     },
 
@@ -516,12 +523,16 @@ export const selectShowSettings = (state: RootState) => state.timer.showSettings
 // 파생 상태 selector들
 export const selectCurrentTime = (state: RootState) => {
   const session = state.timer.currentSession;
-  if (!session) return { minutes: 0, seconds: 0 };
-  
+  if (!session) {
+    // 타이머가 정지 상태이면 기본 집중 시간 표시
+    const minutes = state.timer.settings.focusTime;
+    return { minutes, seconds: 0 };
+  }
+
   const totalSeconds = session.remainingTime;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  
+
   return { minutes, seconds };
 };
 
@@ -545,13 +556,10 @@ export const selectCanPause = (state: RootState) => {
   return state.timer.isRunning;
 };
 
-export const selectSessionProgress = (state: RootState) => {
-  return {
-    current: state.timer.completedSessions,
-    target: state.timer.targetSessions,
-    cycle: state.timer.currentCycle,
-  };
-};
+export const selectSessionProgress = (state: RootState) => ({
+  current: state.timer.completedSessions,
+  target: state.timer.targetSessions,
+});
 
 // 총 경과 시간 (현재 세션)
 export const selectTotalElapsed = (state: RootState) => {
@@ -574,11 +582,11 @@ export const selectModeSettings = (state: RootState) => {
 
 // 다음 세션 정보
 export const selectNextSessionInfo = (state: RootState) => {
-  const nextMode = getNextMode(state.timer.mode, state.timer.completedSessions, state.timer.settings);
+  const nextMode = getNextMode(state.timer.mode);
   const duration = getDurationForMode(nextMode, state.timer.settings);
   
   return {
     mode: nextMode,
-    duration: Math.floor(duration / 60), // 분 단위
+    duration,
   };
 };
