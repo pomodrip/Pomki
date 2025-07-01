@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, styled } from '@mui/material';
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, styled, InputBase } from '@mui/material';
 import { Text } from './';
 
 interface WheelTimeAdjusterProps {
@@ -78,6 +78,11 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [startY, setStartY] = useState(0);
   const [startValue, setStartValue] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const touchStartTime = useRef<number>(0);
+  const touchMoved = useRef<boolean>(false);
 
   // 모바일 환경 감지
   useEffect(() => {
@@ -93,6 +98,7 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
 
   // 데스크톱 마우스 휠 핸들러
   const handleWheel = (e: React.WheelEvent) => {
+    if (isEditing) return;
     e.preventDefault();
     const delta = e.deltaY;
     
@@ -110,12 +116,14 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
     const touch = e.touches[0];
     setStartY(touch.clientY);
     setStartValue(value);
+    touchStartTime.current = Date.now();
+    touchMoved.current = false;
     e.preventDefault();
   };
 
   // 모바일 터치 이동 핸들러
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isMobile || startY === 0) return;
+    if (!isMobile || isEditing || startY === 0) return;
     
     const touch = e.touches[0];
     const deltaY = startY - touch.clientY; // 위로 드래그하면 양수
@@ -123,6 +131,7 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
     const valueChange = Math.floor(deltaY / (10 * sensitivity)) * step;
     
     updateValue(startValue + valueChange);
+    touchMoved.current = true;
     e.preventDefault();
   };
 
@@ -130,6 +139,14 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
   const handleTouchEnd = () => {
     if (!isMobile) return;
     
+    // 탭(짧은 터치)으로 간주: 이동 거의 없고, 200ms 이하
+    const duration = Date.now() - touchStartTime.current;
+    if (!touchMoved.current && duration < 250) {
+      setIsEditing(true);
+      setInputValue(String(value));
+      return; // 편집 모드 진입 시 아래 로직 skip
+    }
+
     setStartY(0);
     setStartValue(0);
   };
@@ -145,17 +162,45 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
     }
   };
 
+  // 편집 모드 진입
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+    setInputValue(String(value));
+  };
+
+  // 입력 변경
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  // 입력 확정 (Enter 또는 blur)
+  const commitInput = () => {
+    const num = parseInt(inputValue, 10);
+    if (!isNaN(num)) {
+      updateValue(num);
+    }
+    setIsEditing(false);
+  };
+
+  // 편집 모드에서 Enter 처리
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      commitInput();
+    }
+  };
+
   return (
     <AdjusterContainer>
       {/* <HelperText>
         휠/드래그로 조절
       </HelperText> */}
       <WheelArea
-        onWheel={handleWheel}
+        onWheel={isEditing ? undefined : handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onKeyDown={handleKeyDown}
+        onDoubleClick={handleDoubleClick}
         tabIndex={0} // 키보드 접근성
         role="spinbutton"
         aria-label={`${label} 조절. 현재 값: ${value}`}
@@ -163,24 +208,47 @@ const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
         aria-valuemin={min}
         aria-valuemax={max}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          height: '100%',
-          gap: '4px' // 숫자와 화살표 사이 간격
-        }}>
-          
-          <ValueText>{value}</ValueText>
+        {isEditing ? (
+          <InputBase
+            inputRef={inputRef}
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={commitInput}
+            onKeyDown={handleInputKeyDown}
+            inputProps={{
+              min,
+              max,
+              step,
+              style: {
+                textAlign: 'center',
+                fontSize: '32px',
+                fontWeight: 700,
+                width: '100%',
+              },
+            }}
+            sx={{ width: '100%', height: '100%' }}
+            autoFocus
+          />
+        ) : (
           <Box sx={{ 
             display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center', 
+            justifyContent: 'center',
+            height: '100%',
+            gap: '4px' // 숫자와 화살표 사이 간격
           }}>
-            <Arrow aria-hidden>▲</Arrow>
-            <Arrow aria-hidden>▼</Arrow>
+            <ValueText>{value}</ValueText>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}>
+              <Arrow aria-hidden>▲</Arrow>
+              <Arrow aria-hidden>▼</Arrow>
+            </Box>
           </Box>
-        </Box>
+        )}
       </WheelArea>
       <AdjusterLabel>
         {label}
