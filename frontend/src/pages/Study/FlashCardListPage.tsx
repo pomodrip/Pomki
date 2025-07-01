@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { styled } from '@mui/material/styles'; // alpha
 import { 
   Box, 
   Typography, 
@@ -49,37 +48,7 @@ interface FlashcardDeck {
   flashcards: FlashCardData[];
 }
 
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
 
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(3),
-}));
-
-const SearchBox = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-}));
-
-const FilterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(3),
-}));
-
-
-
-const SelectedTagsBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-  minHeight: theme.spacing(4),
-  flexWrap: 'wrap',
-}));
 
 const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -526,7 +495,7 @@ const FlashCardListPage: React.FC = () => {
   // 덱이 없는 경우 (기존 로직 유지)
   if (!currentDeck) {
     return (
-      <StyledContainer maxWidth="md">
+      <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
         <Box
           display="flex" 
           flexDirection="column" 
@@ -545,18 +514,18 @@ const FlashCardListPage: React.FC = () => {
             덱 목록으로 이동
           </Button>
         </Box>
-      </StyledContainer>
+      </Container>
     );
   }
 
   return (
-    <StyledContainer maxWidth="md">
+    <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
       {/* 헤더 */}
-      <HeaderBox>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h5" fontWeight="bold">
           {currentDeck.title}
         </Typography>
-      </HeaderBox>
+      </Box>
 
       {/* API Fallback 정보 표시 */}
       {fallbackCards.length > 0 && (
@@ -579,7 +548,7 @@ const FlashCardListPage: React.FC = () => {
       )}
 
       {/* 검색 */}
-      <SearchBox>
+      <Box sx={{ mb: 2 }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -594,10 +563,10 @@ const FlashCardListPage: React.FC = () => {
             ),
           }}
         />
-      </SearchBox>
+      </Box>
 
       {/* 필터 */}
-      <FilterBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Button
           startIcon={<FilterListIcon />}
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
@@ -610,10 +579,10 @@ const FlashCardListPage: React.FC = () => {
         >
           북마크
         </Button>
-      </FilterBox>
+      </Box>
 
       {/* 선택된 태그들 표시 */}
-      <SelectedTagsBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, minHeight: 4, flexWrap: 'wrap' }}>
         {filters.selectedTags.map((tag: string) => (
           <Chip
             key={tag}
@@ -624,7 +593,7 @@ const FlashCardListPage: React.FC = () => {
             variant="filled"
           />
         ))}
-      </SelectedTagsBox>
+      </Box>
 
       {/* 태그 메뉴 */}
       <Menu
@@ -761,7 +730,7 @@ const FlashCardListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </StyledContainer>
+    </Container>
   );
 };
 

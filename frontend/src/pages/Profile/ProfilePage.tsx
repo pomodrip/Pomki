@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, styled, Typography } from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
@@ -9,12 +9,6 @@ import { logoutUser } from '../../store/slices/authSlice';
 import { AppDispatch, RootState } from '../../store/store';
 import MembershipBadge from '../../components/common/MembershipBadge';
 import NavListButton from '../../components/ui/NavListButton';
-
-
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
 
 
 const ProfilePage: React.FC = () => {
@@ -55,7 +49,7 @@ const ProfilePage: React.FC = () => {
   // 로그인하지 않은 사용자 처리
   if (!isAuthenticated) {
     return (
-      <StyledContainer maxWidth="md">
+      <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
         <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
           프로필
         </Typography>
@@ -74,14 +68,14 @@ const ProfilePage: React.FC = () => {
             로그인하러 가기
           </Button>
         </Card>
-      </StyledContainer>
+      </Container>
     );
   }
 
   // 로딩 중 표시
   if (status === 'loading') {
     return (
-      <StyledContainer maxWidth="md">
+      <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
         <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
           프로필
         </Typography>
@@ -90,12 +84,12 @@ const ProfilePage: React.FC = () => {
             사용자 정보를 불러오는 중...
           </Typography>
         </Card>
-      </StyledContainer>
+      </Container>
     );
   }
 
   return (
-    <StyledContainer maxWidth="md">
+    <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
       <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
         프로필
       </Typography>
@@ -209,7 +203,7 @@ const ProfilePage: React.FC = () => {
           </Box>
         </Box>
       </Card>
-    </StyledContainer>
+    </Container>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled, Paper } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, Paper } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -10,11 +10,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
 
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
-
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
   const location = useLocation();
@@ -23,14 +18,20 @@ const DashboardPage: React.FC = () => {
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
 
   return (
-    <StyledContainer maxWidth="md">
+    <Container 
+      maxWidth="md"
+      sx={{
+        pt: 2,
+        pb: 10,
+      }}
+    >
       <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
         대시보드
       </Typography>
 
       {/* 개발자 도구 - 개발 환경에서만 표시 */}
       {import.meta.env.DEV && (
-        <Paper sx={{ p: 3, mb: 3, backgroundColor: '#e3f2fd' }}>
+        <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.light' }}>
           <Typography variant="h2" gutterBottom>
             🔧 개발자 도구
           </Typography>
@@ -68,7 +69,7 @@ const DashboardPage: React.FC = () => {
         gap: 3,
         mb: 4
       }}>
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper' }}>
+        <Card cardVariant="default">
           <Typography variant="h3" gutterBottom>
             오늘의 학습
           </Typography>
@@ -84,7 +85,7 @@ const DashboardPage: React.FC = () => {
 
         </Card>
 
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
+        <Card cardVariant="default" sx={{ p: 0 }}>
           <Accordion elevation={0} sx={{ ml: 0 }}>
             <AccordionSummary
               expandIcon={<span>▼</span>}
@@ -99,8 +100,8 @@ const DashboardPage: React.FC = () => {
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid',
+                  py: 1,
+                  borderBottom: 1,
                   borderColor: 'divider'
                 }}>
                   <Box>
@@ -120,8 +121,8 @@ const DashboardPage: React.FC = () => {
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid',
+                  py: 1,
+                  borderBottom: 1,
                   borderColor: 'divider'
                 }}>
                   <Box>
@@ -141,7 +142,7 @@ const DashboardPage: React.FC = () => {
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'center',
-                  padding: '8px 0'
+                  py: 1
                 }}>
                   <Box>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -176,13 +177,13 @@ const DashboardPage: React.FC = () => {
 
           </Box>
         </Card>
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
+        <Card cardVariant="default" sx={{ p: 0 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateCalendar defaultValue={dayjs('2022-04-17')} />
           </LocalizationProvider>
         </Card>
       </Box>
-    </StyledContainer>
+    </Container>
   );
 };
 
