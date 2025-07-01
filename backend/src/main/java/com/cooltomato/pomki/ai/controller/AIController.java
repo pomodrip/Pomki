@@ -2,8 +2,11 @@ package com.cooltomato.pomki.ai.controller;
 
 import com.cooltomato.pomki.ai.dto.NotePolishRequestDto;
 import com.cooltomato.pomki.ai.dto.NotePolishResponseDto;
+import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
+import com.cooltomato.pomki.ai.service.AILLMService;
 import com.cooltomato.pomki.ai.service.AIService;
-// import com.cooltomato.pomki.note.dto.NoteDto;
+import com.cooltomato.pomki.note.dto.NoteResponseDto;
+import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.service.NoteService;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
@@ -35,10 +38,10 @@ public class AIController {
         
         try {
             // 노트 조회 및 권한 확인
-            // NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), request.getNoteId());
+            NoteResponseDto noteResponse = noteService.readNoteById(request.getNoteId(), principalMember);
             
             // AI 폴리싱 실행
-            // String originalContent = noteResponse.getNoteContent();
+            String originalContent = noteResponse.getNoteContent();
             String customPrompt = request.getCustomPrompt();
             String prompt = (customPrompt != null && !customPrompt.trim().isEmpty()) 
                 ? customPrompt : request.getStyle();
@@ -77,13 +80,14 @@ public class AIController {
         
         try {
             // 노트 조회 및 권한 확인
-            NoteDto.Response noteResponse = noteService.getNote(principalMember.getMemberId(), noteId);
+            NoteResponseDto noteResponse = noteService.readNoteById(noteId, principalMember);
             
             // 노트 업데이트 (제목은 기존 것 유지, 내용만 변경)
-            NoteDto.UpdateRequest updateDto = new NoteDto.UpdateRequest();
+            NoteUpdateRequestDto updateDto = new NoteUpdateRequestDto();
             updateDto.setNoteTitle(noteResponse.getNoteTitle());
             updateDto.setNoteContent(polishedContent);
-            noteService.updateNote(principalMember.getMemberId(), noteId, updateDto);
+            updateDto.setAiEnhanced(true);
+            noteService.updateNote(noteId, updateDto, principalMember);
             
             return ResponseEntity.ok("노트가 성공적으로 업데이트되었습니다");
             
@@ -104,26 +108,12 @@ public class AIController {
             public final String message = available ? "AI 기능이 사용 가능합니다" : "AI 기능을 사용하려면 API 키를 설정해주세요";
         });
     }
-} 
-package com.cooltomato.pomki.ai.controller;
-
-import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
-import com.cooltomato.pomki.ai.service.AILLMService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/api/ai/test")
-@RequiredArgsConstructor
-public class AIController {
-
-    private final AILLMService aiService;
+    private final AILLMService aiLLMService;
 
     @GetMapping("/description")
     public ResponseEntity<GeminiResDto> getProductDescription(@RequestParam String productName) {
         try {
-            GeminiResDto response = aiService.getAIDescription(productName);
+            GeminiResDto response = aiLLMService.getAIDescription(productName);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 테스트용 에러 응답
@@ -136,4 +126,4 @@ public class AIController {
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("AI 서비스가 정상적으로 작동중입니다.");
     }
-} 
+}

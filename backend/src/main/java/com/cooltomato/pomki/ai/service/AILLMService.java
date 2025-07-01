@@ -26,7 +26,7 @@ public class AILLMService {
     private final RestTemplate geminiRestTemplate;
     private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=";
 
-    @Value("${pomki.ai.gemini-api-key}")
+    @Value("${gemini.api.key}")
     private String geminiApiKey;
 
     public String generateContent(String promptText) {
