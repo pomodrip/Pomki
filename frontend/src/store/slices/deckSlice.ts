@@ -9,7 +9,6 @@ import type {
   UpdateDeckRequest,
   UpdateCardRequest,
   CreateCardRequest,
-  SearchCard,
 } from '../../types/card';
 
 /**
@@ -30,12 +29,10 @@ interface DeckState {
   decks: CardDeck[];
   selectedDeck: CardDeck | null;
   currentDeckCards: Card[]; // 현재 덱의 카드들
-  searchResults: SearchCard[]; // 검색 결과 카드들
   
   // 상태
   loading: boolean;
   error: string | null;
-  searchLoading: boolean; // 검색 로딩 상태
   
   // 페이지네이션
   currentPage: number;
@@ -60,10 +57,8 @@ const initialState: DeckState = {
   decks: [],
   selectedDeck: null,
   currentDeckCards: [],
-  searchResults: [],
   loading: false,
   error: null,
-  searchLoading: false,
   currentPage: 0,
   totalPages: 0,
   totalElements: 0,
@@ -198,19 +193,6 @@ export const deleteCard = createAsyncThunk<
   }
 });
 
-// 카드 검색
-export const searchCards = createAsyncThunk<
-  SearchCard[],
-  string,
-  { state: RootState; rejectValue: string }
->('deck/searchCards', async (keyword, { rejectWithValue }) => {
-  try {
-    return await cardService.searchCards(keyword);
-  } catch (error) {
-    return rejectWithValue(handleAsyncError(error));
-  }
-});
-
 // ==========================================
 // 5. Slice 정의
 // ==========================================
@@ -275,17 +257,6 @@ const deckSlice = createSlice({
       const deckId = action.payload;
       const deck = state.decks.find(d => d.deckId === deckId);
       state.selectedDeck = deck || null;
-    },
-
-    // 검색 결과 초기화
-    clearSearchResults: (state) => {
-      state.searchResults = [];
-      state.searchLoading = false;
-    },
-
-    // 검색 로딩 상태 설정
-    setSearchLoading: (state, action: PayloadAction<boolean>) => {
-      state.searchLoading = action.payload;
     },
   },
   
@@ -439,22 +410,6 @@ const deckSlice = createSlice({
              state.selectedDeck.cardCnt -= 1;
            }
          }
-       })
-
-       // 카드 검색
-       .addCase(searchCards.pending, (state) => {
-         state.searchLoading = true;
-         state.error = null;
-       })
-       .addCase(searchCards.fulfilled, (state, action) => {
-         state.searchLoading = false;
-         state.searchResults = action.payload;
-         state.error = null;
-       })
-       .addCase(searchCards.rejected, (state, action) => {
-         state.searchLoading = false;
-         state.error = action.payload || '카드 검색에 실패했습니다.';
-         state.searchResults = [];
        });
   },
 });
@@ -473,8 +428,6 @@ export const {
   setLoading,
   toggleDeckBookmark,
   setCurrentDeck,
-  clearSearchResults,
-  setSearchLoading,
 } = deckSlice.actions;
 
 export default deckSlice.reducer;
@@ -559,7 +512,5 @@ export const selectDeckStats = (state: RootState) => {
   };
 };
 
-// 검색 관련 selector
-export const selectSearchResults = (state: RootState) => state.deck.searchResults;
-export const selectSearchLoading = (state: RootState) => state.deck.searchLoading;
+// 검색 관련 selector - REMOVED (now handled locally in component)
 export const selectCurrentDeckCards = (state: RootState) => state.deck.currentDeckCards; 
