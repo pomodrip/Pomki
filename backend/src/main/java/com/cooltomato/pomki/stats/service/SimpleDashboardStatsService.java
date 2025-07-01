@@ -4,6 +4,10 @@ import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.repository.CardRepository;
 import com.cooltomato.pomki.card.repository.CardStatRepository;
 import com.cooltomato.pomki.card.service.ReviewService;
+import com.cooltomato.pomki.deck.entity.Deck;
+import com.cooltomato.pomki.deck.repository.DeckRepository;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.note.repository.NoteRepository;
 import com.cooltomato.pomki.stats.dto.SimpleDashboardStatsDto;
 import com.cooltomato.pomki.stats.dto.TodayStatsDto;
@@ -30,6 +34,8 @@ public class SimpleDashboardStatsService {
     private final CardRepository cardRepository;
     private final CardStatRepository cardStatRepository;
     private final ReviewService reviewService;
+    private final MemberRepository memberRepository;
+    private final DeckRepository deckRepository;
 
     public SimpleDashboardStatsDto getDashboardStats(PrincipalMember principal) {
         Long memberId = principal.getMemberInfo().getMemberId();
@@ -128,9 +134,17 @@ public class SimpleDashboardStatsService {
 
     private SimpleDashboardStatsDto.TotalStats getTotalStats(Long memberId) {
         try {
-            long totalNotes = noteRepository.countByMemberMemberId(memberId);
-            long totalCards = cardRepository.countByMemberMemberId(memberId);
-            
+            Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+            long totalNotes = noteRepository.findAllByMemberAndIsDeletedIsFalse(member).size();
+
+            List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(memberId);
+            List<String> deckIds = decks.stream().map(Deck::getDeckId).toList();
+            long totalCards = 0;
+            if (!deckIds.isEmpty()) {
+                totalCards = cardRepository.findByDeckDeckIdInAndIsDeletedFalse(deckIds).size();
+            }
+
             // 총 학습 일수 (최근 1년)
             LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
             List<LocalDate> allStudyDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
