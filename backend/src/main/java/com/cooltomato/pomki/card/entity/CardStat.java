@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.card.entity;
 
 import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.deck.entity.Deck;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,10 @@ public class CardStat {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deck_id", nullable = false)
+    private Deck deck;
+
     // SM-2 알고리즘 핵심 필드들
     @Column(name = "repetitions", nullable = false)
     @Builder.Default
@@ -54,6 +59,9 @@ public class CardStat {
     @Column(name = "last_reviewed_at")
     private LocalDateTime lastReviewedAt; // 마지막 복습 시점
 
+    @Column(name = "last_difficulty", length = 20)
+    private String lastDifficulty; // 마지막 선택 난이도 (hard/confuse/easy)
+
     // 품질 추적
     @Column(name = "last_quality")
     private Integer lastQuality; // 마지막 응답 품질 (0-5)
@@ -72,7 +80,7 @@ public class CardStat {
     private LocalDateTime updatedAt;
 
     // 비즈니스 메서드들
-    public void updateAfterReview(Integer quality, Integer newRepetitions, 
+    public void updateAfterReview(Integer quality, String difficulty, Integer newRepetitions, 
                                   BigDecimal newEaseFactor, Integer newIntervalDays) {
         this.repetitions = newRepetitions;
         this.easeFactor = newEaseFactor;
@@ -80,6 +88,7 @@ public class CardStat {
         this.dueAt = LocalDateTime.now().plusDays(newIntervalDays);
         this.lastReviewedAt = LocalDateTime.now();
         this.lastQuality = quality;
+        this.lastDifficulty = difficulty;
         this.totalReviews = this.totalReviews + 1;
     }
 
