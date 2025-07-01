@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.cooltomato.pomki.deck.entity.Deck;
+import com.cooltomato.pomki.cardtag.entity.CardTag;
 // import com.cooltomato.pomki.tag.entity.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,14 +56,9 @@ public class Card {
     )
     private Deck deck;
 
-    // @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
-    // @Builder.Default
-    // private List<Tag> tags = new ArrayList<>();
+    // CardTag와의 양방향 관계
+    @OneToMany(mappedBy = "card", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CardTag> cardTags = new ArrayList<>();
 
-    
-
-    // // deck_id를 가져오는 편의 메서드
-    // public String getDeckId() {
-    //     return deck != null ? deck.getDeckId() : null;
-    // }
 } 

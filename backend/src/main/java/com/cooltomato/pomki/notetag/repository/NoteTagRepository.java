@@ -3,6 +3,8 @@ package com.cooltomato.pomki.notetag.repository;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.entity.NoteTagId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,12 @@ public interface NoteTagRepository extends JpaRepository<NoteTag, NoteTagId> {
     List<NoteTag> findByMemberIdAndTagName(Long memberId, String tagName);
 
     List<NoteTag> findAllNoteIdByMemberIdAndTagName(Long memberId, String tagName);
+
+    @Query("SELECT nt.tagName FROM NoteTag nt WHERE nt.memberId = :memberId")
+    List<String> findTagNameByMemberId(@Param("memberId") Long memberId);
+
+    @Query("SELECT nt.tagName FROM NoteTag nt WHERE nt.noteId = :noteId AND nt.memberId = :memberId")
+    List<String> findTagNameByNoteIdAndMemberId(@Param("noteId") String noteId, @Param("memberId") Long memberId);
+
+    List<String> findTagNameByNoteId(String id);
 } 

@@ -11,11 +11,15 @@ import com.cooltomato.pomki.note.dto.NoteListResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.notetag.entity.NoteTag;
+import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 public class NoteService {
     private final NoteRepository noteRepository;
     private final MemberRepository memberRepository;
+    private final NoteTagRepository noteTagRepository;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
@@ -56,7 +61,10 @@ public class NoteService {
     public NoteResponseDto readNoteById(String id, PrincipalMember memberInfoDto) {
         Member member = getMember(memberInfoDto.getMemberId());
         Note note = getNote(id, member);
-        return NoteResponseDto.from(note);
+        List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(id, member.getMemberId());
+        NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
+        noteResponseDto.setTags(tags);
+        return noteResponseDto;
     }
 
     @Transactional

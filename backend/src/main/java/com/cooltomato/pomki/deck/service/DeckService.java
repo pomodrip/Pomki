@@ -7,6 +7,10 @@ import com.cooltomato.pomki.deck.dto.DeckRequestDto;
 import com.cooltomato.pomki.deck.dto.DeckResponseDto;
 import com.cooltomato.pomki.deck.entity.Deck;
 import com.cooltomato.pomki.deck.repository.DeckRepository;
+import com.cooltomato.pomki.notetag.entity.NoteTag;
+import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
+import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.tag.repository.TagRepository;
 import com.cooltomato.pomki.card.repository.CardRepository;
 import com.cooltomato.pomki.cardtag.entity.CardTag;
 import com.cooltomato.pomki.cardtag.repository.CardTagRepository;
@@ -32,6 +36,8 @@ public class DeckService {
         private final DeckRepository deckRepository;
         private final CardRepository cardRepository;
         private final CardTagRepository cardTagRepository;
+        private final TagRepository tagRepository;
+        private final NoteTagRepository noteTagRepository;
     
         @Transactional
         public DeckResponseDto createOneDeckService(Long memberId, DeckRequestDto request) {
@@ -164,16 +170,31 @@ public class DeckService {
                 log.info("debug >>> 덱 안 카드 삭제 성공");
             }
 
-            for(Card card:cards) {
+            // 덱의 모든 카드에서 사용된 태그들을 수집
+            List<String> usedTagNames = new ArrayList<>();
+            for(Card card : cards) {
+                List<String> cardTagNames = cardTagRepository.findTagNameByCardId(card.getCardId(), principal.getMemberId());
+                usedTagNames.addAll(cardTagNames);
+                // 카드태그 삭제
                 List<CardTag> cardTags = cardTagRepository.findByCard_CardId(card.getCardId());
-                cardTags.forEach(cardTag -> cardTagRepository.delete(cardTag));
-                log.info("debug >>> 덱 안 카드 태그 삭제 성공");
+                cardTagRepository.deleteAll(cardTags);
+            }
+
+            // 노트에서 사용 중인 태그들 확인
+            List<NoteTag> noteTags = noteTagRepository.findByMemberId(principal.getMemberId());
+            List<String> noteTagNames = noteTags.stream()
+                    .map(NoteTag::getTagName)
+                    .collect(Collectors.toList());
+
+            // 카드에서 사용되지 않고 노트에서도 사용되지 않는 태그들을 삭제
+            for(String tagName : usedTagNames) {
+                if (!noteTagNames.contains(tagName)) {
+                    Optional<Tag> tag = tagRepository.findByMemberIdAndTagName(principal.getMemberId(), tagName);
+                    tag.ifPresent(tagRepository::delete);
+                }
             }
 
             log.info("debug >>> 덱 안 카드 태그 삭제 성공");
-
-            
-            
         }
 
         // 덱에서 검색어를 입력하면 덱 안에 있는 검색어가 있는 카드들이 표시됨

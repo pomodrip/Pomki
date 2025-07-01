@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -23,6 +24,7 @@ public class NoteResponseDto {
     private String originalContent;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<String> tags;
 
     public static NoteResponseDto from(Note note) {
         return NoteResponseDto.builder()
@@ -34,5 +36,9 @@ public class NoteResponseDto {
                 .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .build();
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 } 
