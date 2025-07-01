@@ -62,7 +62,6 @@ import type { CardDeck } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useDispatch, useSelector } from 'react-redux';
 import { FlashCard, type FlashCardData } from '../../components/ui';
-import Toast from '../../components/common/Toast';
 import { RootState } from '../../store/store';
 import { PayloadAction } from '@reduxjs/toolkit';
 
@@ -324,7 +323,6 @@ const FlashcardDeckListPage: React.FC = () => {
   // =========================
   return (
     <StyledContainer maxWidth="md">
-      <Toast />
       <HeaderBox>
         <Typography variant="h4" fontWeight="bold">
           나의 덱

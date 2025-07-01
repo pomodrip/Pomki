@@ -7,37 +7,41 @@ import { useResponsive } from '../../hooks/useResponsive';
 import type { ToastItem } from '../../store/slices/toastSlice';
 
 // maxWidth="md" 기준 중앙 정렬을 위한 Wrapper
-const CenterWrapper = styled(Box)(({ theme }) => ({
+const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
   position: 'fixed',
   left: '50%',
   transform: 'translateX(-50%)',
   width: '100%',
   maxWidth: theme.breakpoints.values.md, // md(900px) 기준 중앙 정렬
-  zIndex: theme.zIndex.snackbar,
+  zIndex: theme.zIndex.modal || 1300,
   pointerEvents: 'none',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  // 위치 설정
+  ...(isMobile
+    ? {
+        bottom: 0,
+        top: 'auto',
+      }
+    : {
+        top: 0,
+        bottom: 'auto',
+      }),
 }));
 
-const ToastContainer = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+const ToastContainer = styled(Box)<{ 
+  isMobile: boolean; 
+  position: { mobile: { bottom: number; top: 'auto' }; desktop: { top: number; bottom: 'auto' } } 
+}>(({ theme, isMobile, position }) => ({
   width: 320,
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(1),
   pointerEvents: 'none',
-  // 위치 조건부 적용
-  ...(isMobile
-    ? {
-        bottom: 80,
-        top: 'auto',
-        position: 'fixed',
-      }
-    : {
-        top: 80,
-        bottom: 'auto',
-        position: 'fixed',
-      }),
+  // 🔴 Redux에서 위치 로직 관리
+  marginTop: isMobile ? 'auto' : `${position.desktop.top}px`,
+  marginBottom: isMobile ? `${position.mobile.bottom}px` : 'auto',
 }));
 
 type SeverityType = 'success' | 'error' | 'warning' | 'info';
@@ -52,16 +56,16 @@ const ToastItemBox = styled(Box)<{ severity: SeverityType }>(({ theme, severity 
   return {
     position: 'relative',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center', // 아이콘과 텍스트 수직 중앙 정렬
     gap: theme.spacing(1.5),
     padding: theme.spacing(1.5),
-    paddingTop: theme.spacing(1),
     backgroundColor: theme.palette.background.paper,
     borderRadius: theme.shape.borderRadius,
     border: `1px solid ${severityColors[severity]}`,
     boxShadow: theme.shadows[4],
     pointerEvents: 'auto',
     cursor: 'default',
+    overflow: 'hidden', // 프로그래스 바가 벗어나지 않도록 숨김
     transition: theme.transitions.create(['transform', 'opacity'], {
       duration: theme.transitions.duration.short,
     }),
@@ -80,13 +84,14 @@ const ProgressBar = styled(LinearProgress)<{ severity: SeverityType }>(({ theme,
   };
   return {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, // 바닥에 완전히 붙임
+    left: 0,   // 전체 너비 사용
+    right: 0,  // 전체 너비 사용
     height: 3,
     borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
     '& .MuiLinearProgress-bar': {
       backgroundColor: severityColors[severity],
+      borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
     },
     '& .MuiLinearProgress-root': {
       backgroundColor: 'transparent',
@@ -107,7 +112,7 @@ const IconContainer = styled(Box)<{ severity: SeverityType }>(({ theme, severity
     justifyContent: 'center',
     width: 20,
     height: 20,
-    marginTop: theme.spacing(0.25),
+    flexShrink: 0, // 아이콘 크기 고정
     '& svg': {
       fontSize: '1.25rem',
       color: severityColors[severity],
@@ -119,6 +124,7 @@ const MessageContainer = styled(Box)(({ theme }) => ({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  justifyContent: 'center', // 텍스트 수직 중앙 정렬
   fontFamily: theme.typography.fontFamily,
 }));
 
@@ -167,7 +173,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         {getSeverityIcon(toast.severity)}
       </IconContainer>
       <MessageContainer>
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, margin: 0 }}>
           {toast.message}
         </Typography>
       </MessageContainer>
@@ -176,6 +182,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         onClick={handleClose}
         sx={{ 
           padding: 0.25,
+          flexShrink: 0, // 닫기 버튼 크기 고정
           '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
         }}
       >
@@ -191,14 +198,14 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
 };
 
 const Toast: React.FC = () => {
-  const { toasts } = useAppSelector((state) => state.toast);
+  const { toasts, position } = useAppSelector((state) => state.toast); // 🔴 Redux에서 위치 로직 가져오기
   const { isMobile } = useResponsive();
 
   if (toasts.length === 0) return null;
 
   return (
-    <CenterWrapper>
-      <ToastContainer isMobile={isMobile}>
+    <CenterWrapper isMobile={isMobile}>
+      <ToastContainer isMobile={isMobile} position={position}>
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} />
         ))}

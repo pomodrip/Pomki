@@ -12,11 +12,33 @@ export interface ToastItem {
 export interface ToastState {
   toasts: ToastItem[];
   maxToasts: number; // 최대 동시 표시 개수
+  // 🔴 Redux에서 위치 로직 관리
+  position: {
+    mobile: {
+      bottom: number; // 바텀 위 하단 중앙
+      top: 'auto';
+    };
+    desktop: {
+      top: number; // 헤더바 아래 상단 중앙  
+      bottom: 'auto';
+    };
+  };
 }
 
 const initialState: ToastState = {
   toasts: [],
   maxToasts: 3,
+  // 🔴 Redux에서 위치 로직 관리
+  position: {
+    mobile: {
+      bottom: 80, // 바텀 네비게이션 위
+      top: 'auto',
+    },
+    desktop: {
+      top: 80, // 헤더바 아래
+      bottom: 'auto',
+    },
+  },
 };
 
 export interface ShowToastPayload {
