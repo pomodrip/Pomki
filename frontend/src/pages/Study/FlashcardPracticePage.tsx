@@ -110,6 +110,13 @@ const FlashcardPracticePage: React.FC = () => {
   const [globalFeedback, setGlobalFeedback] = useState('');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
+  // 🎯 각 카드별 난이도 선택 결과 저장용 상태 추가
+  const [cardDifficultyResults, setCardDifficultyResults] = useState<Array<{
+    cardId: number;
+    difficulty: Difficulty;
+    timestamp: string;
+  }>>([]);
+
   // 🎯 deckId로 현재 덱 찾기
   const currentDeck = useMemo(() => {
     return decks.find(deck => deck.deckId === deckId);
@@ -138,8 +145,6 @@ const FlashcardPracticePage: React.FC = () => {
       loadCardsWithFallback();
     }
   }, [dispatch, deckId]);
-
-
 
   // 🎯 Redux와 Fallback 카드를 합치기
   const combinedCards = useMemo(() => {
@@ -175,19 +180,61 @@ const FlashcardPracticePage: React.FC = () => {
   const currentCard = flashcards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
 
+  // 🎯 카드 변경 시 이전에 선택했던 난이도 복원
+  useEffect(() => {
+    if (currentCard) {
+      const previousSelection = cardDifficultyResults.find(
+        result => result.cardId === currentCard.cardId
+      );
+      setSelectedDifficulty(previousSelection?.difficulty || null);
+    }
+  }, [currentCardIndex, currentCard, cardDifficultyResults]);
+
   const handleCardClick = () => {
     setShowAnswer(!showAnswer);
   };
 
   const handleDifficultySelect = (difficulty: Difficulty) => {
-    setSelectedDifficulty(selectedDifficulty === difficulty ? null : difficulty);
+    const newDifficulty = selectedDifficulty === difficulty ? null : difficulty;
+    setSelectedDifficulty(newDifficulty);
+    
+    // 🎯 콘솔에 deckId와 선택한 난이도 출력
+    console.log('=== 난이도 선택 결과 ===');
+    console.log('Deck ID:', deckId);
+    console.log('Card ID:', currentCard?.cardId);
+    console.log('Card Index:', currentCardIndex + 1);
+    console.log('Selected Difficulty:', newDifficulty);
+    console.log('Timestamp:', new Date().toISOString());
+    
+    // 🎯 선택된 난이도가 있을 때만 결과 배열에 저장
+    if (newDifficulty && currentCard) {
+      const newResult = {
+        cardId: currentCard.cardId,
+        difficulty: newDifficulty,
+        timestamp: new Date().toISOString()
+      };
+      
+      setCardDifficultyResults(prev => {
+        // 같은 카드의 이전 선택 제거 후 새로운 선택 추가
+        const filtered = prev.filter(result => result.cardId !== currentCard.cardId);
+        const updated = [...filtered, newResult];
+        
+        return updated;
+      });
+    } else if (!newDifficulty && currentCard) {
+      // 난이도 선택 해제 시 해당 카드 결과 제거
+      setCardDifficultyResults(prev => {
+        const filtered = prev.filter(result => result.cardId !== currentCard.cardId);
+        return filtered;
+      });
+    }
   };
 
   const handlePrevious = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1);
       setShowAnswer(false);
-      setSelectedDifficulty(null);
+      // 🎯 난이도 선택은 useEffect에서 자동으로 복원됨
     }
   };
 
@@ -195,7 +242,7 @@ const FlashcardPracticePage: React.FC = () => {
     if (currentCardIndex < flashcards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
-      setSelectedDifficulty(null);
+      // 🎯 난이도 선택은 useEffect에서 자동으로 복원됨
     } else {
       setShowCompletionDialog(true);
     }
@@ -205,6 +252,15 @@ const FlashcardPracticePage: React.FC = () => {
     try {
       setShowCompletionDialog(false);
       
+      // 🎯 학습 완료 시 전체 결과 콘솔 출력
+      console.log('=== 학습 완료 - 전체 결과 ==='); 
+
+      const study_data = {
+        deckId: deckId,
+        cardDifficultyResults
+      }
+      console.log('study_data:', study_data);
+
       // 학습 완료 토스트 알림
       dispatch(showToast({
         message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
@@ -219,6 +275,8 @@ const FlashcardPracticePage: React.FC = () => {
       setCurrentQuestionFeedback('');
       setGlobalFeedback('');
       setIsFeedbackOpen(false);
+      // 🎯 난이도 결과도 초기화
+      setCardDifficultyResults([]);
       
       console.log('학습 완료 - 덱 목록으로 이동');
       navigate('/study');
@@ -231,7 +289,8 @@ const FlashcardPracticePage: React.FC = () => {
       }));
       // 에러가 발생해도 기본 동작은 수행
       navigate('/study');
-    }  };
+    }
+  };
 
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
@@ -345,7 +404,7 @@ const FlashcardPracticePage: React.FC = () => {
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {/* 카드 내용 */}
               <Typography
-                variant={showAnswer ? "h4" : "h5"}
+                variant={showAnswer ? "body2" : "h5"}
                 textAlign="center"
                 sx={{
                   lineHeight: 1.6,
@@ -389,8 +448,6 @@ const FlashcardPracticePage: React.FC = () => {
               )}
             </Box>
           </FlashcardCard>
-
-
 
           {/* 네비게이션: 이전/다음 버튼만 (미니멀리즘 적용) */}
           <Box
@@ -462,66 +519,69 @@ const FlashcardPracticePage: React.FC = () => {
 
             {/* 다음 버튼 */}
             <Tooltip title="→ 방향키: 다음 카드" arrow placement="top">
-              <IconButton
-                onClick={handleNext}
-                sx={{
-                  width: 44,
-                  height: 44,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  '&:hover': { bgcolor: 'primary.dark' },
-                  '&:disabled': {
-                    bgcolor: 'grey.300',
-                    color: 'grey.500',
-                  },
-                  boxShadow: 1,
-                }}
-              >
-                <ArrowForwardIcon />
-              </IconButton>
+              <span>
+                <IconButton
+                  onClick={handleNext}
+                  disabled={!selectedDifficulty}
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: selectedDifficulty ? 'primary.main' : 'grey.300',
+                    color: selectedDifficulty ? 'white' : 'grey.500',
+                    '&:hover': { 
+                      bgcolor: selectedDifficulty ? 'primary.dark' : 'grey.300'
+                    },
+                    '&:disabled': {
+                      bgcolor: 'grey.300',
+                      color: 'grey.500',
+                    },
+                    boxShadow: selectedDifficulty ? 1 : 0,
+                  }}
+                >
+                  <ArrowForwardIcon />
+                </IconButton>
+              </span>
             </Tooltip>
           </Box>
 
-          {/* 난이도 선택 버튼들 (답변이 보일 때만) */}
-          {showAnswer && (
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => handleDifficultySelect('easy')}
-                  sx={{
-                    ...getDifficultyButtonStyle('easy'),
-                    px: 3,
-                    py: 1,
-                  }}
-                >
-                  Easy
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => handleDifficultySelect('confusing')}
-                  sx={{
-                    ...getDifficultyButtonStyle('confusing'),
-                    px: 3,
-                    py: 1,
-                  }}
-                >
-                  Confusing
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => handleDifficultySelect('hard')}
-                  sx={{
-                    ...getDifficultyButtonStyle('hard'),
-                    px: 3,
-                    py: 1,
-                  }}
-                >
-                  Hard
-                </Button>
-              </Box>
+          {/* 난이도 선택 버튼들 (항상 표시) */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => handleDifficultySelect('easy')}
+                sx={{
+                  ...getDifficultyButtonStyle('easy'),
+                  px: 3,
+                  py: 1,
+                }}
+              >
+                Easy
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => handleDifficultySelect('confusing')}
+                sx={{
+                  ...getDifficultyButtonStyle('confusing'),
+                  px: 3,
+                  py: 1,
+                }}
+              >
+                Confusing
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => handleDifficultySelect('hard')}
+                sx={{
+                  ...getDifficultyButtonStyle('hard'),
+                  px: 3,
+                  py: 1,
+                }}
+              >
+                Hard
+              </Button>
             </Box>
-          )}
+          </Box>
 
           {/* 피드백 섹션 (아코디언 드롭다운) */}
           <Accordion
