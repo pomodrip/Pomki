@@ -51,7 +51,10 @@ const NoteDetailPage: React.FC = () => {
         <Box>
           <Typography variant="h5" sx={{ mb: 1 }}>{currentNote.noteTitle}</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ mb: 3, display: 'block' }}>
-            생성: {new Date(currentNote.createdAt).toLocaleString()} / 수정: {new Date(currentNote.updatedAt).toLocaleString()}
+            생성: {new Date(currentNote.createdAt).toLocaleString()}
+            {currentNote.updatedAt && currentNote.updatedAt !== currentNote.createdAt && (
+              <> / 수정: {new Date(currentNote.updatedAt).toLocaleString()}</>
+            )}
           </Typography>
 
           {/* 노트 내용: HTML 저장된 경우 render, 아니면 그대로 표시 */}
