@@ -11,12 +11,10 @@ import com.cooltomato.pomki.note.dto.NoteListResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
-import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.ai.service.AIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Map;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +27,7 @@ import java.util.stream.Collectors;
 public class NoteService {
     private final NoteRepository noteRepository;
     private final MemberRepository memberRepository;
+    private final AIService aiService;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
@@ -70,19 +69,21 @@ public class NoteService {
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
     }
+
     @Transactional
     public String polishNote(String noteId, String style, PrincipalMember principalMember) {
-        // 사용자 및 노트 조회 로직
-        Long memberId = principalMember.getMemberId();
-        Note note = noteRepository.findByNoteIdAndMemberIdAndIsDeletedFalse(noteId, memberId)
-                .orElseThrow(() -> new NotFoundException("노트를 찾을 수 없습니다."));
+        Member member = getMember(principalMember.getMemberId());
+        Note note = getNote(noteId, member);
 
-        // AI 서비스 실행
         String polishedContent = aiService.polishNote(note.getNoteContent(), style);
 
-        // 노트 업데이트 및 저장 로직
         note.setNoteContent(polishedContent);
         note.setAiEnhanced(true);
+        noteRepository.save(note);
+        return polishedContent;
+    }
+
+    @Transactional
     public NoteResponseDto updateNote(String id, NoteUpdateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
         Member member = getMember(memberInfoDto.getMemberId());
         Note note = getNote(id, member);

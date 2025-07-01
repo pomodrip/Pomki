@@ -13,9 +13,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import jakarta.persistence.OneToMany;
-import java.util.List;
-import java.util.ArrayList;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.card.entity.Card;
 

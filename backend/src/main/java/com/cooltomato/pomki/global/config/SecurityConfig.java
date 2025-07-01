@@ -63,6 +63,7 @@ public class SecurityConfig {
                                         "/api/email/verification",
                                         "/api/email/code"
                                 ).permitAll()
+                                .requestMatchers("/api/ai/**").permitAll()
                                 .requestMatchers("/api/images/**").hasAnyRole("ADMIN", "USER")
                                 .requestMatchers("/api/**").hasAnyRole("ADMIN", "USER")
                 .anyRequest().authenticated()

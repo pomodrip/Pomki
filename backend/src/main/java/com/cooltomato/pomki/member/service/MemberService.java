@@ -43,7 +43,23 @@ public class MemberService {
         
         createMember(request);
     }
-    
+    public void signUpTest(MemberSignUpRequestDto request){
+        Member member = createTestMember(request);
+        memberRepository.save(member);
+    }
+    @Transactional
+    private Member createTestMember(MemberSignUpRequestDto request){
+        Member member = Member.builder()
+                .memberEmail(request.getEmail())
+                .currentEmail(request.getEmail())
+                .memberNickname(request.getNickname())
+                .memberPassword(passwordEncoder.encode(request.getPassword()))
+                .memberRoles(Role.USER)
+                .isSocialLogin(false)
+                .emailVerified(true)
+                .build();
+        return member;
+    }
     private Member createMember(MemberSignUpRequestDto request) {
         if (memberRepository.existsByMemberEmail(request.getEmail())) {
             throw new RuntimeException("이미 사용중인 이메일입니다.");
