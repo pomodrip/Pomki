@@ -199,8 +199,8 @@ public class ReviewService {
                 .todayCompleted(todayCompleted.intValue())
                 .within3DaysCards(within3Days.intValue())
                 .within7DaysCards(within7Days.intValue())
-                .recommendedCardTitle(todayCards.isEmpty() ? "복습할 카드가 없습니다" : 
-                                     todayCards.get(0).getCard().getCardFront())
+                .recommendedCardTitle(todayCards.isEmpty() ? "복습할 카드가 없습니다" :
+                                     todayCards.get(0).getCard().getContent())
                 .build();
     }
 
