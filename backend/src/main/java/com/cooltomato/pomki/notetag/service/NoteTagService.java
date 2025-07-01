@@ -134,17 +134,6 @@ public class NoteTagService {
         }
     }
 
-    // // 특정 노트에 대한 태그 선택시 원본 노트 조회
-    // public NoteResponseDto readNoteByNoteTagService(@AuthenticationPrincipal PrincipalMember principal, String noteId) {
-    //   Optional<Note> allMemberNotes = noteRepository.findByMember_MemberIdAndNoteId(principal.getMemberId(), noteId) ;
-    //   return NoteResponseDto.builder()
-    //                         .noteId(allMemberNotes.get().getNoteId())
-    //                         .memberId(allMemberNotes.get().getMember().getMemberId())
-    //                         .noteTitle(allMemberNotes.get().getNoteTitle())
-    //                         .noteContent(allMemberNotes.get().getNoteContent())
-    //                         .build() ;
-    // }
-
     public List<NoteResponseDto> readNoteByTagNameService(PrincipalMember principal, String tagName) {
       List<NoteTag> allSameTagName = noteTagRepository.findAllNoteIdByMemberIdAndTagName(principal.getMemberId(), tagName) ;
 

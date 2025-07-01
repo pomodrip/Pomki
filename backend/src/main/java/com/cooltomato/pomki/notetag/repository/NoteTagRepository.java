@@ -28,4 +28,8 @@ public interface NoteTagRepository extends JpaRepository<NoteTag, NoteTagId> {
     List<String> findTagNameByNoteIdAndMemberId(@Param("noteId") String noteId, @Param("memberId") Long memberId);
 
     List<String> findTagNameByNoteId(String id);
+
+    List<NoteTag> findByNoteId(String id);
+
+    List<NoteTag> findByNote_NoteId(String id);
 } 
