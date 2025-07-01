@@ -32,16 +32,13 @@ const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) =
 
 const ToastContainer = styled(Box)<{ 
   isMobile: boolean; 
-  position: { mobile: { bottom: number; top: 'auto' }; desktop: { top: number; bottom: 'auto' } } 
-}>(({ theme, isMobile, position }) => ({
+}>(({ theme, isMobile }) => ({
   width: 320,
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(1),
   pointerEvents: 'none',
-  // 🔴 Redux에서 위치 로직 관리
-  marginTop: isMobile ? 'auto' : `${position.desktop.top}px`,
-  marginBottom: isMobile ? `${position.mobile.bottom}px` : 'auto',
+  // 위치는 CenterWrapper에서 관리
 }));
 
 type SeverityType = 'success' | 'error' | 'warning' | 'info';
@@ -198,14 +195,14 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
 };
 
 const Toast: React.FC = () => {
-  const { toasts, position } = useAppSelector((state) => state.toast); // 🔴 Redux에서 위치 로직 가져오기
+  const { toasts } = useAppSelector((state) => state.toast);
   const { isMobile } = useResponsive();
 
   if (toasts.length === 0) return null;
 
   return (
     <CenterWrapper isMobile={isMobile}>
-      <ToastContainer isMobile={isMobile} position={position}>
+      <ToastContainer isMobile={isMobile}>
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} />
         ))}

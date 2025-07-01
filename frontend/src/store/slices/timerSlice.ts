@@ -560,6 +560,7 @@ export const selectCanPause = (state: RootState) => {
 export const selectSessionProgress = (state: RootState) => ({
   current: state.timer.completedSessions,
   target: state.timer.targetSessions,
+  cycle: state.timer.currentCycle,
 });
 
 // 총 경과 시간 (현재 세션)

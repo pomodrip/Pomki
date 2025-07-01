@@ -1043,7 +1043,7 @@ const TimerPage: React.FC = () => {
       
       {/* 노트 에디터 영역 */}
       <QuillEditor
-        theme="snow"
+        theme={"snow" as any}
         modules={editorModules}
         formats={editorFormats}
         expanded={true}
@@ -1484,7 +1484,7 @@ const TimerPage: React.FC = () => {
           
           {/* 노트 에디터 영역 */}
           <QuillEditor
-            theme="snow"
+            theme={"snow" as any}
             modules={editorModules}
             formats={editorFormats}
             expanded={false}
