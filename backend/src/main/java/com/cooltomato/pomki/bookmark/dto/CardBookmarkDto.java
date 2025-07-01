@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookmarkDto {
-    private String noteId;
-    private String noteTitle;
-    private String noteContent;
+public class CardBookmarkDto {
+    private Long cardId;
+    private String cardContent;
+    private String cardAnswer;
+    private String deckName;
     private LocalDateTime createdAt;
 } 

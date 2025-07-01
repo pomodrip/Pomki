@@ -2,8 +2,8 @@ package com.cooltomato.pomki.bookmark.entity;
 
 import java.time.LocalDateTime;
 
+import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.member.entity.Member;
-import com.cooltomato.pomki.note.entity.Note;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,18 +15,21 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
-@Table(name = "NOTE_BOOKMARK")
-@Data
+@Table(name = "CARD_BOOKMARK")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@IdClass(BookmarkId.class)
-public class Bookmark {
+@IdClass(CardBookmarkId.class)
+public class CardBookmark {
+    
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
@@ -34,11 +37,10 @@ public class Bookmark {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "note_id")
-    private Note note;
+    @JoinColumn(name = "card_id")
+    private Card card;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-    
 } 

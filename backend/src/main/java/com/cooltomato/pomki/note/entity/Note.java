@@ -10,6 +10,7 @@ import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
 import com.cooltomato.pomki.tag.entity.NoteTag;
+import com.cooltomato.pomki.trash.entity.TrashNote;
 
 @Entity
 @Table(name = "note")
@@ -57,4 +58,8 @@ public class Note {
     // 연관관계: NOTE_TAG(1:N)
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
     private List<NoteTag> noteTags;
+
+    // 연관관계: TRASH_NOTE(1:N)
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL)
+    private List<TrashNote> trashNotes;
 } 
