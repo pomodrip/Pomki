@@ -186,7 +186,7 @@ public class ReviewService {
         List<CardStat> todayCards = cardStatRepository.findDueCardsByMember(memberId, now);
 
         // 오늘 복습 완료한 카드 수
-        Long todayCompleted = cardStatRepository.countTodayReviewedCards(memberId);
+        Long todayCompleted = cardStatRepository.countTodayReviewedCards(memberId, startOfDay, endOfDay);
 
         // 3일 내 복습 예정 카드 수
         Long within3Days = cardStatRepository.countDueCardsInPeriod(memberId, now, now.plusDays(3));
@@ -199,8 +199,7 @@ public class ReviewService {
                 .todayCompleted(todayCompleted.intValue())
                 .within3DaysCards(within3Days.intValue())
                 .within7DaysCards(within7Days.intValue())
-                .recommendedCardTitle(todayCards.isEmpty() ? "복습할 카드가 없습니다" : 
-                                     todayCards.get(0).getCard().getCardFront())
+                .recommendedCardTitle(todayCards.isEmpty() ? "복습할 카드가 없습니다" : "복습할 카드가 있습니다")
                 .build();
     }
 

@@ -31,8 +31,11 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
     // 특정 사용자의 복습 완료 카드 수 (오늘 기준)
     @Query("SELECT COUNT(cs) FROM CardStat cs " +
            "WHERE cs.member.memberId = :memberId " +
-           "AND DATE(cs.lastReviewedAt) = CURRENT_DATE")
-    Long countTodayReviewedCards(@Param("memberId") Long memberId);
+           "AND cs.lastReviewedAt >= :startOfDay " +
+           "AND cs.lastReviewedAt < :endOfDay")
+    Long countTodayReviewedCards(@Param("memberId") Long memberId,
+                                @Param("startOfDay") LocalDateTime startOfDay,
+                                @Param("endOfDay") LocalDateTime endOfDay);
 
     // 특정 사용자의 총 복습 카드 수
     Long countByMemberMemberId(Long memberId);
