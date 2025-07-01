@@ -45,7 +45,7 @@ public class TrashService {
     public TrashResponseDto getTrashItems(PrincipalMember principal) {
         Long memberId = principal.getMemberInfo().getMemberId();
         
-        List<Trash> trashList = trashRepository.findByMemberIdOrderByDeletedAtDesc(memberId);
+        List<Trash> trashList = trashRepository.findByMember_MemberIdOrderByDeletedAtDesc(memberId);
         List<TrashItemDto> items = new ArrayList<>();
         
         for (Trash trash : trashList) {
