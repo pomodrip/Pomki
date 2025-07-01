@@ -26,6 +26,7 @@ import {
   selectTimerError,
   type TimerMode,
 } from '../store/slices/timerSlice';
+import { showNotification } from '@/utils/notificationUtils';
 
 /**
  * 🎯 useTimer Hook - 타이머 상태관리 통합 Hook
@@ -138,14 +139,12 @@ export const useTimer = (options?: {
 
     return () => clearInterval(interval);
   }, [autoTick, isRunning, tickInterval, dispatch]);
-
-  // 세션 완료 알림 처리 (브라우저 알림)
   useEffect(() => {
-    if (isCompleted && 'Notification' in window && Notification.permission === 'granted') {
+    if (isCompleted) {
       const modeText = mode === 'FOCUS' ? '집중시간' : mode === 'SHORT_BREAK' ? '짧은 휴식' : '긴 휴식';
-      new Notification(`${modeText} 완료!`, {
+      showNotification(`${modeText} 완료!`, {
         body: `${nextSessionInfo.duration}분 ${nextSessionInfo.mode === 'FOCUS' ? '집중시간' : '휴식시간'}이 시작됩니다.`,
-        icon: '/favicon.ico',
+        icon: '/logo192.png',
       });
     }
   }, [isCompleted, mode, nextSessionInfo]);
