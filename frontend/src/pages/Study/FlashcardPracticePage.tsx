@@ -307,18 +307,6 @@ const FlashcardPracticePage: React.FC = () => {
     }));
   };
 
-  const handleCompletionConfirm = () => {
-    setShowCompletionDialog(false);
-    
-    dispatch(showToast({
-      message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
-      severity: 'success',
-      duration: 4000
-    }));
-    
-    navigate('/study');
-  };
-
   // 🎯 플래시카드 네비게이션 키보드 단축키
   useNavigationKeyboardShortcuts(
     handlePrevious,
