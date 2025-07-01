@@ -19,13 +19,15 @@ export interface CardDeck {
  * API: /api/card/**, /api/decks/{deckId}/cards
  */
 export interface Card {
-  cardId: number;
-  content: string;
   answer: string;
+  content: string;
   deckId: string;
-  isDeleted: boolean;
+  deckName: string;
+  cardId: number;
   createdAt: string;
   updatedAt: string;
+  isDeleted: boolean;
+  tags: string[];
 }
 
 
@@ -34,14 +36,15 @@ export interface Card {
  * API: /api/card/search/{keyword}
  */
 export interface SearchCard {
-  cardId: number;
-  content: string;
   answer: string;
+  content: string;
   deckId: string;
   deckName: string;
-  isDeleted: boolean;
+  cardId: number;
   createdAt: string;
   updatedAt: string;
+  isDeleted: boolean;
+  tags: string[];
 }
 
 /**
@@ -78,4 +81,13 @@ export interface CreateCardRequest {
 export interface UpdateCardRequest {
   content: string;
   answer: string;
+}
+
+/**
+ * 카드 태그 추가 요청 DTO
+ * API: POST /api/card-tag
+ */
+export interface AddCardTagRequest {
+  cardId: number;
+  tagNames: string[];
 }

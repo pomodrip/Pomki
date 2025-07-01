@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import api from './index';
-import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
 
 /**
  * 카드 생성 
@@ -54,4 +54,12 @@ export const updateCard = async (
  */
 export const deleteCard = async (cardId: number): Promise<void> => {
   await api.delete(`/api/card/${cardId}`);
-}; 
+};
+
+/**
+ * 카드에 태그 추가
+ * @param data 카드 ID와 추가할 태그 이름들
+ */
+export const addCardTags = async (data: AddCardTagRequest): Promise<void> => {
+  await api.post('/api/card-tag', data);
+};
