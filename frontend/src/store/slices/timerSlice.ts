@@ -315,7 +315,7 @@ const timerSlice = createSlice({
       const elapsed = getTotalElapsedMs(state.currentSession.timeEntries);
       const remainingTime = Math.max(0, state.currentSession.duration * 1000 - elapsed);
       
-      state.currentSession.remainingTime = Math.floor(remainingTime / 1000);
+      state.currentSession.remainingTime = Math.ceil(remainingTime / 1000);
       state.lastTick = now;
       
       // 시간 종료 체크
