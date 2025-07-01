@@ -462,6 +462,7 @@ interface TimerSettings {
   sessions: number;
   focusMinutes: number;
   breakMinutes: number;
+  targetSessions?: number;
 }
 
 // React-Quill 에디터 설정
@@ -508,14 +509,14 @@ const TimerPage: React.FC = () => {
   
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
-    sessions: settings.longBreakInterval,
+    sessions: (settings as any).targetSessions ?? 2,
     focusMinutes: settings.focusTime,
     breakMinutes: settings.shortBreakTime,
   });
   
   // 임시 설정값 (모달에서 편집용)
   const [tempSettings, setTempSettings] = useState<TimerSettings>({
-    sessions: settings.longBreakInterval,
+    sessions: (settings as any).targetSessions ?? 2,
     focusMinutes: settings.focusTime,
     breakMinutes: settings.shortBreakTime,
   });
@@ -607,7 +608,7 @@ const TimerPage: React.FC = () => {
   // 설정값 변경 감지
   useEffect(() => {
     const newLocalSettings = {
-      sessions: settings.longBreakInterval,
+      sessions: (settings as any).targetSessions ?? 2,
       focusMinutes: settings.focusTime,
       breakMinutes: settings.shortBreakTime,
     };
@@ -655,8 +656,10 @@ const TimerPage: React.FC = () => {
     updateTimerSettings({
       focusTime: tempSettings.focusMinutes,
       shortBreakTime: tempSettings.breakMinutes,
-      longBreakInterval: tempSettings.sessions,
-    });
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      targetSessions: tempSettings.sessions,
+    } as any);
     setShowSettings(false);
   };
 

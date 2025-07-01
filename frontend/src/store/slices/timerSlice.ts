@@ -363,8 +363,20 @@ const timerSlice = createSlice({
     },
 
     // 설정 업데이트 (로컬)
-    updateSettings: (state, action: PayloadAction<Partial<TimerSettings>>) => {
+    updateSettings: (state, action: PayloadAction<Partial<TimerSettings> & { targetSessions?: number }>) => {
+      // 분 단위 설정 값을 병합
       state.settings = { ...state.settings, ...action.payload };
+      // targetSessions 값이 넘어오면 별도 상태에 반영
+      if ((action.payload as any).targetSessions !== undefined) {
+        state.targetSessions = (action.payload as any).targetSessions;
+      }
+      // 새 설정이 적용되면 기존 세션/진행 상태를 초기화하여 변경 사항을 즉시 반영한다.
+      state.currentSession = null;
+      state.completedSessions = 0;
+      state.mode = 'FOCUS';
+      state.status = 'IDLE';
+      state.isRunning = false;
+      state.lastTick = 0;
     },
 
     // 설정 모달 토글
