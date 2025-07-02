@@ -11,6 +11,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import Badge from '@mui/material/Badge';
+import 'dayjs/locale/ko';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -233,10 +234,27 @@ const DashboardPage: React.FC = () => {
           </Box>
         </Card>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="ko"
+            localeText={{
+              calendarWeekNumberHeaderText: '주',
+              previousMonth: '이전 달',
+              nextMonth: '다음 달',
+              openPreviousView: '이전 보기',
+              openNextView: '다음 보기',
+              start: '시작',
+              end: '끝',
+              cancelButtonLabel: '취소',
+              clearButtonLabel: '지우기',
+              okButtonLabel: '확인',
+              todayButtonLabel: '오늘',
+            }}
+          >
             <DateCalendar
               defaultValue={dayjs()}
               slots={{ day: CustomDay }}
+              dayOfWeekFormatter={(date) => date.locale('ko').format('dd')}
             />
           </LocalizationProvider>
         </Card>
