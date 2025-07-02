@@ -10,6 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
+import Badge from '@mui/material/Badge';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -36,15 +37,37 @@ const holidays = [
   '2025-12-25', // 성탄절
 ];
 
+// 임시 출석/학습 현황 데이터 (실제 서비스에서는 API로 받아야 함)
+const attendanceDays = [
+  '2025-07-02', '2025-07-03', '2025-01-04',
+  '2025-07-28', '2025-07-29', '2025-07-30', 
+];
+const studyDays = [
+  '2025-07-04', '2025-07-05', // 학습 완료 예시
+];
+
 function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
   const { day, outsideCurrentMonth, ...other } = props;
+  const dateStr = day.format('YYYY-MM-DD');
   const isSunday = day.day() === 0;
   const isSaturday = day.day() === 6;
-  const isHoliday = holidays.includes(day.format('YYYY-MM-DD'));
+  const isHoliday = holidays.includes(dateStr);
   let color = undefined;
   if (isSunday || isSaturday || isHoliday) color = 'red';
+
+  // 아이콘: 학습(🍅)이 출석(🌱)보다 우선
+  let icon = null;
+  if (attendanceDays.includes(dateStr)) icon = '🌱';
+  if (studyDays.includes(dateStr)) icon = '🍅';
+
   return (
-    <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
+    <Badge
+      overlap="circular"
+      badgeContent={icon}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    >
+      <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
+    </Badge>
   );
 }
 
