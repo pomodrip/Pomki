@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.note.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,12 +10,11 @@ import java.util.List;
 import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
-import com.cooltomato.pomki.tag.entity.NoteTag;
+import com.cooltomato.pomki.notetag.entity.NoteTag;
 
 @Entity
 @Table(name = "review_note")
 @Data
-
 public class Note {
     @Id
     @Column(name = "note_id", length = 50, nullable = false)

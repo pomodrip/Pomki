@@ -2,19 +2,16 @@ package com.cooltomato.pomki.tag.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+@Data
 @Builder
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class TagResponseDto {
-    Long tagId;
-    Long memberId;
-    String tagName;
-    
-}
+
+  private String tagName ;
+  private Long memberId ;
+  }
+

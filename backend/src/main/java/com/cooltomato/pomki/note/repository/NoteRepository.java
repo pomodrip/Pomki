@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface NoteRepository extends JpaRepository<Note, String> {
     List<Note> findAllByMemberAndIsDeletedIsFalse(Member member);
     Optional<Note> findByNoteIdAndMemberAndIsDeletedIsFalse(String noteId, Member member);
+    Optional<Note> findByMember_MemberIdAndNoteId(Long memberId, String noteId);
 } 
