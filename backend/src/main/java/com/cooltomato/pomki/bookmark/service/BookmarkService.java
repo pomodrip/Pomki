@@ -4,6 +4,7 @@ import com.cooltomato.pomki.bookmark.dto.BookmarkDto;
 import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.bookmark.entity.BookmarkId;
 import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
+import com.cooltomato.pomki.global.exception.AlreadyBookmarkedException;
 import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
@@ -35,7 +36,7 @@ public class BookmarkService {
 
         // 이미 북마크가 존재하는지 확인
         if (bookmarkRepository.existsByMemberMemberIdAndNoteNoteId(memberId, noteId)) {
-            return; // 이미 존재하면 무시
+            throw new AlreadyBookmarkedException("이미 북마크된 노트입니다.");
         }
 
         Bookmark bookmark = Bookmark.builder()

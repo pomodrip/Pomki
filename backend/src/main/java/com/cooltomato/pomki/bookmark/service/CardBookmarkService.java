@@ -2,10 +2,10 @@ package com.cooltomato.pomki.bookmark.service;
 
 import com.cooltomato.pomki.bookmark.dto.CardBookmarkDto;
 import com.cooltomato.pomki.bookmark.entity.CardBookmark;
-import com.cooltomato.pomki.bookmark.entity.CardBookmarkId;
 import com.cooltomato.pomki.bookmark.repository.CardBookmarkRepository;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.card.repository.CardRepository;
+import com.cooltomato.pomki.global.exception.AlreadyBookmarkedException;
 import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
@@ -35,7 +35,7 @@ public class CardBookmarkService {
 
         // 이미 북마크가 존재하는지 확인
         if (cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(memberId, cardId)) {
-            return; // 이미 존재하면 무시
+            throw new AlreadyBookmarkedException("이미 북마크된 카드입니다.");
         }
 
         CardBookmark cardBookmark = CardBookmark.builder()

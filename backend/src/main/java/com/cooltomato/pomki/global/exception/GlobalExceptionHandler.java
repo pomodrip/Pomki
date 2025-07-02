@@ -177,4 +177,10 @@ public class GlobalExceptionHandler {
         log.error("ImageException: ", exception);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
+
+    @ExceptionHandler(AlreadyBookmarkedException.class)
+    public ResponseEntity<String> handleAlreadyBookmarkedException(AlreadyBookmarkedException exception) {
+        log.error("AlreadyBookmarkedException: ", exception);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+    }
 }
