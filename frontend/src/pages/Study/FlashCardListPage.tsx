@@ -39,6 +39,7 @@ import type { Card, CreateCardRequest, SearchCard } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
 import { FlashCard, type FlashCardData } from '../../components/ui';
 import { deckService } from '../../services/deckService';
+import { cardService } from '../../services/cardService';
 import Button from '../../components/ui/Button';
 
 
@@ -184,7 +185,7 @@ const FlashCardListPage: React.FC = () => {
           id: cardId,
           front: card.content || 'No content',
           back: card.answer || 'No answer',
-          tags: card.tags ? card.tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`) : [`#카드${card.cardId}`, '#학습'],
+          tags: card.tags ? card.tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`) : [],
         };
       });
   }, [allCards, deckId]);
@@ -204,7 +205,7 @@ const FlashCardListPage: React.FC = () => {
       id: searchCard.cardId,
       front: searchCard.content,
       back: searchCard.answer,
-      tags: [`#${searchCard.deckName}`, '#검색결과']
+      tags: searchCard.tags ? searchCard.tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`) : [],
     }));
   }, [searchResults]);
 
@@ -406,25 +407,52 @@ const FlashCardListPage: React.FC = () => {
       if (result.meta.requestStatus === 'fulfilled') {
         console.log('✅ Redux API 호출 성공');
 
-        // 태그 처리: 쉼표로 분리하고 # 제거 (저장할 때는 #이 없는 형태로)
-        if (editCardTags.trim()) {
-          const tagNames = editCardTags
-            .split(',')
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0)
-            .map(tag => tag.startsWith('#') ? tag.slice(1) : tag) // # 제거
-            .filter(tag => tag.length > 0); // 빈 태그 제거
+        // 🏷️ 태그 처리: 기존 태그와 새로운 태그 비교하여 추가/삭제
+        const currentCard = flashCards.find(c => c.id === editingCardId);
+        const existingTags = currentCard?.tags?.map(tag => tag.startsWith('#') ? tag.slice(1) : tag) || [];
+        
+        // 새로운 태그 목록 처리
+        const newTagNames = editCardTags.trim() 
+          ? editCardTags
+              .split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag.length > 0)
+              .map(tag => tag.startsWith('#') ? tag.slice(1) : tag) // # 제거
+              .filter(tag => tag.length > 0) // 빈 태그 제거
+          : [];
 
-          if (tagNames.length > 0) {
-            try {
-              await dispatch(addCardTags({
-                cardId: editingCardId,
-                tagNames: tagNames
-              }));
-              console.log('✅ 태그 추가 성공:', tagNames);
-            } catch (error) {
-              console.error('❌ 태그 추가 실패:', error);
-            }
+        console.log('🏷️ 태그 처리:', { existingTags, newTagNames });
+
+        // 삭제할 태그들 (기존에 있었지만 새로운 목록에는 없는 태그들)
+        const tagsToRemove = existingTags.filter(tag => !newTagNames.includes(tag));
+        
+        // 추가할 태그들 (새로운 목록에는 있지만 기존에 없는 태그들)
+        const tagsToAdd = newTagNames.filter(tag => !existingTags.includes(tag));
+
+        console.log('🏷️ 삭제할 태그:', tagsToRemove);
+        console.log('🏷️ 추가할 태그:', tagsToAdd);
+
+        // 🗑️ 태그 삭제 (순차적으로 하나씩)
+        for (const tagToRemove of tagsToRemove) {
+          try {
+            // cardService를 사용하여 Mock/Real API 간 일관성 보장
+            await cardService.removeCardTag(editingCardId, tagToRemove);
+            console.log(`✅ 태그 삭제 성공: ${tagToRemove}`);
+          } catch (error) {
+            console.error(`❌ 태그 삭제 실패 (${tagToRemove}):`, error);
+          }
+        }
+
+        // ➕ 태그 추가
+        if (tagsToAdd.length > 0) {
+          try {
+            await dispatch(addCardTags({
+              cardId: editingCardId,
+              tagNames: tagsToAdd
+            }));
+            console.log('✅ 태그 추가 성공:', tagsToAdd);
+          } catch (error) {
+            console.error('❌ 태그 추가 실패:', error);
           }
         }
 
@@ -653,7 +681,7 @@ const FlashCardListPage: React.FC = () => {
           startIcon={<FilterListIcon />}
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
-          태그 필터 ({filters.selectedTags.length})
+          태그 필터
         </Button>
         <Button
           startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
