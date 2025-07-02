@@ -6,8 +6,9 @@ import lombok.Getter;
 import java.util.Map;
 
 @Getter
-@Builder
 public class NotificationOption {
+    
+    private final NotificationMessageType messageType;
     
     private final String imageUrl;
     private final String clickAction;
@@ -31,6 +32,34 @@ public class NotificationOption {
     private final Boolean requireInteraction;
     private final Boolean silent;
     
+    @Builder
+    public NotificationOption(NotificationMessageType messageType, 
+                             String imageUrl, String clickAction, Map<String, String> data,
+                             String channelId, String groupKey, String priority, Long ttl, String sound, String color,
+                             Integer badge, String category, Boolean mutableContent, Boolean contentAvailable,
+                             String icon, String urgency, Map<String, String> headers, 
+                             Boolean requireInteraction, Boolean silent) {
+        this.messageType = messageType != null ? messageType : NotificationMessageType.DATA_ONLY;
+        this.imageUrl = imageUrl;
+        this.clickAction = clickAction;
+        this.data = data;
+        this.channelId = channelId;
+        this.groupKey = groupKey;
+        this.priority = priority;
+        this.ttl = ttl;
+        this.sound = sound;
+        this.color = color;
+        this.badge = badge;
+        this.category = category;
+        this.mutableContent = mutableContent;
+        this.contentAvailable = contentAvailable;
+        this.icon = icon;
+        this.urgency = urgency;
+        this.headers = headers;
+        this.requireInteraction = requireInteraction;
+        this.silent = silent;
+    }
+    
     public static NotificationOption empty() {
         return NotificationOption.builder().build();
     }
@@ -38,6 +67,38 @@ public class NotificationOption {
     public static NotificationOption withData(Map<String, String> data) {
         return NotificationOption.builder()
                 .data(data)
+                .build();
+    }
+    
+    public static NotificationOption dataOnly() {
+        return NotificationOption.builder()
+                .messageType(NotificationMessageType.DATA_ONLY)
+                .build();
+    }
+    
+    public static NotificationOption dataOnlyWithData(Map<String, String> data) {
+        return NotificationOption.builder()
+                .messageType(NotificationMessageType.DATA_ONLY)
+                .data(data)
+                .build();
+    }
+    
+    public static NotificationOption notificationOnly() {
+        return NotificationOption.builder()
+                .messageType(NotificationMessageType.NOTIFICATION_ONLY)
+                .build();
+    }
+    
+    public static NotificationOption notificationOnlyWithImage(String imageUrl) {
+        return NotificationOption.builder()
+                .messageType(NotificationMessageType.NOTIFICATION_ONLY)
+                .imageUrl(imageUrl)
+                .build();
+    }
+    
+    public static NotificationOption both() {
+        return NotificationOption.builder()
+                .messageType(NotificationMessageType.BOTH)
                 .build();
     }
     

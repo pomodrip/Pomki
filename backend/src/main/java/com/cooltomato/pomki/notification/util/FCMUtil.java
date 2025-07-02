@@ -1,12 +1,16 @@
 package com.cooltomato.pomki.notification.util;
 
 import com.cooltomato.pomki.global.constant.FireBasePlatform;
+import com.cooltomato.pomki.notification.dto.NotificationMessageType;
 import com.cooltomato.pomki.notification.dto.NotificationRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationOption;
 import com.google.firebase.messaging.*;
 import org.springframework.util.StringUtils;
+import org.springframework.util.CollectionUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class FCMUtil {
 
@@ -17,17 +21,26 @@ public final class FCMUtil {
      */
     public static Message buildMessage(String token, NotificationRequestDto request, FireBasePlatform platform) {
         NotificationOption option = request.getOption();
+        NotificationMessageType messageType = getMessageType(option);
         
-        Message.Builder messageBuilder = Message.builder()
-                .setToken(token)
-                .setNotification(buildNotification(request));
+        Message.Builder messageBuilder = Message.builder().setToken(token);
 
-        addPlatformSpecificConfig(messageBuilder, request, platform);
-        
-        if (option != null && option.getData() != null && !option.getData().isEmpty()) {
-            messageBuilder.putAllData(option.getData());
+        switch (messageType) {
+            case DATA_ONLY:
+                messageBuilder.putAllData(buildDataWithTitleBody(request, option));
+                break;
+            case NOTIFICATION_ONLY:
+                messageBuilder.setNotification(buildNotification(request));
+                break;
+            case BOTH:
+                messageBuilder.setNotification(buildNotification(request));
+                if (!CollectionUtils.isEmpty(getDataMap(option))) {
+                    messageBuilder.putAllData(getDataMap(option));
+                }
+                break;
         }
 
+        addPlatformSpecificConfig(messageBuilder, request, platform);
         return messageBuilder.build();
     }
 
@@ -38,17 +51,26 @@ public final class FCMUtil {
                                                         NotificationRequestDto request, 
                                                         FireBasePlatform platform) {
         NotificationOption option = request.getOption();
+        NotificationMessageType messageType = getMessageType(option);
         
-        MulticastMessage.Builder messageBuilder = MulticastMessage.builder()
-                .addAllTokens(tokens)
-                .setNotification(buildNotification(request));
+        MulticastMessage.Builder messageBuilder = MulticastMessage.builder().addAllTokens(tokens);
 
-        addPlatformSpecificConfigForMulticast(messageBuilder, request, platform);
-        
-        if (option != null && option.getData() != null && !option.getData().isEmpty()) {
-            messageBuilder.putAllData(option.getData());
+        switch (messageType) {
+            case DATA_ONLY:
+                messageBuilder.putAllData(buildDataWithTitleBody(request, option));
+                break;
+            case NOTIFICATION_ONLY:
+                messageBuilder.setNotification(buildNotification(request));
+                break;
+            case BOTH:
+                messageBuilder.setNotification(buildNotification(request));
+                if (!CollectionUtils.isEmpty(getDataMap(option))) {
+                    messageBuilder.putAllData(getDataMap(option));
+                }
+                break;
         }
 
+        addPlatformSpecificConfigForMulticast(messageBuilder, request, platform);
         return messageBuilder.build();
     }
 
@@ -57,17 +79,26 @@ public final class FCMUtil {
      */
     public static Message buildTopicMessage(String topic, NotificationRequestDto request, FireBasePlatform platform) {
         NotificationOption option = request.getOption();
+        NotificationMessageType messageType = getMessageType(option);
         
-        Message.Builder messageBuilder = Message.builder()
-                .setTopic(topic)
-                .setNotification(buildNotification(request));
+        Message.Builder messageBuilder = Message.builder().setTopic(topic);
 
-        addPlatformSpecificConfig(messageBuilder, request, platform);
-        
-        if (option != null && option.getData() != null && !option.getData().isEmpty()) {
-            messageBuilder.putAllData(option.getData());
+        switch (messageType) {
+            case DATA_ONLY:
+                messageBuilder.putAllData(buildDataWithTitleBody(request, option));
+                break;
+            case NOTIFICATION_ONLY:
+                messageBuilder.setNotification(buildNotification(request));
+                break;
+            case BOTH:
+                messageBuilder.setNotification(buildNotification(request));
+                if (!CollectionUtils.isEmpty(getDataMap(option))) {
+                    messageBuilder.putAllData(getDataMap(option));
+                }
+                break;
         }
 
+        addPlatformSpecificConfig(messageBuilder, request, platform);
         return messageBuilder.build();
     }
 
@@ -82,6 +113,27 @@ public final class FCMUtil {
                 .setBody(request.getBody())
                 .setImage(option != null && StringUtils.hasText(option.getImageUrl()) ? option.getImageUrl() : null)
                 .build();
+    }
+
+    private static Map<String, String> buildDataWithTitleBody(NotificationRequestDto request, NotificationOption option) {
+        Map<String, String> data = new HashMap<>();
+        data.put("title", request.getTitle());
+        data.put("body", request.getBody());
+        
+        if (!CollectionUtils.isEmpty(getDataMap(option))) {
+            data.putAll(getDataMap(option));
+        }
+        
+        return data;
+    }
+    
+    private static NotificationMessageType getMessageType(NotificationOption option) {
+        return option != null && option.getMessageType() != null ? 
+               option.getMessageType() : NotificationMessageType.DATA_ONLY;
+    }
+    
+    private static Map<String, String> getDataMap(NotificationOption option) {
+        return option != null ? option.getData() : null;
     }
 
     /**
