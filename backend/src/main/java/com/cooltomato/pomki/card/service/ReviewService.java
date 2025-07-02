@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.card.service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.card.dto.CardReviewRequestDto;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.card.entity.CardStat;
 import com.cooltomato.pomki.card.repository.CardRepository;
@@ -9,7 +10,6 @@ import com.cooltomato.pomki.global.exception.NotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 import com.cooltomato.pomki.stats.service.StudyLogService;
-import com.cooltomato.pomki.card.dto.CardReviewRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -298,6 +299,53 @@ public class ReviewService {
     }
 
     /**
+     * 카드 복습 완료 처리 (단순화된 버전)
+     */
+    @Transactional
+    public void completeCardReviewSimple(Long cardId, String difficulty, PrincipalMember principal) {
+        Member member = memberRepository.findById(principal.getMemberInfo().getMemberId())
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new NotFoundException("카드를 찾을 수 없습니다."));
+
+        CardStat cardStat = cardStatRepository.findByMemberMemberIdAndCardCardId(member.getMemberId(), cardId)
+                .orElseGet(() -> CardStat.builder()
+                        .card(card)
+                        .member(member)
+                        .deck(card.getDeck())
+                        .dueAt(LocalDateTime.now())
+                        .build());
+
+        int intervalDays = mapDifficultyToSimpleInterval(difficulty);
+
+        cardStat.updateAfterReview(
+                null, // quality
+                difficulty,
+                cardStat.getRepetitions() + 1,
+                cardStat.getEaseFactor(),
+                intervalDays
+        );
+
+        cardStat.setLastReviewedAt(LocalDateTime.now());
+        
+        cardStatRepository.save(cardStat);
+
+        // 학습 로그 기록
+        Map<String, Object> details = new HashMap<>();
+        details.put("cardId", card.getCardId());
+        details.put("deckId", card.getDeck().getDeckId());
+        details.put("difficulty", difficulty);
+        details.put("durationSeconds", calculateReviewDuration(difficulty));
+
+        studyLogService.recordActivity(
+                member.getMemberId(),
+                "CARD_REVIEW",
+                details
+        );
+    }
+
+    /**
      * 난이도를 SM-2 품질 점수로 매핑
      * 0: 완전히 기억 못함, 1: 틀렸지만 정답을 알았을 때 기억남
      * 2: 틀렸지만 쉽게 기억해냄, 3: 맞았지만 어려웠음
@@ -401,23 +449,17 @@ public class ReviewService {
      */
     private int calculateReviewDuration(String difficulty) {
         switch (difficulty.toLowerCase()) {
-            case "easy":
-            case "쉬움":
-                return 1; // 1분
-            case "good":
-            case "괜찮음":
-            case "좋음":
-                return 2; // 2분
-            case "hard":
-            case "어려움":
-            case "헷갈림":
-                return 3; // 3분
             case "again":
-            case "다시":
-            case "잊음":
-                return 4; // 4분
+                return 60; // 1분
+            case "hard":
+            case "confuse":
+                return 45; // 45초
+            case "good":
+                return 30; // 30초
+            case "easy":
+                return 15; // 15초
             default:
-                return 2; // 기본 2분
+                return 30; // 기본값
         }
     }
 
