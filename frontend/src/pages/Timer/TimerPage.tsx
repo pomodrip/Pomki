@@ -189,7 +189,7 @@ const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded, theme }) =>
     zIndex: 9999,
     margin: 0,
     padding: 0,
-    overflow: 'hidden',
+    overflow: 'auto',
   }),
 }));
 
@@ -1048,6 +1048,7 @@ const TimerPage: React.FC = () => {
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
+                MenuProps={{ disablePortal: true }}
                 sx={{
                   minWidth: '150px',
                   backgroundColor: '#FFFFFF',
@@ -1166,6 +1167,7 @@ const TimerPage: React.FC = () => {
               value={summaryStyle}
               onChange={(e) => setSummaryStyle(e.target.value as string)}
               displayEmpty
+              MenuProps={{ disablePortal: true }}
               sx={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '6px',
@@ -1485,6 +1487,7 @@ const TimerPage: React.FC = () => {
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
+                MenuProps={{ disablePortal: true }}
                 sx={{
                   backgroundColor: '#FFFFFF',
                   borderRadius: { xs: '6px', sm: '8px' },
