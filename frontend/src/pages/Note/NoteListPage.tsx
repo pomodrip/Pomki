@@ -336,19 +336,26 @@ const NoteListPage: React.FC = () => {
   const handleGenerateFlashcards = async (note: EnrichedNote, event: React.MouseEvent) => {
     event.stopPropagation();
     
-    // 모바일에서는 바텀시트/다이얼로그로 확인
-    if (isMobile) {
+    // 사용 횟수 확인 (localStorage 사용)
+    const usageCount = parseInt(localStorage.getItem('cardGenerationUsageCount') || '0', 10);
+    
+    // 모바일에서는 3번 이하일 때만 바텀시트 표시
+    if (isMobile && usageCount < 3) {
       setCardGenerationDialog({ open: true, note });
       return;
     }
     
-    // 데스크톱에서는 바로 실행
+    // 3번 이상 사용했거나 데스크톱에서는 바로 실행
     executeCardGeneration(note);
   };
   
   const executeCardGeneration = async (note: EnrichedNote) => {
     setGeneratingQuizId(note.noteId);
     setCardGenerationDialog({ open: false, note: null });
+    
+    // 사용 횟수 증가
+    const currentCount = parseInt(localStorage.getItem('cardGenerationUsageCount') || '0', 10);
+    localStorage.setItem('cardGenerationUsageCount', (currentCount + 1).toString());
     
     try {
       // 1. 노트의 상세 정보 (noteContent 포함) 가져오기
