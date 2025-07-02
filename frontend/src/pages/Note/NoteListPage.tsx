@@ -5,7 +5,6 @@ import {
   Box, 
   Fab, 
   CircularProgress, 
-  Button,
   TextField,
   InputAdornment,
   IconButton,
@@ -14,6 +13,7 @@ import {
   Chip,
   Typography
 } from '@mui/material';
+import { Text, Button, Modal } from '../../components/ui';
 
 import { 
   Add as AddIcon, 
@@ -166,6 +166,12 @@ const NoteListPage: React.FC = () => {
   // 🎯 메뉴 상태
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+  
+  // 🎯 카드 생성 확인 다이얼로그 상태
+  const [cardGenerationDialog, setCardGenerationDialog] = useState<{
+    open: boolean;
+    note: EnrichedNote | null;
+  }>({ open: false, note: null });
 
   useEffect(() => {
     dispatch(fetchNotes());
@@ -329,7 +335,21 @@ const NoteListPage: React.FC = () => {
   
   const handleGenerateFlashcards = async (note: EnrichedNote, event: React.MouseEvent) => {
     event.stopPropagation();
+    
+    // 모바일에서는 바텀시트/다이얼로그로 확인
+    if (isMobile) {
+      setCardGenerationDialog({ open: true, note });
+      return;
+    }
+    
+    // 데스크톱에서는 바로 실행
+    executeCardGeneration(note);
+  };
+  
+  const executeCardGeneration = async (note: EnrichedNote) => {
     setGeneratingQuizId(note.noteId);
+    setCardGenerationDialog({ open: false, note: null });
+    
     try {
       // 1. 노트의 상세 정보 (noteContent 포함) 가져오기
       const fullNote = await dispatch(fetchNote(note.noteId)).unwrap();
@@ -569,6 +589,41 @@ const NoteListPage: React.FC = () => {
           </Button>
         </Box>
       )}
+
+      {/* 🎯 카드 생성 확인 다이얼로그 (모바일용) */}
+      <Modal
+        open={cardGenerationDialog.open}
+        onClose={() => setCardGenerationDialog({ open: false, note: null })}
+        title="AI 카드 생성"
+        variant={isMobile ? 'bottomSheet' : 'dialog'}
+        actions={
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            flexDirection: isMobile ? 'column' : 'row',
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            <Button
+              onClick={() => setCardGenerationDialog({ open: false, note: null })}
+              variant="outlined"
+              fullWidth={isMobile}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={() => cardGenerationDialog.note && executeCardGeneration(cardGenerationDialog.note)}
+              variant="contained"
+              fullWidth={isMobile}
+            >
+              생성하기
+            </Button>
+          </Box>
+        }
+      >
+        <Text variant="body1" color="text.secondary">
+          노트 내용을 분석해 학습용 카드를 자동으로 만들어드립니다.
+        </Text>
+      </Modal>
     </StyledContainer>
   );
 };
