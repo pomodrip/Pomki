@@ -492,6 +492,7 @@ const TimerPage: React.FC = () => {
     settings,
     updateTimerSettings,
     progress,
+    mode,
   } = useTimer();
 
   const { minutes, seconds } = currentTime;
@@ -499,7 +500,7 @@ const TimerPage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
+
   const [summaryStyle, setSummaryStyle] = useState('concept');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
@@ -579,8 +580,7 @@ const TimerPage: React.FC = () => {
     };
   }, []);
 
-  // 총 시간 계산
-  const totalTime = settings.focusTime * 60;
+
 
   // 노트 임팩트 효과
   useEffect(() => {
@@ -591,12 +591,7 @@ const TimerPage: React.FC = () => {
     }
   }, [isRunning]);
 
-  // 경과시간 계산
-  useEffect(() => {
-    if (isRunning) {
-      setElapsedTime((totalTime - (minutes * 60 + seconds)));
-    }
-  }, [isRunning, minutes, seconds, totalTime]);
+
 
   // 타이머 시작 추적
   useEffect(() => {
@@ -637,7 +632,6 @@ const TimerPage: React.FC = () => {
   const handleReset = () => {
     reset();
     setHasTimerStarted(false);
-    setElapsedTime(0);
   };
 
   const handleSettings = () => {
@@ -692,11 +686,7 @@ const TimerPage: React.FC = () => {
     return `${min.toString().padStart(2, '0')} : ${sec.toString().padStart(2, '0')}`;
   };
 
-  const formatElapsedTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   // AI 노트 생성 핸들러 (임시 구현)
   const handleGenerateAI = async () => {
@@ -1315,7 +1305,8 @@ const TimerPage: React.FC = () => {
             세션 {sessionProgress.current + 1}/{sessionProgress.target}
           </SessionProgress>
           <ElapsedTime>
-            {formatElapsedTime(elapsedTime)}
+            {/*{mode === 'FOCUS' ? '🍅 집중시간' : mode === 'SHORT_BREAK' ? '☕ 짧은 휴식' : '🛋️ 긴 휴식'}*/}
+            {mode === 'FOCUS' ? '집중시간' :'짧은 휴식'}
           </ElapsedTime>
         </RunningHeader>
       ) : (
