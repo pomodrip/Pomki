@@ -11,6 +11,4 @@ public interface NoteImageRepository extends JpaRepository<NoteImage, Long> {
     
     void deleteByNote_NoteId(String noteId);
 
-    List<NoteImage> findByNoteId(String id);
-    
 } 

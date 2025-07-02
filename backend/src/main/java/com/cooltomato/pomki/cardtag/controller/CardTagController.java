@@ -40,7 +40,7 @@ public class CardTagController {
     }
 
     @GetMapping("/{tagName}")
-    public ResponseEntity<List<CardResponseDto>> readCardByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String tagName) {
+    public ResponseEntity<List<CardResponseDto>> readCardByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("tagName") String tagName) {
         List<CardResponseDto> response = service.readCardByTagNameService(principal, tagName);
         return ResponseEntity.ok(response);
     }

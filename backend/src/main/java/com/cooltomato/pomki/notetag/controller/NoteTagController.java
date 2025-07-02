@@ -33,21 +33,21 @@ public class NoteTagController {
 
     //노트에 태그 추가
     @PostMapping
-    public ResponseEntity<NoteTagResponseDto> createNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
-        NoteTagResponseDto response = service.createNoteTagService(principal, request) ;
+    public ResponseEntity<List<NoteTagResponseDto>> createNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
+        List<NoteTagResponseDto> response = service.createNoteTagService(principal, request) ;
         return ResponseEntity.ok(response) ;
     }
 
     // 노트에서 태그 삭제
     @DeleteMapping
-    public ResponseEntity<Void> deleteNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestBody NoteTagRequestDto request) {
-        service.deleteNoteTagService(principal, request);
+    public ResponseEntity<Void> deleteNoteTag(@AuthenticationPrincipal PrincipalMember principal, @RequestParam("noteId") String noteId, @RequestParam("tagName") String tagName) {
+        service.deleteNoteTagService(principal, noteId, tagName);
         return ResponseEntity.noContent().build();
     }
 
     // 특정 태그 선택시 태그에 해당하는 모든 노트 조회
     @GetMapping("/{tagName}")
-    public ResponseEntity<List<NoteResponseDto>> readNoteByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable String tagName) {
+    public ResponseEntity<List<NoteResponseDto>> readNoteByTagName(@AuthenticationPrincipal PrincipalMember principal, @PathVariable("tagName") String tagName) {
         List<NoteResponseDto> response = service.readNoteByTagNameService(principal, tagName) ;
         return ResponseEntity.ok(response) ;
     }

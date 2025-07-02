@@ -16,6 +16,7 @@ import com.cooltomato.pomki.cardtag.dto.CardTagResponseDto;
 import com.cooltomato.pomki.cardtag.entity.CardTag;
 import com.cooltomato.pomki.cardtag.entity.CardTagId;
 import com.cooltomato.pomki.cardtag.repository.CardTagRepository;
+import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
 import com.cooltomato.pomki.tag.entity.Tag;
 import com.cooltomato.pomki.tag.entity.TagId;
 import com.cooltomato.pomki.tag.repository.TagRepository;
@@ -30,6 +31,7 @@ public class CardTagService {
     private final CardTagRepository cardTagRepository;
     private final TagRepository tagRepository;
     private final CardRepository cardRepository;
+    private final NoteTagRepository noteTagRepository;
 
     public List<CardTagResponseDto> readAllCardTagService(PrincipalMember principal) {
         List<CardTag> cardTagList = cardTagRepository.findByMemberId(principal.getMemberId());
@@ -48,6 +50,10 @@ public class CardTagService {
                 .orElseThrow(() -> new RuntimeException("Card not found with id: " + request.getCardId()));
         if (!card.getDeck().getMemberId().equals(principal.getMemberId())) {
             throw new RuntimeException("사용자의 카드가 아닙니다.");
+        }
+
+        if (card.getIsDeleted()) {
+            throw new RuntimeException("삭제된 카드에는 태그를 추가할 수 없습니다.");
         }
 
         List<CardTagResponseDto> createdTags = new ArrayList<>();
@@ -100,13 +106,17 @@ public class CardTagService {
         cardTagRepository.deleteById(cardTagIdEntity);
         Long remainingCardTagCount = cardTagRepository.countByTagNameAndMemberId(
                 tagName, principal.getMemberId());
-        if (remainingCardTagCount == 0) {
+        Long noteTagCount = noteTagRepository.countByTagNameAndMemberId(
+                tagName, principal.getMemberId());
+        if (remainingCardTagCount == 0 && noteTagCount == 0) {
             TagId tagIdEntity = TagId.builder()
                     .tagName(tagName)
                     .memberId(principal.getMemberId())
                     .build();
             tagRepository.deleteById(tagIdEntity);
             log.info("debug >>> Tag에서 삭제 완료");
+        } else {
+            log.info("debug >>> Tag는 유지 (다른 노트에서 {}개 사용 중)", remainingCardTagCount) ;
         }
     }
 
@@ -124,6 +134,10 @@ public class CardTagService {
                         .answer(card.getAnswer())
                         .createdAt(card.getCreatedAt())
                         .updatedAt(card.getUpdatedAt())
+                        .tags(card.getCardTags().stream()
+                                .map(CardTag::getTagName)
+                                .distinct()
+                                .collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
     }

@@ -13,7 +13,6 @@ import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
-import com.cooltomato.pomki.noteimage.repository.NoteImageRepository;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
 import com.cooltomato.pomki.tag.entity.Tag;
@@ -45,7 +44,6 @@ public class NoteService {
     private final NoteTagRepository noteTagRepository;
     private final TagRepository tagRepository;
     private final CardTagRepository cardTagRepository;
-    private final NoteImageRepository noteImageRepository;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
