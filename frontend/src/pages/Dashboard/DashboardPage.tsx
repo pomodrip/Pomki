@@ -178,7 +178,7 @@ const DashboardPage: React.FC = () => {
         </Card>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar defaultValue={dayjs('2022-04-17')} />
+            <DateCalendar defaultValue={dayjs()} />
           </LocalizationProvider>
         </Card>
       </Box>
