@@ -72,10 +72,10 @@ public class TrashController {
         return ResponseEntity.ok("항목이 영구 삭제되었습니다.");
     }
     
-    @PostMapping("/cleanup")
-    @Operation(summary = "오래된 항목 정리", description = "30일 이상 된 쓰레기통 항목을 자동으로 삭제합니다.")
-    public ResponseEntity<String> cleanupOldTrashItems() {
-        trashService.cleanupOldTrashItems();
-        return ResponseEntity.ok("오래된 쓰레기통 항목이 정리되었습니다.");
-    }
+    // @PostMapping("/cleanup")
+    // @Operation(summary = "오래된 항목 정리", description = "30일 이상 된 쓰레기통 항목을 자동으로 삭제합니다.")
+    // public ResponseEntity<String> cleanupOldTrashItems() {
+    //     trashService.cleanupOldTrashItems();
+    //     return ResponseEntity.ok("오래된 쓰레기통 항목이 정리되었습니다.");
+    // }
 } 

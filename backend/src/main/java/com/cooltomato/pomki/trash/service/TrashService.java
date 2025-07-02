@@ -317,43 +317,43 @@ public class TrashService {
     /**
      * 30일 이상 된 쓰레기통 항목 자동 삭제
      */
-    @Transactional
-    public void cleanupOldTrashItems() {
-        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30);
+    // @Transactional
+    // public void cleanupOldTrashItems() {
+    //     LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30);
         
-        List<Trash> oldTrashItems = trashRepository.findAll().stream()
-                .filter(trash -> trash.getDeletedAt().isBefore(cutoffDate))
-                .toList();
+    //     List<Trash> oldTrashItems = trashRepository.findAll().stream()
+    //             .filter(trash -> trash.getDeletedAt().isBefore(cutoffDate))
+    //             .toList();
         
-        for (Trash trash : oldTrashItems) {
-            // 시스템에서 직접 삭제 (권한 체크 없이)
-            String trashId = trash.getTrashId();
+    //     for (Trash trash : oldTrashItems) {
+    //         // 시스템에서 직접 삭제 (권한 체크 없이)
+    //         String trashId = trash.getTrashId();
             
-            // 덱 영구 삭제
-            List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trashId);
-            for (TrashDeck trashDeck : trashDecks) {
-                deckRepository.deleteById(trashDeck.getDeckId());
-            }
+    //         // 덱 영구 삭제
+    //         List<TrashDeck> trashDecks = trashDeckRepository.findByIdTrashId(trashId);
+    //         for (TrashDeck trashDeck : trashDecks) {
+    //             deckRepository.deleteById(trashDeck.getDeckId());
+    //         }
             
-            // 카드 영구 삭제
-            List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trashId);
-            for (TrashCard trashCard : trashCards) {
-                cardRepository.deleteById(trashCard.getCardId());
-            }
+    //         // 카드 영구 삭제
+    //         List<TrashCard> trashCards = trashCardRepository.findByIdTrashId(trashId);
+    //         for (TrashCard trashCard : trashCards) {
+    //             cardRepository.deleteById(trashCard.getCardId());
+    //         }
             
-            // 노트 영구 삭제
-            List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trashId);
-            for (TrashNote trashNote : trashNotes) {
-                noteRepository.deleteById(trashNote.getNoteId());
-            }
+    //         // 노트 영구 삭제
+    //         List<TrashNote> trashNotes = trashNoteRepository.findByIdTrashId(trashId);
+    //         for (TrashNote trashNote : trashNotes) {
+    //             noteRepository.deleteById(trashNote.getNoteId());
+    //         }
             
-            // 쓰레기통에서 제거
-            trashDeckRepository.deleteByIdTrashId(trashId);
-            trashCardRepository.deleteByIdTrashId(trashId);
-            trashNoteRepository.deleteByIdTrashId(trashId);
-            trashRepository.delete(trash);
-        }
+    //         // 쓰레기통에서 제거
+    //         trashDeckRepository.deleteByIdTrashId(trashId);
+    //         trashCardRepository.deleteByIdTrashId(trashId);
+    //         trashNoteRepository.deleteByIdTrashId(trashId);
+    //         trashRepository.delete(trash);
+    //     }
         
-        log.info("30일 이상 된 쓰레기통 항목 {} 개가 자동 삭제되었습니다.", oldTrashItems.size());
-    }
+    //     log.info("30일 이상 된 쓰레기통 항목 {} 개가 자동 삭제되었습니다.", oldTrashItems.size());
+    // }
 } 
