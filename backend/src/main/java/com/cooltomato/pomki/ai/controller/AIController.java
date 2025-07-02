@@ -2,8 +2,6 @@ package com.cooltomato.pomki.ai.controller;
 
 import com.cooltomato.pomki.ai.dto.NotePolishRequestDto;
 import com.cooltomato.pomki.ai.dto.NotePolishResponseDto;
-import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
-import com.cooltomato.pomki.ai.service.AILLMService;
 import com.cooltomato.pomki.ai.service.AIService;
 import com.cooltomato.pomki.note.dto.NoteResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
@@ -107,23 +105,5 @@ public class AIController {
             public final boolean available = !aiService.toString().contains("not configured");
             public final String message = available ? "AI 기능이 사용 가능합니다" : "AI 기능을 사용하려면 API 키를 설정해주세요";
         });
-    }
-    private final AILLMService aiLLMService;
-
-    @GetMapping("/description")
-    public ResponseEntity<GeminiResDto> getProductDescription(@RequestParam String productName) {
-        try {
-            GeminiResDto response = aiLLMService.getAIDescription(productName);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // 테스트용 에러 응답
-            return ResponseEntity.internalServerError()
-                    .body(new GeminiResDto("서비스 오류가 발생했습니다: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("AI 서비스가 정상적으로 작동중입니다.");
     }
 }

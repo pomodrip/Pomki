@@ -9,9 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service("openAiService")
-public class OpenAiService 
-// implements LLMService 
-{
+public class OpenAiService implements LLMService {
 
     private final WebClient webClient;
 
@@ -29,8 +27,8 @@ public class OpenAiService
         return Mono.just("OpenAI 서비스는 구현 예정입니다: " + prompt.substring(0, Math.min(50, prompt.length())));
     }
 
-    // @Override
-    // public String getProviderName() {
-    //     return "openai";
-    // }
+    @Override
+    public String getProviderName() {
+        return "openai";
+    }
 }
