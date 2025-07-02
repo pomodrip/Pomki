@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.card.controller;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.card.dto.CardReviewRequestDto;
 import com.cooltomato.pomki.card.entity.CardStat;
 import com.cooltomato.pomki.card.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,21 +20,34 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    @PostMapping("/batch-complete")
+    @Operation(summary = "학습 세션의 카드 복습 결과 일괄 처리",
+               description = "정상적인 학습 종료 시 호출됩니다.")
+    public ResponseEntity<Void> completeStudySession(
+            @RequestBody List<CardReviewRequestDto> reviewRequests,
+            @AuthenticationPrincipal PrincipalMember principal) {
+        reviewService.completeStudySession(reviewRequests, principal);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/batch-complete-beacon")
+    @Operation(summary = "페이지 이탈 시 Beacon을 통한 일괄 처리",
+               description = "브라우저 이탈 시 데이터 유실 방지를 위해 호출됩니다.")
+    public ResponseEntity<Void> completeStudySessionWithBeacon(
+            @RequestBody List<CardReviewRequestDto> reviewRequests,
+            @AuthenticationPrincipal PrincipalMember principal) {
+        if (principal != null) {
+            reviewService.completeStudySession(reviewRequests, principal);
+        }
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/today")
     @Operation(summary = "오늘 복습할 카드 목록 조회")
     public ResponseEntity<List<CardStat>> getTodayReviewCards(
             @AuthenticationPrincipal PrincipalMember principal) {
         List<CardStat> cards = reviewService.getTodayReviewCards(principal);
         return ResponseEntity.ok(cards);
-    }
-
-    @PostMapping("/batch-complete")
-    @Operation(summary = "학습 세션의 카드 복습 결과 일괄 처리")
-    public ResponseEntity<Void> completeStudySession(
-            @RequestBody List<com.cooltomato.pomki.card.dto.CardReviewRequestDto> reviewRequests,
-            @AuthenticationPrincipal PrincipalMember principal) {
-        reviewService.completeStudySession(reviewRequests, principal);
-        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/complete/{cardId}")
@@ -99,16 +113,5 @@ public class ReviewController {
         ReviewService.StudyLoadRecommendation recommendation = 
                 reviewService.getStudyLoadRecommendation(principal);
         return ResponseEntity.ok(recommendation);
-    }
-
-    @PostMapping("/batch-complete-beacon")
-    @Operation(summary = "페이지 이탈 시 Beacon을 통한 일괄 처리")
-    public ResponseEntity<Void> completeStudySessionWithBeacon(
-            @RequestBody List<com.cooltomato.pomki.card.dto.CardReviewRequestDto> reviewRequests,
-            @AuthenticationPrincipal PrincipalMember principal) {
-        if (principal != null) {
-            reviewService.completeStudySession(reviewRequests, principal);
-        }
-        return ResponseEntity.ok().build();
     }
 } 

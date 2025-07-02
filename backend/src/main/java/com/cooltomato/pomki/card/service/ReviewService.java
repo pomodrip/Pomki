@@ -467,35 +467,38 @@ public class ReviewService {
      * hard: 1일, confuse: 3일, easy: 5일
      */
     @Transactional
-    public void completeCardReviewSimple(Long cardId, String difficulty, PrincipalMember principal) {
+    public void completeStudySession(List<CardReviewRequestDto> reviewRequests, PrincipalMember principal) {
         Member member = memberRepository.findById(principal.getMemberInfo().getMemberId())
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
-        
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new NotFoundException("카드를 찾을 수 없습니다."));
 
-        // 기존 통계 조회 또는 신규 생성
-        Optional<CardStat> existingStatOpt = cardStatRepository
-                .findByMemberMemberIdAndCardCardId(member.getMemberId(), cardId);
-
-        CardStat cardStat;
-        if (existingStatOpt.isPresent()) {
-            cardStat = existingStatOpt.get();
-        } else {
-            // 첫 복습인 경우 새로운 통계 생성
-            cardStat = CardStat.builder()
-                    .card(card)
-                    .member(member)
-                    .deck(card.getDeck())
-                    .dueAt(LocalDateTime.now().plusDays(1))
-                    .build();
+        for (CardReviewRequestDto request : reviewRequests) {
+            processSingleReview(request.getCardId(), request.getDifficulty(), member);
         }
 
-        // 단순화된 간격 계산
+        log.info("학습 세션 완료: memberId={}, reviewCount={}", member.getMemberId(), reviewRequests.size());
+        
+        studyLogService.recordActivity(
+                member.getMemberId(),
+                "STUDY_SESSION_COMPLETED",
+                Map.of("reviewed_card_count", reviewRequests.size())
+        );
+    }
+
+    private void processSingleReview(Long cardId, String difficulty, Member member) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new NotFoundException("카드를 찾을 수 없습니다: " + cardId));
+
+        CardStat cardStat = cardStatRepository.findByMemberMemberIdAndCardCardId(member.getMemberId(), cardId)
+                .orElseGet(() -> CardStat.builder()
+                        .card(card)
+                        .member(member)
+                        .deck(card.getDeck())
+                        .dueAt(LocalDateTime.now())
+                        .build());
+
         int intervalDays = mapDifficultyToSimpleInterval(difficulty);
         int quality = mapDifficultyToQuality(difficulty);
 
-        // 통계 업데이트 (단순한 버전)
         cardStat.updateAfterReview(
                 quality,
                 difficulty,
@@ -503,95 +506,16 @@ public class ReviewService {
                 cardStat.getEaseFactor(),
                 intervalDays
         );
-
         cardStatRepository.save(cardStat);
-        log.info("단순 카드 복습 완료: cardId={}, deckId={}, difficulty={}, nextReview={}일", 
-                cardId, card.getDeck().getDeckId(), difficulty, intervalDays);
-        
-        // 학습 활동 기록
-        Map<String, Object> details = Map.of(
-                "card_id", cardId,
-                "difficulty", difficulty,
-                "next_review_days", intervalDays,
-                "review_type", "SIMPLE",
-                "duration_minutes", calculateReviewDuration(difficulty)
-        );
-        studyLogService.recordActivity(
-                member.getMemberId(),
-                "CARD_REVIEWED",
-                details
-        );
     }
 
-    /**
-     * 난이도를 단순한 간격(일)으로 매핑
-     */
     private int mapDifficultyToSimpleInterval(String difficulty) {
         switch (difficulty.toLowerCase()) {
-            case "hard":
-            case "어려움":
-            case "헷갈림":
-                return 1; // 1일 후
+            case "hard": return 1;
             case "confuse":
-            case "confusing":
-            case "헷갈려":
-            case "애매":
-                return 3; // 3일 후
-            case "easy":
-            case "쉬움":
-                return 5; // 5일 후
-            default:
-                return 3; // 기본값: 3일
+            case "confusing": return 3;
+            case "easy": return 5;
+            default: return 3;
         }
-    }
-
-    /**
-     * 🎯 학습 세션의 카드 복습 결과 일괄 처리
-     */
-    @Transactional
-    public void completeStudySession(List<CardReviewRequestDto> reviewRequests, PrincipalMember principal) {
-        Member member = memberRepository.findById(principal.getMemberInfo().getMemberId())
-                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
-
-        for (CardReviewRequestDto request : reviewRequests) {
-            Long cardId = request.getCardId();
-            String difficulty = request.getDifficulty();
-
-            Card card = cardRepository.findById(cardId)
-                    .orElseThrow(() -> new NotFoundException("카드를 찾을 수 없습니다: " + cardId));
-
-            // 여기서부터는 completeCardReviewSimple의 로직과 거의 동일합니다.
-            CardStat cardStat = cardStatRepository.findByMemberMemberIdAndCardCardId(member.getMemberId(), cardId)
-                    .orElseGet(() -> CardStat.builder()
-                            .card(card)
-                            .member(member)
-                            .deck(card.getDeck())
-                            .dueAt(LocalDateTime.now())
-                            .build());
-
-            int intervalDays = mapDifficultyToSimpleInterval(difficulty);
-            int quality = mapDifficultyToQuality(difficulty);
-
-            cardStat.updateAfterReview(
-                    quality,
-                    difficulty,
-                    cardStat.getRepetitions() + (quality >= 3 ? 1 : 0),
-                    cardStat.getEaseFactor(),
-                    intervalDays
-            );
-            // @Transactional 이므로 save는 반복문 내에서 호출해도 괜찮습니다.
-            // JPA가 쓰기 지연을 통해 최적화합니다.
-            cardStatRepository.save(cardStat);
-        }
-
-        // 전체 세션에 대한 로그
-        log.info("학습 세션 완료: memberId={}, reviewCount={}", member.getMemberId(), reviewRequests.size());
-        
-        // 학습 시간 기록 등 추가 로직 가능
-        studyLogService.recordActivity(
-                member.getMemberId(),
-                "STUDY_SESSION_COMPLETED",
-                Map.of("reviewed_card_count", reviewRequests.size())
-        );
     }
 } 
