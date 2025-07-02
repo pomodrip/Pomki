@@ -1,4 +1,4 @@
-import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
 import * as cardApi from '../api/cardApi';
 
 // 🎯 카드 서비스 인터페이스 정의
@@ -8,6 +8,8 @@ export interface ICardService {
   updateCard(cardId: number, data: UpdateCardRequest): Promise<Card>;
   deleteCard(cardId: number): Promise<void>;
   searchCards(keyword: string): Promise<SearchCard[]>;
+  addCardTags(data: AddCardTagRequest): Promise<void>;
+  removeCardTag(cardId: number, tagName: string): Promise<void>;
 }
 
 // 🎭 Mock 카드 서비스 구현
@@ -20,7 +22,9 @@ class MockCardService implements ICardService {
       deckId: 'deck-uuid-1',
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      deckName: '',
+      tags: ['React', 'JavaScript', 'Frontend']
     },
     {
       cardId: 2,
@@ -29,7 +33,9 @@ class MockCardService implements ICardService {
       deckId: 'deck-uuid-1',
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      deckName: '',
+      tags: ['React', 'JSX']
     }
   ];
   private nextCardId = 10;
@@ -60,7 +66,9 @@ class MockCardService implements ICardService {
       deckId,
       isDeleted: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      deckName: '',
+      tags: []
     };
     
     this.cards.push(newCard);
@@ -113,6 +121,36 @@ class MockCardService implements ICardService {
       };
     });
   }
+
+  async addCardTags(data: AddCardTagRequest): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === data.cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 기존 태그와 중복되지 않는 새 태그만 추가
+    const existingTags = this.cards[cardIndex].tags || [];
+    const newTags = data.tagNames.filter(tag => !existingTags.includes(tag));
+    
+    this.cards[cardIndex].tags = [...existingTags, ...newTags];
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
+  }
+
+  async removeCardTag(cardId: number, tagName: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 지정된 태그 제거
+    const existingTags = this.cards[cardIndex].tags || [];
+    this.cards[cardIndex].tags = existingTags.filter(tag => tag !== tagName);
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
+  }
 }
 
 // 🌐 실제 API 카드 서비스 구현
@@ -161,6 +199,24 @@ class RealCardService implements ICardService {
     } catch (error) {
       console.warn('⚠️ Real API (searchCards) 실패! Mock 데이터로 대체합니다.', error);
       return this.mockService.searchCards(keyword);
+    }
+  }
+
+  async addCardTags(data: AddCardTagRequest): Promise<void> {
+    try {
+      await cardApi.addCardTags(data);
+    } catch (error) {
+      console.warn('⚠️ Real API (addCardTags) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.addCardTags(data);
+    }
+  }
+
+  async removeCardTag(cardId: number, tagName: string): Promise<void> {
+    try {
+      await cardApi.removeCardTag(cardId, tagName);
+    } catch (error) {
+      console.warn('⚠️ Real API (removeCardTag) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.removeCardTag(cardId, tagName);
     }
   }
 }

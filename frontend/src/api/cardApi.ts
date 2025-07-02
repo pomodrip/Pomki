@@ -63,3 +63,17 @@ export const deleteCard = async (cardId: number): Promise<void> => {
 export const addCardTags = async (data: AddCardTagRequest): Promise<void> => {
   await api.post('/api/card-tag', data);
 };
+
+/**
+ * 카드에서 태그 삭제
+ * @param cardId 카드 ID
+ * @param tagName 삭제할 태그 이름
+ */
+export const removeCardTag = async (cardId: number, tagName: string): Promise<void> => {
+  await api.delete('/api/card-tag', {
+    params: {
+      cardId,
+      tagName,
+    },
+  });
+};
