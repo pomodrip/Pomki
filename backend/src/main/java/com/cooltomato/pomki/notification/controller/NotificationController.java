@@ -3,6 +3,7 @@ package com.cooltomato.pomki.notification.controller;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.notification.dto.NotificationRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationResponseDto;
+import com.cooltomato.pomki.notification.dto.NotificationTargetRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationTokenRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationTokenResponseDto;
 import com.cooltomato.pomki.notification.service.NotificationService;
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -36,21 +36,12 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/tokens/{firebaseToken}")
-    @Operation(summary = "특정 FCM 토큰 삭제")
-    public ResponseEntity<Void> deleteToken(@PathVariable String firebaseToken) {
-        notificationService.deleteFireBaseToken(firebaseToken);
-        return ResponseEntity.ok().build();
-    }
-
     @DeleteMapping("/tokens")
     @Operation(summary = "현재 사용자의 모든 토큰 삭제")
     public ResponseEntity<Void> deleteAllTokens(@AuthenticationPrincipal PrincipalMember principalMember) {
         notificationService.deleteFireBaseTokenByMemberId(principalMember.getMemberId());
         return ResponseEntity.ok().build();
     }
-
-
 
     @GetMapping("/tokens")
     @Operation(summary = "현재 사용자의 토큰 조회")
@@ -84,10 +75,9 @@ public class NotificationController {
     @PostMapping("/test/send-to-token")
     @Operation(summary = "특정 토큰으로 테스트 알림 전송")
     public ResponseEntity<String> sendNotificationToToken(
-            @RequestParam String token,
-            @Valid @RequestBody NotificationRequestDto request) {
+            @Valid @RequestBody NotificationTargetRequestDto request) {
         
-        notificationService.sendNotificationToToken(token, request);
+        notificationService.sendNotificationToToken(request.getToken(), request.getPlatform(), request.getNotification());
         return ResponseEntity.ok("토큰으로 알림 전송 요청이 처리되었습니다.");
     }
 

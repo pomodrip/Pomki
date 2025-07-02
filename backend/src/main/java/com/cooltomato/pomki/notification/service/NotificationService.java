@@ -146,16 +146,14 @@ public class NotificationService {
 
 
     @Async("notificationTaskExecutor")
-    public void sendNotificationToToken(String deviceToken, NotificationRequestDto request) {
-        tokenRepository.findById(deviceToken)
-                .ifPresentOrElse(tokenEntity -> sendSingleMessage(deviceToken, request, tokenEntity.getPlatform()),
-                        () -> log.warn("유효하지 않은 토큰입니다: {}", deviceToken));
+    public void sendNotificationToToken(String deviceToken, FireBasePlatform platform, NotificationRequestDto request) {
+        sendSingleMessage(deviceToken, request, platform);
+        log.info("지정된 토큰으로 테스트 알림을 전송했습니다: {}", deviceToken);
     }
 
     // 테스트용 응답 반환 비동기 메서드 (테스트용)
     public CompletableFuture<NotificationResponseDto> sendNotificationToMemberWithResponse(Long memberId, NotificationRequestDto request) {
         List<FireBaseToken> tokens = findAllTokensByMemberId(memberId);
-        
         if (tokens.isEmpty()) {
             return CompletableFuture.completedFuture(
                     NotificationResponseDto.builder()
