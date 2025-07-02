@@ -75,7 +75,8 @@ api.interceptors.response.use(
     // CORS 에러 처리
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
       console.error('Network error - possibly CORS issue:', error);
-      // 🔵 Axios 간접 활용 (API 인터셉터에서 트리거)
+      // 🔵 네트워크 오류 토스트 비활성화 (주석 처리)
+      /*
       if (store) {
         const { showToast } = await import('../store/slices/toastSlice');
         store.dispatch(showToast({ 
@@ -83,6 +84,7 @@ api.interceptors.response.use(
           severity: 'error'
         }));
       }
+      */
       return Promise.reject(new Error('서버에 연결할 수 없습니다. CORS 설정을 확인해주세요.'));
     }
 
