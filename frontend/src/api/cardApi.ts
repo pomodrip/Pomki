@@ -77,3 +77,19 @@ export const removeCardTag = async (cardId: number, tagName: string): Promise<vo
     },
   });
 };
+
+/**
+ * 카드 북마크 추가
+ * @param cardId 카드 ID
+ */
+export const addCardBookmark = async (cardId: number): Promise<void> => {
+  await api.post(`/api/card-bookmarks/${cardId}`);
+};
+
+/**
+ * 카드 북마크 삭제
+ * @param cardId 카드 ID
+ */
+export const removeCardBookmark = async (cardId: number): Promise<void> => {
+  await api.delete(`/api/card-bookmarks/${cardId}`);
+};
