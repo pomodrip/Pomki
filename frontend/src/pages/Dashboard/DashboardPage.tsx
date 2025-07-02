@@ -9,11 +9,44 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
+import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
 }));
+
+// 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
+const holidays = [
+  '2025-01-01', // 신정
+  '2025-01-28', // 설날 연휴 시작
+  '2025-01-29', // 설날
+  '2025-01-30', // 설날 연휴 끝
+  '2025-03-01', // 삼일절
+  '2025-05-05', // 어린이날
+  '2025-05-06', // 어린이날 대체공휴일 (월요일)
+  '2025-05-12', // 부처님오신날
+  '2025-06-06', // 현충일
+  '2025-08-15', // 광복절
+  '2025-10-03', // 개천절
+  '2025-10-06', // 추석 연휴 시작
+  '2025-10-07', // 추석
+  '2025-10-08', // 추석 연휴 끝
+  '2025-10-09', // 한글날
+  '2025-12-25', // 성탄절
+];
+
+function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
+  const { day, outsideCurrentMonth, ...other } = props;
+  const isSunday = day.day() === 0;
+  const isSaturday = day.day() === 6;
+  const isHoliday = holidays.includes(day.format('YYYY-MM-DD'));
+  let color = undefined;
+  if (isSunday || isSaturday || isHoliday) color = 'red';
+  return (
+    <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
+  );
+}
 
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
@@ -178,7 +211,10 @@ const DashboardPage: React.FC = () => {
         </Card>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar defaultValue={dayjs()} />
+            <DateCalendar
+              defaultValue={dayjs()}
+              slots={{ day: CustomDay }}
+            />
           </LocalizationProvider>
         </Card>
       </Box>
