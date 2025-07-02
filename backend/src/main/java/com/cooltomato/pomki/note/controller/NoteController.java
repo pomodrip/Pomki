@@ -20,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/notes")
 @RequiredArgsConstructor
 public class NoteController {
+
     private final NoteService noteService;
     @PostMapping
     public ResponseEntity<NoteResponseDto> createNote(@Valid @RequestBody NoteCreateRequestDto noteRequestDto,

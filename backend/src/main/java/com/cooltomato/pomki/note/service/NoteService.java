@@ -11,6 +11,7 @@ import com.cooltomato.pomki.note.dto.NoteListResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.ai.service.AIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class NoteService {
     private final NoteRepository noteRepository;
     private final MemberRepository memberRepository;
+    private final AIService aiService;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
@@ -67,6 +69,20 @@ public class NoteService {
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
     }
+
+    @Transactional
+    public String polishNote(String noteId, String style, PrincipalMember principalMember) {
+        Member member = getMember(principalMember.getMemberId());
+        Note note = getNote(noteId, member);
+
+        String polishedContent = aiService.polishNote(note.getNoteContent(), style);
+
+        note.setNoteContent(polishedContent);
+        note.setAiEnhanced(true);
+        noteRepository.save(note);
+        return polishedContent;
+    }
+
     @Transactional
     public NoteResponseDto updateNote(String id, NoteUpdateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
         Member member = getMember(memberInfoDto.getMemberId());

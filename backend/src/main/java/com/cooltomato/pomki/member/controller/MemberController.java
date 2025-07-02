@@ -31,6 +31,16 @@ public class MemberController {
         memberService.signUp(request);
         return ResponseEntity.ok().build();
     }
+    @PostMapping("/test")
+    public ResponseEntity<Void> signUpTest() {
+        MemberSignUpRequestDto request = new MemberSignUpRequestDto();
+        request.setEmail("test@test.com");
+        request.setNickname("test");
+        request.setPassword("test");
+        request.setVerificationToken("test");
+        memberService.signUpTest(request);
+        return ResponseEntity.ok().build();
+    }
 
     @GetMapping("/my")
     public ResponseEntity<MemberInfoResponseDto> readMemberInfo(@AuthenticationPrincipal PrincipalMember principal) {
