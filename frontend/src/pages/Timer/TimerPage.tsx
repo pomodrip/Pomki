@@ -471,14 +471,15 @@ const editorModules = {
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link'],
-    ['clean']
+    // ['link', 'image'],
+    // ['clean']
+    ['image']
   ],
 };
 
 const editorFormats = [
   'header', 'bold', 'italic', 'underline',
-  'list', 'bullet', 'link'
+  'list', 'bullet', 'link', 'image'
 ];
 
 const TimerPage: React.FC = () => {
