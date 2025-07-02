@@ -9,6 +9,7 @@ import type {
   UpdateDeckRequest,
   UpdateCardRequest,
   CreateCardRequest,
+  AddCardTagRequest,
 } from '../../types/card';
 
 /**
@@ -188,6 +189,48 @@ export const deleteCard = createAsyncThunk<
   try {
     await cardService.deleteCard(cardId);
     return cardId;
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드에 태그 추가
+export const addCardTags = createAsyncThunk<
+  { cardId: number; addedTags: string[] },
+  AddCardTagRequest,
+  { state: RootState; rejectValue: string }
+>('deck/addCardTags', async (data, { getState, rejectWithValue }) => {
+  try {
+    // 현재 카드의 기존 태그 확인
+    const state = getState() as RootState;
+    const currentCard = state.deck.currentDeckCards.find(card => card.cardId === data.cardId);
+    const existingTags = currentCard?.tags || [];
+    
+    // 중복되지 않는 새 태그만 필터링
+    const newTags = data.tagNames.filter(tag => !existingTags.includes(tag));
+    
+    if (newTags.length === 0) {
+      // 추가할 새 태그가 없으면 조기 반환
+      return { cardId: data.cardId, addedTags: [] };
+    }
+    
+    // 실제로 추가할 태그만으로 API 호출
+    await cardService.addCardTags({ ...data, tagNames: newTags });
+    return { cardId: data.cardId, addedTags: newTags };
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드에서 태그 제거
+export const removeCardTag = createAsyncThunk<
+  { cardId: number; removedTag: string },
+  { cardId: number; tagName: string },
+  { state: RootState; rejectValue: string }
+>('deck/removeCardTag', async ({ cardId, tagName }, { rejectWithValue }) => {
+  try {
+    await cardService.removeCardTag(cardId, tagName);
+    return { cardId, removedTag: tagName };
   } catch (error) {
     return rejectWithValue(handleAsyncError(error));
   }
@@ -410,6 +453,38 @@ const deckSlice = createSlice({
              state.selectedDeck.cardCnt -= 1;
            }
          }
+       })
+
+       // 카드 태그 추가
+       .addCase(addCardTags.fulfilled, (state, action) => {
+         const { cardId, addedTags } = action.payload;
+         const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+         
+         if (cardIndex !== -1 && addedTags.length > 0) {
+           const existingTags = state.currentDeckCards[cardIndex].tags || [];
+           // 중복 방지를 위해 한 번 더 필터링 (안전장치)
+           const uniqueNewTags = addedTags.filter(tag => !existingTags.includes(tag));
+           state.currentDeckCards[cardIndex].tags = [...existingTags, ...uniqueNewTags];
+           state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+         }
+       })
+       .addCase(addCardTags.rejected, (state, action) => {
+         state.error = action.payload || '태그 추가에 실패했습니다.';
+       })
+
+       // 카드 태그 제거
+       .addCase(removeCardTag.fulfilled, (state, action) => {
+         const { cardId, removedTag } = action.payload;
+         const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+         
+         if (cardIndex !== -1) {
+           const existingTags = state.currentDeckCards[cardIndex].tags || [];
+           state.currentDeckCards[cardIndex].tags = existingTags.filter(tag => tag !== removedTag);
+           state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+         }
+       })
+       .addCase(removeCardTag.rejected, (state, action) => {
+         state.error = action.payload || '태그 제거에 실패했습니다.';
        });
   },
 });

@@ -30,7 +30,8 @@ import {
   fetchCardsInDeck, 
   updateCard, 
   deleteCard, 
-  setCurrentDeck 
+  setCurrentDeck,
+  addCardTags 
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
 import * as cardApi from '../../api/cardApi';
@@ -38,17 +39,10 @@ import type { Card, CreateCardRequest, SearchCard } from '../../types/card';
 import { showToast } from '../../store/slices/toastSlice';
 import { FlashCard, type FlashCardData } from '../../components/ui';
 import { deckService } from '../../services/deckService';
+import { cardService } from '../../services/cardService';
 import Button from '../../components/ui/Button';
 
-// 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
-interface FlashcardDeck {
-  id: string;
-  category: string;
-  title: string;
-  isBookmarked: boolean;
-  tags: string[];
-  flashcards: FlashCardData[];
-}
+
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -119,8 +113,7 @@ const FlashCardListPage: React.FC = () => {
     9: false,
   });
   
-  // 카드별 사용자 정의 태그 저장
-  const [customCardTags, setCustomCardTags] = useState<{[key: number]: string[]}>({});
+
   
   // 수정 다이얼로그 상태
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -157,36 +150,7 @@ const FlashCardListPage: React.FC = () => {
     return result;
   }, [currentDeckCards, fallbackCards]);
 
-  // 🎯 Mock 덱 데이터 (기존 구조 유지하면서 새로운 API 데이터와 병합)
-  const mockDecks: FlashcardDeck[] = useMemo(() => {
-    if (!deckId || !selectedDeck) return [];
-    
-    const deckTitle = selectedDeck.deckName || '덱 이름 없음';
 
-    return [{
-      id: deckId,
-      category: '학습',
-      title: deckTitle,
-      isBookmarked: false,
-      tags: [`#${deckTitle.split(' ')[0]}`, '#학습'],
-      flashcards: allCards
-        .filter(card => card.deckId === deckId)
-        .map(card => {
-          const cardId = parseInt(card.cardId.toString());
-          return {
-            id: cardId,
-            front: card.content || 'No content',
-            back: card.answer || 'No answer',
-            tags: customCardTags[cardId] || [`#카드${card.cardId}`, '#학습'],
-          };
-        })
-    }];
-  }, [deckId, allCards, selectedDeck, customCardTags]);
-
-  // 🎯 현재 덱 찾기 (기존 로직 유지)
-  const currentDeck = useMemo(() => {
-    return mockDecks.find(deck => deck.id === deckId);
-  }, [mockDecks, deckId]);
 
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
@@ -211,14 +175,20 @@ const FlashCardListPage: React.FC = () => {
     }
   }, [dispatch, deckId]);
 
-  // 🎯 플래시카드 목록 (기존 로직 유지)
+  // 🎯 플래시카드 목록 (Redux 데이터에서 직접 생성)
   const flashCards = useMemo(() => {
-    if (!currentDeck) return [];
-    return currentDeck.flashcards.map(card => ({
-      ...card,
-      tags: card.tags ?? [], // 카드의 개별 태그 사용, 없으면 빈 배열
-    }));
-  }, [currentDeck]);
+    return allCards
+      .filter(card => card.deckId === deckId)
+      .map(card => {
+        const cardId = parseInt(card.cardId.toString());
+        return {
+          id: cardId,
+          front: card.content || 'No content',
+          back: card.answer || 'No answer',
+          tags: card.tags ? card.tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`) : [],
+        };
+      });
+  }, [allCards, deckId]);
 
   // 모든 태그 목록 추출 (기존 로직 유지)
   const allTags = useMemo(() => {
@@ -235,7 +205,7 @@ const FlashCardListPage: React.FC = () => {
       id: searchCard.cardId,
       front: searchCard.content,
       back: searchCard.answer,
-      tags: [`#${searchCard.deckName}`, '#검색결과']
+      tags: searchCard.tags ? searchCard.tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`) : [],
     }));
   }, [searchResults]);
 
@@ -338,13 +308,6 @@ const FlashCardListPage: React.FC = () => {
         try {
           const result = await dispatch(deleteCard(id));
           if (result.meta.requestStatus === 'fulfilled') {
-            // Redux 삭제 성공 시에도 사용자 정의 태그 삭제
-            setCustomCardTags(prev => {
-              const updated = { ...prev };
-              delete updated[id];
-              return updated;
-            });
-            
             // 카드 목록 다시 로드
             if (deckId) {
               dispatch(fetchCardsInDeck(deckId));
@@ -432,15 +395,6 @@ const FlashCardListPage: React.FC = () => {
     }
 
     try {
-      // 태그 처리: 쉼표로 분리하고 # 자동 추가
-      const processedTags = editCardTags
-        .split(',')
-        .map(tag => {
-          const trimmed = tag.trim();
-          return trimmed && !trimmed.startsWith('#') ? `#${trimmed}` : trimmed;
-        })
-        .filter(tag => tag.length > 1); // 빈 태그나 #만 있는 것 제거
-      
       // 🎯 Redux로 실제 API 호출 시도 (우선순위)
       const result = await dispatch(updateCard({ 
         cardId: editingCardId, 
@@ -452,13 +406,55 @@ const FlashCardListPage: React.FC = () => {
       
       if (result.meta.requestStatus === 'fulfilled') {
         console.log('✅ Redux API 호출 성공');
+
+        // 🏷️ 태그 처리: 기존 태그와 새로운 태그 비교하여 추가/삭제
+        const currentCard = flashCards.find(c => c.id === editingCardId);
+        const existingTags = currentCard?.tags?.map(tag => tag.startsWith('#') ? tag.slice(1) : tag) || [];
         
-        // 성공 시 태그 업데이트
-        setCustomCardTags(prev => ({
-          ...prev,
-          [editingCardId]: processedTags
-        }));
+        // 새로운 태그 목록 처리
+        const newTagNames = editCardTags.trim() 
+          ? editCardTags
+              .split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag.length > 0)
+              .map(tag => tag.startsWith('#') ? tag.slice(1) : tag) // # 제거
+              .filter(tag => tag.length > 0) // 빈 태그 제거
+          : [];
+
+        console.log('🏷️ 태그 처리:', { existingTags, newTagNames });
+
+        // 삭제할 태그들 (기존에 있었지만 새로운 목록에는 없는 태그들)
+        const tagsToRemove = existingTags.filter(tag => !newTagNames.includes(tag));
         
+        // 추가할 태그들 (새로운 목록에는 있지만 기존에 없는 태그들)
+        const tagsToAdd = newTagNames.filter(tag => !existingTags.includes(tag));
+
+        console.log('🏷️ 삭제할 태그:', tagsToRemove);
+        console.log('🏷️ 추가할 태그:', tagsToAdd);
+
+        // 🗑️ 태그 삭제 (순차적으로 하나씩)
+        for (const tagToRemove of tagsToRemove) {
+          try {
+            // cardService를 사용하여 Mock/Real API 간 일관성 보장
+            await cardService.removeCardTag(editingCardId, tagToRemove);
+            console.log(`✅ 태그 삭제 성공: ${tagToRemove}`);
+          } catch (error) {
+            console.error(`❌ 태그 삭제 실패 (${tagToRemove}):`, error);
+          }
+        }
+
+        // ➕ 태그 추가
+        if (tagsToAdd.length > 0) {
+          try {
+            await dispatch(addCardTags({
+              cardId: editingCardId,
+              tagNames: tagsToAdd
+            }));
+            console.log('✅ 태그 추가 성공:', tagsToAdd);
+          } catch (error) {
+            console.error('❌ 태그 추가 실패:', error);
+          }
+        }
 
         // 카드 목록 다시 로드
         if (deckId) {
@@ -573,8 +569,8 @@ const FlashCardListPage: React.FC = () => {
     }
   );
 
-  // 덱이 없는 경우 (기존 로직 유지)
-  if (!currentDeck) {
+  // 덱이 없는 경우
+  if (!selectedDeck || !deckId) {
     return (
       <StyledContainer maxWidth="md">
         <Box
@@ -604,7 +600,7 @@ const FlashCardListPage: React.FC = () => {
       {/* 헤더 */}
       <HeaderBox>
         <Typography variant="h5" fontWeight="bold">
-          {currentDeck.title}
+          {selectedDeck?.deckName || '덱 이름 없음'}
         </Typography>
       </HeaderBox>
 
@@ -685,7 +681,7 @@ const FlashCardListPage: React.FC = () => {
           startIcon={<FilterListIcon />}
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
-          태그 필터 ({filters.selectedTags.length})
+          태그 필터
         </Button>
         <Button
           startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
