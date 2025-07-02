@@ -5,7 +5,7 @@ import { setFcmToken, setPermissionStatus } from '@/store/slices/notificationSli
 import type { AppDispatch } from '@/store/store';
 import { showNotification } from './notificationUtils';
 
-// Function to request notification permission and get token
+
 export const requestPermissionAndGetToken = async (dispatch: AppDispatch) => {
   try {
     const messaging = getMessaging(app);
@@ -14,11 +14,11 @@ export const requestPermissionAndGetToken = async (dispatch: AppDispatch) => {
 
     if (permission === 'granted') {
       console.log('Notification permission granted.');
-      // The service worker is now automatically registered by vite-plugin-pwa
-      const swRegistration = await navigator.serviceWorker.ready;
+
+      // const swRegistration = await navigator.serviceWorker.ready;
       const currentToken = await getToken(messaging, {
         vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-        serviceWorkerRegistration: swRegistration,
+        // serviceWorkerRegistration: swRegistration,
       });
 
       if (currentToken) {
@@ -43,10 +43,10 @@ export const requestPermissionAndGetToken = async (dispatch: AppDispatch) => {
   }
 };
 
-// Function to set up foreground message handling
+
 export const onForegroundMessage = () => {
   const messaging = getMessaging(app);
-  // onMessage returns an unsubscribe function
+
   return onMessage(messaging, (payload) => {
     console.log('Message received in foreground. ', payload);
 
@@ -56,8 +56,9 @@ export const onForegroundMessage = () => {
       icon: payload.data?.icon || '/logo192.png',
       data: payload.data,
     };
+    
 
-    // Use the unified notification handler
+
     showNotification(notificationTitle, notificationOptions);
   });
 };

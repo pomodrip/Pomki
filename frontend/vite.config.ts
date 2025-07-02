@@ -13,10 +13,12 @@ export default defineConfig(({ mode }) => {
       svgr(),
       react(),
       VitePWA({
-        strategies: 'injectManifest',
-        srcDir: 'public',
-        filename: 'firebase-messaging-sw.js',
         registerType: 'autoUpdate',
+        strategies: 'generateSW',
+        injectRegister: 'auto',
+        devOptions: {
+          enabled: true,
+        },
         workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
