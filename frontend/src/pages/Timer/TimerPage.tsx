@@ -465,15 +465,45 @@ interface TimerSettings {
   targetSessions?: number;
 }
 
-// React-Quill 에디터 설정
+// Quill 이미지 업로드 커스텀 핸들러 (주석처리)
+/*
+const imageHandler = function (this: any) {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        const imageUrl = data.url || data.path || data.imageUrl; // 서버 반환값에 따라 조정
+        if (imageUrl) {
+          const quill = this.quill;
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, 'image', imageUrl);
+        }
+      } catch (err) {
+        alert('이미지 업로드에 실패했습니다.');
+      }
+    }
+  };
+};
+*/
+
 const editorModules = {
   toolbar: [
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    // ['link', 'image'],
-    // ['clean']
-    ['image']
+    ['image'],
   ],
 };
 
