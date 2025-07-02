@@ -535,8 +535,9 @@ const NoteListPage: React.FC = () => {
                   startIcon={generatingQuizId === note.noteId ? <CircularProgress size={20} color="inherit" /> : <QuizIcon />}
                   onClick={(e) => handleGenerateFlashcards(note, e)}
                   disabled={generatingQuizId === note.noteId}
+                  title="AI가 노트를 분석해 카드 후보를 제안합니다"
                 >
-                  {generatingQuizId === note.noteId ? '생성중...' : '퀴즈 생성'}
+                  {generatingQuizId === note.noteId ? '생성중...' : '카드 생성'}
                 </Button>
               </ActionBox>
             </NoteCard>
