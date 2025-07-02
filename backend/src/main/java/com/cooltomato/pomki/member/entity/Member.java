@@ -29,7 +29,7 @@ import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
-import com.cooltomato.pomki.tag.entity.Tag;
+// import com.cooltomato.pomki.tag.entity.Tag;
 import com.cooltomato.pomki.trash.entity.Trash;
 
 @Entity
@@ -89,9 +89,9 @@ public class Member {
 
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    // @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @Builder.Default
+    // private List<Tag> tags = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

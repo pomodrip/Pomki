@@ -1,45 +1,28 @@
 package com.cooltomato.pomki.tag.entity;
 
-import jakarta.persistence.CascadeType;
+import lombok.*;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import jakarta.persistence.OneToMany;
-import java.util.List;
-import java.util.ArrayList;
-import com.cooltomato.pomki.member.entity.Member;
-import com.cooltomato.pomki.card.entity.Card;
+
+import java.io.Serializable;
 
 @Entity
 @Table(name = "tag")
-@Builder
+@IdClass(TagId.class)
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Tag {
+@Builder
+public class Tag implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long tagId;
-
-    // Member와의 비식별 관계 (ManyToOne)
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member member;
-
-    @ManyToOne
-    @JoinColumn(name = "card_id")
-    private Card card;
-
+    @Column(name = "tag_name", nullable = false, length = 50)
     private String tagName;
 
+    @Id
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 }

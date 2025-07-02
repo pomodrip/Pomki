@@ -1,16 +1,20 @@
 package com.cooltomato.pomki.tag.repository;
 
-import com.cooltomato.pomki.tag.entity.Tag;
-
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+
+import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.tag.entity.TagId;
+
 @Repository
-public interface TagRepository extends JpaRepository<Tag, Long> {
+public interface TagRepository extends JpaRepository<Tag, TagId> {
 
-    List<Tag> findAllByMember_MemberId(Long memberId);
+  List<Tag> findByMemberId(Long memberId);
 
-    List<Tag> findAllByMember_MemberIdAndTagName(Long memberId, String tagName);
-} 
+  Optional<Tag> findByMemberIdAndTagName(Long memberId, String tagName);
+    
+}
