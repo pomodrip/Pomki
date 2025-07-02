@@ -6,6 +6,9 @@ import { hideToast, updateToastProgress } from '../../store/slices/toastSlice';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { ToastItem } from '../../store/slices/toastSlice';
 
+const HEADER_HEIGHT_DESKTOP = 72; // 실제 헤더 높이에 맞게 조정
+const BOTTOM_BAR_HEIGHT_MOBILE = 72; // 실제 바텀바 높이에 맞게 조정
+
 // maxWidth="md" 기준 중앙 정렬을 위한 Wrapper
 const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
   position: 'fixed',
@@ -21,11 +24,11 @@ const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) =
   // 위치 설정
   ...(isMobile
     ? {
-        bottom: 0,
+        bottom: BOTTOM_BAR_HEIGHT_MOBILE,
         top: 'auto',
       }
     : {
-        top: 0,
+        top: HEADER_HEIGHT_DESKTOP,
         bottom: 'auto',
       }),
 }));
