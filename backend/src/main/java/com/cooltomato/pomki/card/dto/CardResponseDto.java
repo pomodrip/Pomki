@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.cooltomato.pomki.card.entity.Card;
 
 @Builder
 @Getter
@@ -25,4 +24,5 @@ public class CardResponseDto {
     private LocalDateTime updatedAt;
     private Boolean isDeleted;
     private List<String> tags;
+    private boolean isBookmarked;
 }

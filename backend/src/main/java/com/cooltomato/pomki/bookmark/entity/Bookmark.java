@@ -13,11 +13,18 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
-@Table(name = "bookmark_note")
+@Table(name = "NOTE_BOOKMARK")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(BookmarkId.class)
 public class Bookmark {
     @Id
@@ -30,7 +37,8 @@ public class Bookmark {
     @JoinColumn(name = "note_id")
     private Note note;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
 } 

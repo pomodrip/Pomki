@@ -4,6 +4,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.bookmark.entity.CardBookmark;
+import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
+import com.cooltomato.pomki.bookmark.repository.CardBookmarkRepository;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
@@ -36,6 +40,7 @@ public class CardService {
     private final CardTagRepository cardTagRepository;
     private final NoteTagRepository noteTagRepository;
     private final TagRepository tagRepository;
+    private final CardBookmarkRepository cardBookmarkRepository;
     
     @Transactional
     public CardResponseDto createOneCardService(PrincipalMember principal, String deckId, CardRequestDto request) {
@@ -77,9 +82,10 @@ public class CardService {
 
     // 카드 한 장 조회
     @Transactional(readOnly = true)
-    public CardResponseDto readOnecardService(Long cardId) {
+    public CardResponseDto readOnecardService(PrincipalMember principal, Long cardId) {
         log.info("debug >>> CardService readAllCardsService");
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId);
+        boolean isBookmarked = cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(principal.getMemberId(), cardId);
         if (aCardOp.isPresent()) {
             log.info("debug >>> CardService readAcardService 해당 카드 존재");
             Card aCard = aCardOp.get();
@@ -95,6 +101,7 @@ public class CardService {
                                 .tags(aCard.getCardTags().stream()
                                         .map(CardTag::getTagName)
                                         .collect(Collectors.toList()))
+                                .isBookmarked(isBookmarked)
                                 .build() ;
             }
             
@@ -110,6 +117,7 @@ public class CardService {
         log.info("debug >>> CardService updateAcardService 카드 한 장 내용 수정");
         log.info("debug >>> cardId: " + cardId);
         Optional<Card> aCardOp = cardRepository.findByCardIdAndIsDeletedFalse(cardId) ;
+        boolean isBookmarked = cardBookmarkRepository.existsByCardCardId(cardId);
         if (aCardOp.isPresent()) {
             log.info("debug >>> CardService updateAcardService 해당 카드 존재, 수정 시작");
             aCardOp.get().setContent(request.getContent());
@@ -130,6 +138,7 @@ public class CardService {
                                     .tags(aCardOp.get().getCardTags().stream()
                                         .map(CardTag::getTagName)
                                         .collect(Collectors.toList()))
+                                    .isBookmarked(isBookmarked)
                                     .build() ;
             
         }
@@ -158,6 +167,9 @@ public class CardService {
                     deck.setUpdatedAt(LocalDateTime.now());
                     deckRepository.save(deck);
             });
+
+            cardBookmarkRepository.deleteByCardCardIdAndMemberMemberId(cardId, principal.getMemberId());
+            log.info("debug >>> CardService deleteOneCardService 카드 북마크 삭제 성공");
 
             // 카드 태그 삭제 전에 태그 이름들을 먼저 저장
             List<CardTag> cardTags = cardTagRepository.findByCard_CardId(aCardOp.get().getCardId());
@@ -206,6 +218,8 @@ public class CardService {
     public List<CardResponseDto> searchCardsByKeywordService(PrincipalMember principal, String keyword) {
         List<Card> cards = cardRepository.findByDeck_MemberIdAndIsDeletedFalseAndContentContainingIgnoreCaseOrDeck_MemberIdAndIsDeletedFalseAndAnswerContainingIgnoreCase(
             principal.getMemberId(), keyword, principal.getMemberId(), keyword);
+
+        // List<CardBookmark> bookmarkedCards = cardBookmarkRepository
         
         if (cards.isEmpty()) {
             log.info("debug >>> 검색어에 해당하는 검색 결과가 없습니다.");
@@ -220,6 +234,7 @@ public class CardService {
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .isDeleted(card.getIsDeleted())
+                .isBookmarked(cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(principal.getMemberId(), card.getCardId()))
                 .build()
         ).toList();
     }

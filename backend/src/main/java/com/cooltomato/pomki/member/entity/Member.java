@@ -25,9 +25,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
 // import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.trash.entity.Trash;
 
 @Entity
 @Table(name = "MEMBER", uniqueConstraints = {
@@ -52,7 +55,7 @@ public class Member {
     @Column(nullable = false)
     private String currentEmail;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String memberNickname;
 
     @Column(name = "social_provider_user_id")
@@ -89,6 +92,18 @@ public class Member {
     // @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     // @Builder.Default
     // private List<Tag> tags = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Trash> trashItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Bookmark> bookmarks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CardBookmark> cardBookmarks = new ArrayList<>();
 
     @Builder
     public Member(String memberEmail, String currentEmail, String memberNickname,

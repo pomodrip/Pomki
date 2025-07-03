@@ -1,79 +1,89 @@
 package com.cooltomato.pomki.card.entity;
 
+import com.cooltomato.pomki.member.entity.Member;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "CARD_STAT")
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class CardStat {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "stat_id")
-    private Long statId;
+    @Column(name = "card_stat_id")
+    private Long cardStatId;
 
-    @Column(name = "card_id", nullable = false)
-    private Long cardId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "card_id", nullable = false)
+    private Card card;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
-    @CreationTimestamp
-    @Column(name = "review_timestamp", nullable = false)
-    private LocalDateTime reviewTimestamp;
+    // SM-2 알고리즘 핵심 필드들
+    @Column(name = "repetitions", nullable = false)
+    @Builder.Default
+    private Integer repetitions = 0; // 연속 정답 횟수
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "user_rating", nullable = false)
-    private UserRating userRating;
+    @Column(name = "ease_factor", nullable = false, precision = 4, scale = 2)
+    @Builder.Default
+    private BigDecimal easeFactor = new BigDecimal("2.50"); // 용이성 지수
 
-    @Column(name = "previous_interval")
-    private Integer previousInterval; // 이전 복습으로부터 경과된 시간(일)
+    @Column(name = "interval_days", nullable = false)
+    @Builder.Default
+    private Integer intervalDays = 1; // 다음 복습까지 간격(일)
 
-    @Column(name = "new_interval")
-    private Integer newInterval; // 이번 복습 후 계산된 새로운 복습 간격(일)
+    // 스케줄링 관련
+    @Column(name = "due_at", nullable = false)
+    private LocalDateTime dueAt; // 다음 복습 예정일
 
-    @Column(name = "stability")
-    private Float stability; // 기억이 얼마나 오래 지속되는지를 나타내는 지표
+    @Column(name = "last_reviewed_at")
+    private LocalDateTime lastReviewedAt; // 마지막 복습 시점
 
-    @Column(name = "difficulty")
-    private Float difficulty; // 카드의 고유한 내재적 어려움
+    // 품질 추적
+    @Column(name = "last_quality")
+    private Integer lastQuality; // 마지막 응답 품질 (0-5)
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false)
-    private CardState state;
+    @Column(name = "total_reviews", nullable = false)
+    @Builder.Default
+    private Integer totalReviews = 0; // 총 복습 횟수
 
-    @Column(name = "next_review_at")
-    private LocalDateTime nextReviewAt;
+    // 메타데이터
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public enum UserRating {
-        AGAIN, HARD, GOOD, EASY
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    // 비즈니스 메서드들
+    public void updateAfterReview(Integer quality, Integer newRepetitions, 
+                                  BigDecimal newEaseFactor, Integer newIntervalDays) {
+        this.repetitions = newRepetitions;
+        this.easeFactor = newEaseFactor;
+        this.intervalDays = newIntervalDays;
+        this.dueAt = LocalDateTime.now().plusDays(newIntervalDays);
+        this.lastReviewedAt = LocalDateTime.now();
+        this.lastQuality = quality;
+        this.totalReviews = this.totalReviews + 1;
     }
 
-    public enum CardState {
-        NEW, LEARNING, REVIEW
-    }
-
-    @Builder
-    public CardStat(Long cardId, Long memberId, UserRating userRating, Integer previousInterval,
-                   Integer newInterval, Float stability, Float difficulty, CardState state,
-                   LocalDateTime nextReviewAt) {
-        this.cardId = cardId;
-        this.memberId = memberId;
-        this.userRating = userRating;
-        this.previousInterval = previousInterval;
-        this.newInterval = newInterval;
-        this.stability = stability;
-        this.difficulty = difficulty;
-        this.state = state != null ? state : CardState.NEW;
-        this.nextReviewAt = nextReviewAt;
+    public boolean isDue() {
+        return LocalDateTime.now().isAfter(this.dueAt) || LocalDateTime.now().isEqual(this.dueAt);
     }
 } 
