@@ -189,7 +189,7 @@ const FlashcardPracticePage: React.FC = () => {
       // 새로운 난이도 선택
       setSelectedDifficulty(difficulty);
       
-      // 1초 후 자동으로 다음 카드로 넘어가기
+      // 자동으로 다음 카드로 넘어가기
       setTimeout(() => {
         if (currentCardIndex < flashcards.length - 1) {
           // 다음 카드로 이동
@@ -197,10 +197,11 @@ const FlashcardPracticePage: React.FC = () => {
           setShowAnswer(false);
           setSelectedDifficulty(null);
         } else {
-          // 마지막 카드인 경우 학습 완료 다이얼로그 표시
+          // 마지막 카드인 경우 학습 완료 다이얼로그 표시 (계속 학습 vs 학습완료 선택)
           setShowCompletionDialog(true);
+          setSelectedDifficulty(null); // 다이얼로그 표시 시 난이도 선택 해제
         }
-      }, 1000); // 1초 후 자동 이동
+      }, 1500); // 마지막 카드는 1.5초 후 다이얼로그 표시 (조금 더 여유롭게)
     }
   };
 
@@ -257,14 +258,22 @@ const FlashcardPracticePage: React.FC = () => {
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
     
+    // 처음부터 다시 학습 시작
+    setCurrentCardIndex(0);
+    setShowAnswer(false);
+    setSelectedDifficulty(null);
+    setCurrentQuestionFeedback('');
+    setGlobalFeedback('');
+    setIsFeedbackOpen(false);
+    
     // 계속 학습 토스트 알림
     dispatch(showToast({
-      message: '학습을 계속 진행합니다!',
+      message: '처음부터 다시 학습을 시작합니다!',
       severity: 'info',
       duration: 2000
     }));
     
-    console.log('학습 계속 진행');
+    console.log('학습 처음부터 다시 시작');
   };
 
   // 🎯 플래시카드 네비게이션 키보드 단축키
