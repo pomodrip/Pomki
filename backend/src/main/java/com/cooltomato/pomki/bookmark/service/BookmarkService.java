@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,9 +32,12 @@ public class BookmarkService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new NotFoundException("Note not found"));
+        Optional<Note> note = noteRepository.findByMember_MemberIdAndNoteIdAndIsDeletedIsFalse(memberId, noteId) ;
 
+        if (note.isEmpty()) {
+            throw new NotFoundException("북마크를 지정할 노트를 찾을 수 없습니다.");
+        }
+                
         // 이미 북마크가 존재하는지 확인
         if (bookmarkRepository.existsByMemberMemberIdAndNoteNoteId(memberId, noteId)) {
             throw new AlreadyBookmarkedException("이미 북마크된 노트입니다.");
@@ -41,7 +45,7 @@ public class BookmarkService {
 
         Bookmark bookmark = Bookmark.builder()
                 .member(member)
-                .note(note)
+                .note(note.get())
                 .build();
 
         bookmarkRepository.save(bookmark);

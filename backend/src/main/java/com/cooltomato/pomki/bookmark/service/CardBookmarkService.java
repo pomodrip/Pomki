@@ -30,8 +30,8 @@ public class CardBookmarkService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
         
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new NotFoundException("Card not found"));
+        Card card = cardRepository.findByCardIdAndIsDeletedIsFalse(cardId)
+            .orElseThrow(() -> new NotFoundException("북마크를 지정할 카드를 찾을 수 없습니다."));
 
         // 이미 북마크가 존재하는지 확인
         if (cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(memberId, cardId)) {

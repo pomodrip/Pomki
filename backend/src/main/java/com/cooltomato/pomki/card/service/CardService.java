@@ -40,7 +40,6 @@ public class CardService {
     private final CardTagRepository cardTagRepository;
     private final NoteTagRepository noteTagRepository;
     private final TagRepository tagRepository;
-    private final BookmarkRepository bookmarkRepository;
     private final CardBookmarkRepository cardBookmarkRepository;
     
     @Transactional
@@ -171,7 +170,6 @@ public class CardService {
 
             cardBookmarkRepository.deleteByCardCardIdAndMemberMemberId(cardId, principal.getMemberId());
             log.info("debug >>> CardService deleteOneCardService 카드 북마크 삭제 성공");
-            
 
             // 카드 태그 삭제 전에 태그 이름들을 먼저 저장
             List<CardTag> cardTags = cardTagRepository.findByCard_CardId(aCardOp.get().getCardId());

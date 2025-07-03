@@ -61,6 +61,7 @@ public class NoteService {
         note.setAiEnhanced(noteRequestDto.getAiEnhanced());
         note.setCreatedAt(LocalDateTime.now());
         note.setIsDeleted(false);
+        note.setIsDeleted(false);
 
         NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
         noteResponseDto.setIsBookmarked(false);
