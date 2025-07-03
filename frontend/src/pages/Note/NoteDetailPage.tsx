@@ -8,6 +8,7 @@ import { fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
 import Alert from '../../components/ui/Alert';
 import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
+import ListIcon from '@mui/icons-material/List';
 
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
@@ -68,13 +69,22 @@ const NoteDetailPage: React.FC = () => {
           노트 상세
         </Typography>
         {noteId && (
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={() => navigate(`/note/${noteId}/edit`)}
-          >
-            편집
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<ListIcon />}
+              onClick={() => navigate('/note')}
+            >
+              목록
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={() => navigate(`/note/${noteId}/edit`)}
+            >
+              편집
+            </Button>
+          </Box>
         )}
       </HeaderBox>
 
@@ -107,14 +117,29 @@ const NoteDetailPage: React.FC = () => {
             </Typography>
 
             {currentNote.noteContent ? (
-              <TextField
-                label="내용"
-                fullWidth
-                multiline
-                rows={12}
-                value={currentNote.noteContent}
-                InputProps={{ readOnly: true }}
-                variant="outlined"
+              <Box
+                sx={{
+                  border: theme => `1px solid ${theme.palette.divider}`,
+                  borderRadius: '8px',
+                  padding: theme => theme.spacing(5),
+                  minHeight: '150px',
+                  maxHeight: '500px',
+                  overflowY: 'auto',
+                  backgroundColor: '#fafafa',
+                  fontSize: '1rem',
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-line',
+                  wordBreak: 'break-all',
+                  '& img': { maxWidth: '100%' },
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '4px',
+                  },
+                }}
+                dangerouslySetInnerHTML={{ __html: currentNote.noteContent }}
               />
             ) : (
               <Typography variant="body1" color="text.secondary">

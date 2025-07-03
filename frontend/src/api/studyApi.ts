@@ -130,3 +130,22 @@ export const getReviewCards = async (): Promise<Card[]> => {
   console.warn('복습 카드 조회 기능은 백엔드에서 아직 구현되지 않았습니다.');
   return [];
 };
+
+// 대시보드 복습 일정 관리용 API
+// 오늘 학습해야할 카드 개수 조회
+export const getTodayCardsCount = async (): Promise<number> => {
+  const response = await api.get<any[]>('/api/study-cycle/today-cards');
+  return response.data.length;
+};
+
+// 3일 이내 학습해야할 카드 개수 조회
+export const getWithin3DaysCardsCount = async (): Promise<number> => {
+  const response = await api.get<any>('/api/study-cycle/stats');
+  return response.data.within3DaysCount ?? 0;
+};
+
+// 복습 미완료(지연된) 카드 개수 조회
+export const getOverdueCardsCount = async (): Promise<number> => {
+  const response = await api.get<any[]>('/api/study-cycle/overdue-cards');
+  return response.data.length;
+};
