@@ -259,11 +259,12 @@ const DashboardPage: React.FC = () => {
                 }} />
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    오늘 복습
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                    {/* 오늘 복습 */}
                     오늘 학습해야할 카드
                   </Typography>
+                  {/* <Typography variant="caption" color="text.secondary">
+                    오늘 학습해야할 카드
+                  </Typography> */}
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
@@ -290,11 +291,12 @@ const DashboardPage: React.FC = () => {
                 }} />
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    3일 이내 복습
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                    {/* 3일 이내 복습 */}
                     3일내 학습해야할 카드
                   </Typography>
+                  {/* <Typography variant="caption" color="text.secondary">
+                    3일내 학습해야할 카드
+                  </Typography> */}
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
@@ -321,11 +323,11 @@ const DashboardPage: React.FC = () => {
                 }} />
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    복습 미완료
+                    복습 미완료 or 하루이상 지난 카드
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  {/* <Typography variant="caption" color="text.secondary">
                     하루이상 지난 카드
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#f44336' }}>
