@@ -1,6 +1,10 @@
 package com.cooltomato.pomki.deck.service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.bookmark.entity.CardBookmark;
+import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
+import com.cooltomato.pomki.bookmark.repository.CardBookmarkRepository;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.deck.dto.DeckRequestDto;
@@ -38,6 +42,8 @@ public class DeckService {
         private final CardTagRepository cardTagRepository;
         private final TagRepository tagRepository;
         private final NoteTagRepository noteTagRepository;
+        private final BookmarkRepository bookmarkRepository;
+        private final CardBookmarkRepository cardBookmarkRepository;
     
         @Transactional
         public DeckResponseDto createOneDeckService(Long memberId, DeckRequestDto request) {
@@ -116,6 +122,7 @@ public class DeckService {
                 List<String> tags = cardTags.stream()
                         .map(CardTag::getTagName)
                         .collect(Collectors.toList());
+                boolean isBookmarked = cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(principal.getMemberId(), card.getCardId());
 
                 CardResponseDto dto = CardResponseDto.builder()
                         .cardId(card.getCardId())
@@ -126,6 +133,7 @@ public class DeckService {
                         .createdAt(card.getCreatedAt())
                         .updatedAt(card.getUpdatedAt())
                         .tags(tags)
+                        .isBookmarked(isBookmarked)
                         .build();
                 result.add(dto);
             }
@@ -219,6 +227,7 @@ public class DeckService {
 
             List<CardResponseDto> result = new ArrayList<>();
             for (Card card : filteredCards) {
+                boolean isBookmarked = cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(principal.getMemberId(), card.getCardId());
                 List<CardTag> cardTags = cardTagRepository.findByCard_CardId(card.getCardId());
                 List<String> tags = cardTags.stream()
                         .map(CardTag::getTagName)
@@ -233,6 +242,7 @@ public class DeckService {
                         .deckId(card.getDeck().getDeckId())
                         .deckName(card.getDeck().getDeckName())
                         .tags(tags)
+                        .isBookmarked(isBookmarked)
                         .build();
                 result.add(dto);
             }
