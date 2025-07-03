@@ -22,6 +22,10 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
+import { createNote } from '../../api/noteApi';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import { useNavigate } from 'react-router-dom';
 // import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
@@ -556,28 +560,25 @@ const TimerPage: React.FC = () => {
   // 자동저장을 위한 디바운싱 ref
   const autoSaveTimeoutRef = useRef<number | null>(null);
 
+  const navigate = useNavigate();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   // 저장 로직 함수
   const saveNotesLogic = useCallback(async () => {
     if (!notes.trim() && !taskName.trim()) {
       return;
     }
-
     try {
       const saveData = {
-        taskName,
-        notes,
-        sessionId: `session-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        autoSaveEnabled,
-        hasAIGenerated: hasGeneratedAI,
+        noteTitle: taskName || '집중노트',
+        noteContent: notes,
       };
-
-      console.log('저장될 데이터:', saveData);
-      // TODO: API 연동 - 노트 저장
+      await createNote(saveData);
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('노트 저장 실패:', error);
     }
-  }, [notes, taskName, autoSaveEnabled, hasGeneratedAI]);
+  }, [notes, taskName]);
 
   // 디바운싱된 자동저장 함수
   const debouncedAutoSave = useCallback((content: string) => {
@@ -1686,6 +1687,27 @@ const TimerPage: React.FC = () => {
           </PresetsSection>
         </SettingsContainer>
       </Modal>
+
+      {/* 노트 저장 성공 스낵바 */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <MuiAlert
+          onClose={() => setSnackbarOpen(false)}
+          severity="success"
+          sx={{ width: '100%' }}
+          action={
+            <Button color="inherit" size="small" onClick={() => { setSnackbarOpen(false); navigate('/note'); }}>
+              노트 목록으로
+            </Button>
+          }
+        >
+          노트가 성공적으로 저장되었습니다.
+        </MuiAlert>
+      </Snackbar>
     </PageContainer>
   );
 };

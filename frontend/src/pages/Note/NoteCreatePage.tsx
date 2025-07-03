@@ -18,10 +18,12 @@ import { useNotifications, useUI } from '../../hooks/useUI';
 import { useFormSaveKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import type { NoteUpdateRequest } from '../../types/note';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(4),
+  paddingBottom: theme.spacing(2)
 }));
 
 const HeaderBox = styled(Box)(({ theme }) => ({
@@ -35,6 +37,51 @@ const FormBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(3),
+}));
+
+const EditorContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  marginBottom: theme.spacing(2),
+  '.quill': {
+    display: 'flex',
+    flexDirection: 'column',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    border: '1px solid rgba(0, 0, 0, 0.23)',
+    '&:hover': {
+      border: '1px solid rgba(0, 0, 0, 0.87)',
+    },
+    '&:focus-within': {
+      border: '2px solid #1976d2',
+      margin: '-1px',
+    },
+    '.ql-toolbar': {
+      border: 'none',
+      borderBottom: '1px solid rgba(0, 0, 0, 0.23)',
+    },
+    '.ql-container': {
+      overflow: 'hidden',
+      border: 'none',
+      '.ql-editor': {
+        overflowY: 'auto',
+        minHeight: '300px',
+        maxHeight: '500px',
+        padding: theme.spacing(5),
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderRadius: '4px',
+        },
+        '&.ql-blank::before': {
+          fontStyle: 'normal',
+          color: 'rgba(0, 0, 0, 0.38)'
+        }
+      }
+    }
+  }
 }));
 
 const NoteCreatePage: React.FC = () => {
@@ -95,6 +142,7 @@ const NoteCreatePage: React.FC = () => {
         };
         await dispatch(updateNoteAsync({ noteId, data: updateData })).unwrap();
         success('노트 수정 완료', '노트가 성공적으로 수정되었습니다.');
+        navigate(`/note/${noteId}`);
       } else {
         await dispatch(
           createNoteAsync({
@@ -103,8 +151,8 @@ const NoteCreatePage: React.FC = () => {
           }),
         ).unwrap();
         success('노트 저장 완료', '노트가 성공적으로 저장되었습니다.');
+        navigate('/note');
       }
-      navigate('/note');
     } catch (e: unknown) {
       const caughtError = e as { message?: string };
       error(
@@ -215,20 +263,37 @@ const NoteCreatePage: React.FC = () => {
           onChange={(e) => setNoteTitle(e.target.value)}
           variant="outlined"
           placeholder="노트 제목을 입력하세요"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+            }
+          }}
         />
 
         {/* 내용 입력 */}
-        <TextField
-          inputRef={contentInputRef}
-          fullWidth
-          label="내용"
-          value={noteContent}
-          onChange={(e) => setNoteContent(e.target.value)}
-          variant="outlined"
-          multiline
-          rows={12}
-          placeholder="노트 내용을 입력하세요"
-        />
+        <EditorContainer>
+          <Box sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>내용</Box>
+          <ReactQuill
+            value={noteContent}
+            onChange={setNoteContent}
+            placeholder="노트 내용을 입력하세요"
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['blockquote', 'link'],
+                ['clean']
+              ],
+            }}
+            formats={[
+              'header',
+              'bold', 'italic', 'underline', 'strike',
+              'list', 'bullet',
+              'blockquote', 'link'
+            ]}
+          />
+        </EditorContainer>
       </FormBox>
     </StyledContainer>
   );
