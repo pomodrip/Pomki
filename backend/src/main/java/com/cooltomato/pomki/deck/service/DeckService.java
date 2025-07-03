@@ -175,6 +175,7 @@ public class DeckService {
             if (!cards.isEmpty()) {
                 cards.forEach(card -> card.setIsDeleted(true));
                 cardRepository.saveAll(cards);
+                cardBookmarkRepository.deleteAllByCardCardIdIn(cards.stream().map(Card::getCardId).collect(Collectors.toList()));
                 log.info("debug >>> 덱 안 카드 삭제 성공");
             }
 
@@ -203,6 +204,9 @@ public class DeckService {
             }
 
             log.info("debug >>> 덱 안 카드 태그 삭제 성공");
+
+            // 북마크에서 삭제된 카드들에 대한 데이터들 삭제
+
         }
 
         // 덱에서 검색어를 입력하면 덱 안에 있는 검색어가 있는 카드들이 표시됨

@@ -16,4 +16,6 @@ public interface CardBookmarkRepository extends JpaRepository<CardBookmark, Card
     boolean existsByMemberMemberIdAndCardCardId(Long memberId, Long cardId);
     void deleteByMemberMemberIdAndCardCardId(Long memberId, Long cardId);
     boolean existsByCardCardId(Long cardId);
+    void deleteAllByCardCardIdIn(List<Long> cardIds);
+    void deleteByCardCardIdAndMemberMemberId(Long cardId, Long memberId);
 } 

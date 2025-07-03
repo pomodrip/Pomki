@@ -78,7 +78,7 @@ public class NoteService {
             List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(note.getNoteId(), member.getMemberId());
             NoteListResponseDto noteListResponseDto = NoteListResponseDto.from(note);
             noteListResponseDto.setTags(tags);
-            noteListResponseDto.setIsBookmarked(bookmarkedNotes.contains(note.getNoteId()));
+            noteListResponseDto.setIsBookmarked(bookmarkedNotes.stream().anyMatch(bookmark -> bookmark.getNote().getNoteId().equals(note.getNoteId())));
             noteListResponseDtos.add(noteListResponseDto);
         }
         return noteListResponseDtos;
@@ -108,6 +108,8 @@ public class NoteService {
         note.setIsDeleted(true);
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
+
+        bookmarkRepository.deleteByMemberMemberIdAndNoteNoteId(memberInfoDto.getMemberId(), id);
 
         // 카드 태그 삭제 전에 태그 이름들을 먼저 저장
         List<NoteTag> noteTags = noteTagRepository.findByNote_NoteId(id);
