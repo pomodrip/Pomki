@@ -77,5 +77,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  envPrefix: ['VITE_', 'CI'],
 });
 
