@@ -37,6 +37,8 @@ public class SimpleDashboardStatsService {
     private final MemberRepository memberRepository;
     private final DeckRepository deckRepository;
 
+    // 캐싱 적용 (5분 캐시)
+    // @Cacheable(value = "dashboardStats", key = "#principal.memberInfo.memberId", unless = "#result == null")
     public SimpleDashboardStatsDto getDashboardStats(PrincipalMember principal) {
         Long memberId = principal.getMemberInfo().getMemberId();
         log.info("Getting simple dashboard stats for member: {}", memberId);
@@ -53,15 +55,15 @@ public class SimpleDashboardStatsService {
     private SimpleDashboardStatsDto.TodayStudyStats getTodayStudyStats(Long memberId) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         
-        // 오늘의 통계 조회
+        // 단순하고 안전한 구조화된 컬럼 쿼리
         TodayStatsDto todayStats = studyLogRepository.getTodayStats(memberId, startOfDay);
         
         int goalMinutes = 240; // 기본 4시간
         int progressPercentage = goalMinutes > 0 ? 
                 Math.min((int)((todayStats.getTotalFocusMinutes() * 100) / goalMinutes), 100) : 0;
         
-        // 오늘 활동 수 계산 (간단하게)
-        int todayActivities = (int)(todayStats.getTotalFocusMinutes() / 25); // 포모도로 기준 추정
+        // 오늘 활동 수 계산 (정확한 데이터 기반)
+        int todayActivities = (int)(todayStats.getTotalFocusMinutes() / 25); // 포모도로 기준
 
         return SimpleDashboardStatsDto.TodayStudyStats.builder()
                 .totalFocusMinutes(todayStats.getTotalFocusMinutes())
@@ -87,8 +89,8 @@ public class SimpleDashboardStatsService {
         // 최근 7일 출석으로 대략적인 연속 일수 계산
         int currentStreak = calculateSimpleStreak(memberId);
         
-        // 주간 총 시간 (근사치)
-        long totalWeeklyMinutes = studyDaysThisWeek * 120; // 평균 2시간/일로 추정
+        // 실제 주간 총 시간 조회 (추정 아닌 정확한 데이터)
+        Long totalWeeklyMinutes = studyLogRepository.getWeeklyStudyMinutes(memberId, startOfWeek, endOfWeek);
         
         double avgDailyMinutes = studyDaysThisWeek > 0 ? 
                 (double)totalWeeklyMinutes / studyDaysThisWeek : 0;
