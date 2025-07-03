@@ -45,7 +45,7 @@ let theme = createTheme({
     h2: { fontSize: '1.5rem', fontWeight: 700 }, // 16. h2 (24px)
     h3: { fontSize: '1.25rem', fontWeight: 700 }, // 17. h3 (20px)
     body1: { fontSize: '1rem', fontWeight: 400, lineHeight: 1.5 }, // 18. body1 (16px)
-    body2: { fontSize: '0.875rem', fontWeight: 400, color: '#595959' }, // 19. body2 (14px)
+    body2: { fontSize: '0.875rem', fontWeight: 400, color: '#525252' }, // 19. body2 (14px)
     subtitle1: { fontSize: '0.875rem', fontWeight: 500 }, // 20. subtitle1 (14px)
     caption: { fontSize: '0.75rem', fontWeight: 400 }, // 21. caption (12px)
     button: {
