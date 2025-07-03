@@ -5,7 +5,6 @@ import com.cooltomato.pomki.note.entity.Note;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -25,6 +24,7 @@ public class NoteResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> tags;
+    private boolean isBookmarked;
 
     public static NoteResponseDto from(Note note) {
         return NoteResponseDto.builder()
@@ -40,5 +40,9 @@ public class NoteResponseDto {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public void setIsBookmarked(boolean isBookmarked) {
+        this.isBookmarked = isBookmarked;
     }
 } 

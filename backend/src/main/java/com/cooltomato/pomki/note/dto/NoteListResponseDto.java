@@ -18,6 +18,7 @@ public class NoteListResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> tags;
+    private boolean isBookmarked;
 
     public static NoteListResponseDto from(Note note) {
         return NoteListResponseDto.builder()
@@ -27,5 +28,9 @@ public class NoteListResponseDto {
                 .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .build();
+    }
+
+    public void setIsBookmarked(boolean isBookmarked) {
+        this.isBookmarked = isBookmarked;
     }
 } 

@@ -54,6 +54,8 @@ public class BookmarkService {
 
     public List<BookmarkDto> getBookmarks(Long memberId) {
         List<Bookmark> bookmarks = bookmarkRepository.findByMemberMemberId(memberId);
+
+        
         
         return bookmarks.stream()
                 .map(this::convertToDto)

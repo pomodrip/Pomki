@@ -55,7 +55,7 @@ public class Member {
     @Column(nullable = false)
     private String currentEmail;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String memberNickname;
 
     @Column(name = "social_provider_user_id")

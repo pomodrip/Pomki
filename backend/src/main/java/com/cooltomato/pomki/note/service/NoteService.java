@@ -1,6 +1,8 @@
 package com.cooltomato.pomki.note.service;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
 import com.cooltomato.pomki.cardtag.repository.CardTagRepository;
 import com.cooltomato.pomki.global.exception.MemberNotFoundException;
 import com.cooltomato.pomki.global.exception.NoteNotFoundException;
@@ -44,6 +46,7 @@ public class NoteService {
     private final NoteTagRepository noteTagRepository;
     private final TagRepository tagRepository;
     private final CardTagRepository cardTagRepository;
+    private final BookmarkRepository bookmarkRepository;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
@@ -59,6 +62,9 @@ public class NoteService {
         note.setCreatedAt(LocalDateTime.now());
         note.setIsDeleted(false);
 
+        NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
+        noteResponseDto.setIsBookmarked(false);
+
         Note savedNote = noteRepository.save(note);
         return NoteResponseDto.from(savedNote);
     }
@@ -67,10 +73,12 @@ public class NoteService {
         Member member = getMember(memberInfoDto.getMemberId());
         List<Note> notes = noteRepository.findAllByMemberAndIsDeletedIsFalse(member);
         List<NoteListResponseDto> noteListResponseDtos = new ArrayList<>();
+        List<Bookmark> bookmarkedNotes = bookmarkRepository.findByMemberMemberId(member.getMemberId());
         for(Note note : notes) {
             List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(note.getNoteId(), member.getMemberId());
             NoteListResponseDto noteListResponseDto = NoteListResponseDto.from(note);
             noteListResponseDto.setTags(tags);
+            noteListResponseDto.setIsBookmarked(bookmarkedNotes.contains(note.getNoteId()));
             noteListResponseDtos.add(noteListResponseDto);
         }
         return noteListResponseDtos;
@@ -82,6 +90,14 @@ public class NoteService {
         List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(id, member.getMemberId());
         NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
         noteResponseDto.setTags(tags);
+        
+        Optional<Bookmark> bookmarked = bookmarkRepository.findByMemberMemberIdAndNoteNoteId(member.getMemberId(), note.getNoteId());
+
+        if(bookmarked.isPresent()) {
+            noteResponseDto.setIsBookmarked(true);
+        } else {
+            noteResponseDto.setIsBookmarked(false);
+        }
         return noteResponseDto;
     }
 
