@@ -5,11 +5,11 @@ import {
   Button,
   Select,
   MenuItem,
-  CircularProgress as MuiCircularProgress,
   FormControl,
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import { CircularProgress as MuiCircularProgress } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';

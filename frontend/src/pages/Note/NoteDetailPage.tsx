@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, CircularProgress, Button, Container, TextField } from '@mui/material';
+import { Box, Typography, IconButton, Button, Container, TextField } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';

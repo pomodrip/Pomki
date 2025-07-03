@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Box, CircularProgress, Typography, Alert } from '@mui/material';
+import { Box, Typography, Alert } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import { AppDispatch } from '../../store/store';
 import { setOAuth2User, setAccessToken } from '../../store/slices/authSlice';
 import { getMyInfo } from '../../api/userApi';

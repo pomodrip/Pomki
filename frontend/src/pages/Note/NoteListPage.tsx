@@ -4,7 +4,6 @@ import {
   Container, 
   Box, 
   Fab, 
-  CircularProgress, 
   TextField,
   InputAdornment,
   IconButton,
@@ -13,6 +12,7 @@ import {
   Chip,
   Typography
 } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import { Text, Button, Modal } from '../../components/ui';
 
 import { 

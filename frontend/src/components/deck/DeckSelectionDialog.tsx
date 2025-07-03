@@ -10,9 +10,9 @@ import {
   ListItemText,
   TextField,
   Box,
-  Typography,
-  CircularProgress,
+  Typography
 } from '@mui/material';
+import CircularProgress from '../ui/CircularProgress';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import {
   fetchDecks,

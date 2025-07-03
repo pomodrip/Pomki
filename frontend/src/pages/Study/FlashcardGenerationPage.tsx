@@ -13,7 +13,6 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
-  CircularProgress,
 } from '@mui/material';
 import {
   ArrowForward,

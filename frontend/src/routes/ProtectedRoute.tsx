@@ -3,7 +3,8 @@ import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { RootState } from '../store/store';
 import { show401ErrorSnackbar } from '../store/slices/snackbarSlice';
 import { useEffect } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import CircularProgress from '../components/ui/CircularProgress';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, accessToken } = useAppSelector((state: RootState) => state.auth);

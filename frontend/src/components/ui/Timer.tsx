@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, CircularProgress, styled } from '@mui/material';
+import { Box, styled } from '@mui/material';
+import CircularProgress from './CircularProgress';
 import Text from './Text';
 import theme from '../../theme/theme';
 

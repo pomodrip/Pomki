@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Button,
   IconButton,
   Menu,
@@ -26,6 +25,7 @@ import {
   CardContent,
   CardActions,
 } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import {
   Search as SearchIcon,
   Add as AddIcon,
