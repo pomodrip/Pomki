@@ -22,6 +22,14 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
+import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
+import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
+import { 
+  saveTempNote, 
+  getTempNote, 
+  clearTempNote, 
+  TempNoteData 
+} from '../../utils/storage';
 // import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
@@ -539,6 +547,11 @@ const TimerPage: React.FC = () => {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
   const [hasGeneratedAI, setHasGeneratedAI] = useState(false);
   
+  // AI 다이얼로그 상태
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiResponse, setAiResponse] = useState<AIEnhanceResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
     sessions: (settings as any).targetSessions ?? 2,
@@ -555,6 +568,16 @@ const TimerPage: React.FC = () => {
 
   // 자동저장을 위한 디바운싱 ref
   const autoSaveTimeoutRef = useRef<number | null>(null);
+  
+  // 페이지 로드 시 임시 저장된 노트 불러오기
+  useEffect(() => {
+    const tempNote = getTempNote();
+    if (tempNote) {
+      setTaskName(tempNote.taskName);
+      setNotes(tempNote.notes);
+      console.log('임시 저장된 노트를 불러왔습니다:', tempNote);
+    }
+  }, []);
 
   // 저장 로직 함수
   const saveNotesLogic = useCallback(async () => {
@@ -579,28 +602,45 @@ const TimerPage: React.FC = () => {
     }
   }, [notes, taskName, autoSaveEnabled, hasGeneratedAI]);
 
-  // 디바운싱된 자동저장 함수
-  const debouncedAutoSave = useCallback((content: string) => {
+  // 디바운싱된 자동저장 함수 (localStorage에 임시 저장)
+  const debouncedAutoSave = useCallback((content: string, task: string) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
     autoSaveTimeoutRef.current = setTimeout(() => {
-      if (autoSaveEnabled && content.trim()) {
-        saveNotesLogic();
+      if (autoSaveEnabled && (content.trim() || task.trim())) {
+        const tempData: TempNoteData = {
+          taskName: task,
+          notes: content,
+          timestamp: new Date().toISOString(),
+          sessionId: `session-${Date.now()}`,
+        };
+        saveTempNote(tempData);
+        console.log('임시 저장 완료:', tempData);
       }
     }, 1000) as unknown as number;
-  }, [autoSaveEnabled, saveNotesLogic]);
+  }, [autoSaveEnabled]);
 
   // 에디터 내용 변경 핸들러 (useCallback 적용)
   const handleEditorChange = useCallback((content: string) => {
     setNotes(content);
     
     // 자동저장이 활성화된 경우 디바운싱된 저장 실행
-    if (autoSaveEnabled && content.trim()) {
-      debouncedAutoSave(content);
+    if (autoSaveEnabled && (content.trim() || taskName.trim())) {
+      debouncedAutoSave(content, taskName);
     }
-  }, [autoSaveEnabled, debouncedAutoSave]);
+  }, [autoSaveEnabled, debouncedAutoSave, taskName]);
+  
+  // 태스크 이름 변경 핸들러 추가
+  const handleTaskNameChange = useCallback((name: string) => {
+    setTaskName(name);
+    
+    // 자동저장이 활성화된 경우 디바운싱된 저장 실행
+    if (autoSaveEnabled && (name.trim() || notes.trim())) {
+      debouncedAutoSave(notes, name);
+    }
+  }, [autoSaveEnabled, debouncedAutoSave, notes]);
 
   // 컴포넌트 언마운트 시 timeout 정리
   useEffect(() => {
@@ -719,26 +759,45 @@ const TimerPage: React.FC = () => {
 
 
 
-  // AI 노트 생성 핸들러 (임시 구현)
+  // AI 노트 생성 핸들러 (실제 API 호출)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
       alert('먼저 노트에 내용을 작성해주세요.');
       return;
     }
 
-    setIsGeneratingAI(true);
+    setAiLoading(true);
+    setAiDialogOpen(true);
     
-    // 임시 AI 생성 시뮬레이션
-    setTimeout(() => {
-      const aiContent = generateMockAIContent(summaryStyle, taskName);
-      setNotes(prevNotes => {
-        const separator = prevNotes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '';
-        return prevNotes + separator + aiContent;
+    try {
+      const response = await enhanceNoteWithAI({
+        noteTitle: taskName || '집중 세션 노트',
+        noteContent: notes,
       });
-      setIsGeneratingAI(false);
-      setHasGeneratedAI(true);
-      alert('AI 노트가 성공적으로 생성되었습니다!');
-    }, 2000);
+      
+      setAiResponse(response);
+      setAiLoading(false);
+    } catch (error) {
+      console.error('AI 노트 생성 실패:', error);
+      setAiLoading(false);
+      setAiDialogOpen(false);
+      alert('AI 노트 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // AI 생성 결과 적용 핸들러
+  const handleApplyAI = (aiContent: string) => {
+    setNotes(prevNotes => {
+      const separator = prevNotes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '';
+      return prevNotes + separator + aiContent;
+    });
+    setHasGeneratedAI(true);
+    
+    // 임시 저장도 업데이트
+    if (autoSaveEnabled) {
+      const newContent = notes + (notes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '') + aiContent;
+      debouncedAutoSave(newContent, taskName);
+    }
   };
 
   // 노트 수동 저장 핸들러
@@ -749,7 +808,14 @@ const TimerPage: React.FC = () => {
     }
 
     try {
-      await saveNotesLogic();
+      await createNote({
+        noteTitle: taskName || '집중 세션 노트',
+        noteContent: notes,
+        aiEnhanced: hasGeneratedAI,
+      });
+      
+      // 저장 성공 시 localStorage에서 임시 데이터 삭제
+      clearTempNote();
       alert('노트가 성공적으로 저장되었습니다!');
     } catch (error) {
       console.error('노트 저장 실패:', error);
@@ -1024,7 +1090,7 @@ const TimerPage: React.FC = () => {
       <TaskInput
         type="text"
         value={taskName}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTaskNameChange(e.target.value)}
         disabled={!isRunning}
         placeholder={
           isRunning
@@ -1468,11 +1534,11 @@ const TimerPage: React.FC = () => {
           <TaskInput
             type="text"
             value={taskName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTaskNameChange(e.target.value)}
             disabled={!isRunning}
             placeholder={
               isRunning
-                ? "🍅포모도로 타임! 집중할 목표를 수정하세요"
+                ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -1616,6 +1682,15 @@ const TimerPage: React.FC = () => {
           </Box>
         </NotesSection>
       )}
+
+      {/* AI 다이얼로그 */}
+      <AIEnhanceDialog
+        open={aiDialogOpen}
+        onClose={() => setAiDialogOpen(false)}
+        onApply={handleApplyAI}
+        aiResponse={aiResponse}
+        loading={aiLoading}
+      />
 
       {/* 설정 다이얼로그 */}
       <Modal
