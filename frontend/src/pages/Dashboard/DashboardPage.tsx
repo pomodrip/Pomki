@@ -58,8 +58,10 @@ function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
 
   // 아이콘: 학습(🍅)이 출석(🌱)보다 우선
   let icon = null;
-  if (attendanceDays.includes(dateStr)) icon = '🌱';
-  if (studyDays.includes(dateStr)) icon = '🍅';
+  if (!outsideCurrentMonth) {
+    if (attendanceDays.includes(dateStr)) icon = '🌱';
+    if (studyDays.includes(dateStr)) icon = '🍅';
+  }
 
   return (
     <Badge
