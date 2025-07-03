@@ -189,63 +189,63 @@ const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded, theme }) =>
     zIndex: 9999,
     margin: 0,
     padding: 0,
-    overflow: 'hidden',
+    overflow: 'auto',
   }),
 }));
 
-// 확장된 노트의 타이머 바
-const ExpandedTimerBar = styled(Box)(() => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '20px 24px',
-  backgroundColor: '#FFFFFF',
-  borderRadius: '16px',
-  marginBottom: '24px',
-  border: '2px solid #E5E7EB',
-  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
-  position: 'sticky',
-  top: 0,
-  zIndex: 10,
-}));
+// 확장된 노트의 타이머 바 - 사용하지 않음 (주석 처리)
+// const ExpandedTimerBar = styled(Box)(() => ({
+//   display: 'flex',
+//   alignItems: 'center',
+//   justifyContent: 'space-between',
+//   padding: '20px 24px',
+//   backgroundColor: '#FFFFFF',
+//   borderRadius: '16px',
+//   marginBottom: '24px',
+//   border: '2px solid #E5E7EB',
+//   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
+//   position: 'sticky',
+//   top: 0,
+//   zIndex: 10,
+// }));
 
-const ExpandedTimerInfo = styled(Box)(() => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '20px',
-}));
+// const ExpandedTimerInfo = styled(Box)(() => ({
+//   display: 'flex',
+//   alignItems: 'center',
+//   gap: '20px',
+// }));
 
-const ExpandedTimerDisplay = styled(Text)(() => ({
-  fontSize: '28px',
-  fontWeight: 700,
-  color: '#1A1A1A',
-  fontFamily: "'Pretendard', monospace",
-}));
+// const ExpandedTimerDisplay = styled(Text)(() => ({
+//   fontSize: '28px',
+//   fontWeight: 700,
+//   color: '#1A1A1A',
+//   fontFamily: "'Pretendard', monospace",
+// }));
 
-const ExpandedSessionInfo = styled(Text)(() => ({
-  fontSize: '16px',
-  fontWeight: 500,
-  color: '#6B7280',
-}));
+// const ExpandedSessionInfo = styled(Text)(() => ({
+//   fontSize: '16px',
+//   fontWeight: 500,
+//   color: '#6B7280',
+// }));
 
-const ExpandedProgressBar = styled(Box)(() => ({
-  flex: 1,
-  height: '12px',
-  backgroundColor: '#F3F4F6',
-  borderRadius: '6px',
-  overflow: 'hidden',
-  margin: '0 20px',
-  border: '1px solid #E5E7EB',
-}));
+// const ExpandedProgressBar = styled(Box)(() => ({
+//   flex: 1,
+//   height: '12px',
+//   backgroundColor: '#F3F4F6',
+//   borderRadius: '6px',
+//   overflow: 'hidden',
+//   margin: '0 20px',
+//   border: '1px solid #E5E7EB',
+// }));
 
-const ExpandedProgressFill = styled(Box)<{ progress: number }>(({ progress }) => ({
-  width: `${progress}%`,
-  height: '100%',
-  backgroundColor: '#2563EB',
-  transition: 'width 0.3s ease',
-  borderRadius: '6px',
-  boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
-}));
+// const ExpandedProgressFill = styled(Box)<{ progress: number }>(({ progress }) => ({
+//   width: `${progress}%`,
+//   height: '100%',
+//   backgroundColor: '#2563EB',
+//   transition: 'width 0.3s ease',
+//   borderRadius: '6px',
+//   boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+// }));
 
 const NotesHeader = styled(Box)(() => ({
   display: 'flex',
@@ -465,20 +465,51 @@ interface TimerSettings {
   targetSessions?: number;
 }
 
-// React-Quill 에디터 설정
+// Quill 이미지 업로드 커스텀 핸들러 (주석처리)
+/*
+const imageHandler = function (this: any) {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        const imageUrl = data.url || data.path || data.imageUrl; // 서버 반환값에 따라 조정
+        if (imageUrl) {
+          const quill = this.quill;
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, 'image', imageUrl);
+        }
+      } catch (err) {
+        alert('이미지 업로드에 실패했습니다.');
+      }
+    }
+  };
+};
+*/
+
 const editorModules = {
   toolbar: [
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link'],
-    ['clean']
+    ['image'],
   ],
 };
 
 const editorFormats = [
   'header', 'bold', 'italic', 'underline',
-  'list', 'bullet', 'link'
+  'list', 'bullet', 'link', 'image'
 ];
 
 const TimerPage: React.FC = () => {
@@ -492,6 +523,7 @@ const TimerPage: React.FC = () => {
     settings,
     updateTimerSettings,
     progress,
+    mode,
   } = useTimer();
 
   const { minutes, seconds } = currentTime;
@@ -499,7 +531,7 @@ const TimerPage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
+
   const [summaryStyle, setSummaryStyle] = useState('concept');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
@@ -579,8 +611,7 @@ const TimerPage: React.FC = () => {
     };
   }, []);
 
-  // 총 시간 계산
-  const totalTime = settings.focusTime * 60;
+
 
   // 노트 임팩트 효과
   useEffect(() => {
@@ -591,12 +622,7 @@ const TimerPage: React.FC = () => {
     }
   }, [isRunning]);
 
-  // 경과시간 계산
-  useEffect(() => {
-    if (isRunning) {
-      setElapsedTime((totalTime - (minutes * 60 + seconds)));
-    }
-  }, [isRunning, minutes, seconds, totalTime]);
+
 
   // 타이머 시작 추적
   useEffect(() => {
@@ -637,7 +663,6 @@ const TimerPage: React.FC = () => {
   const handleReset = () => {
     reset();
     setHasTimerStarted(false);
-    setElapsedTime(0);
   };
 
   const handleSettings = () => {
@@ -692,11 +717,7 @@ const TimerPage: React.FC = () => {
     return `${min.toString().padStart(2, '0')} : ${sec.toString().padStart(2, '0')}`;
   };
 
-  const formatElapsedTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   // AI 노트 생성 핸들러 (임시 구현)
   const handleGenerateAI = async () => {
@@ -828,154 +849,127 @@ const TimerPage: React.FC = () => {
         padding: '12px 16px',
         marginBottom: '16px',
       }}>
-        {/* 상단 행: 타이머, 버튼들, 세션 정보, 닫기 버튼 */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'space-between',
-          marginBottom: '12px',
+          justifyContent: 'center',
+          gap: '8px',
+          flexWrap: 'wrap',
         }}>
+          <Text sx={{ fontSize: '14px', fontWeight: 500, color: '#6B7280' }}>
+            세션 {sessionProgress.current + 1}/{sessionProgress.target}
+          </Text>
+          <Text sx={{ fontSize: '14px', fontWeight: 500, color: '#6B7280' }}>
+            ·
+          </Text>
+          <Text sx={{ fontSize: '14px', fontWeight: 600, color: '#2563EB' }}>
+            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+          </Text>
           <Text sx={{ 
-            fontSize: '20px', 
+            fontSize: '16px', 
             fontWeight: 700, 
             color: '#1A1A1A',
             fontFamily: "'Pretendard', monospace",
-            minWidth: '70px',
           }}>
             {formatTime(minutes, seconds)}
           </Text>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
             <IconButton 
               size="small" 
               sx={{ 
-                color: '#FFFFFF',
-                backgroundColor: '#EF4444',
+                color: isRunning ? '#EF4444' : '#2563EB',
                 '&:hover': {
-                  backgroundColor: '#DC2626',
+                  color: isRunning ? '#DC2626' : '#1D4ED8',
                 },
-                width: '32px',
-                height: '32px',
+                width: '28px',
+                height: '28px',
               }}
               onClick={isRunning ? pause : handleStart}
             >
-              {isRunning ? (
-                <Box sx={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                }}>
-                  <Box sx={{ 
-                    width: '3px', 
-                    height: '12px', 
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '0.5px',
-                  }} />
-                  <Box sx={{ 
-                    width: '3px', 
-                    height: '12px', 
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '0.5px',
-                  }} />
-                </Box>
-              ) : (
-                <Box sx={{ 
-                  width: 0,
-                  height: 0,
-                  borderLeft: '6px solid #FFFFFF',
-                  borderTop: '4px solid transparent',
-                  borderBottom: '4px solid transparent',
-                  marginLeft: '1px',
-                }} />
-              )}
+              {isRunning ? '⏸️' : '▶️'}
             </IconButton>
             
             <IconButton 
               size="small" 
               sx={{ 
                 color: '#6B7280',
-                backgroundColor: '#F3F4F6',
                 '&:hover': {
-                  backgroundColor: '#E5E7EB',
+                  color: '#374151',
                 },
-                width: '32px',
-                height: '32px',
+                width: '28px',
+                height: '28px',
               }}
               onClick={handleReset}
             >
-              <Box sx={{ 
-                width: '12px', 
-                height: '12px', 
-                border: '2px solid currentColor',
-                borderRadius: '50%',
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: '-1px',
-                  right: '1px',
-                  width: 0,
-                  height: 0,
-                  borderLeft: '3px solid transparent',
-                  borderRight: '3px solid transparent',
-                  borderBottom: '4px solid currentColor',
-                },
-              }} />
+              ⏹️
             </IconButton>
           </Box>
-          
-          <Text sx={{ 
-            fontSize: '14px', 
-            fontWeight: 500, 
-            color: '#6B7280',
-            textAlign: 'center',
-            minWidth: '60px',
-          }}>
-            세션 {sessionProgress.current + 1}/{sessionProgress.target}
-          </Text>
-        </Box>
-        
-        {/* 프로그레스 바 */}
-        <Box sx={{ 
-          width: '100%',
-          height: '6px',
-          backgroundColor: '#F3F4F6',
-          borderRadius: '3px',
-          overflow: 'hidden',
-          border: '1px solid #E5E7EB',
-        }}>
-          <Box sx={{ 
-            width: `${isRunning ? progress : 0}%`,
-            height: '100%',
-            backgroundColor: '#2563EB',
-            transition: 'width 0.3s ease',
-            borderRadius: '3px',
-          }} />
         </Box>
       </Box>
 
       {/* 데스크톱 타이머 바 */}
-      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-        <ExpandedTimerBar>
-          <ExpandedTimerInfo>
-            <ExpandedTimerDisplay>
-              {formatTime(minutes, seconds)}
-            </ExpandedTimerDisplay>
-            {isRunning ? (
-              <ExpandedSessionInfo>
-                세션 {sessionProgress.current + 1}/{sessionProgress.target}
-              </ExpandedSessionInfo>
-            ) : (
-              <ExpandedSessionInfo>
-                세션 {sessionProgress.current + 1}/{sessionProgress.target} • 준비됨
-              </ExpandedSessionInfo>
-            )}
-          </ExpandedTimerInfo>
+      <Box sx={{ 
+        display: { xs: 'none', sm: 'block' },
+        padding: '16px 0',
+        marginBottom: '24px',
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '12px',
+        }}>
+          <Text sx={{ fontSize: '16px', fontWeight: 500, color: '#6B7280' }}>
+            세션 {sessionProgress.current + 1}/{sessionProgress.target}
+          </Text>
+          <Text sx={{ fontSize: '16px', fontWeight: 500, color: '#6B7280' }}>
+            ·
+          </Text>
+          <Text sx={{ fontSize: '16px', fontWeight: 600, color: '#2563EB' }}>
+            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+          </Text>
+          <Text sx={{ 
+            fontSize: '20px', 
+            fontWeight: 700, 
+            color: '#1A1A1A',
+            fontFamily: "'Pretendard', monospace",
+          }}>
+            {formatTime(minutes, seconds)}
+          </Text>
           
-          <ExpandedProgressBar>
-            <ExpandedProgressFill progress={isRunning ? progress : 0} />
-          </ExpandedProgressBar>
-        </ExpandedTimerBar>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '12px' }}>
+            <IconButton 
+              size="medium" 
+              sx={{ 
+                color: isRunning ? '#EF4444' : '#2563EB',
+                '&:hover': {
+                  color: isRunning ? '#DC2626' : '#1D4ED8',
+                },
+                width: '36px',
+                height: '36px',
+              }}
+              onClick={isRunning ? pause : handleStart}
+            >
+              {isRunning ? '⏸️' : '▶️'}
+            </IconButton>
+            
+            <IconButton 
+              size="medium" 
+              sx={{ 
+                color: '#6B7280',
+                '&:hover': {
+                  color: '#374151',
+                },
+                width: '36px',
+                height: '36px',
+              }}
+              onClick={handleReset}
+            >
+              ⏹️
+            </IconButton>
+          </Box>
+        </Box>
       </Box>
 
       {/* 노트 제목과 자동저장 토글 */}
@@ -1085,6 +1079,7 @@ const TimerPage: React.FC = () => {
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
+                MenuProps={{ disablePortal: true }}
                 sx={{
                   minWidth: '150px',
                   backgroundColor: '#FFFFFF',
@@ -1203,6 +1198,7 @@ const TimerPage: React.FC = () => {
               value={summaryStyle}
               onChange={(e) => setSummaryStyle(e.target.value as string)}
               displayEmpty
+              MenuProps={{ disablePortal: true }}
               sx={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '6px',
@@ -1315,7 +1311,8 @@ const TimerPage: React.FC = () => {
             세션 {sessionProgress.current + 1}/{sessionProgress.target}
           </SessionProgress>
           <ElapsedTime>
-            {formatElapsedTime(elapsedTime)}
+            {/*{mode === 'FOCUS' ? '🍅 집중시간' : mode === 'SHORT_BREAK' ? '☕ 짧은 휴식' : '🛋️ 긴 휴식'}*/}
+            {mode === 'FOCUS' ? '집중시간' :'짧은 휴식'}
           </ElapsedTime>
         </RunningHeader>
       ) : (
@@ -1521,6 +1518,7 @@ const TimerPage: React.FC = () => {
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
+                MenuProps={{ disablePortal: true }}
                 sx={{
                   backgroundColor: '#FFFFFF',
                   borderRadius: { xs: '6px', sm: '8px' },

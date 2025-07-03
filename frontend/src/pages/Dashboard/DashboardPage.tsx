@@ -9,11 +9,68 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
+import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
+import Badge from '@mui/material/Badge';
+import 'dayjs/locale/ko';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
 }));
+
+// 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
+const holidays = [
+  '2025-01-01', // 신정
+  '2025-01-28', // 설날 연휴 시작
+  '2025-01-29', // 설날
+  '2025-01-30', // 설날 연휴 끝
+  '2025-03-01', // 삼일절
+  '2025-05-05', // 어린이날
+  '2025-05-06', // 어린이날 대체공휴일 (월요일)
+  '2025-05-12', // 부처님오신날
+  '2025-06-06', // 현충일
+  '2025-08-15', // 광복절
+  '2025-10-03', // 개천절
+  '2025-10-06', // 추석 연휴 시작
+  '2025-10-07', // 추석
+  '2025-10-08', // 추석 연휴 끝
+  '2025-10-09', // 한글날
+  '2025-12-25', // 성탄절
+];
+
+// 임시 출석/학습 현황 데이터 (실제 서비스에서는 API로 받아야 함)
+const attendanceDays = [
+  '2025-07-02', '2025-07-03', '2025-01-04',
+  '2025-07-28', '2025-07-29', '2025-07-30', 
+];
+const studyDays = [
+  '2025-07-04', '2025-07-05', // 학습 완료 예시
+];
+
+function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
+  const { day, outsideCurrentMonth, ...other } = props;
+  const dateStr = day.format('YYYY-MM-DD');
+  const isSunday = day.day() === 0;
+  const isSaturday = day.day() === 6;
+  const isHoliday = holidays.includes(dateStr);
+  let color = undefined;
+  if (isSunday || isSaturday || isHoliday) color = 'red';
+
+  // 아이콘: 학습(🍅)이 출석(🌱)보다 우선
+  let icon = null;
+  if (attendanceDays.includes(dateStr)) icon = '🌱';
+  if (studyDays.includes(dateStr)) icon = '🍅';
+
+  return (
+    <Badge
+      overlap="circular"
+      badgeContent={icon}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    >
+      <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
+    </Badge>
+  );
+}
 
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
@@ -177,8 +234,28 @@ const DashboardPage: React.FC = () => {
           </Box>
         </Card>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar defaultValue={dayjs('2022-04-17')} />
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="ko"
+            localeText={{
+              calendarWeekNumberHeaderText: '주',
+              previousMonth: '이전 달',
+              nextMonth: '다음 달',
+              openPreviousView: '이전 보기',
+              openNextView: '다음 보기',
+              start: '시작',
+              end: '끝',
+              cancelButtonLabel: '취소',
+              clearButtonLabel: '지우기',
+              okButtonLabel: '확인',
+              todayButtonLabel: '오늘',
+            }}
+          >
+            <DateCalendar
+              defaultValue={dayjs()}
+              slots={{ day: CustomDay }}
+              dayOfWeekFormatter={(date) => date.locale('ko').format('dd')}
+            />
           </LocalizationProvider>
         </Card>
       </Box>
