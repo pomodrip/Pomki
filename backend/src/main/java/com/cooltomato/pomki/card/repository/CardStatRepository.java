@@ -28,13 +28,6 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
     // 특정 사용자의 모든 카드 통계 조회
     List<CardStat> findByMemberMemberIdOrderByUpdatedAtDesc(Long memberId);
 
-    // 특정 사용자의 오늘 복습한 카드 수
-    @Query("SELECT COUNT(cs) FROM CardStat cs WHERE cs.memberId = :memberId " +
-           "AND cs.reviewTimestamp >= :startOfDay AND cs.reviewTimestamp < :endOfDay")
-    long countTodayReviews(@Param("memberId") Long memberId, 
-                          @Param("startOfDay") LocalDateTime startOfDay, 
-                          @Param("endOfDay") LocalDateTime endOfDay);
-
     // 특정 사용자의 총 복습 카드 수
     Long countByMemberMemberId(Long memberId);
 
@@ -45,4 +38,12 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
     Long countDueCardsInPeriod(@Param("memberId") Long memberId,
                                @Param("startDate") LocalDateTime startDate,
                                @Param("endDate") LocalDateTime endDate);
+
+    // 특정 사용자의 오늘 복습 완료한 카드 수
+    @Query("SELECT COUNT(cs) FROM CardStat cs " +
+           "WHERE cs.member.memberId = :memberId " +
+           "AND cs.lastReviewedAt >= :startOfDay AND cs.lastReviewedAt < :endOfDay")
+    Long countTodayReviewedCards(@Param("memberId") Long memberId, 
+                                @Param("startOfDay") LocalDateTime startOfDay, 
+                                @Param("endOfDay") LocalDateTime endOfDay);
 } 

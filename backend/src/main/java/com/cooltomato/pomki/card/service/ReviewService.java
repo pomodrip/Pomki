@@ -186,7 +186,7 @@ public class ReviewService {
         List<CardStat> todayCards = cardStatRepository.findDueCardsByMember(memberId, now);
 
         // 오늘 복습 완료한 카드 수
-        Long todayCompleted = cardStatRepository.countTodayReviewedCards(memberId);
+        Long todayCompleted = cardStatRepository.countTodayReviewedCards(memberId, startOfDay, endOfDay);
 
         // 3일 내 복습 예정 카드 수
         Long within3Days = cardStatRepository.countDueCardsInPeriod(memberId, now, now.plusDays(3));
