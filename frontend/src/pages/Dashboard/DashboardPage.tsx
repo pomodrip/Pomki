@@ -47,6 +47,13 @@ const studyDays = [
   '2025-07-04', '2025-07-05', // 학습 완료 예시
 ];
 
+// 임시 학습 주기 데이터 (실제 서비스에서는 API로 받아야 함)
+const studyScheduleData = {
+  todayCards: 12, // 오늘 학습해야할 카드
+  within3DaysCards: 8, // 3일내 학습해야할 카드
+  overdueCards: 5, // 하루이상 지난 카드
+};
+
 function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
   const { day, outsideCurrentMonth, ...other } = props;
   const dateStr = day.format('YYYY-MM-DD');
@@ -229,10 +236,102 @@ const DashboardPage: React.FC = () => {
       }}>
         <Card cardVariant="default">
           <Typography variant="h3" gutterBottom>
-            통계
+            복습 일정 관리
           </Typography>
+          
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* 오늘 학습해야할 카드 */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              p: 2,
+              backgroundColor: '#e8f5e8',
+              borderRadius: 1,
+              border: '1px solid #c8e6c9'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ 
+                  width: 12, 
+                  height: 40, 
+                  backgroundColor: '#4caf50',
+                  borderRadius: 1
+                }} />
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    오늘 복습
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    오늘 학습해야할 카드
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
+                {studyScheduleData.todayCards}
+              </Typography>
+            </Box>
 
+            {/* 3일내 학습해야할 카드 */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              p: 2,
+              backgroundColor: '#fff3e0',
+              borderRadius: 1,
+              border: '1px solid #ffcc02'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ 
+                  width: 12, 
+                  height: 40, 
+                  backgroundColor: '#ff9800',
+                  borderRadius: 1
+                }} />
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    3일 이내 복습
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    3일내 학습해야할 카드
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
+                {studyScheduleData.within3DaysCards}
+              </Typography>
+            </Box>
+
+            {/* 하루이상 지난 카드 */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              p: 2,
+              backgroundColor: '#ffebee',
+              borderRadius: 1,
+              border: '1px solid #ffcdd2'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ 
+                  width: 12, 
+                  height: 40, 
+                  backgroundColor: '#f44336',
+                  borderRadius: 1
+                }} />
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    복습 미완료
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    하루이상 지난 카드
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#f44336' }}>
+                {studyScheduleData.overdueCards}
+              </Typography>
+            </Box>
           </Box>
         </Card>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
