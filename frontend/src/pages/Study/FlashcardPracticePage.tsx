@@ -258,22 +258,14 @@ const FlashcardPracticePage: React.FC = () => {
   const handleCompletionCancel = () => {
     setShowCompletionDialog(false);
     
-    // 처음부터 다시 학습 시작
-    setCurrentCardIndex(0);
-    setShowAnswer(false);
-    setSelectedDifficulty(null);
-    setCurrentQuestionFeedback('');
-    setGlobalFeedback('');
-    setIsFeedbackOpen(false);
-    
     // 계속 학습 토스트 알림
     dispatch(showToast({
-      message: '처음부터 다시 학습을 시작합니다!',
+      message: '학습을 계속 진행합니다!',
       severity: 'info',
       duration: 2000
     }));
     
-    console.log('학습 처음부터 다시 시작');
+    console.log('학습 계속 진행');
   };
 
   // 🎯 플래시카드 네비게이션 키보드 단축키
