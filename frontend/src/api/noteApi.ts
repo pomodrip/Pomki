@@ -7,6 +7,23 @@ import type {
   NoteUpdateRequest,
 } from '../types/note';
 
+// AI 노트 생성 요청 타입
+export interface AIEnhanceRequest {
+  noteTitle: string;
+  noteContent: string;
+}
+
+// AI 노트 생성 응답 타입
+export interface AIEnhanceResponse {
+  polishedContent: string;
+  keywords: string[];
+  reasoning: string;
+  learningGuide: {
+    summary: string;
+    nextSteps: string[];
+  };
+}
+
 // 노트 리스트 조회
 export const getNotes = async (): Promise<NoteListItem[]> => {
   const response: AxiosResponse<NoteListItem[]> = await api.get('/api/notes');
@@ -35,6 +52,34 @@ export const createNote = async (data: NoteCreateRequest): Promise<Note> => {
   } catch (error) {
     const err = error as AxiosError;
     console.error('=== API 요청 실패 ===');
+    if (err.response) {
+      console.error('Error Status:', err.response.status);
+      console.error('Error Data:', err.response.data);
+    } else if (err.request) {
+      console.error('No response received:', err.request);
+    } else {
+      console.error('Request setup error:', err.message);
+    }
+    throw err;
+  }
+};
+
+// AI 노트 생성
+export const enhanceNoteWithAI = async (data: AIEnhanceRequest): Promise<AIEnhanceResponse> => {
+  console.log('=== AI 노트 생성 요청 시작 ===');
+  console.log('URL: /api/ai/notes/enhance');
+  console.log('Method: POST');
+  console.log('Request Data:', data);
+
+  try {
+    const response: AxiosResponse<AIEnhanceResponse> = await api.post('/api/ai/notes/enhance', data);
+    console.log('=== AI 노트 생성 응답 성공 ===');
+    console.log('Response Status:', response.status);
+    console.log('Response Data:', response.data);
+    return response.data;
+  } catch (error) {
+    const err = error as AxiosError;
+    console.error('=== AI 노트 생성 요청 실패 ===');
     if (err.response) {
       console.error('Error Status:', err.response.status);
       console.error('Error Data:', err.response.data);

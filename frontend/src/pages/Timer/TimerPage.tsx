@@ -22,6 +22,15 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
+import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
+import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
+import { 
+  saveTempNote, 
+  getTempNote, 
+  clearTempNote, 
+  TempNoteData,
+  getTempSaveStatus
+} from '../../utils/storage';
 // import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
@@ -170,7 +179,9 @@ const ButtonContainer = styled(Box)(() => ({
 // }));
 
 // 노트 섹션
-const NotesSection = styled(Box)<{ expanded: boolean }>(({ expanded, theme }) => ({
+const NotesSection = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'expanded',
+})<{ expanded: boolean }>(({ expanded, theme }) => ({
   width: '100%',
   maxWidth: expanded ? 'none' : '400px',
   marginTop: '32px',
@@ -260,7 +271,9 @@ const NotesTitle = styled(Text)(() => ({
   color: '#1A1A1A',
 }));
 
-const QuillEditor = styled(ReactQuill)<{ 
+const QuillEditor = styled(ReactQuill, {
+  shouldForwardProp: (prop) => !['expanded', 'disabled', 'animate'].includes(prop as string),
+})<{ 
   expanded: boolean; 
   disabled?: boolean; 
   animate?: boolean 
@@ -533,11 +546,26 @@ const TimerPage: React.FC = () => {
   const [notesExpanded, setNotesExpanded] = useState(false);
 
   const [summaryStyle, setSummaryStyle] = useState('concept');
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [noteImpact, setNoteImpact] = useState(false);
   const [hasTimerStarted, setHasTimerStarted] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [hasGeneratedAI, setHasGeneratedAI] = useState(false);
+  const [lastContentLength, setLastContentLength] = useState(0);
+  
+  // AI 다이얼로그 상태
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiResponse, setAiResponse] = useState<AIEnhanceResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  
+  // 임시 저장 관련 상태
+  const [tempSaveStatus, setTempSaveStatus] = useState<{
+    hasTempData: boolean;
+    lastSaved: string | null;
+    timeSinceLastSave: number | null;
+  }>({ hasTempData: false, lastSaved: null, timeSinceLastSave: null });
+  
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
@@ -555,6 +583,103 @@ const TimerPage: React.FC = () => {
 
   // 자동저장을 위한 디바운싱 ref
   const autoSaveTimeoutRef = useRef<number | null>(null);
+  
+  // 페이지 로드 시 임시 저장된 노트 불러오기
+  useEffect(() => {
+    try {
+      const tempNote = getTempNote();
+      const restoreDialogHandled = sessionStorage.getItem('pomki_restore_dialog_handled');
+      
+      if (tempNote && !restoreDialogHandled) {
+        console.log('🔄 이전 세션 데이터 발견:', tempNote);
+        setShowRestoreDialog(true);
+      } else if (restoreDialogHandled) {
+        console.log('📝 이번 세션에서 이미 복원 다이얼로그를 처리했으므로 생략');
+      }
+      
+      // 임시 저장 상태 업데이트
+      updateTempSaveStatus();
+    } catch (error) {
+      console.error('❌ 페이지 로드 시 임시 노트 확인 실패:', error);
+      // 에러가 발생해도 앱이 정상 동작하도록 함
+    }
+  }, []);
+  
+  // 임시 저장 상태 업데이트 함수
+  const updateTempSaveStatus = useCallback(() => {
+    try {
+      const status = getTempSaveStatus();
+      setTempSaveStatus(status);
+    } catch (error) {
+      console.error('❌ 임시 저장 상태 업데이트 실패:', error);
+      // 에러 발생 시 기본값으로 설정
+      setTempSaveStatus({
+        hasTempData: false,
+        lastSaved: null,
+        timeSinceLastSave: null
+      });
+    }
+  }, []);
+  
+  // 임시 저장 상태를 주기적으로 업데이트 (30초마다)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateTempSaveStatus();
+    }, 30000); // 30초마다 업데이트로 변경
+    return () => clearInterval(interval);
+  }, []); // 의존성 배열 수정
+  
+  // 복원 확인 핸들러
+  const handleRestoreData = () => {
+    try {
+      const tempNote = getTempNote();
+      if (tempNote) {
+        setTaskName(tempNote.taskName || '');
+        setNotes(tempNote.notes || '');
+        setAutoSaveEnabled(tempNote.autoSaveEnabled ?? true);
+        console.log('✅ 임시 저장된 노트 복원 완료');
+      }
+      
+      // 이번 세션에서 복원 다이얼로그 처리했음을 기록
+      sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
+      setShowRestoreDialog(false);
+      updateTempSaveStatus();
+    } catch (error) {
+      console.error('❌ 노트 복원 실패:', error);
+      setShowRestoreDialog(false);
+      alert('노트 복원에 실패했습니다.');
+    }
+  };
+  
+  // 복원 거절 핸들러
+  const handleSkipRestore = () => {
+    try {
+      clearTempNote();
+      
+      // 이번 세션에서 복원 다이얼로그 처리했음을 기록
+      sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
+      setShowRestoreDialog(false);
+      console.log('❌ 임시 저장 데이터 무시 및 삭제');
+      updateTempSaveStatus();
+    } catch (error) {
+      console.error('❌ 임시 데이터 삭제 실패:', error);
+      setShowRestoreDialog(false);
+    }
+  };
+  
+  // 페이지 이탈 전 확인
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && (notes.trim() || taskName.trim())) {
+        e.preventDefault();
+        e.returnValue = '저장하지 않은 변경사항이 있습니다. 페이지를 떠나시겠습니까?';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges, notes, taskName]);
 
   // 저장 로직 함수
   const saveNotesLogic = useCallback(async () => {
@@ -579,28 +704,85 @@ const TimerPage: React.FC = () => {
     }
   }, [notes, taskName, autoSaveEnabled, hasGeneratedAI]);
 
-  // 디바운싱된 자동저장 함수
-  const debouncedAutoSave = useCallback((content: string) => {
+  // 스마트 자동저장 함수 (20초 주기 + 20자 이상 즉시 저장)
+  const smartAutoSave = useCallback((content: string, task: string, immediate: boolean = false) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      if (autoSaveEnabled && content.trim()) {
-        saveNotesLogic();
+    const performSave = () => {
+      try {
+        // 자동저장이 활성화되고 타이머가 실행 중일 때만 저장
+        if (autoSaveEnabled && isRunning && (content.trim() || task.trim())) {
+          const tempData: TempNoteData = {
+            taskName: task,
+            notes: content,
+            timestamp: new Date().toISOString(),
+            sessionId: `session-${Date.now()}`,
+            autoSaveEnabled: autoSaveEnabled,
+            lastModified: new Date().toISOString(),
+          };
+          saveTempNote(tempData);
+          console.log('💾 백그라운드 임시 저장 완료 (사용자에게 알리지 않음)');
+          updateTempSaveStatus(); // 저장 후 상태 업데이트
+        }
+      } catch (error) {
+        console.error('❌ 자동 저장 실패:', error);
       }
-    }, 1000) as unknown as number;
-  }, [autoSaveEnabled, saveNotesLogic]);
-
-  // 에디터 내용 변경 핸들러 (useCallback 적용)
-  const handleEditorChange = useCallback((content: string) => {
-    setNotes(content);
+    };
     
-    // 자동저장이 활성화된 경우 디바운싱된 저장 실행
-    if (autoSaveEnabled && content.trim()) {
-      debouncedAutoSave(content);
+    if (immediate) {
+      performSave();
+    } else {
+      // 20초 디바운스로 변경
+      autoSaveTimeoutRef.current = setTimeout(performSave, 20000) as unknown as number;
     }
-  }, [autoSaveEnabled, debouncedAutoSave]);
+  }, [autoSaveEnabled, isRunning, updateTempSaveStatus]);
+
+  // 에디터 내용 변경 핸들러 (스마트 자동저장 적용)
+  const handleEditorChange = useCallback((content: string) => {
+    try {
+      setNotes(content);
+      setHasUnsavedChanges(true);
+      
+      // 자동저장이 활성화된 경우 스마트 저장 실행
+      if (autoSaveEnabled && isRunning && (content.trim() || taskName.trim())) {
+        const currentContentLength = content.length + taskName.length;
+        const lengthDiff = currentContentLength - lastContentLength;
+        
+        // 20자 이상 추가 입력 시 즉시 저장, 그렇지 않으면 20초 디바운스
+        const shouldSaveImmediately = lengthDiff >= 20;
+        
+        if (shouldSaveImmediately) {
+          console.log('📝 대량 입력 감지 (20자 이상), 즉시 임시 저장:', { lengthDiff, currentLength: currentContentLength });
+        }
+        
+        smartAutoSave(content, taskName, shouldSaveImmediately);
+        setLastContentLength(currentContentLength);
+      }
+    } catch (error) {
+      console.error('❌ 에디터 변경 핸들러 오류:', error);
+    }
+  }, [autoSaveEnabled, isRunning, smartAutoSave, taskName, lastContentLength]);
+  
+  // 태스크 이름 변경 핸들러 (스마트 자동저장 적용)
+  const handleTaskNameChange = useCallback((name: string) => {
+    try {
+      setTaskName(name);
+      setHasUnsavedChanges(true);
+      
+      // 자동저장이 활성화된 경우 스마트 저장 실행
+      if (autoSaveEnabled && isRunning && (name.trim() || notes.trim())) {
+        const currentContentLength = notes.length + name.length;
+        
+        // 태스크명은 보통 짧으므로 20초 디바운스만 적용 (즉시 저장 조건 없음)
+        smartAutoSave(notes, name, false);
+        setLastContentLength(currentContentLength);
+      }
+    } catch (error) {
+      console.error('❌ 태스크명 변경 핸들러 오류:', error);
+    }
+  }, [autoSaveEnabled, isRunning, smartAutoSave, notes, lastContentLength]);
 
   // 컴포넌트 언마운트 시 timeout 정리
   useEffect(() => {
@@ -719,41 +901,103 @@ const TimerPage: React.FC = () => {
 
 
 
-  // AI 노트 생성 핸들러 (임시 구현)
+  // 수동 임시 저장 핸들러 (타이머 실행 중이 아닐 때)
+  const handleManualTempSave = useCallback(() => {
+    try {
+      if (!autoSaveEnabled || isRunning) return;
+      
+      if (notes.trim() || taskName.trim()) {
+        const tempData: TempNoteData = {
+          taskName,
+          notes,
+          timestamp: new Date().toISOString(),
+          sessionId: `session-${Date.now()}`,
+          autoSaveEnabled,
+          lastModified: new Date().toISOString(),
+        };
+        saveTempNote(tempData);
+        console.log('📁 수동 임시 저장 완료:', tempData);
+        updateTempSaveStatus(); // 저장 후 상태 업데이트
+        // alert 대신 콘솔 로그만 (UI 방해 최소화)
+      }
+    } catch (error) {
+      console.error('❌ 수동 임시 저장 실패:', error);
+      alert('임시 저장에 실패했습니다.');
+    }
+  }, [autoSaveEnabled, isRunning, notes, taskName, updateTempSaveStatus]);
+
+  // AI 노트 생성 핸들러 (실제 API 호출)
   const handleGenerateAI = async () => {
     if (!notes.trim()) {
       alert('먼저 노트에 내용을 작성해주세요.');
       return;
     }
 
-    setIsGeneratingAI(true);
+    setAiLoading(true);
+    setAiDialogOpen(true);
     
-    // 임시 AI 생성 시뮬레이션
-    setTimeout(() => {
-      const aiContent = generateMockAIContent(summaryStyle, taskName);
+    try {
+      const response = await enhanceNoteWithAI({
+        noteTitle: taskName || '집중 세션 노트',
+        noteContent: notes,
+      });
+      
+      setAiResponse(response);
+      setAiLoading(false);
+    } catch (error) {
+      console.error('AI 노트 생성 실패:', error);
+      setAiLoading(false);
+      setAiDialogOpen(false);
+      alert('AI 노트 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // AI 생성 결과 적용 핸들러
+  const handleApplyAI = (aiContent: string) => {
+    try {
       setNotes(prevNotes => {
         const separator = prevNotes.trim() ? '\n\n--- AI 생성 내용 ---\n\n' : '';
-        return prevNotes + separator + aiContent;
+        const newContent = prevNotes + separator + aiContent;
+        
+        // AI 생성은 대량 내용 추가이므로 즉시 저장
+        if (autoSaveEnabled) {
+          console.log('🤖 AI 생성 내용 적용, 즉시 임시 저장');
+          smartAutoSave(newContent, taskName, true);
+          setLastContentLength(newContent.length + taskName.length);
+        }
+        
+        return newContent;
       });
-      setIsGeneratingAI(false);
       setHasGeneratedAI(true);
-      alert('AI 노트가 성공적으로 생성되었습니다!');
-    }, 2000);
+    } catch (error) {
+      console.error('❌ AI 내용 적용 실패:', error);
+      alert('AI 생성 내용 적용에 실패했습니다.');
+    }
   };
 
   // 노트 수동 저장 핸들러
   const handleSaveNotes = async () => {
-    if (!notes.trim() && !taskName.trim()) {
-      alert('저장할 내용이 없습니다.');
-      return;
-    }
-
     try {
-      await saveNotesLogic();
+      if (!notes.trim() && !taskName.trim()) {
+        alert('저장할 내용이 없습니다.');
+        return;
+      }
+
+      await createNote({
+        noteTitle: taskName || '집중 세션 노트',
+        noteContent: notes,
+        aiEnhanced: hasGeneratedAI,
+      });
+      
+      // 저장 성공 시 localStorage에서 임시 데이터 삭제
+      clearTempNote();
+      setHasUnsavedChanges(false);
+      updateTempSaveStatus();
+      console.log('✅ 백엔드 저장 완료 - 임시 데이터 정리됨');
       alert('노트가 성공적으로 저장되었습니다!');
     } catch (error) {
-      console.error('노트 저장 실패:', error);
-      alert('노트 저장에 실패했습니다.');
+      console.error('❌ 노트 저장 실패:', error);
+      alert('노트 저장에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -788,7 +1032,7 @@ const TimerPage: React.FC = () => {
   };
 
   // 버튼 활성화 조건
-  const canGenerateAI = notes.trim() && !isGeneratingAI;
+  const canGenerateAI = notes.trim() && !aiLoading;
   const canSave = (notes.trim() || taskName.trim());
 
   // SVG 원의 중심과 반지름 계산 (반지름 기준)
@@ -986,7 +1230,7 @@ const TimerPage: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-              자동저장
+              자동 임시 저장
             </Text>
             <Switch
               checked={autoSaveEnabled}
@@ -1002,6 +1246,44 @@ const TimerPage: React.FC = () => {
               }}
             />
           </Box>
+          
+          {/* 임시 저장 상태 표시 */}
+          {tempSaveStatus.hasTempData && (
+            <Text sx={{ 
+              fontSize: '11px', 
+              color: '#6B7280',
+              whiteSpace: 'nowrap',
+            }}>
+              마지막 임시 저장: {
+                tempSaveStatus.timeSinceLastSave !== null && !isNaN(tempSaveStatus.timeSinceLastSave)
+                  ? `${tempSaveStatus.timeSinceLastSave}초 전`
+                  : '방금 전'
+              }
+            </Text>
+          )}
+          
+          {/* 수동 임시 저장 버튼 (타이머 실행 중이 아닐 때만 표시) */}
+          {!isRunning && (notes.trim() || taskName.trim()) && (
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleManualTempSave}
+              sx={{
+                fontSize: '11px',
+                padding: '4px 8px',
+                minWidth: 'auto',
+                borderColor: '#D1D5DB',
+                color: '#6B7280',
+                '&:hover': {
+                  borderColor: '#9CA3AF',
+                  backgroundColor: '#F9FAFB',
+                },
+              }}
+            >
+              임시 저장
+            </Button>
+          )}
+          
           <IconButton 
             size="small" 
             sx={{ 
@@ -1024,7 +1306,7 @@ const TimerPage: React.FC = () => {
       <TaskInput
         type="text"
         value={taskName}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTaskNameChange(e.target.value)}
         disabled={!isRunning}
         placeholder={
           isRunning
@@ -1131,7 +1413,7 @@ const TimerPage: React.FC = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {isGeneratingAI ? (
+              {aiLoading ? (
                 <>
                   <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
                   생성 중
@@ -1251,7 +1533,7 @@ const TimerPage: React.FC = () => {
               whiteSpace: 'nowrap',
             }}
           >
-            {isGeneratingAI ? (
+            {aiLoading ? (
               <>
                 <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
                 생성 중
@@ -1433,7 +1715,7 @@ const TimerPage: React.FC = () => {
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-                자동저장
+                백그라운드 저장
               </Text>
               <Switch
                 checked={autoSaveEnabled}
@@ -1448,19 +1730,6 @@ const TimerPage: React.FC = () => {
                   },
                 }}
               />
-              <IconButton 
-                size="small" 
-                sx={{ 
-                  color: '#6B7280',
-                  backgroundColor: '#F3F4F6',
-                  '&:hover': {
-                    backgroundColor: '#E5E7EB',
-                  },
-                }}
-                onClick={() => setNotesExpanded(true)}
-              >
-                <ExpandIcon fontSize="small" />
-              </IconButton>
             </Box>
           </NotesHeader>
 
@@ -1468,11 +1737,11 @@ const TimerPage: React.FC = () => {
           <TaskInput
             type="text"
             value={taskName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTaskNameChange(e.target.value)}
             disabled={!isRunning}
             placeholder={
               isRunning
-                ? "🍅포모도로 타임! 집중할 목표를 수정하세요"
+                ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -1572,7 +1841,7 @@ const TimerPage: React.FC = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {isGeneratingAI ? (
+              {aiLoading ? (
                 <>
                   <MuiCircularProgress size={16} sx={{ color: '#FFFFFF' }} />
                   <Box sx={{ display: { xs: 'none', sm: 'block' } }}>생성 중</Box>
@@ -1616,6 +1885,90 @@ const TimerPage: React.FC = () => {
           </Box>
         </NotesSection>
       )}
+
+      {/* AI 다이얼로그 */}
+      <AIEnhanceDialog
+        open={aiDialogOpen}
+        onClose={() => setAiDialogOpen(false)}
+        onApply={handleApplyAI}
+        aiResponse={aiResponse}
+        loading={aiLoading}
+      />
+
+      {/* 복원 다이얼로그 */}
+      <Modal open={showRestoreDialog} onClose={() => {
+        // 다이얼로그를 그냥 닫으면 다음에 다시 나타나지 않게 처리
+        sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
+        setShowRestoreDialog(false);
+        console.log('🔒 복원 다이얼로그 무시됨 (이번 세션에서 다시 표시 안됨)');
+      }}>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: { xs: '85%', sm: '400px' },
+          maxWidth: '400px',
+          maxHeight: { xs: '80vh', sm: '90vh' },
+          bgcolor: 'background.paper',
+          borderRadius: '12px',
+          boxShadow: 24,
+          p: { xs: 2, sm: 3 },
+          overflow: 'auto',
+        }}>
+          <Box sx={{ mb: 2 }}>
+            <Text sx={{ fontSize: '18px', fontWeight: 600, color: '#1F2937', mb: 1 }}>
+              🔄 이전 세션 데이터 발견
+            </Text>
+            <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
+              이전에 작성하던 노트가 임시 저장되어 있습니다. 복원하시겠습니까?
+            </Text>
+            {tempSaveStatus.lastSaved && (
+              <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
+                마지막 저장: {
+                  (() => {
+                    try {
+                      const date = new Date(tempSaveStatus.lastSaved);
+                      return isNaN(date.getTime()) ? '시간 정보 없음' : date.toLocaleString();
+                    } catch (error) {
+                      return '시간 정보 없음';
+                    }
+                  })()
+                }
+              </Text>
+            )}
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              onClick={handleSkipRestore}
+              sx={{
+                borderColor: '#D1D5DB',
+                color: '#6B7280',
+                '&:hover': {
+                  borderColor: '#9CA3AF',
+                  backgroundColor: '#F9FAFB',
+                },
+              }}
+            >
+              삭제하고 새로 시작
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleRestoreData}
+              sx={{
+                backgroundColor: '#3B82F6',
+                '&:hover': {
+                  backgroundColor: '#2563EB',
+                },
+              }}
+            >
+              복원하기
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
 
       {/* 설정 다이얼로그 */}
       <Modal

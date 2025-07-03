@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import * as timerApi from '../../api/timerApi';
 import type { 
@@ -521,21 +521,22 @@ export const selectTimerLoading = (state: RootState) => state.timer.loading;
 export const selectTimerError = (state: RootState) => state.timer.error;
 export const selectShowSettings = (state: RootState) => state.timer.showSettings;
 
-// 파생 상태 selector들
-export const selectCurrentTime = (state: RootState) => {
-  const session = state.timer.currentSession;
-  if (!session) {
-    // 타이머가 정지 상태이면 기본 집중 시간 표시
-    const minutes = state.timer.settings.focusTime;
-    return { minutes, seconds: 0 };
+// 파생 상태 selector들 (memoized)
+export const selectCurrentTime = createSelector(
+  [(state: RootState) => state.timer.currentSession, (state: RootState) => state.timer.settings.focusTime],
+  (session, focusTime) => {
+    if (!session) {
+      // 타이머가 정지 상태이면 기본 집중 시간 표시
+      return { minutes: focusTime, seconds: 0 };
+    }
+
+    const totalSeconds = session.remainingTime;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return { minutes, seconds };
   }
-
-  const totalSeconds = session.remainingTime;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return { minutes, seconds };
-};
+);
 
 export const selectProgress = (state: RootState) => {
   const session = state.timer.currentSession;
@@ -557,11 +558,18 @@ export const selectCanPause = (state: RootState) => {
   return state.timer.isRunning;
 };
 
-export const selectSessionProgress = (state: RootState) => ({
-  current: state.timer.completedSessions,
-  target: state.timer.targetSessions,
-  cycle: state.timer.currentCycle,
-});
+export const selectSessionProgress = createSelector(
+  [
+    (state: RootState) => state.timer.completedSessions,
+    (state: RootState) => state.timer.targetSessions,
+    (state: RootState) => state.timer.currentCycle,
+  ],
+  (completedSessions, targetSessions, currentCycle) => ({
+    current: completedSessions,
+    target: targetSessions,
+    cycle: currentCycle,
+  })
+);
 
 // 총 경과 시간 (현재 세션)
 export const selectTotalElapsed = (state: RootState) => {
@@ -582,13 +590,16 @@ export const selectModeSettings = (state: RootState) => {
   };
 };
 
-// 다음 세션 정보
-export const selectNextSessionInfo = (state: RootState) => {
-  const nextMode = getNextMode(state.timer.mode);
-  const duration = getDurationForMode(nextMode, state.timer.settings);
-  
-  return {
-    mode: nextMode,
-    duration,
-  };
-};
+// 다음 세션 정보 (memoized)
+export const selectNextSessionInfo = createSelector(
+  [(state: RootState) => state.timer.mode, (state: RootState) => state.timer.settings],
+  (mode, settings) => {
+    const nextMode = getNextMode(mode);
+    const duration = getDurationForMode(nextMode, settings);
+    
+    return {
+      mode: nextMode,
+      duration,
+    };
+  }
+);
