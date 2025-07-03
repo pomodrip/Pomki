@@ -180,7 +180,28 @@ const FlashcardPracticePage: React.FC = () => {
   };
 
   const handleDifficultySelect = (difficulty: Difficulty) => {
-    setSelectedDifficulty(selectedDifficulty === difficulty ? null : difficulty);
+    const isAlreadySelected = selectedDifficulty === difficulty;
+    
+    if (isAlreadySelected) {
+      // 이미 선택된 난이도를 다시 클릭하면 선택 해제
+      setSelectedDifficulty(null);
+    } else {
+      // 새로운 난이도 선택
+      setSelectedDifficulty(difficulty);
+      
+      // 1초 후 자동으로 다음 카드로 넘어가기
+      setTimeout(() => {
+        if (currentCardIndex < flashcards.length - 1) {
+          // 다음 카드로 이동
+          setCurrentCardIndex(currentCardIndex + 1);
+          setShowAnswer(false);
+          setSelectedDifficulty(null);
+        } else {
+          // 마지막 카드인 경우 학습 완료 다이얼로그 표시
+          setShowCompletionDialog(true);
+        }
+      }, 1000); // 1초 후 자동 이동
+    }
   };
 
   const handlePrevious = () => {
