@@ -150,7 +150,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
     if (toast.duration > 0) {
       const interval = 50; // 50ms마다 업데이트
       const decrement = (100 / toast.duration) * interval;
-      intervalRef.current = setInterval(() => {
+      intervalRef.current = window.setInterval(() => {
         dispatch(updateToastProgress({ 
           id: toast.id, 
           progress: Math.max(0, toast.progress - decrement) 
@@ -162,7 +162,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
     }
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        window.clearInterval(intervalRef.current);
       }
     };
   }, [toast.id, toast.duration, toast.progress, dispatch]);
