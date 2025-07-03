@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled, Paper } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
@@ -12,6 +12,7 @@ import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import Badge from '@mui/material/Badge';
 import 'dayjs/locale/ko';
+import { getTodayCardsCount, getWithin3DaysCardsCount, getOverdueCardsCount } from '../../api/studyApi';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -48,11 +49,11 @@ const studyDays = [
 ];
 
 // 임시 학습 주기 데이터 (실제 서비스에서는 API로 받아야 함)
-const studyScheduleData = {
-  todayCards: 12, // 오늘 학습해야할 카드
-  within3DaysCards: 8, // 3일내 학습해야할 카드
-  overdueCards: 5, // 하루이상 지난 카드
-};
+// const studyScheduleData = {
+//   todayCards: 12, // 오늘 학습해야할 카드
+//   within3DaysCards: 8, // 3일내 학습해야할 카드
+//   overdueCards: 5, // 하루이상 지난 카드
+// };
 
 function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
   const { day, outsideCurrentMonth, ...other } = props;
@@ -85,6 +86,17 @@ const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // 복습 일정 관리 API 연동
+  const [todayCards, setTodayCards] = useState<number | null>(null);
+  const [within3DaysCards, setWithin3DaysCards] = useState<number | null>(null);
+  const [overdueCards, setOverdueCards] = useState<number | null>(null);
+
+  useEffect(() => {
+    getTodayCardsCount().then(setTodayCards);
+    getWithin3DaysCardsCount().then(setWithin3DaysCards);
+    getOverdueCardsCount().then(setOverdueCards);
+  }, []);
 
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
 
@@ -268,7 +280,7 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
-                {studyScheduleData.todayCards}
+                {todayCards === null ? '...' : todayCards}
               </Typography>
             </Box>
 
@@ -300,7 +312,7 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
-                {studyScheduleData.within3DaysCards}
+                {within3DaysCards === null ? '...' : within3DaysCards}
               </Typography>
             </Box>
 
@@ -326,12 +338,12 @@ const DashboardPage: React.FC = () => {
                     복습 미완료 or 하루이상 지난 카드
                   </Typography>
                   {/* <Typography variant="caption" color="text.secondary">
-                    하루이상 지난 카드
+                    복습 미완료 or 하루이상 지난 카드
                   </Typography> */}
                 </Box>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#f44336' }}>
-                {studyScheduleData.overdueCards}
+                {overdueCards === null ? '...' : overdueCards}
               </Typography>
             </Box>
           </Box>
