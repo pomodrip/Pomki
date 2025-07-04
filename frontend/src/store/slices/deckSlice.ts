@@ -530,13 +530,8 @@ const deckSlice = createSlice({
          state.error = action.payload || '태그 제거에 실패했습니다.';
        })
 
-       // 카드 북마크 토글
-       .addCase(toggleCardBookmark.pending, (state) => {
-         state.loading = true;
-         state.error = null;
-       })
+       // 카드 북마크 토글 - loading 상태를 변경하지 않음 (UI 깜빡임 방지)
        .addCase(toggleCardBookmark.fulfilled, (state, action) => {
-         state.loading = false;
          const { cardId, bookmarked } = action.payload;
          const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
          
@@ -547,7 +542,6 @@ const deckSlice = createSlice({
          state.error = null;
        })
        .addCase(toggleCardBookmark.rejected, (state, action) => {
-         state.loading = false;
          state.error = action.payload || '북마크 토글에 실패했습니다.';
        });
   },
