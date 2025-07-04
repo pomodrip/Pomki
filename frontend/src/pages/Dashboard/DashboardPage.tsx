@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled, Paper } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, Paper, Grid, Alert } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider, DateCalendar } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import Badge from '@mui/material/Badge';
 import 'dayjs/locale/ko';
 import { getTodayCardsCount, getWithin3DaysCardsCount, getOverdueCardsCount } from '../../api/studyApi';
-
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
 
 // 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
 const holidays = [
@@ -101,285 +95,151 @@ const DashboardPage: React.FC = () => {
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
 
   return (
-    <Container 
-      maxWidth="md"
-      sx={{
-        pt: 2,
-        pb: 10,
-      }}
-    >
-      <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
-        대시보드
-      </Typography>
-
-      {/* 개발자 도구 - 개발 환경에서만 표시 */}
-      {import.meta.env.DEV && (
-        <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.light' }}>
-          <Typography variant="h2" gutterBottom>
-            🔧 개발자 도구
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            API Fallback 시스템을 테스트해보세요!
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              onClick={() => navigate('/api-fallback')}
-            >
-              API Fallback 테스트
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/ad')}
-            >
-              광고 시스템 예제
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => navigate('/study')}
-            >
-              📚 학습 페이지에서 확인
-            </Button>
-          </Box>
-        </Paper>
+    <Container sx={{ pt: 2, pb: 10 }}>
+      {location.state?.from === '/signup' && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          회원가입이 완료되었습니다! Pomki에 오신 것을 환영합니다.
+        </Alert>
       )}
 
-      {/* 오늘의 학습, 최근 활동 - 세로 배치 */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: 3,
-        mb: 4
-      }}>
-        <Card cardVariant="default">
-          <Typography variant="h3" gutterBottom>
-            오늘의 학습
-          </Typography>
-          <ProgressBar
-            value={65}
-            showLabel
-            label="Focus Time"
-            sx={{ mb: 2 }}
-          />
+      {/* 학습 목표 및 진행률 */}
+      <Card cardVariant="default" sx={{ mb: 2 }}>
+        <Typography variant="h3" gutterBottom>
+          학습 목표 및 진행률
+        </Typography>
+        <ProgressBar value={75} showLabel label="일일 목표" />
+        <Box sx={{ mt: 1, textAlign: 'right' }}>
           <Typography variant="body2" color="text.secondary">
-            65% 달성
+            75% 달성 (6/8시간)
           </Typography>
+        </Box>
+      </Card>
 
-        </Card>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <Card cardVariant="default">
+            <Typography variant="h3" gutterBottom>
+              복습 일정 관리
+            </Typography>
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* 오늘 학습해야할 카드 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                p: 2,
+                backgroundColor: 'success.lightest',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'success.light'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 40, 
+                    backgroundColor: 'success.main',
+                    borderRadius: 1
+                  }} />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      오늘 학습해야할 카드
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
+                  {todayCards === null ? '...' : todayCards}
+                </Typography>
+              </Box>
 
-        <Card cardVariant="default" sx={{ p: 0 }}>
-          <Accordion elevation={0} sx={{ ml: 0 }}>
-            <AccordionSummary
-              expandIcon={<span>▼</span>}
-              aria-controls="recent-activity-content"
-              id="recent-activity-header"
+              {/* 3일내 학습해야할 카드 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                p: 2,
+                backgroundColor: 'warning.lightest',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'warning.light'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 40, 
+                    backgroundColor: 'warning.main',
+                    borderRadius: 1
+                  }} />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      3일내 학습해야할 카드
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                  {within3DaysCards === null ? '...' : within3DaysCards}
+                </Typography>
+              </Box>
+
+              {/* 하루이상 지난 카드 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                p: 2,
+                backgroundColor: 'error.lightest',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'error.light'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 40, 
+                    backgroundColor: 'error.main',
+                    borderRadius: 1
+                  }} />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      복습 미완료 or 하루이상 지난 카드
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'error.main' }}>
+                  {overdueCards === null ? '...' : overdueCards}
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
+            <LocalizationProvider
+              dateAdapter={AdapterDayjs}
+              adapterLocale="ko"
+              localeText={{
+                calendarWeekNumberHeaderText: '주',
+                previousMonth: '이전 달',
+                nextMonth: '다음 달',
+                openPreviousView: '이전 보기',
+                openNextView: '다음 보기',
+                start: '시작',
+                end: '끝',
+                cancelButtonLabel: '취소',
+                clearButtonLabel: '지우기',
+                okButtonLabel: '확인',
+                todayButtonLabel: '오늘',
+              }}
             >
-              <Typography variant="h3">최근 활동</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  py: 1,
-                  borderBottom: 1,
-                  borderColor: 'divider'
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      포모도로 세션 완료
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      25분 집중 학습
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    2시간 전
-                  </Typography>
-                </Box>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  py: 1,
-                  borderBottom: 1,
-                  borderColor: 'divider'
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      플래시카드 학습
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      영어 단어 20개 복습
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    4시간 전
-                  </Typography>
-                </Box>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  py: 1
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      노트 작성
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      "React 컴포넌트 설계" 노트 생성
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    6시간 전
-                  </Typography>
-                </Box>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        </Card>
-      </Box>
-
-      {/* 통계, 캘린더 - 가로 배치 */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-        gap: 3,
-        mb: 4
-      }}>
-        <Card cardVariant="default">
-          <Typography variant="h3" gutterBottom>
-            복습 일정 관리
-          </Typography>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* 오늘 학습해야할 카드 */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              p: 2,
-              backgroundColor: '#e8f5e8',
-              borderRadius: 1,
-              border: '1px solid #c8e6c9'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#4caf50',
-                  borderRadius: 1
-                }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {/* 오늘 복습 */}
-                    오늘 학습해야할 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    오늘 학습해야할 카드
-                  </Typography> */}
-                </Box>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
-                {todayCards === null ? '...' : todayCards}
-              </Typography>
-            </Box>
-
-            {/* 3일내 학습해야할 카드 */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              p: 2,
-              backgroundColor: '#fff3e0',
-              borderRadius: 1,
-              border: '1px solid #ffcc02'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#ff9800',
-                  borderRadius: 1
-                }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {/* 3일 이내 복습 */}
-                    3일내 학습해야할 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    3일내 학습해야할 카드
-                  </Typography> */}
-                </Box>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
-                {within3DaysCards === null ? '...' : within3DaysCards}
-              </Typography>
-            </Box>
-
-            {/* 하루이상 지난 카드 */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              p: 2,
-              backgroundColor: '#ffebee',
-              borderRadius: 1,
-              border: '1px solid #ffcdd2'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#f44336',
-                  borderRadius: 1
-                }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    복습 미완료 or 하루이상 지난 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    복습 미완료 or 하루이상 지난 카드
-                  </Typography> */}
-                </Box>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#f44336' }}>
-                {overdueCards === null ? '...' : overdueCards}
-              </Typography>
-            </Box>
-          </Box>
-        </Card>
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            adapterLocale="ko"
-            localeText={{
-              calendarWeekNumberHeaderText: '주',
-              previousMonth: '이전 달',
-              nextMonth: '다음 달',
-              openPreviousView: '이전 보기',
-              openNextView: '다음 보기',
-              start: '시작',
-              end: '끝',
-              cancelButtonLabel: '취소',
-              clearButtonLabel: '지우기',
-              okButtonLabel: '확인',
-              todayButtonLabel: '오늘',
-            }}
-          >
-            <DateCalendar
-              defaultValue={dayjs()}
-              slots={{ day: CustomDay }}
-              dayOfWeekFormatter={(date) => date.locale('ko').format('dd')}
-            />
-          </LocalizationProvider>
-        </Card>
-      </Box>
+              <DateCalendar
+                defaultValue={dayjs()}
+                slots={{ day: CustomDay }}
+                dayOfWeekFormatter={(date) => date.locale('ko').format('dd')}
+              />
+            </LocalizationProvider>
+          </Card>
+        </Grid>
+      </Grid>
     </Container>
   );
 };
