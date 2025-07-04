@@ -1745,6 +1745,24 @@ const TimerPage: React.FC = () => {
                   },
                 }}
               />
+              <IconButton
+                size="small"
+                onClick={() => setNotesExpanded(true)}
+                sx={{
+                  color: '#6B7280',
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  '&:hover': {
+                    color: '#374151',
+                    backgroundColor: '#E5E7EB',
+                  },
+                }}
+                aria-label="노트 확대"
+              >
+                <ExpandIcon fontSize="small" />
+              </IconButton>
             </Box>
           </NotesHeader>
 
@@ -2043,13 +2061,13 @@ const TimerPage: React.FC = () => {
           <PresetsSection>
             <PresetsTitle>Presets</PresetsTitle>
             <PresetButton onClick={() => handlePreset('deep')}>
-              심층 학습 (50 min / 10 min)
+              심층 학습 (3 session / 50 min / 10 min)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('pomodoro')}>
-              포모도로 학습 (25 min / 5 min)
+              포모도로 학습 (4 session / 25 min / 5 min)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('quick')}>
-              빠른 학습 (15 min / 3 min)
+              빠른 학습 (6 session / 15 min / 3 min)
             </PresetButton>
           </PresetsSection>
         </SettingsContainer>
