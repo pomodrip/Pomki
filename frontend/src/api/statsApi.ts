@@ -1,12 +1,13 @@
 import api from './index';
 import type { DashboardStats } from '../types/study';
+import type { ApiResponse } from '../types/api';
 
 /**
  * 메인 대시보드에 필요한 모든 통계를 한번에 조회합니다.
  */
 export const getDashboardData = async (): Promise<DashboardStats> => {
-  const response = await api.get<DashboardStats>('/api/v1/stats/dashboard');
-  return response.data;
+  const response = await api.get<ApiResponse<DashboardStats>>('/api/v1/stats/dashboard');
+  return (response.data as ApiResponse<DashboardStats>).data as DashboardStats;
 };
 
 /**

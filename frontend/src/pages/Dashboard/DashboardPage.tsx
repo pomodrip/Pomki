@@ -72,7 +72,14 @@ const DashboardPage: React.FC = () => {
   // DateCalendar에서 사용할 커스텀 Day 컴포넌트
   const CustomDay = (props: PickersDayProps<dayjs.Dayjs>) => {
     const { day, outsideCurrentMonth, ...other } = props;
-    const attendedDates = dashboardData?.attendance?.attendedDates || [];
+    // 백엔드 응답 구조 호환 처리
+    const attendedDates = (
+      // 1) 새로운 구조: attendance.attendedDates
+      dashboardData?.attendance?.attendedDates ??
+      // 2) 기존 구조: attendanceDates 루트 필드
+      (dashboardData as any)?.attendanceDates ??
+      []
+    ) as string[];
     const dateStr = day.format('YYYY-MM-DD');
     const isSunday = day.day() === 0;
     const isSaturday = day.day() === 6;
