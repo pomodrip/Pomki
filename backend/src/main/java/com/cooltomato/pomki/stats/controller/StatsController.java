@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
+@Tag(name = "Statistics", description = "학습 통계 및 대시보드 API")
 @RestController
 @RequestMapping("/api/stats")
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class StatsController {
 
     private final StudyLogService studyLogService;
 
+    @Operation(summary = "대시보드 통계 조회", description = "월별 학습 통계 및 대시보드 정보를 조회합니다.")
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardStatsResponseDto> getDashboardStats(
             @RequestParam(required = false) Integer year,

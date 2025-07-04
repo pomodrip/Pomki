@@ -7,6 +7,8 @@ import com.cooltomato.pomki.note.dto.NoteResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.service.NoteService;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Note", description = "노트 관리 API")
 @RestController
 @RequestMapping("/api/notes")
 @RequiredArgsConstructor
 public class NoteController {
 
     private final NoteService noteService;
+    @Operation(summary = "노트 생성", description = "새로운 노트를 생성합니다.")
     @PostMapping
     public ResponseEntity<NoteResponseDto> createNote(@Valid @RequestBody NoteCreateRequestDto noteRequestDto,
                                                       @AuthenticationPrincipal PrincipalMember memberInfoDto) {
@@ -30,12 +34,14 @@ public class NoteController {
                 .body(responseDto);
     }
 
+    @Operation(summary = "노트 목록 조회", description = "사용자의 모든 노트 목록을 조회합니다.")
     @GetMapping
     public ResponseEntity<List<NoteListResponseDto>> readNote(@AuthenticationPrincipal PrincipalMember memberInfoDto) {
         List<NoteListResponseDto> responseDto = noteService.readNote(memberInfoDto);
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "노트 단건 조회", description = "노트 ID로 단일 노트 정보를 조회합니다.")
     @GetMapping("/{id}")
     public ResponseEntity<NoteResponseDto> readNoteById(@Parameter(name = "id", example = "1", description = "복습노트 고유 아이디", required = true)
                                                         @PathVariable("id") String id,
@@ -44,6 +50,7 @@ public class NoteController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "노트 삭제", description = "노트를 삭제합니다.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNote(@Parameter(name = "id", example = "1", description = "복습노트 고유 아이디", required = true)
                                            @PathVariable("id") String id,
@@ -51,6 +58,7 @@ public class NoteController {
         noteService.deleteNote(id, memberInfoDto);
         return ResponseEntity.noContent().build();
     }
+    @Operation(summary = "노트 수정", description = "노트의 제목, 내용을 수정합니다.")
     @PutMapping("/{id}")
     public ResponseEntity<NoteResponseDto> updateNote(@Parameter(name = "id", example = "1", description = "복습노트 고유 아이디", required = true)
                                                       @PathVariable("id") String id,
