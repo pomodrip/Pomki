@@ -6,8 +6,24 @@ import type { ApiResponse } from '../types/api';
  * 메인 대시보드에 필요한 모든 통계를 한번에 조회합니다.
  */
 export const getDashboardData = async (): Promise<DashboardStats> => {
-  const response = await api.get<ApiResponse<DashboardStats>>('/api/v1/stats/dashboard');
-  return (response.data as ApiResponse<DashboardStats>).data as DashboardStats;
+  const response = await api.get<ApiResponse<any>>('/api/v1/stats/dashboard');
+  const raw = (response.data as ApiResponse<any>).data;
+
+  // 새로운 백엔드 구조(todayStudy) ↔ 구 구조(studyTime) 매핑
+  if (raw.todayStudy) {
+    const {
+      totalFocusMinutes = 0,
+      goalMinutes = raw.todayStudy.goalMinutes ?? 60,
+    } = raw.todayStudy;
+
+    raw.studyTime = {
+      todayStudyMinutes: totalFocusMinutes,
+      dailyGoalMinutes: goalMinutes,
+    };
+  }
+
+  // 과거 구조에서 studyTime 필드가 이미 올바른 경우 그대로 유지
+  return raw as DashboardStats;
 };
 
 /**

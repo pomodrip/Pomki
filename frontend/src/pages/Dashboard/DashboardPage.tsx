@@ -123,6 +123,31 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    // 대시보드 실시간 갱신 이벤트 리스너 등록
+    const refreshHandler = () => fetchDashboardData();
+    window.addEventListener('refresh-dashboard', refreshHandler);
+
+    const updateHandler = (e: any) => {
+      const { totalMinutes, addedMinutes } = e.detail || {};
+      setDashboardData(prev => {
+        if (!prev) return prev;
+        const current = prev.studyTime?.todayStudyMinutes ?? 0;
+        const newTotal = totalMinutes ?? current + (addedMinutes || 0);
+        return {
+          ...prev,
+          studyTime: {
+            ...prev.studyTime,
+            todayStudyMinutes: newTotal,
+          },
+        } as DashboardStats;
+      });
+    };
+    window.addEventListener('update-focus-time', updateHandler);
+
+    return () => {
+      window.removeEventListener('refresh-dashboard', refreshHandler);
+      window.removeEventListener('update-focus-time', updateHandler);
+    };
   }, [fetchDashboardData]);
 
   const handleAttendance = async () => {

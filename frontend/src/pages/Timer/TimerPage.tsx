@@ -842,14 +842,97 @@ const TimerPage: React.FC = () => {
     }
   }, [autoSaveEnabled]);
 
-  // 학습 시간 기록
+  // -------------------------------------------
+  // 📊 학습 시간 실시간 누적 & 기록 로직
+  // -------------------------------------------
+
+  // ⏱️ 현재 모드(FOCUS/SHORT_BREAK 등)에서 경과한 초 누적용 ref
+  const modeElapsedSecRef = useRef(0);
+  // 이전 렌더에서의 남은 시간을 기록하여 diff 계산
+  const prevTimeSecRef = useRef<number | null>(null);
+  // 이전 모드 기록용 ref (모드 전환 감지)
+  const prevModeRef = useRef(mode);
+
+  // 1) tick마다 경과 시간 누적 (isRunning 상태에서만)
   useEffect(() => {
-    if (isCompleted && mode === 'FOCUS') {
-      recordStudyTime(settings.focusTime)
-        .then(() => console.log(`${settings.focusTime}분 학습 시간 기록 완료`))
-        .catch(err => console.error('학습 시간 기록 실패:', err));
+    const currentSec = currentTime.minutes * 60 + currentTime.seconds;
+    if (isRunning && prevTimeSecRef.current !== null) {
+      const diff = prevTimeSecRef.current - currentSec;
+      if (diff > 0) {
+        modeElapsedSecRef.current += diff; // 초 단위 누적
+      }
+      // 디버깅 로그
+      console.log('[TICK]', {
+        mode,
+        diff,
+        totalElapsedSec: modeElapsedSecRef.current,
+      });
     }
-  }, [isCompleted, mode, settings.focusTime]);
+    prevTimeSecRef.current = currentSec;
+  }, [currentTime, isRunning]);
+
+  // 🔄 누적된 시간을 서버에 기록하고 초기화하는 헬퍼
+  const flushElapsed = useCallback(async (reason: string) => {
+    console.log('[FLUSH START]', reason, 'elapsedSec', modeElapsedSecRef.current);
+    const minutesSpent = Math.round(modeElapsedSecRef.current / 60);
+    if (minutesSpent > 0) {
+      try {
+        const res = await recordStudyTime(minutesSpent);
+        const totalMinutes = (res?.totalMinutes ?? null) as number | null;
+        console.log(`✅ ${minutesSpent}분 학습 시간 기록 완료 (${reason})`, { totalMinutes });
+        window.dispatchEvent(new CustomEvent('update-focus-time', {
+          detail: {
+            addedMinutes: minutesSpent,
+            totalMinutes,
+          },
+        }));
+        window.dispatchEvent(new CustomEvent('refresh-dashboard'));
+      } catch (err) {
+        console.error('❌ 학습 시간 기록 실패:', err);
+      } finally {
+        modeElapsedSecRef.current = 0; // 초기화
+      }
+    }
+  }, []);
+
+  // 2) 모드 전환 시: 이전 모드의 누적 시간을 기록
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      flushElapsed('모드 전환');
+      prevModeRef.current = mode;
+      // prevTimeSec을 현재 모드의 시작 시점으로 재설정
+      prevTimeSecRef.current = currentTime.minutes * 60 + currentTime.seconds;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // 3) 페이지 언마운트 시 누적 시간 기록
+  useEffect(() => {
+    return () => {
+      flushElapsed('언마운트');
+    };
+  }, []);
+
+  // 4) 브라우저 종료/새로고침(완전 언로드) 대비: sendBeacon 사용
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const minutesSpent = Math.round(modeElapsedSecRef.current / 60);
+      if (minutesSpent > 0 && navigator.sendBeacon) {
+        try {
+          const blob = new Blob([JSON.stringify({ studyMinutes: minutesSpent })], {
+            type: 'application/json',
+          });
+          navigator.sendBeacon('/api/v1/stats/study-time', blob);
+          // 누적 초기화 (다음 unload 중복 방지)
+          modeElapsedSecRef.current = 0;
+        } catch (err) {
+          console.error('sendBeacon 실패:', err);
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const handleStart = () => {
     if (isRunning) {
@@ -867,6 +950,8 @@ const TimerPage: React.FC = () => {
   };
 
   const handleConfirmReset = () => {
+    // 리셋 전에 누적된 시간을 기록
+    flushElapsed('리셋');
     reset();
     setHasTimerStarted(false);
     setShowResetDialog(false);
@@ -947,7 +1032,7 @@ const TimerPage: React.FC = () => {
         saveTempNote(tempData);
         console.log('📁 수동 임시 저장 완료:', tempData);
         updateTempSaveStatus(); // 저장 후 상태 업데이트
-        // alert 대신 콘솔 로그만 (UI 방해 최소화)
+        // alert 대신 콘씔 로그만 (UI 방해 최소화)
       }
     } catch (error) {
       console.error('❌ 수동 임시 저장 실패:', error);
@@ -2078,9 +2163,9 @@ const TimerPage: React.FC = () => {
               value={tempSettings.focusMinutes}
               onChange={(value) => setTempSettings(prev => ({ ...prev, focusMinutes: value }))}
               label="집중 시간"
-              min={5}
+              min={1}
               max={120}
-              step={5}
+              step={1}
               boxWidth={100}
             />
             <WheelTimeAdjuster
