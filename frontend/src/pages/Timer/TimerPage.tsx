@@ -1281,21 +1281,47 @@ const TimerPage: React.FC = () => {
               }}
             />
           </Box>
-          <IconButton
-            size="small"
-            onClick={() => setNotesExpanded(true)}
-            sx={{
-              color: '#6B7280',
-              backgroundColor: '#F3F4F6',
-              borderRadius: '50%',
-              width: 32,
-              height: 32,
-              ml: { xs: 0, sm: 1 },
-            }}
-            aria-label="노트 확대"
-          >
-            <ExpandIcon fontSize="small" />
-          </IconButton>
+          {/* 확대/축소 버튼 조건부 렌더링 및 hover 배경 제거 */}
+          {!notesExpanded && (
+            <IconButton
+              size="small"
+              onClick={() => setNotesExpanded(true)}
+              sx={{
+                color: '#6B7280',
+                backgroundColor: 'transparent',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                ml: { xs: 0, sm: 1 },
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+              }}
+              aria-label="노트 확대"
+            >
+              <ExpandIcon fontSize="small" />
+            </IconButton>
+          )}
+          {notesExpanded && (
+            <IconButton
+              size="small"
+              onClick={() => setNotesExpanded(false)}
+              sx={{
+                color: '#6B7280',
+                backgroundColor: 'transparent',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                ml: { xs: 0, sm: 1 },
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+              }}
+              aria-label="노트 축소"
+            >
+              <CompressIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </NotesHeader>
 
@@ -1743,21 +1769,47 @@ const TimerPage: React.FC = () => {
                   }}
                 />
               </Box>
-              <IconButton
-                size="small"
-                onClick={() => setNotesExpanded(true)}
-                sx={{
-                  color: '#6B7280',
-                  backgroundColor: '#F3F4F6',
-                  borderRadius: '50%',
-                  width: 32,
-                  height: 32,
-                  ml: { xs: 0, sm: 1 },
-                }}
-                aria-label="노트 확대"
-              >
-                <ExpandIcon fontSize="small" />
-              </IconButton>
+              {/* 확대/축소 버튼 조건부 렌더링 및 hover 배경 제거 */}
+              {!notesExpanded && (
+                <IconButton
+                  size="small"
+                  onClick={() => setNotesExpanded(true)}
+                  sx={{
+                    color: '#6B7280',
+                    backgroundColor: 'transparent',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    ml: { xs: 0, sm: 1 },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                  aria-label="노트 확대"
+                >
+                  <ExpandIcon fontSize="small" />
+                </IconButton>
+              )}
+              {notesExpanded && (
+                <IconButton
+                  size="small"
+                  onClick={() => setNotesExpanded(false)}
+                  sx={{
+                    color: '#6B7280',
+                    backgroundColor: 'transparent',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    ml: { xs: 0, sm: 1 },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                  aria-label="노트 축소"
+                >
+                  <CompressIcon fontSize="small" />
+                </IconButton>
+              )}
             </Box>
           </NotesHeader>
 
