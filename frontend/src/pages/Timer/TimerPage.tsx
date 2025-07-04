@@ -1122,7 +1122,7 @@ const TimerPage: React.FC = () => {
             ·
           </Text>
           <Text sx={{ fontSize: '14px', fontWeight: 600, color: '#2563EB' }}>
-            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+            {mode === 'FOCUS' ? '집중시간' : '휴식시간'}
           </Text>
           <Text sx={{ 
             fontSize: '16px', 
@@ -1186,7 +1186,7 @@ const TimerPage: React.FC = () => {
             ·
           </Text>
           <Text sx={{ fontSize: '16px', fontWeight: 600, color: '#2563EB' }}>
-            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+            {mode === 'FOCUS' ? '집중시간' : '휴식시간'}
           </Text>
           <Text sx={{ 
             fontSize: '20px', 
@@ -1325,7 +1325,7 @@ const TimerPage: React.FC = () => {
         disabled={!isRunning}
         placeholder={
           isRunning
-            ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+            ? "이번 세션에서 주제나 목표를 기록해보세요..."
             : "타이머를 시작하면 입력할 수 있습니다"
         }
         aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -1774,7 +1774,7 @@ const TimerPage: React.FC = () => {
             disabled={!isRunning}
             placeholder={
               isRunning
-                ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+                ? "이번 세션에서 주제나 목표를 기록해보세요..."
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
