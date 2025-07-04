@@ -12,7 +12,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+
+import com.cooltomato.pomki.stats.dto.SimpleDashboardStatsDto;
+import com.cooltomato.pomki.stats.dto.TodayStatsDto;
+import com.cooltomato.pomki.stats.repository.StudyLogRepository;
+import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.deck.repository.DeckRepository;
+import com.cooltomato.pomki.card.repository.CardRepository;
+import com.cooltomato.pomki.card.repository.CardStatRepository;
+import com.cooltomato.pomki.card.service.ReviewService;
+import com.cooltomato.pomki.deck.entity.Deck;
+import com.cooltomato.pomki.auth.dto.PrincipalMember;
+
+import java.time.DayOfWeek;
+import java.time.YearMonth;
 
 // 출석 기록 및 학습 시간 누적 서비스
 @Service
@@ -24,6 +40,12 @@ public class StatsService {
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final StudyLogService studyLogService;
+    private final StudyLogRepository studyLogRepository;
+    private final NoteRepository noteRepository;
+    private final DeckRepository deckRepository;
+    private final CardRepository cardRepository;
+    private final ReviewService reviewService;
+    private final CardStatRepository cardStatRepository;
 
     /**
      * 출석 기록 - 중복 방지 + 연속 출석 관리
@@ -208,5 +230,174 @@ public class StatsService {
         public Double getAverageStudyMinutesPerDay() { return averageStudyMinutesPerDay; }
         public String getStudyLevel() { return studyLevel; }
         public Boolean getIsActiveStudier() { return isActiveStudier; }
+    }
+
+    // ====================================================================
+    // == SimpleDashboardStatsService에서 마이그레이션된 기능 ==
+    // ====================================================================
+
+    public SimpleDashboardStatsDto getDashboardStats(PrincipalMember principal) {
+        Long memberId = principal.getMemberInfo().getMemberId();
+        log.info("Getting simple dashboard stats for member: {}", memberId);
+
+        return SimpleDashboardStatsDto.builder()
+                .todayStudy(getTodayStudyStats(memberId))
+                .weeklyStats(getWeeklyStats(memberId))
+                .reviewStats(getReviewStats(principal))
+                .attendanceDates(getAttendanceDates(memberId))
+                .totalStats(getTotalStats(memberId))
+                .build();
+    }
+
+    public SimpleDashboardStatsDto.TodayStudyStats getTodayStatsOnly(PrincipalMember principal) {
+        return getTodayStudyStats(principal.getMemberInfo().getMemberId());
+    }
+
+    public SimpleDashboardStatsDto.WeeklyStats getWeeklyStatsOnly(PrincipalMember principal) {
+        return getWeeklyStats(principal.getMemberInfo().getMemberId());
+    }
+
+    public SimpleDashboardStatsDto.ReviewStats getReviewStatsOnly(PrincipalMember principal) {
+        return getReviewStats(principal);
+    }
+
+    public SimpleDashboardStatsDto.TotalStats getTotalStatsOnly(PrincipalMember principal) {
+        return getTotalStats(principal.getMemberInfo().getMemberId());
+    }
+
+    private SimpleDashboardStatsDto.TodayStudyStats getTodayStudyStats(Long memberId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        TodayStatsDto todayStats = studyLogRepository.getTodayStats(memberId, startOfDay);
+        int goalMinutes = 240;
+        int progressPercentage = goalMinutes > 0 ?
+                Math.min((int)((todayStats.getTotalFocusMinutes() * 100) / goalMinutes), 100) : 0;
+        int todayActivities = (int)(todayStats.getTotalFocusMinutes() / 25);
+
+        return SimpleDashboardStatsDto.TodayStudyStats.builder()
+                .totalFocusMinutes(todayStats.getTotalFocusMinutes())
+                .pomodoroCompleted((int)todayStats.getPomodoroSessionsCompleted())
+                .goalMinutes(goalMinutes)
+                .progressPercentage(progressPercentage)
+                .todayActivities(todayActivities)
+                .build();
+    }
+
+    private SimpleDashboardStatsDto.WeeklyStats getWeeklyStats(Long memberId) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).toLocalDate().atStartOfDay();
+        LocalDateTime endOfWeek = startOfWeek.plusDays(7);
+        List<LocalDate> weeklyDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+                memberId, startOfWeek, endOfWeek);
+        int studyDaysThisWeek = weeklyDates.size();
+        int currentStreak = calculateSimpleStreak(memberId);
+        Long totalWeeklyMinutes = studyLogRepository.getWeeklyStudyMinutes(memberId, startOfWeek, endOfWeek);
+        double avgDailyMinutes = studyDaysThisWeek > 0 ?
+                (double)totalWeeklyMinutes / studyDaysThisWeek : 0;
+
+        return SimpleDashboardStatsDto.WeeklyStats.builder()
+                .studyDaysThisWeek(studyDaysThisWeek)
+                .totalWeeklyMinutes(totalWeeklyMinutes)
+                .currentStreak(currentStreak)
+                .avgDailyMinutes(avgDailyMinutes)
+                .build();
+    }
+
+    private SimpleDashboardStatsDto.ReviewStats getReviewStats(PrincipalMember principal) {
+        Long memberId = principal.getMemberInfo().getMemberId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        LocalDateTime startOfToday = today.atStartOfDay();
+        LocalDateTime endOfToday = today.plusDays(1).atStartOfDay();
+
+        try {
+            // 1. 오늘 학습해야할 카드 수 (정확히 오늘 만기)
+            int todayOnlyCards = cardStatRepository.countByMember_MemberIdAndDueAtBetween(memberId, startOfToday, endOfToday);
+
+            // 2. 복습 미완료 카드 수 (오늘 이전)
+            int overdueCards = cardStatRepository.countByMember_MemberIdAndDueAtBefore(memberId, startOfToday);
+
+            // 3. 3일 내 학습해야할 카드 수 (내일 ~ 3일 뒤)
+            LocalDateTime tomorrow = endOfToday;
+            LocalDateTime in3Days = tomorrow.plusDays(3);
+            int upcoming3DaysCards = cardStatRepository.countByMember_MemberIdAndDueAtBetween(memberId, tomorrow, in3Days);
+
+            // 4. 오늘 완료한 복습 개수
+            int completedReviews = cardStatRepository.countByMember_MemberIdAndLastReviewedAtBetween(memberId, startOfToday, now);
+            
+            return SimpleDashboardStatsDto.ReviewStats.builder()
+                    .todayReviewCards(todayOnlyCards)
+                    .overdueCards(overdueCards)
+                    .upcoming3DaysCards(upcoming3DaysCards)
+                    .completedReviews(completedReviews)
+                    .mostDifficultCard("통계 준비중")
+                    .build();
+        } catch (Exception e) {
+            log.warn("Failed to get review stats for member {}: {}", memberId, e.getMessage());
+            return SimpleDashboardStatsDto.ReviewStats.builder()
+                    .todayReviewCards(0)
+                    .completedReviews(0)
+                    .overdueCards(0)
+                    .upcoming3DaysCards(0)
+                    .mostDifficultCard("오류 발생")
+                    .build();
+        }
+    }
+
+    private List<LocalDate> getAttendanceDates(Long memberId) {
+        YearMonth currentMonth = YearMonth.now();
+        return studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+                memberId,
+                currentMonth.atDay(1).atStartOfDay(),
+                currentMonth.atEndOfMonth().atTime(23, 59, 59)
+        );
+    }
+
+    private SimpleDashboardStatsDto.TotalStats getTotalStats(Long memberId) {
+        try {
+            Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+            long totalNotes = noteRepository.findAllByMemberAndIsDeletedIsFalse(member).size();
+            List<Deck> decks = deckRepository.findAllDecksByMemberIdAndIsDeletedFalse(memberId);
+            List<String> deckIds = decks.stream().map(Deck::getDeckId).toList();
+            long totalCards = 0;
+            if (!deckIds.isEmpty()) {
+                totalCards = cardRepository.findByDeckDeckIdInAndIsDeletedFalse(deckIds).size();
+            }
+            LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+            List<LocalDate> allStudyDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+                    memberId, oneYearAgo, LocalDateTime.now());
+            long totalStudyDays = allStudyDates.size();
+            long totalFocusHours = totalStudyDays * 2;
+
+            return SimpleDashboardStatsDto.TotalStats.builder()
+                    .totalNotes(totalNotes)
+                    .totalCards(totalCards)
+                    .totalStudyDays(totalStudyDays)
+                    .totalFocusHours(totalFocusHours)
+                    .build();
+        } catch (Exception e) {
+            log.warn("Failed to get total stats: {}", e.getMessage());
+            return SimpleDashboardStatsDto.TotalStats.builder()
+                    .totalNotes(0L)
+                    .totalCards(0L)
+                    .totalStudyDays(0L)
+                    .totalFocusHours(0L)
+                    .build();
+        }
+    }
+
+    private int calculateSimpleStreak(Long memberId) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        List<LocalDate> recentDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+                memberId, thirtyDaysAgo, LocalDateTime.now());
+        if (recentDates.isEmpty()) return 0;
+        LocalDate today = LocalDate.now();
+        int streak = 0;
+        for (int i = 0; i < 30; i++) {
+            LocalDate checkDate = today.minusDays(i);
+            if (recentDates.contains(checkDate)) streak++;
+            else break;
+        }
+        return streak;
     }
 } 

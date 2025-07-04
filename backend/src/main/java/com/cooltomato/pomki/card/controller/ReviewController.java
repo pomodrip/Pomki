@@ -1,11 +1,11 @@
 package com.cooltomato.pomki.card.controller;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
+import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.dto.CardReviewRequestDto;
-import com.cooltomato.pomki.card.entity.CardStat;
 import com.cooltomato.pomki.card.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,111 +14,56 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/v1/review")
 @RequiredArgsConstructor
+@Tag(name = "Review API", description = "카드 복습 및 스케줄링 관련 API")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping("/batch-complete")
-    @Operation(summary = "학습 세션의 카드 복습 결과 일괄 처리",
-               description = "정상적인 학습 종료 시 호출됩니다.")
-    public ResponseEntity<Void> completeStudySession(
-            @RequestBody List<CardReviewRequestDto> reviewRequests,
+    @GetMapping("/session-cards")
+    @Operation(summary = "학습 세션용 카드 목록 조회",
+               description = "새로운 학습 세션을 시작할 때 호출합니다. 복습 기한이 오늘이거나 이미 지난 모든 카드를 한 번에 조회합니다.")
+    public ResponseEntity<List<CardResponseDto>> getCardsForSession(
             @AuthenticationPrincipal PrincipalMember principal) {
-        reviewService.completeStudySession(reviewRequests, principal);
-        return ResponseEntity.ok().build();
+        List<CardResponseDto> cards = reviewService.getTodayReviewCards(principal);
+        return ResponseEntity.ok(cards);
     }
 
-    @PostMapping("/batch-complete-beacon")
-    @Operation(summary = "페이지 이탈 시 Beacon을 통한 일괄 처리",
-               description = "브라우저 이탈 시 데이터 유실 방지를 위해 호출됩니다.")
-    public ResponseEntity<Void> completeStudySessionWithBeacon(
+    @PostMapping("/batch-complete")
+    @Operation(summary = "카드 복습 결과 일괄 처리",
+               description = "학습 세션 종료 시, 카드별 평가(hard, confuse, easy) 결과를 이 API로 일괄 전송합니다.")
+    public ResponseEntity<Void> batchCompleteReview(
             @RequestBody List<CardReviewRequestDto> reviewRequests,
             @AuthenticationPrincipal PrincipalMember principal) {
-        if (principal != null) {
-            reviewService.completeStudySession(reviewRequests, principal);
-        }
+        reviewService.batchCompleteReview(reviewRequests, principal);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/today")
-    @Operation(summary = "오늘 복습할 카드 목록 조회")
-    public ResponseEntity<List<CardStat>> getTodayReviewCards(
+    @Operation(summary = "오늘 학습할 카드 목록 상세 조회",
+               description = "복습 주기가 정확히 오늘인 카드들의 목록을 조회합니다.")
+    public ResponseEntity<List<CardResponseDto>> getTodaysCards(
             @AuthenticationPrincipal PrincipalMember principal) {
-        List<CardStat> cards = reviewService.getTodayReviewCards(principal);
+        List<CardResponseDto> cards = reviewService.getCardsForToday(principal);
         return ResponseEntity.ok(cards);
     }
 
-    @PostMapping("/complete/{cardId}")
-    @Operation(summary = "카드 복습 완료 처리",
-               description = "⚠️ 복잡한 SM-2 알고리즘 사용. 일반적인 경우 /complete-simple 사용 권장")
-    public ResponseEntity<Void> completeCardReview(
-            @Parameter(description = "카드 ID") @PathVariable Long cardId,
-            @Parameter(description = "난이도 (easy, good, hard, again)") 
-            @RequestParam String difficulty,
+    @GetMapping("/overdue")
+    @Operation(summary = "밀린 카드 목록 상세 조회",
+               description = "복습 주기가 이미 지난 카드들의 목록을 조회합니다.")
+    public ResponseEntity<List<CardResponseDto>> getOverdueCards(
             @AuthenticationPrincipal PrincipalMember principal) {
-        
-        // ⚠️ 복잡한 SM-2 알고리즘 - 특별한 경우에만 사용
-        // 일반적인 경우 POST /complete-simple/{cardId} 사용 권장
-        reviewService.completeCardReview(cardId, difficulty, principal);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/complete-simple/{cardId}")
-    @Operation(summary = "카드 복습 완료 처리 (단순화된 버전 - 권장)",
-               description = "✅ 권장: hard(1일), confuse(3일), easy(5일) 단순 주기")
-    public ResponseEntity<Void> completeCardReviewSimple(
-            @Parameter(description = "카드 ID") @PathVariable Long cardId,
-            @Parameter(description = "난이도 (hard: 1일, confuse: 3일, easy: 5일)") 
-            @RequestParam String difficulty,
-            @AuthenticationPrincipal PrincipalMember principal) {
-        
-        // ✅ 권장: 단순하고 예측 가능한 학습 주기
-        reviewService.completeCardReviewSimple(cardId, difficulty, principal);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/stats")
-    @Operation(summary = "복습 통계 조회")
-    public ResponseEntity<ReviewService.ReviewStats> getReviewStats(
-            @AuthenticationPrincipal PrincipalMember principal) {
-        ReviewService.ReviewStats stats = reviewService.getReviewStats(principal);
-        return ResponseEntity.ok(stats);
-    }
-
-    @GetMapping("/optimized")
-    @Operation(summary = "최적화된 복습 카드 조회 (일일 제한 + 우선순위)")
-    public ResponseEntity<List<CardStat>> getOptimizedReviewCards(
-            @RequestParam(required = false) Integer maxCards,
-            @AuthenticationPrincipal PrincipalMember principal) {
-        List<CardStat> cards = reviewService.getOptimizedReviewCards(principal, maxCards);
+        List<CardResponseDto> cards = reviewService.getOverdueCards(principal);
         return ResponseEntity.ok(cards);
     }
 
-    @GetMapping("/analysis")
-    @Operation(summary = "개인화된 학습 성과 분석")
-    public ResponseEntity<ReviewService.LearningAnalysis> getLearningAnalysis(
+    @GetMapping("/upcoming")
+    @Operation(summary = "3일 내 학습할 카드 목록 상세 조회",
+               description = "복습 주기가 내일부터 3일 사이에 도래하는 카드들의 목록을 조회합니다.")
+    public ResponseEntity<List<CardResponseDto>> getUpcomingCards(
             @AuthenticationPrincipal PrincipalMember principal) {
-        ReviewService.LearningAnalysis analysis = reviewService.getLearningAnalysis(principal);
-        return ResponseEntity.ok(analysis);
-    }
-
-    @GetMapping("/struggling")
-    @Operation(summary = "취약한 카드 집중 복습 추천")
-    public ResponseEntity<List<CardStat>> getStrugglingCards(
-            @RequestParam(defaultValue = "10") int limit,
-            @AuthenticationPrincipal PrincipalMember principal) {
-        List<CardStat> cards = reviewService.getStrugglingCardsForReview(principal, limit);
+        List<CardResponseDto> cards = reviewService.getUpcomingCards(principal);
         return ResponseEntity.ok(cards);
-    }
-
-    @GetMapping("/load-recommendation")
-    @Operation(summary = "학습 부하 조절 추천")
-    public ResponseEntity<ReviewService.StudyLoadRecommendation> getStudyLoadRecommendation(
-            @AuthenticationPrincipal PrincipalMember principal) {
-        ReviewService.StudyLoadRecommendation recommendation = 
-                reviewService.getStudyLoadRecommendation(principal);
-        return ResponseEntity.ok(recommendation);
     }
 } 

@@ -18,5 +18,4 @@ public class CardResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isDeleted;
-
 }
