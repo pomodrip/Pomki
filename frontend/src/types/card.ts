@@ -28,6 +28,7 @@ export interface Card {
   updatedAt: string;
   isDeleted: boolean;
   tags: string[];
+  bookmarked: boolean;
 }
 
 
@@ -45,6 +46,7 @@ export interface SearchCard {
   updatedAt: string;
   isDeleted: boolean;
   tags: string[];
+  bookmarked: boolean;
 }
 
 /**

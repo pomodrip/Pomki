@@ -10,6 +10,7 @@ export interface ICardService {
   searchCards(keyword: string): Promise<SearchCard[]>;
   addCardTags(data: AddCardTagRequest): Promise<void>;
   removeCardTag(cardId: number, tagName: string): Promise<void>;
+  toggleBookmark(cardId: number, bookmarked: boolean): Promise<void>;
 }
 
 // 🎭 Mock 카드 서비스 구현
@@ -24,7 +25,8 @@ class MockCardService implements ICardService {
       createdAt: '2024-01-15T10:30:00',
       updatedAt: '2024-01-15T10:30:00',
       deckName: '',
-      tags: ['React', 'JavaScript', 'Frontend']
+      tags: ['React', 'JavaScript', 'Frontend'],
+      bookmarked: false
     },
     {
       cardId: 2,
@@ -35,7 +37,8 @@ class MockCardService implements ICardService {
       createdAt: '2024-01-15T10:30:00',
       updatedAt: '2024-01-15T10:30:00',
       deckName: '',
-      tags: ['React', 'JSX']
+      tags: ['React', 'JSX'],
+      bookmarked: true
     }
   ];
   private nextCardId = 10;
@@ -68,7 +71,8 @@ class MockCardService implements ICardService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deckName: '',
-      tags: []
+      tags: [],
+      bookmarked: false
     };
     
     this.cards.push(newCard);
@@ -151,6 +155,19 @@ class MockCardService implements ICardService {
     this.cards[cardIndex].tags = existingTags.filter(tag => tag !== tagName);
     this.cards[cardIndex].updatedAt = new Date().toISOString();
   }
+
+  async toggleBookmark(cardId: number, bookmarked: boolean): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 북마크 상태 업데이트
+    this.cards[cardIndex].bookmarked = bookmarked;
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
+  }
 }
 
 // 🌐 실제 API 카드 서비스 구현
@@ -217,6 +234,19 @@ class RealCardService implements ICardService {
     } catch (error) {
       console.warn('⚠️ Real API (removeCardTag) 실패! Mock 동작으로 대체합니다.', error);
       return this.mockService.removeCardTag(cardId, tagName);
+    }
+  }
+
+  async toggleBookmark(cardId: number, bookmarked: boolean): Promise<void> {
+    try {
+      if (bookmarked) {
+        await cardApi.addCardBookmark(cardId);
+      } else {
+        await cardApi.removeCardBookmark(cardId);
+      }
+    } catch (error) {
+      console.warn('⚠️ Real API (toggleBookmark) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.toggleBookmark(cardId, bookmarked);
     }
   }
 }

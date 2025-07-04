@@ -53,7 +53,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['React', 'Frontend'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 2,
@@ -64,7 +65,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['React', 'JSX'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     },
     {
       cardId: 3,
@@ -75,7 +77,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['React', 'Hook'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 4,
@@ -86,7 +89,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['React', 'Hook', 'Lifecycle'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     },
     {
       cardId: 5,
@@ -97,7 +101,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['React', 'Component'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     }
   ],
   'deck-uuid-2': [
@@ -110,7 +115,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['Accounting', 'Finance'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 7,
@@ -121,7 +127,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['Accounting', 'Finance'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     }
   ],
   'deck-uuid-3': [
@@ -134,7 +141,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['CS', 'Methodology'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 9,
@@ -145,7 +153,8 @@ const mockCards: { [deckId: string]: Card[] } = {
       tags: ['CS', 'Methodology', 'Agile'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     }
   ]
 };
@@ -252,7 +261,8 @@ class MockDeckService implements IDeckService {
         isDeleted: card.isDeleted,
         createdAt: card.createdAt,
         updatedAt: card.updatedAt,
-        tags: card.tags
+        tags: card.tags,
+        bookmarked: card.bookmarked
       }));
     
     console.log('🎭 MockDeckService: searchCardsInDeck 결과', searchResults);

@@ -31,7 +31,8 @@ import {
   updateCard, 
   deleteCard, 
   setCurrentDeck,
-  addCardTags 
+  addCardTags,
+  toggleCardBookmark
 } from '../../store/slices/deckSlice';
 import { deckApiWithFallback } from '../../api/apiWithFallback';
 import * as cardApi from '../../api/cardApi';
@@ -101,18 +102,6 @@ const FlashCardListPage: React.FC = () => {
   
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
-  const [cardBookmarks, setCardBookmarks] = useState<{[key: number]: boolean}>({
-    1: false,
-    2: true,
-    3: false,
-    4: true,
-    5: false,
-    6: true,
-    7: false,
-    8: true,
-    9: false,
-  });
-  
 
   
   // 수정 다이얼로그 상태
@@ -217,11 +206,11 @@ const FlashCardListPage: React.FC = () => {
       const matchesTags = filters.selectedTags.length === 0 || 
                          filters.selectedTags.some((tag: string) => card.tags.includes(tag));
       
-      const matchesBookmark = !filters.showBookmarked || cardBookmarks[card.id];
+      const matchesBookmark = !filters.showBookmarked || Boolean((allCards.find(c => c.cardId === card.id)?.bookmarked));
 
       return matchesTags && matchesBookmark;
     });
-  }, [filters.selectedTags, filters.showBookmarked, flashCards, cardBookmarks, convertSearchResultsToFlashCards, searchResults]);
+  }, [filters.selectedTags, filters.showBookmarked, flashCards, allCards, convertSearchResultsToFlashCards, searchResults]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -345,34 +334,19 @@ const FlashCardListPage: React.FC = () => {
 
   const handleToggleBookmark = async (cardId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    
     try {
-      // 클라이언트 상태 즉시 업데이트 (UI 반응성)
-      const newBookmarkState = !cardBookmarks[cardId];
-      setCardBookmarks(prev => ({
-        ...prev,
-        [cardId]: newBookmarkState
-      }));
-      
-      // 향후 API 연동 시 서버 동기화
-      // await dispatch(updateCardBookmark({ cardId, isBookmarked: newBookmarkState }));
-      
-      console.log(`📌 카드 ${cardId} 북마크 ${newBookmarkState ? '추가' : '제거'}`);
-      
-      // 성공 토스트 메시지
-      dispatch(showToast({
-        message: newBookmarkState ? '북마크에 추가되었습니다.' : '북마크에서 제거되었습니다.',
-        severity: 'success'
-      }));
-      
+      const result = await dispatch(toggleCardBookmark(cardId));
+      if (result.meta.requestStatus === 'fulfilled') {
+        const { bookmarked } = result.payload as { bookmarked: boolean };
+        dispatch(showToast({
+          message: bookmarked ? '북마크에 추가되었습니다.' : '북마크에서 제거되었습니다.',
+          severity: 'success'
+        }));
+      } else {
+        throw new Error('북마크 토글 실패');
+      }
     } catch (error) {
-      // 실패 시 상태 롤백
       console.error('북마크 상태 변경 실패:', error);
-      setCardBookmarks(prev => ({
-        ...prev,
-        [cardId]: cardBookmarks[cardId] // 원래 상태로 되돌림
-      }));
-      
       dispatch(showToast({
         message: '북마크 상태 변경에 실패했습니다.',
         severity: 'error'
@@ -772,7 +746,7 @@ const FlashCardListPage: React.FC = () => {
             <FlashCard
               key={card.id}
               card={card}
-              isBookmarked={cardBookmarks[card.id]}
+              isBookmarked={Boolean((allCards.find(c=>c.cardId===card.id)?.bookmarked))}
               onToggleBookmark={handleToggleBookmark}
               onEdit={handleEditCard}
               onDelete={handleDeleteCard}
