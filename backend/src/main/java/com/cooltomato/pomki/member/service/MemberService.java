@@ -1,7 +1,9 @@
 package com.cooltomato.pomki.member.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +27,11 @@ import com.cooltomato.pomki.email.service.EmailService;
 import com.cooltomato.pomki.auth.jwt.JwtProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberService {
 
     private final MemberRepository memberRepository;
@@ -87,6 +91,30 @@ public class MemberService {
         return MemberInfoResponseDto.from(member);
     }
 
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponseDto readMemberWithBookmarks(Long memberId) {
+        Member member = memberRepository.findByMemberIdWithBookmarks(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
+        return MemberInfoResponseDto.from(member);
+    }
+
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponseDto readMemberWithCardBookmarks(Long memberId) {
+        Member member = memberRepository.findByMemberIdWithCardBookmarks(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
+        return MemberInfoResponseDto.from(member);
+    }
+
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponseDto readMemberWithTrashItems(Long memberId) {
+        Member member = memberRepository.findByMemberIdWithTrashItems(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
+        return MemberInfoResponseDto.from(member);
+    }
+
     @Transactional
     public void softDeleteMember(Long memberId) {
         Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
@@ -97,9 +125,30 @@ public class MemberService {
 
     @Transactional
     public void hardDeleteMember(Long memberId) {
+        Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
+        
         memberRepository.deleteById(memberId);
     }
 
+    @Scheduled(cron = "0 0 2 */2 * ?")
+    @Transactional
+    public void hardDeleteExpiredMembers() {
+
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        List<Member> targets =
+            memberRepository.findByIsDeletedTrueAndDeletedAtBefore(cutoff);
+
+        if (targets.isEmpty()) {
+            log.debug("삭제 대상 회원 없음");
+            return;
+        }
+
+        memberRepository.deleteAll(targets);
+        memberRepository.flush(); // 혹시몰라서 넣음    
+
+        log.info("탈퇴 후 30일 경과 회원 {}명 하드 삭제 완료", targets.size());
+    }
     @Transactional
     public MemberUpdateResponseDto updateMember(Long memberId, MemberUpdateRequestDto request) {
         Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
