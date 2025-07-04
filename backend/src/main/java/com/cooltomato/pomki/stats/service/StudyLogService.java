@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.sql.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -77,11 +78,12 @@ public class StudyLogService {
         TodayStatsDto todayStats = studyLogRepository.getTodayStats(memberId, LocalDate.now().atStartOfDay());
 
         YearMonth yearMonth = YearMonth.of(year, month);
-        List<LocalDate> attendanceDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+        List<java.sql.Date> sqlDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
                 memberId,
                 yearMonth.atDay(1).atStartOfDay(),
                 yearMonth.atEndOfMonth().atTime(23, 59, 59)
         );
+        List<LocalDate> attendanceDates = sqlDates.stream().map(java.sql.Date::toLocalDate).toList();
 
         return new DashboardStatsResponseDto(todayStats, attendanceDates);
     }

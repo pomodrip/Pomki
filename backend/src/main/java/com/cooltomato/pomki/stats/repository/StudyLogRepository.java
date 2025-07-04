@@ -13,7 +13,7 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Long> {
 
     // 캘린더의 '출석' 날짜 조회를 위한 쿼리
     @Query("SELECT DISTINCT CAST(s.createdAt AS date) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt BETWEEN :startDate AND :endDate ORDER BY CAST(s.createdAt AS date) ASC")
-    List<LocalDate> findDistinctActivityDatesByMemberAndPeriod(
+    List<java.sql.Date> findDistinctActivityDatesByMemberAndPeriod(
             @Param("memberId") Long memberId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
