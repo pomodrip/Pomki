@@ -5,6 +5,10 @@ import com.cooltomato.pomki.stats.dto.SimpleDashboardStatsDto;
 import com.cooltomato.pomki.stats.service.StatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +29,18 @@ public class StatsController {
     @GetMapping("/dashboard")
     @Operation(summary = "메인 대시보드 전체 데이터 조회",
                description = "메인 대시보드에 필요한 모든 통계(학습, 복습, 출석 등)를 한번에 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "대시보드 통계 조회 성공",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = SimpleDashboardStatsDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "401", 
+            description = "인증 실패"
+        )
+    })
     public ResponseEntity<Map<String, Object>> getDashboardStats(@AuthenticationPrincipal PrincipalMember principal) {
         SimpleDashboardStatsDto data = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(Map.of("success", true, "data", data));
