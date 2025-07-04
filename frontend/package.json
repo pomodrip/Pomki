@@ -21,6 +21,7 @@
     "framer-motion": "^12.17.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-quill": "^2.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
     "styled-components": "^6.1.19"

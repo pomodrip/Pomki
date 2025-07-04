@@ -6,38 +6,42 @@ import { hideToast, updateToastProgress } from '../../store/slices/toastSlice';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { ToastItem } from '../../store/slices/toastSlice';
 
+const HEADER_HEIGHT_DESKTOP = 72; // 실제 헤더 높이에 맞게 조정
+const BOTTOM_BAR_HEIGHT_MOBILE = 72; // 실제 바텀바 높이에 맞게 조정
+
 // maxWidth="md" 기준 중앙 정렬을 위한 Wrapper
-const CenterWrapper = styled(Box)(({ theme }) => ({
+const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
   position: 'fixed',
   left: '50%',
   transform: 'translateX(-50%)',
   width: '100%',
   maxWidth: theme.breakpoints.values.md, // md(900px) 기준 중앙 정렬
-  zIndex: theme.zIndex.snackbar,
+  zIndex: theme.zIndex.modal || 1300,
   pointerEvents: 'none',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  // 위치 설정
+  ...(isMobile
+    ? {
+        bottom: BOTTOM_BAR_HEIGHT_MOBILE,
+        top: 'auto',
+      }
+    : {
+        top: HEADER_HEIGHT_DESKTOP,
+        bottom: 'auto',
+      }),
 }));
 
-const ToastContainer = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+const ToastContainer = styled(Box)<{ 
+  isMobile: boolean; 
+}>(({ theme, isMobile }) => ({
   width: 320,
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(1),
   pointerEvents: 'none',
-  // 위치 조건부 적용
-  ...(isMobile
-    ? {
-        bottom: 80,
-        top: 'auto',
-        position: 'fixed',
-      }
-    : {
-        top: 80,
-        bottom: 'auto',
-        position: 'fixed',
-      }),
+  // 위치는 CenterWrapper에서 관리
 }));
 
 type SeverityType = 'success' | 'error' | 'warning' | 'info';
@@ -52,16 +56,16 @@ const ToastItemBox = styled(Box)<{ severity: SeverityType }>(({ theme, severity 
   return {
     position: 'relative',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center', // 아이콘과 텍스트 수직 중앙 정렬
     gap: theme.spacing(1.5),
     padding: theme.spacing(1.5),
-    paddingTop: theme.spacing(1),
     backgroundColor: theme.palette.background.paper,
     borderRadius: theme.shape.borderRadius,
     border: `1px solid ${severityColors[severity]}`,
     boxShadow: theme.shadows[4],
     pointerEvents: 'auto',
     cursor: 'default',
+    overflow: 'hidden', // 프로그래스 바가 벗어나지 않도록 숨김
     transition: theme.transitions.create(['transform', 'opacity'], {
       duration: theme.transitions.duration.short,
     }),
@@ -80,13 +84,14 @@ const ProgressBar = styled(LinearProgress)<{ severity: SeverityType }>(({ theme,
   };
   return {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, // 바닥에 완전히 붙임
+    left: 0,   // 전체 너비 사용
+    right: 0,  // 전체 너비 사용
     height: 3,
     borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
     '& .MuiLinearProgress-bar': {
       backgroundColor: severityColors[severity],
+      borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
     },
     '& .MuiLinearProgress-root': {
       backgroundColor: 'transparent',
@@ -107,7 +112,7 @@ const IconContainer = styled(Box)<{ severity: SeverityType }>(({ theme, severity
     justifyContent: 'center',
     width: 20,
     height: 20,
-    marginTop: theme.spacing(0.25),
+    flexShrink: 0, // 아이콘 크기 고정
     '& svg': {
       fontSize: '1.25rem',
       color: severityColors[severity],
@@ -119,6 +124,7 @@ const MessageContainer = styled(Box)(({ theme }) => ({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  justifyContent: 'center', // 텍스트 수직 중앙 정렬
   fontFamily: theme.typography.fontFamily,
 }));
 
@@ -144,7 +150,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
     if (toast.duration > 0) {
       const interval = 50; // 50ms마다 업데이트
       const decrement = (100 / toast.duration) * interval;
-      intervalRef.current = setInterval(() => {
+      intervalRef.current = window.setInterval(() => {
         dispatch(updateToastProgress({ 
           id: toast.id, 
           progress: Math.max(0, toast.progress - decrement) 
@@ -156,7 +162,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
     }
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        window.clearInterval(intervalRef.current);
       }
     };
   }, [toast.id, toast.duration, toast.progress, dispatch]);
@@ -167,7 +173,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         {getSeverityIcon(toast.severity)}
       </IconContainer>
       <MessageContainer>
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, margin: 0 }}>
           {toast.message}
         </Typography>
       </MessageContainer>
@@ -176,6 +182,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         onClick={handleClose}
         sx={{ 
           padding: 0.25,
+          flexShrink: 0, // 닫기 버튼 크기 고정
           '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
         }}
       >
@@ -197,7 +204,7 @@ const Toast: React.FC = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <CenterWrapper>
+    <CenterWrapper isMobile={isMobile}>
       <ToastContainer isMobile={isMobile}>
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} />

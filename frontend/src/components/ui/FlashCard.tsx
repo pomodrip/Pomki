@@ -7,7 +7,6 @@ import {
   Card as MuiCard,
   CardContent,
   Chip,
-  Button,
 } from '@mui/material';
 import {
   BookmarkBorder,
@@ -15,6 +14,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import Button from './Button';
 
 // 타입 정의
 export interface FlashCardData {
@@ -56,9 +56,13 @@ const TagChip = styled(Chip)(({ theme }) => ({
   marginRight: theme.spacing(0.5),
 }));
 
-const ActionButton = styled(Button)({
+const ActionButton = styled(Button)(({ theme }) => ({
+  flex: 1,
   whiteSpace: 'nowrap',
-});
+  minWidth: 'auto',
+  padding: theme.spacing(0.5, 1),
+  fontSize: '0.8rem',
+}));
 
 const FlashCard: React.FC<FlashCardProps> = ({
   card,
@@ -155,10 +159,20 @@ const FlashCard: React.FC<FlashCardProps> = ({
       
       {/* 액션 버튼들 */}
       {showActions && (onEdit || onDelete) && (
-        <Box sx={{ justifyContent: 'flex-end', display: 'flex', p: 1 }}>
+        <Box sx={{ 
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '8px',
+          marginTop: '8px',
+          paddingLeft: 1,
+          paddingRight: 1,
+          paddingBottom: 1,
+        }}>
           {onEdit && (
             <ActionButton 
               size="small" 
+              variant="outlined"
+              color="primary"
               startIcon={<EditIcon />} 
               onClick={handleEdit}
             >
@@ -168,8 +182,9 @@ const FlashCard: React.FC<FlashCardProps> = ({
           {onDelete && (
             <ActionButton 
               size="small" 
-              startIcon={<DeleteIcon />} 
+              variant="outlined"
               color="error" 
+              startIcon={<DeleteIcon />} 
               onClick={handleDelete}
             >
               삭제

@@ -4,8 +4,6 @@ import {
   Container, 
   Box, 
   Fab, 
-  CircularProgress, 
-  Button,
   TextField,
   InputAdornment,
   IconButton,
@@ -14,6 +12,8 @@ import {
   Chip,
   Typography
 } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
+import { Text, Button, Modal } from '../../components/ui';
 
 import { 
   Add as AddIcon, 
@@ -166,6 +166,12 @@ const NoteListPage: React.FC = () => {
   // 🎯 메뉴 상태
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+  
+  // 🎯 카드 생성 확인 다이얼로그 상태
+  const [cardGenerationDialog, setCardGenerationDialog] = useState<{
+    open: boolean;
+    note: EnrichedNote | null;
+  }>({ open: false, note: null });
 
   useEffect(() => {
     dispatch(fetchNotes());
@@ -314,24 +320,43 @@ const NoteListPage: React.FC = () => {
 
   const handleDeleteNote = async (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const confirmed = await showConfirmDialog({
-      title: '노트 삭제',
-      message: '정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
-    });
 
-    if (confirmed) {
+    // 📌 기본 confirm 다이얼로그 사용 (Deck 삭제 방식과 동일)
+    if (window.confirm('정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
       try {
         await dispatch(deleteNoteAsync(noteId)).unwrap();
-        dispatch(showToast({ message: '노트가 삭제되었습니다.', severity: 'success' }));
-      } catch (e: any) {
-        dispatch(showToast({ message: e.message || '노트 삭제에 실패했습니다.', severity: 'error' }));
+        dispatch(showToast({ message: '노트가 성공적으로 삭제되었습니다.', severity: 'success' }));
+      } catch (err) {
+        const error = err as Error;
+        dispatch(showToast({ message: error.message || '노트 삭제에 실패했습니다.', severity: 'error' }));
       }
     }
   };
   
   const handleGenerateFlashcards = async (note: EnrichedNote, event: React.MouseEvent) => {
     event.stopPropagation();
+    
+    // 사용 횟수 확인 (localStorage 사용)
+    const usageCount = parseInt(localStorage.getItem('cardGenerationUsageCount') || '0', 10);
+    
+    // 모바일에서는 3번 이하일 때만 바텀시트 표시
+    if (isMobile && usageCount < 3) {
+      setCardGenerationDialog({ open: true, note });
+      return;
+    }
+    
+    // 3번 이상 사용했거나 데스크톱에서는 바로 실행
+    executeCardGeneration(note);
+  };
+  
+  const executeCardGeneration = async (note: EnrichedNote) => {
     setGeneratingQuizId(note.noteId);
+    setCardGenerationDialog({ open: false, note: null });
+    
+    // 사용 횟수 증가
+    const currentCount = parseInt(localStorage.getItem('cardGenerationUsageCount') || '0', 10);
+    localStorage.setItem('cardGenerationUsageCount', (currentCount + 1).toString());
+    
     try {
       // 1. 노트의 상세 정보 (noteContent 포함) 가져오기
       const fullNote = await dispatch(fetchNote(note.noteId)).unwrap();
@@ -537,8 +562,9 @@ const NoteListPage: React.FC = () => {
                   startIcon={generatingQuizId === note.noteId ? <CircularProgress size={20} color="inherit" /> : <QuizIcon />}
                   onClick={(e) => handleGenerateFlashcards(note, e)}
                   disabled={generatingQuizId === note.noteId}
+                  title="AI가 노트를 분석해 카드 후보를 제안합니다"
                 >
-                  {generatingQuizId === note.noteId ? '생성중...' : '퀴즈 생성'}
+                  {generatingQuizId === note.noteId ? '생성중...' : '카드 생성'}
                 </Button>
               </ActionBox>
             </NoteCard>
@@ -570,6 +596,41 @@ const NoteListPage: React.FC = () => {
           </Button>
         </Box>
       )}
+
+      {/* 🎯 카드 생성 확인 다이얼로그 (모바일용) */}
+      <Modal
+        open={cardGenerationDialog.open}
+        onClose={() => setCardGenerationDialog({ open: false, note: null })}
+        title="AI 카드 생성"
+        variant={isMobile ? 'bottomSheet' : 'dialog'}
+        actions={
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            flexDirection: isMobile ? 'column' : 'row',
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            <Button
+              onClick={() => setCardGenerationDialog({ open: false, note: null })}
+              variant="outlined"
+              fullWidth={isMobile}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={() => cardGenerationDialog.note && executeCardGeneration(cardGenerationDialog.note)}
+              variant="contained"
+              fullWidth={isMobile}
+            >
+              생성하기
+            </Button>
+          </Box>
+        }
+      >
+        <Text variant="body1" color="text.secondary">
+          노트 내용을 분석해 학습용 카드를 자동으로 만들어드립니다.
+        </Text>
+      </Modal>
     </StyledContainer>
   );
 };

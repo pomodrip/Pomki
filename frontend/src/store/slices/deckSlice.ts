@@ -9,7 +9,7 @@ import type {
   UpdateDeckRequest,
   UpdateCardRequest,
   CreateCardRequest,
-  SearchCard,
+  AddCardTagRequest,
 } from '../../types/card';
 
 /**
@@ -30,12 +30,10 @@ interface DeckState {
   decks: CardDeck[];
   selectedDeck: CardDeck | null;
   currentDeckCards: Card[]; // 현재 덱의 카드들
-  searchResults: SearchCard[]; // 검색 결과 카드들
   
   // 상태
   loading: boolean;
   error: string | null;
-  searchLoading: boolean; // 검색 로딩 상태
   
   // 페이지네이션
   currentPage: number;
@@ -50,6 +48,15 @@ interface DeckState {
     sortBy: 'deckName' | 'createdAt' | 'cardCnt';
     sortOrder: 'asc' | 'desc';
   };
+  
+  // 카드 필터
+  cardFilters: {
+    searchQuery: string;
+    showBookmarkedOnly: boolean;
+    selectedTags: string[];
+    sortBy: 'content' | 'createdAt' | 'updatedAt';
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 // ==========================================
@@ -60,10 +67,8 @@ const initialState: DeckState = {
   decks: [],
   selectedDeck: null,
   currentDeckCards: [],
-  searchResults: [],
   loading: false,
   error: null,
-  searchLoading: false,
   currentPage: 0,
   totalPages: 0,
   totalElements: 0,
@@ -71,6 +76,13 @@ const initialState: DeckState = {
   filters: {
     searchQuery: '',
     showBookmarked: false,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  },
+  cardFilters: {
+    searchQuery: '',
+    showBookmarkedOnly: false,
+    selectedTags: [],
     sortBy: 'createdAt',
     sortOrder: 'desc',
   },
@@ -198,14 +210,65 @@ export const deleteCard = createAsyncThunk<
   }
 });
 
-// 카드 검색
-export const searchCards = createAsyncThunk<
-  SearchCard[],
-  string,
+// 카드에 태그 추가
+export const addCardTags = createAsyncThunk<
+  { cardId: number; addedTags: string[] },
+  AddCardTagRequest,
   { state: RootState; rejectValue: string }
->('deck/searchCards', async (keyword, { rejectWithValue }) => {
+>('deck/addCardTags', async (data, { getState, rejectWithValue }) => {
   try {
-    return await cardService.searchCards(keyword);
+    // 현재 카드의 기존 태그 확인
+    const state = getState() as RootState;
+    const currentCard = state.deck.currentDeckCards.find(card => card.cardId === data.cardId);
+    const existingTags = currentCard?.tags || [];
+    
+    // 중복되지 않는 새 태그만 필터링
+    const newTags = data.tagNames.filter(tag => !existingTags.includes(tag));
+    
+    if (newTags.length === 0) {
+      // 추가할 새 태그가 없으면 조기 반환
+      return { cardId: data.cardId, addedTags: [] };
+    }
+    
+    // 실제로 추가할 태그만으로 API 호출
+    await cardService.addCardTags({ ...data, tagNames: newTags });
+    return { cardId: data.cardId, addedTags: newTags };
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드에서 태그 제거
+export const removeCardTag = createAsyncThunk<
+  { cardId: number; removedTag: string },
+  { cardId: number; tagName: string },
+  { state: RootState; rejectValue: string }
+>('deck/removeCardTag', async ({ cardId, tagName }, { rejectWithValue }) => {
+  try {
+    await cardService.removeCardTag(cardId, tagName);
+    return { cardId, removedTag: tagName };
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
+// 카드 북마크 토글
+export const toggleCardBookmark = createAsyncThunk<
+  { cardId: number; bookmarked: boolean },
+  number,
+  { state: RootState; rejectValue: string }
+>('deck/toggleCardBookmark', async (cardId, { getState, rejectWithValue }) => {
+  try {
+    // 현재 카드의 북마크 상태 확인
+    const state = getState() as RootState;
+    const currentCard = state.deck.currentDeckCards.find(card => card.cardId === cardId);
+    const currentBookmarked = currentCard?.bookmarked || false;
+    const newBookmarked = !currentBookmarked;
+    
+    // API 호출
+    await cardService.toggleBookmark(cardId, newBookmarked);
+    
+    return { cardId, bookmarked: newBookmarked };
   } catch (error) {
     return rejectWithValue(handleAsyncError(error));
   }
@@ -239,6 +302,16 @@ const deckSlice = createSlice({
       state.filters = initialState.filters;
     },
     
+    // 카드 필터 설정
+    setCardFilters: (state, action: PayloadAction<Partial<DeckState['cardFilters']>>) => {
+      state.cardFilters = { ...state.cardFilters, ...action.payload };
+    },
+    
+    // 카드 필터 초기화
+    clearCardFilters: (state) => {
+      state.cardFilters = initialState.cardFilters;
+    },
+    
     // 페이지 설정
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
@@ -255,18 +328,13 @@ const deckSlice = createSlice({
       state.loading = action.payload;
     },
     
-    // 덱 북마크 토글 (로컬 상태 업데이트)
-    toggleDeckBookmark: (state, action: PayloadAction<string>) => {
-      const deckId = action.payload;
-      const deck = state.decks.find(d => d.deckId === deckId);
-      if (deck) {
-        // 북마크 상태는 API에 따라 다를 수 있으므로 임시로 처리
-        // 실제로는 별도의 북마크 API가 필요할 수 있음
-      }
-      
-      // 선택된 덱도 업데이트
-      if (state.selectedDeck?.deckId === deckId) {
-        // state.selectedDeck.isBookmarked = !state.selectedDeck.isBookmarked;
+    // 카드 북마크 토글 (로컬 상태 업데이트)
+    toggleCardBookmarkLocal: (state, action: PayloadAction<number>) => {
+      const cardId = action.payload;
+      const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+      if (cardIndex !== -1) {
+        state.currentDeckCards[cardIndex].bookmarked = !state.currentDeckCards[cardIndex].bookmarked;
+        state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
       }
     },
 
@@ -275,17 +343,6 @@ const deckSlice = createSlice({
       const deckId = action.payload;
       const deck = state.decks.find(d => d.deckId === deckId);
       state.selectedDeck = deck || null;
-    },
-
-    // 검색 결과 초기화
-    clearSearchResults: (state) => {
-      state.searchResults = [];
-      state.searchLoading = false;
-    },
-
-    // 검색 로딩 상태 설정
-    setSearchLoading: (state, action: PayloadAction<boolean>) => {
-      state.searchLoading = action.payload;
     },
   },
   
@@ -441,20 +498,51 @@ const deckSlice = createSlice({
          }
        })
 
-       // 카드 검색
-       .addCase(searchCards.pending, (state) => {
-         state.searchLoading = true;
+       // 카드 태그 추가
+       .addCase(addCardTags.fulfilled, (state, action) => {
+         const { cardId, addedTags } = action.payload;
+         const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+         
+         if (cardIndex !== -1 && addedTags.length > 0) {
+           const existingTags = state.currentDeckCards[cardIndex].tags || [];
+           // 중복 방지를 위해 한 번 더 필터링 (안전장치)
+           const uniqueNewTags = addedTags.filter(tag => !existingTags.includes(tag));
+           state.currentDeckCards[cardIndex].tags = [...existingTags, ...uniqueNewTags];
+           state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+         }
+       })
+       .addCase(addCardTags.rejected, (state, action) => {
+         state.error = action.payload || '태그 추가에 실패했습니다.';
+       })
+
+       // 카드 태그 제거
+       .addCase(removeCardTag.fulfilled, (state, action) => {
+         const { cardId, removedTag } = action.payload;
+         const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+         
+         if (cardIndex !== -1) {
+           const existingTags = state.currentDeckCards[cardIndex].tags || [];
+           state.currentDeckCards[cardIndex].tags = existingTags.filter(tag => tag !== removedTag);
+           state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+         }
+       })
+       .addCase(removeCardTag.rejected, (state, action) => {
+         state.error = action.payload || '태그 제거에 실패했습니다.';
+       })
+
+       // 카드 북마크 토글 - loading 상태를 변경하지 않음 (UI 깜빡임 방지)
+       .addCase(toggleCardBookmark.fulfilled, (state, action) => {
+         const { cardId, bookmarked } = action.payload;
+         const cardIndex = state.currentDeckCards.findIndex(card => card.cardId === cardId);
+         
+         if (cardIndex !== -1) {
+           state.currentDeckCards[cardIndex].bookmarked = bookmarked;
+           state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+         }
          state.error = null;
        })
-       .addCase(searchCards.fulfilled, (state, action) => {
-         state.searchLoading = false;
-         state.searchResults = action.payload;
-         state.error = null;
-       })
-       .addCase(searchCards.rejected, (state, action) => {
-         state.searchLoading = false;
-         state.error = action.payload || '카드 검색에 실패했습니다.';
-         state.searchResults = [];
+       .addCase(toggleCardBookmark.rejected, (state, action) => {
+         state.error = action.payload || '북마크 토글에 실패했습니다.';
        });
   },
 });
@@ -468,13 +556,13 @@ export const {
   setSelectedDeck, 
   setFilters, 
   clearFilters,
+  setCardFilters,
+  clearCardFilters,
   setCurrentPage,
   setPageSize,
   setLoading,
-  toggleDeckBookmark,
+  toggleCardBookmarkLocal,
   setCurrentDeck,
-  clearSearchResults,
-  setSearchLoading,
 } = deckSlice.actions;
 
 export default deckSlice.reducer;
@@ -489,6 +577,7 @@ export const selectSelectedDeck = (state: RootState) => state.deck.selectedDeck;
 export const selectDeckLoading = (state: RootState) => state.deck.loading;
 export const selectDeckError = (state: RootState) => state.deck.error;
 export const selectDeckFilters = (state: RootState) => state.deck.filters;
+export const selectCardFilters = (state: RootState) => state.deck.cardFilters;
 export const selectDeckPagination = (state: RootState) => ({
   currentPage: state.deck.currentPage,
   totalPages: state.deck.totalPages,
@@ -551,15 +640,80 @@ export const selectFilteredDecks = (state: RootState) => {
 // 통계 selector
 export const selectDeckStats = (state: RootState) => {
   const decks = selectDecks(state);
+  const cards = selectCurrentDeckCards(state);
   
   return {
     totalDecks: decks.length,
     totalCards: decks.reduce((sum, deck) => sum + deck.cardCnt, 0),
-    // bookmarkedDecks: decks.filter(deck => deck.isBookmarked).length,
+    bookmarkedCards: cards.filter(card => card.bookmarked).length,
   };
 };
 
-// 검색 관련 selector
-export const selectSearchResults = (state: RootState) => state.deck.searchResults;
-export const selectSearchLoading = (state: RootState) => state.deck.searchLoading;
-export const selectCurrentDeckCards = (state: RootState) => state.deck.currentDeckCards; 
+// 현재 덱 카드 관련 selector
+export const selectCurrentDeckCards = (state: RootState) => state.deck.currentDeckCards;
+
+// 북마크된 카드만 필터링하는 selector
+export const selectBookmarkedCards = (state: RootState) => {
+  const cards = selectCurrentDeckCards(state);
+  return cards.filter(card => card.bookmarked);
+};
+
+// 카드 필터링 selector (상태 기반)
+export const selectFilteredCards = (state: RootState) => {
+  const cards = selectCurrentDeckCards(state);
+  const filters = selectCardFilters(state);
+  
+  let filteredCards = [...cards];
+  
+  // 검색어 필터링
+  if (filters.searchQuery) {
+    const query = filters.searchQuery.toLowerCase();
+    filteredCards = filteredCards.filter(card =>
+      card.content.toLowerCase().includes(query) ||
+      card.answer.toLowerCase().includes(query) ||
+      card.tags.some(tag => tag.toLowerCase().includes(query))
+    );
+  }
+  
+  // 북마크 필터링
+  if (filters.showBookmarkedOnly) {
+    filteredCards = filteredCards.filter(card => card.bookmarked);
+  }
+  
+  // 태그 필터링
+  if (filters.selectedTags.length > 0) {
+    filteredCards = filteredCards.filter(card =>
+      filters.selectedTags.every(tag => card.tags.includes(tag))
+    );
+  }
+  
+  // 정렬
+  filteredCards.sort((a, b) => {
+    let aValue: string | number;
+    let bValue: string | number;
+    
+    switch (filters.sortBy) {
+      case 'content':
+        aValue = a.content;
+        bValue = b.content;
+        break;
+      case 'updatedAt':
+        aValue = a.updatedAt;
+        bValue = b.updatedAt;
+        break;
+      case 'createdAt':
+      default:
+        aValue = a.createdAt;
+        bValue = b.createdAt;
+        break;
+    }
+    
+    if (filters.sortOrder === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
+  });
+  
+  return filteredCards;
+}; 

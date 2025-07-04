@@ -23,9 +23,9 @@ import {
   ListItemIcon,
   Divider,
   Alert,
-  CircularProgress,
   TextField,
 } from '@mui/material';
+import CircularProgress from '../components/ui/CircularProgress';
 import {
   Star,
   CreditCard,

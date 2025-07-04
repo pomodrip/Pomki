@@ -5,6 +5,7 @@ import type {
   Card,
   CreateDeckRequest,
   UpdateDeckRequest,
+  SearchCard,
 } from '../types/card';
 
 /**
@@ -49,4 +50,14 @@ export const updateDeck = async (deckId: string, data: UpdateDeckRequest): Promi
  */
 export const deleteDeck = async (deckId: string): Promise<void> => {
   await api.delete(`/api/decks/${deckId}`);
+};
+
+/**
+ * 덱 내 카드 검색
+ * @param keyword 검색 키워드
+ * @param deckId 덱 ID
+ */
+export const searchCardsInDeck = async (keyword: string, deckId: string): Promise<SearchCard[]> => {
+  const response: AxiosResponse<SearchCard[]> = await api.get(`/api/decks/search/${keyword}?deckId=${deckId}`);
+  return response.data;
 }; 

@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Button,
   IconButton,
   Menu,
@@ -26,6 +25,7 @@ import {
   CardContent,
   CardActions,
 } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -48,21 +48,27 @@ import {
   createDeck,
   updateDeck,
   deleteDeck,
-  selectSearchLoading,
-  selectSearchResults,
-  searchCards,
-  clearSearchResults,
 } from '../../store/slices/deckSlice';
 import {
   adjustFabForScreenSize,
   setFabVisible,
   selectFab,
 } from '../../store/slices/uiSlice';
-import type { CardDeck } from '../../types/card';
+import type { CardDeck, SearchCard } from '../../types/card';
 import { useResponsive } from '../../hooks/useResponsive';
+import Card from '../../components/ui/Card';
+import { cardService } from '../../services/cardService';
 import { useDispatch, useSelector } from 'react-redux';
 import { FlashCard, type FlashCardData } from '../../components/ui';
-import Toast from '../../components/common/Toast';
+import { RootState } from '../../store/store';
+import { PayloadAction } from '@reduxjs/toolkit';
+
+// 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
+interface ClientSideDeckInfo {
+  isBookmarked: boolean;
+  tags: string[];
+}
+
 
 // 🔹 스타일 컴포넌트 정의
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -121,19 +127,27 @@ const DeckCard = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(Button)(({ theme }) => ({
+const ActionBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '8px',
+  marginTop: '24px',
+  paddingLeft: theme.spacing(0.5),
+  paddingRight: theme.spacing(0.5),
+  '& .MuiButton-root': {
     flex: 1,
     whiteSpace: 'nowrap',
     minWidth: 'auto',
-    flexShrink: 1,
-    maxWidth: 'calc(33.33% - 4px)',
-    fontSize: '0.75rem',
-    padding: theme.spacing(1, 1),
-    [theme.breakpoints.down('sm')]: {
-      maxWidth: 'calc(33.33% - 3px)',
-      fontSize: '0.7rem',
-      padding: theme.spacing(0.75, 0.75),
+    padding: theme.spacing(0.5, 1),
+    fontSize: '0.8rem',
+    '&.MuiButton-containedPrimary': {
+      color: theme.palette.common.white,
     },
+    '&.MuiButton-outlinedError': {
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+    },
+  },
 }));
 
 const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => ({
@@ -150,17 +164,25 @@ const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => 
 // 메인 컴포넌트
 // =========================
 const FlashcardDeckListPage: React.FC = () => {
-  const searchResults = useSelector(selectSearchResults);
-  const searchLoading = useSelector(selectSearchLoading);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useResponsive();
-  const { decks = [], loading, error } = useAppSelector((state) => state.deck);
-  const { filters } = useAppSelector((state) => state.study);
-  const { user } = useAppSelector((state) => state.auth);
+  const decks = useAppSelector((state: RootState) => state.deck.decks);
+  const loading = useAppSelector((state: RootState) => state.deck.loading);
+  const error = useAppSelector((state: RootState) => state.deck.error);
+  const totalElements = useAppSelector((state: RootState) => state.deck.totalElements);
+  const filters = useAppSelector((state: RootState) => state.study.filters);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const fab = useAppSelector(selectFab);
-  const { bottomNavVisible } = useAppSelector((state) => state.ui);
+  const { bottomNavVisible } = useAppSelector((state: RootState) => state.ui);
+
+  // 🎯 로컬 검색 상태
+  const [searchResults, setSearchResults] = useState<SearchCard[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // 🎯 클라이언트 측 상태 (북마크, 태그)
+  const [clientSideInfo, setClientSideInfo] = useState<{ [deckId: string]: ClientSideDeckInfo }>({});
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
@@ -168,14 +190,27 @@ const FlashcardDeckListPage: React.FC = () => {
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   
   const [searchInput, setSearchInput] = useState('');
+  
+  // 🎯 메뉴 상태
+  const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
+  const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
 
+  // 🎯 API Fallback 비활성화 - Redux만 사용
+  // const [fallbackDecks, setFallbackDecks] = useState<CardDeck[]>([]);
+  // const [fallbackLoading, setFallbackLoading] = useState(false);
+
+  // 다시 들어오면 검색 결과 초기화
   useEffect(() => {
-    dispatch(clearSearchResults());
-  }, [dispatch]);
+    setSearchResults([]);
+  }, []);
 
+  // �� 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
     dispatch(fetchDecks());
+    console.log("유저", user);
   }, [dispatch, user?.memberId]);
+
+  // 🎯 Redux 덱만 사용 (Fallback 비활성화)
 
   useEffect(() => {
     dispatch(setFabVisible(true));
@@ -208,20 +243,32 @@ const FlashcardDeckListPage: React.FC = () => {
   const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
     if (event.target.value === '') {
-      dispatch(searchCards(''));
+      setSearchResults([]);
     }
   };
 
-  const handleSearchSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      dispatch(clearSearchResults());
-      console.log("검색");
-      dispatch(searchCards(searchInput));
+  const handleSearchSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && searchInput.trim()) {
+      setSearchLoading(true);
+      try {
+        const results = await cardService.searchCards(searchInput.trim());
+        setSearchResults(results);
+      } catch (error) {
+        console.error('검색 실패:', error);
+        setSearchResults([]);
+        dispatch(showToast({
+          message: '검색에 실패했습니다.',
+          severity: 'error'
+        }));
+      } finally {
+        setSearchLoading(false);
+      }
     }
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
+    setSearchResults([]);
   };
 
   const handleDeckClick = (deckId: string) => {
@@ -291,11 +338,18 @@ const FlashcardDeckListPage: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleCreateDialogConfirm();
+    }
+  };
+
   useDialogKeyboardShortcuts(
     handleCreateDialogConfirm,
     handleCreateDialogClose,
     {
-      enabled: showCreateDialog
+      enabled: false
     }
   );
 
@@ -304,7 +358,6 @@ const FlashcardDeckListPage: React.FC = () => {
   // =========================
   return (
     <StyledContainer maxWidth="md">
-      <Toast />
       <HeaderBox>
         <Typography variant="h4" fontWeight="bold">
           나의 덱
@@ -355,7 +408,16 @@ const FlashcardDeckListPage: React.FC = () => {
       )}
       {!loading && error && <Typography color="error" align="center" py={5}>오류: {error}</Typography>}
       
-      {!loading && !error && searchInput && searchResults.length > 0 && (
+      {/* 검색 로딩 표시 */}
+      {searchLoading && (
+        <Box display="flex" justifyContent="center" my={2}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" sx={{ ml: 1 }}>검색 중...</Typography>
+        </Box>
+      )}
+
+      {/* 검색 결과 - 카드로 표시 */}
+      {!searchLoading && !loading && !error && searchInput && searchResults.length > 0 && (
         <Box>
           <Typography variant="h6" sx={{ mb: 2 }}>
             검색 결과 ({searchResults.length}개 카드)
@@ -400,7 +462,9 @@ const FlashcardDeckListPage: React.FC = () => {
         </Box>
       )}
 
-      {!loading && !error && (!searchInput || searchResults.length === 0) && (
+
+      {/* 덱 리스트 - 검색어가 없거나 검색 결과가 없을 때 표시 */}
+      {!searchLoading && !loading && !error && (!searchInput || searchResults.length === 0) && (
         <Box>
           <Box 
             sx={{ 
@@ -424,24 +488,39 @@ const FlashcardDeckListPage: React.FC = () => {
                   </Typography>
                   <Box mt={1.5} sx={{ minHeight: 24 }} />
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <ActionButton size="small" startIcon={<EditIcon />} onClick={(e) => handleEditDeck(deck, e)}>
+                <ActionBox>
+                  <Button
+                    variant="outlined"
+                    startIcon={<EditIcon />}
+                    onClick={(e) => handleEditDeck(deck, e)}
+                  >
                     수정
-                  </ActionButton>
-                  <ActionButton size="small" startIcon={<DeleteIcon />} color="error" onClick={(e) => handleDeleteDeck(deck, e)}>
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={(e) => handleDeleteDeck(deck, e)}
+                  >
                     삭제
-                  </ActionButton>
-                  <ActionButton size="small" startIcon={<SchoolIcon />} onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}>
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<SchoolIcon />}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/flashcards/${deck.deckId}/practice`); }}
+                  >
                     학습하기
-                  </ActionButton>
-                </CardActions>
+                  </Button>
+                </ActionBox>
               </DeckCard>
             ))}
           </Box>
         </Box>
       )}
 
-      {!loading && !error && (!searchInput || searchResults.length === 0) && filteredDecks.length === 0 && (
+      {/* 빈 상태 */}
+      {!searchLoading && !loading && !error && (!searchInput || searchResults.length === 0) && filteredDecks.length === 0 && (
         <Box 
           display="flex" 
           flexDirection="column" 
@@ -472,12 +551,15 @@ const FlashcardDeckListPage: React.FC = () => {
           <TextField
             autoFocus
             margin="dense"
-            label="덱 이름"
+            id="name"
+            label={isEditMode ? "덱 이름 수정" : "새 덱 이름"}
+            type="text"
             fullWidth
             variant="outlined"
             value={newDeckTitle}
-            onChange={(e) => setNewDeckTitle(e.target.value)}
-            sx={{ mb: 2 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewDeckTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
           />
         </DialogContent>
         <DialogActions>

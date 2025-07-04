@@ -13,7 +13,6 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
-  CircularProgress,
 } from '@mui/material';
 import {
   ArrowForward,
@@ -254,9 +253,7 @@ const FlashcardGenerationPage: React.FC = () => {
       );
       
       showSnackbar(`${deck.deckName} 덱에 ${selectedQuizData.length}개의 카드가 생성되었습니다.`, 'success');
-      // TODO: 생성된 덱 상세 페이지로 이동할 지 결정
-      // navigate(`/study/deck/${deck.deckId}`);
-      navigate('/study');
+      navigate(`/flashcards/${deck.deckId}/cards`);
     } catch (error) {
       console.error('플래시카드 생성 실패:', error);
       showSnackbar('플래시카드 생성에 실패했습니다.', 'error');

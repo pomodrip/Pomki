@@ -9,6 +9,17 @@ import type {
   UpdateCardRequest,
 } from '../types/card';
 import type { ApiResponse } from '../types/api';
+import { getStudySession, clearStudySession } from '../utils/storage';
+
+// 학습 결과 전송 데이터 타입
+export interface StudyResultRequest {
+  deckId: string;
+  cardDifficultyResults: {
+    cardId: number;
+    difficulty: 'easy' | 'confuse' | 'hard';
+    timestamp: string;
+  }[];
+}
 
 // 🔥 현재 로그인한 사용자의 덱 리스트 조회 (백엔드 API에 맞게 수정)
 export const getDecks = async (): Promise<CardDeck[]> => {
@@ -99,9 +110,36 @@ export const startStudySession = async (): Promise<Card[]> => {
   return [];
 };
 
-export const submitStudyResults = async (): Promise<ApiResponse> => {
-  console.warn('학습 결과 제출 기능은 백엔드에서 아직 구현되지 않았습니다.');
-  return { success: true, message: '학습 결과 제출 기능 준비 중' };
+export const submitStudyResults = async (deckId: string): Promise<ApiResponse> => {
+  try {
+    const studySession = getStudySession();
+    
+    if (!studySession || studySession.deckId !== deckId) {
+      throw new Error('저장된 학습 세션이 없습니다.');
+    }
+
+    const requestData: StudyResultRequest = {
+      deckId,
+      cardDifficultyResults: studySession.reviews.map(review => ({
+        cardId: review.cardId,
+        difficulty: review.difficulty,
+        timestamp: review.timestamp,
+      })),
+    };
+
+    console.log('학습 결과 전송:', requestData);
+
+    // 실제 API 호출 (엔드포인트는 백엔드에서 정의되어야 함)
+    const response: AxiosResponse<ApiResponse> = await api.post('/api/study/results', requestData);
+    
+    // 성공 시 localStorage에서 세션 데이터 삭제
+    clearStudySession();
+    
+    return response.data;
+  } catch (error) {
+    console.error('학습 결과 제출 실패:', error);
+    throw error;
+  }
 };
 
 export const generateCards = async (): Promise<Card[]> => {
@@ -129,4 +167,23 @@ export const getStudyStats = async (): Promise<{
 export const getReviewCards = async (): Promise<Card[]> => {
   console.warn('복습 카드 조회 기능은 백엔드에서 아직 구현되지 않았습니다.');
   return [];
+};
+
+// 대시보드 복습 일정 관리용 API
+// 오늘 학습해야할 카드 개수 조회
+export const getTodayCardsCount = async (): Promise<number> => {
+  const response = await api.get<any[]>('/api/study-cycle/today-cards');
+  return response.data.length;
+};
+
+// 3일 이내 학습해야할 카드 개수 조회
+export const getWithin3DaysCardsCount = async (): Promise<number> => {
+  const response = await api.get<any>('/api/study-cycle/stats');
+  return response.data.within3DaysCount ?? 0;
+};
+
+// 복습 미완료(지연된) 카드 개수 조회
+export const getOverdueCardsCount = async (): Promise<number> => {
+  const response = await api.get<any[]>('/api/study-cycle/overdue-cards');
+  return response.data.length;
 };

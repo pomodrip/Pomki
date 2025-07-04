@@ -1,4 +1,4 @@
-import type { CardDeck, Card, CreateDeckRequest, UpdateDeckRequest } from '../types/card';
+import type { CardDeck, Card, CreateDeckRequest, UpdateDeckRequest, SearchCard } from '../types/card';
 import * as deckApi from '../api/deckApi';
 
 // 🎯 덱 서비스 인터페이스 정의
@@ -8,6 +8,7 @@ export interface IDeckService {
   updateDeck(deckId: string, data: UpdateDeckRequest): Promise<CardDeck>;
   deleteDeck(deckId: string): Promise<void>;
   getCardsInDeck(deckId: string): Promise<Card[]>;
+  searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]>;
 }
 
 // 🎭 Mock 데이터 (기존 데이터 활용)
@@ -48,45 +49,60 @@ const mockCards: { [deckId: string]: Card[] } = {
       content: 'React란 무엇인가?',
       answer: 'Facebook에서 개발한 JavaScript 라이브러리로, 사용자 인터페이스를 구축하기 위한 컴포넌트 기반 라이브러리입니다.',
       deckId: 'deck-uuid-1',
+      deckName: 'React 기초 개념',
+      tags: ['React', 'Frontend'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 2,
       content: 'JSX란?',
       answer: 'JavaScript XML의 줄임말로 React에서 사용하는 문법입니다. HTML과 유사한 문법으로 JavaScript 안에서 UI를 작성할 수 있게 해줍니다.',
       deckId: 'deck-uuid-1',
+      deckName: 'React 기초 개념',
+      tags: ['React', 'JSX'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     },
     {
       cardId: 3,
       content: 'useState Hook이란?',
       answer: 'React에서 함수형 컴포넌트에 상태를 추가할 수 있게 해주는 Hook입니다.',
       deckId: 'deck-uuid-1',
+      deckName: 'React 기초 개념',
+      tags: ['React', 'Hook'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 4,
       content: 'useEffect Hook의 역할은?',
       answer: '컴포넌트가 렌더링될 때 특정 작업을 수행할 수 있게 해주는 Hook입니다. 생명주기 메서드를 대체합니다.',
       deckId: 'deck-uuid-1',
+      deckName: 'React 기초 개념',
+      tags: ['React', 'Hook', 'Lifecycle'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     },
     {
       cardId: 5,
       content: 'Props란?',
       answer: '부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다. Properties의 줄임말입니다.',
       deckId: 'deck-uuid-1',
+      deckName: 'React 기초 개념',
+      tags: ['React', 'Component'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     }
   ],
   'deck-uuid-2': [
@@ -95,18 +111,24 @@ const mockCards: { [deckId: string]: Card[] } = {
       content: '손익계산서란?',
       answer: '일정 기간 동안 기업의 수익과 비용을 보여주는 재무제표입니다. 기업의 경영성과를 나타냅니다.',
       deckId: 'deck-uuid-2',
+      deckName: '회계 기초',
+      tags: ['Accounting', 'Finance'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 7,
       content: '대차대조표란?',
       answer: '특정 시점에서 기업의 자산, 부채, 자본의 상태를 보여주는 재무제표입니다.',
       deckId: 'deck-uuid-2',
+      deckName: '회계 기초',
+      tags: ['Accounting', 'Finance'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: true
     }
   ],
   'deck-uuid-3': [
@@ -115,18 +137,24 @@ const mockCards: { [deckId: string]: Card[] } = {
       content: 'SDLC란?',
       answer: 'System Development Life Cycle의 줄임말로, 시스템 개발 생명주기를 의미합니다.',
       deckId: 'deck-uuid-3',
+      deckName: '시스템 개발 방법론',
+      tags: ['CS', 'Methodology'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     },
     {
       cardId: 9,
       content: '애자일 방법론이란?',
       answer: '소프트웨어 개발에서 빠른 반복과 피드백을 통해 점진적으로 개발하는 방법론입니다.',
       deckId: 'deck-uuid-3',
+      deckName: '시스템 개발 방법론',
+      tags: ['CS', 'Methodology', 'Agile'],
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      bookmarked: false
     }
   ]
 };
@@ -210,6 +238,36 @@ class MockDeckService implements IDeckService {
     await new Promise(resolve => setTimeout(resolve, 300));
     return this.cards[deckId] || [];
   }
+
+  async searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]> {
+    console.log('🎭 MockDeckService: searchCardsInDeck 호출', { keyword, deckId });
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const deckCards = this.cards[deckId] || [];
+    const deck = this.decks.find(d => d.deckId === deckId);
+    const deckName = deck?.deckName || 'Unknown Deck';
+    
+    const searchResults: SearchCard[] = deckCards
+      .filter(card => 
+        card.content.toLowerCase().includes(keyword.toLowerCase()) ||
+        card.answer.toLowerCase().includes(keyword.toLowerCase())
+      )
+      .map(card => ({
+        cardId: card.cardId,
+        content: card.content,
+        answer: card.answer,
+        deckId: card.deckId,
+        deckName: deckName,
+        isDeleted: card.isDeleted,
+        createdAt: card.createdAt,
+        updatedAt: card.updatedAt,
+        tags: card.tags,
+        bookmarked: card.bookmarked
+      }));
+    
+    console.log('🎭 MockDeckService: searchCardsInDeck 결과', searchResults);
+    return searchResults;
+  }
 }
 
 // 🌐 실제 API 서비스 구현
@@ -258,6 +316,15 @@ class RealDeckService implements IDeckService {
     } catch (error) {
       console.warn('⚠️ Real API (getCardsInDeck) 실패! Mock 데이터로 대체합니다.', error);
       return this.mockService.getCardsInDeck(deckId);
+    }
+  }
+
+  async searchCardsInDeck(keyword: string, deckId: string): Promise<SearchCard[]> {
+    try {
+      return await deckApi.searchCardsInDeck(keyword, deckId);
+    } catch (error) {
+      console.warn('⚠️ Real API (searchCardsInDeck) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.searchCardsInDeck(keyword, deckId);
     }
   }
 }

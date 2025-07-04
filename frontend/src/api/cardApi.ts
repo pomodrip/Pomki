@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import api from './index';
-import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
 
 /**
  * 카드 생성 
@@ -54,4 +54,42 @@ export const updateCard = async (
  */
 export const deleteCard = async (cardId: number): Promise<void> => {
   await api.delete(`/api/card/${cardId}`);
-}; 
+};
+
+/**
+ * 카드에 태그 추가
+ * @param data 카드 ID와 추가할 태그 이름들
+ */
+export const addCardTags = async (data: AddCardTagRequest): Promise<void> => {
+  await api.post('/api/card-tag', data);
+};
+
+/**
+ * 카드에서 태그 삭제
+ * @param cardId 카드 ID
+ * @param tagName 삭제할 태그 이름
+ */
+export const removeCardTag = async (cardId: number, tagName: string): Promise<void> => {
+  await api.delete('/api/card-tag', {
+    params: {
+      cardId,
+      tagName,
+    },
+  });
+};
+
+/**
+ * 카드 북마크 추가
+ * @param cardId 카드 ID
+ */
+export const addCardBookmark = async (cardId: number): Promise<void> => {
+  await api.post(`/api/card-bookmarks/${cardId}`);
+};
+
+/**
+ * 카드 북마크 삭제
+ * @param cardId 카드 ID
+ */
+export const removeCardBookmark = async (cardId: number): Promise<void> => {
+  await api.delete(`/api/card-bookmarks/${cardId}`);
+};

@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, CircularProgress } from '@mui/material';
+import { CssBaseline, Box } from '@mui/material';
+import CircularProgress from './components/ui/CircularProgress';
 import { useDispatch } from 'react-redux';
 import baseTheme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
 import AppRoutes from './routes';
 import { useUI } from './hooks/useUI';
 import { useAuth } from './hooks/useAuth';
-import GlobalNotifications from './components/common/GlobalNotifications';
 import { validateToken } from './store/slices/authSlice';
 import type { AppDispatch } from './store/store';
 import ErrorSnackbar from './components/common/ErrorSnackbar';
@@ -17,12 +17,14 @@ import Toast from './components/common/Toast';
 function LoadingSplash() {
   return (
     <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="100vh"
-      bgcolor="background.default"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        bgcolor: 'background.default'
+      }}
     >
       <CircularProgress size={60} sx={{ mb: 2 }} />
     </Box>
@@ -71,7 +73,6 @@ function UIInitializer() {
       ) : (
         <>
           <AppRoutes />
-          <GlobalNotifications />
           <ErrorSnackbar />
           <Toast />
         </>

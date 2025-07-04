@@ -56,6 +56,9 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['react-quill'],
+  },
   server: {
     proxy: {
       '/api': {
@@ -74,5 +77,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  envPrefix: ['VITE_', 'CI'],
 });
 

@@ -27,6 +27,7 @@ const StyledButton = styled(MuiButton)<ButtonProps>(({ theme, variant, color }) 
     
 }));  
 
+// 모든 MUI ButtonProps를 지원하도록 확장
 const Button: React.FC<ButtonProps> = (props) => {
   return <StyledButton {...props} />;
 };
