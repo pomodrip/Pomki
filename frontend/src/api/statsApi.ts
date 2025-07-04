@@ -1,0 +1,28 @@
+import api from './index';
+import type { DashboardStats } from '../types/study';
+
+/**
+ * 메인 대시보드에 필요한 모든 통계를 한번에 조회합니다.
+ */
+export const getDashboardData = async (): Promise<DashboardStats> => {
+  const response = await api.get<DashboardStats>('/api/v1/stats/dashboard');
+  return response.data;
+};
+
+/**
+ * 오늘 날짜로 출석을 기록합니다.
+ * 하루에 한 번만 기록됩니다.
+ */
+export const recordAttendance = async (): Promise<any> => {
+  const response = await api.post('/api/v1/stats/attendance');
+  return response.data;
+};
+
+/**
+ * 누적된 학습 시간을 분 단위로 기록합니다.
+ * @param studyMinutes 학습 시간(분)
+ */
+export const recordStudyTime = async (studyMinutes: number): Promise<any> => {
+  const response = await api.post('/api/v1/stats/study-time', { studyMinutes });
+  return response.data;
+}; 

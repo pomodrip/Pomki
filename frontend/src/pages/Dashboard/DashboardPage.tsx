@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Container, styled, Paper } from '@mui/material';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Box, Typography, Container, styled, Paper, Chip } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -12,7 +12,11 @@ import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import Badge from '@mui/material/Badge';
 import 'dayjs/locale/ko';
-import { getTodayCardsCount, getWithin3DaysCardsCount, getOverdueCardsCount } from '../../api/studyApi';
+import { getDashboardData, recordAttendance } from '../../api/statsApi';
+import { checkTodayAttendance } from '../../api/analysisApi';
+import type { DashboardStats } from '../../types/study';
+import { useAppDispatch } from '../../hooks/useRedux';
+import { showToast } from '../../store/slices/toastSlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -55,50 +59,81 @@ const studyDays = [
 //   overdueCards: 5, // 하루이상 지난 카드
 // };
 
-function CustomDay(props: PickersDayProps<dayjs.Dayjs>) {
-  const { day, outsideCurrentMonth, ...other } = props;
-  const dateStr = day.format('YYYY-MM-DD');
-  const isSunday = day.day() === 0;
-  const isSaturday = day.day() === 6;
-  const isHoliday = holidays.includes(dateStr);
-  let color = undefined;
-  if (isSunday || isSaturday || isHoliday) color = 'red';
-
-  // 아이콘: 학습(🍅)이 출석(🌱)보다 우선
-  let icon = null;
-  if (!outsideCurrentMonth) {
-    if (attendanceDays.includes(dateStr)) icon = '🌱';
-    if (studyDays.includes(dateStr)) icon = '🍅';
-  }
-
-  return (
-    <Badge
-      overlap="circular"
-      badgeContent={icon}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    >
-      <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
-    </Badge>
-  );
-}
-
 const DashboardPage: React.FC = () => {
   const { isMobile } = useResponsive();
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  // 복습 일정 관리 API 연동
-  const [todayCards, setTodayCards] = useState<number | null>(null);
-  const [within3DaysCards, setWithin3DaysCards] = useState<number | null>(null);
-  const [overdueCards, setOverdueCards] = useState<number | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [hasAttendedToday, setHasAttendedToday] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // DateCalendar에서 사용할 커스텀 Day 컴포넌트
+  const CustomDay = (props: PickersDayProps<dayjs.Dayjs>) => {
+    const { day, outsideCurrentMonth, ...other } = props;
+    const attendedDates = dashboardData?.attendance?.attendedDates || [];
+    const dateStr = day.format('YYYY-MM-DD');
+    const isSunday = day.day() === 0;
+    const isSaturday = day.day() === 6;
+    const isHoliday = holidays.includes(dateStr);
+    let color = undefined;
+    if (isSunday || isSaturday || isHoliday) color = 'red';
+
+    let icon = null;
+    if (!outsideCurrentMonth) {
+      if (attendedDates.includes(dateStr)) icon = '🌱';
+      // studyDays는 현재 사용되지 않음
+    }
+
+    return (
+      <Badge
+        overlap="circular"
+        badgeContent={icon}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <PickersDay {...other} day={day} outsideCurrentMonth={outsideCurrentMonth} sx={{ color }} />
+      </Badge>
+    );
+  };
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [data, attendanceStatus] = await Promise.all([
+        getDashboardData(),
+        checkTodayAttendance(),
+      ]);
+      setDashboardData(data);
+      setHasAttendedToday(attendanceStatus.attended);
+    } catch (error) {
+      console.error('대시보드 데이터 로딩 실패:', error);
+      dispatch(showToast({ message: '데이터를 불러오는 데 실패했습니다.', severity: 'error' }));
+    } finally {
+      setLoading(false);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
-    getTodayCardsCount().then(setTodayCards);
-    getWithin3DaysCardsCount().then(setWithin3DaysCards);
-    getOverdueCardsCount().then(setOverdueCards);
-  }, []);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const handleAttendance = async () => {
+    try {
+      await recordAttendance();
+      dispatch(showToast({ message: '출석 체크 완료!', severity: 'success' }));
+      await fetchDashboardData(); // 데이터 새로고침
+    } catch (error) {
+      console.error('출석 기록 실패:', error);
+      dispatch(showToast({ message: '출석 처리에 실패했습니다. 이미 출석했을 수 있습니다.', severity: 'error' }));
+    }
+  };
 
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
+
+  const studyProgress = (dashboardData?.studyTime?.todayStudyMinutes && dashboardData?.studyTime?.dailyGoalMinutes)
+    ? (dashboardData.studyTime.todayStudyMinutes / dashboardData.studyTime.dailyGoalMinutes) * 100
+    : 0;
 
   return (
     <StyledContainer maxWidth="md">
@@ -147,95 +182,36 @@ const DashboardPage: React.FC = () => {
         mb: 4
       }}>
         <Card cardVariant="default" sx={{ backgroundColor: 'background.paper' }}>
-          <Typography variant="h3" gutterBottom>
-            오늘의 학습
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h3" gutterBottom>
+              오늘의 학습 목표
+            </Typography>
+            <Chip label={`${dashboardData?.studyTime?.todayStudyMinutes ?? 0}분 / ${dashboardData?.studyTime?.dailyGoalMinutes ?? 60}분`} color="primary" />
+          </Box>
           <ProgressBar
-            value={65}
+            value={studyProgress > 100 ? 100 : studyProgress}
             showLabel
             label="Focus Time"
             sx={{ mb: 2 }}
           />
           <Typography variant="body2" color="text.secondary">
-            65% 달성
+            {Math.round(studyProgress)}% 달성
           </Typography>
-
         </Card>
 
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
-          <Accordion elevation={0} sx={{ ml: 0 }}>
-            <AccordionSummary
-              expandIcon={<span>▼</span>}
-              aria-controls="recent-activity-content"
-              id="recent-activity-header"
-            >
-              <Typography variant="h3">최근 활동</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider'
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      포모도로 세션 완료
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      25분 집중 학습
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    2시간 전
-                  </Typography>
-                </Box>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider'
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      플래시카드 학습
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      영어 단어 20개 복습
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    4시간 전
-                  </Typography>
-                </Box>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  padding: '8px 0'
-                }}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      노트 작성
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      "React 컴포넌트 설계" 노트 생성
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    6시간 전
-                  </Typography>
-                </Box>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
+        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper' }}>
+           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h3">출석 체크</Typography>
+            <Chip label={`연속 ${dashboardData?.attendance?.consecutiveDays ?? 0}일`} color="secondary" />
+          </Box>
+          <Button 
+            onClick={handleAttendance} 
+            disabled={hasAttendedToday}
+            fullWidth
+            variant="contained"
+          >
+            {hasAttendedToday ? '오늘 출석 완료! 🎉' : '출석하고 포인트 받기'}
+          </Button>
         </Card>
       </Box>
 
@@ -264,27 +240,19 @@ const DashboardPage: React.FC = () => {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#4caf50',
-                  borderRadius: 1
+                  width: 10, 
+                  height: 10, 
+                  borderRadius: '50%', 
+                  backgroundColor: '#4caf50' 
                 }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {/* 오늘 복습 */}
-                    오늘 학습해야할 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    오늘 학습해야할 카드
-                  </Typography> */}
-                </Box>
+                <Typography variant="body1">오늘 복습할 카드</Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
-                {todayCards === null ? '...' : todayCards}
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                {loading ? '...' : `${dashboardData?.review?.todayCount ?? 0}개`}
               </Typography>
             </Box>
 
-            {/* 3일내 학습해야할 카드 */}
+            {/* 3일 내 학습해야할 카드 */}
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -296,27 +264,19 @@ const DashboardPage: React.FC = () => {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#ff9800',
-                  borderRadius: 1
+                  width: 10, 
+                  height: 10, 
+                  borderRadius: '50%', 
+                  backgroundColor: '#ff9800' 
                 }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {/* 3일 이내 복습 */}
-                    3일내 학습해야할 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    3일내 학습해야할 카드
-                  </Typography> */}
-                </Box>
+                <Typography variant="body1">3일 내 복습 카드</Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
-                {within3DaysCards === null ? '...' : within3DaysCards}
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                 {loading ? '...' : `${dashboardData?.review?.upcomingCount ?? 0}개`}
               </Typography>
             </Box>
-
-            {/* 하루이상 지난 카드 */}
+            
+            {/* 밀린 카드 */}
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -328,48 +288,25 @@ const DashboardPage: React.FC = () => {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ 
-                  width: 12, 
-                  height: 40, 
-                  backgroundColor: '#f44336',
-                  borderRadius: 1
+                  width: 10, 
+                  height: 10, 
+                  borderRadius: '50%', 
+                  backgroundColor: '#f44336' 
                 }} />
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    복습 미완료 or 하루이상 지난 카드
-                  </Typography>
-                  {/* <Typography variant="caption" color="text.secondary">
-                    복습 미완료 or 하루이상 지난 카드
-                  </Typography> */}
-                </Box>
+                <Typography variant="body1">밀린 카드</Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#f44336' }}>
-                {overdueCards === null ? '...' : overdueCards}
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                 {loading ? '...' : `${dashboardData?.review?.overdueCount ?? 0}개`}
               </Typography>
             </Box>
           </Box>
         </Card>
-        <Card cardVariant="default" sx={{ backgroundColor: 'background.paper', padding: 0 }}>
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            adapterLocale="ko"
-            localeText={{
-              calendarWeekNumberHeaderText: '주',
-              previousMonth: '이전 달',
-              nextMonth: '다음 달',
-              openPreviousView: '이전 보기',
-              openNextView: '다음 보기',
-              start: '시작',
-              end: '끝',
-              cancelButtonLabel: '취소',
-              clearButtonLabel: '지우기',
-              okButtonLabel: '확인',
-              todayButtonLabel: '오늘',
-            }}
-          >
+        <Card cardVariant="default">
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
             <DateCalendar
-              defaultValue={dayjs()}
+              value={dayjs()}
               slots={{ day: CustomDay }}
-              dayOfWeekFormatter={(date) => date.locale('ko').format('dd')}
+              readOnly
             />
           </LocalizationProvider>
         </Card>
