@@ -62,11 +62,13 @@ public class CardStat {
     private LocalDateTime lastReviewedAt; // 마지막 복습 시점
 
     @Column(name = "last_difficulty", length = 20)
-    private String lastDifficulty; // 마지막 선택 난이도 (hard/confuse/easy)
+    @Builder.Default
+    private String lastDifficulty = "easy"; // 마지막 선택 난이도 (hard/confuse/easy) - 기본값 설정
 
     // 품질 추적
     @Column(name = "last_quality")
-    private Integer lastQuality; // 마지막 응답 품질 (0-5)
+    @Builder.Default
+    private Integer lastQuality = 3; // 마지막 응답 품질 (0-5) - 기본값 3 (보통)
 
     @Column(name = "total_reviews", nullable = false)
     @Builder.Default
@@ -89,12 +91,35 @@ public class CardStat {
         this.intervalDays = newIntervalDays;
         this.dueAt = LocalDateTime.now().plusDays(newIntervalDays);
         this.lastReviewedAt = LocalDateTime.now();
-        this.lastQuality = quality;
-        this.lastDifficulty = difficulty;
+        this.lastQuality = quality != null ? quality : 3; // null 방지
+        this.lastDifficulty = difficulty != null ? difficulty : "easy"; // null 방지
         this.totalReviews = this.totalReviews + 1;
     }
 
     public boolean isDue() {
         return LocalDateTime.now().isAfter(this.dueAt) || LocalDateTime.now().isEqual(this.dueAt);
+    }
+
+    // 헬퍼 메서드들 추가
+    public boolean isNewCard() {
+        return totalReviews == 0;
+    }
+
+    public boolean isLearningCard() {
+        return totalReviews > 0 && repetitions < 2;
+    }
+
+    public boolean isReviewCard() {
+        return repetitions >= 2;
+    }
+
+    public String getDifficultyLevel() {
+        if (easeFactor.compareTo(new BigDecimal("2.0")) < 0) {
+            return "어려움";
+        } else if (easeFactor.compareTo(new BigDecimal("2.8")) > 0) {
+            return "쉬움";
+        } else {
+            return "보통";
+        }
     }
 } 

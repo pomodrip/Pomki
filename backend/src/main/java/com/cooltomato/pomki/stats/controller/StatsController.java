@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/stats")
@@ -22,11 +23,15 @@ public class StatsController {
     private final StatsService statsService;
 
     @GetMapping("/dashboard")
+    @Operation(summary = "월별 캘린더용 대시보드 조회",
+               description = "⚠️ 특수 목적용 - 일반적인 경우 /api/simple-stats/dashboard 사용 권장")
     public ResponseEntity<DashboardStatsResponseDto> getDashboardStats(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @AuthenticationPrincipal PrincipalMember member) {
         
+        // ⚠️ 응답 형식 불일치: 다른 API들과 달리 success/data 구조 없음
+        // TODO: 응답 형식 통일 필요 { "success": true, "data": {...} }
         LocalDate today = LocalDate.now();
         int queryYear = (year!= null)? year : today.getYear();
         int queryMonth = (month!= null)? month : today.getMonthValue();
@@ -39,19 +44,19 @@ public class StatsController {
      * 출석 기록 API
      */
     @PostMapping("/attendance")
-    public ResponseEntity<?> recordAttendance(@AuthenticationPrincipal PrincipalMember member) {
+    public ResponseEntity<?> recordAttendance(@AuthenticationPrincipal PrincipalMember principalMember) {
         try {
-            boolean isNewAttendance = statsService.recordAttendance(member.getMemberId());
+            boolean isNewAttendance = statsService.recordAttendance(principalMember.getMemberId());
             
             if (isNewAttendance) {
-                log.info("New attendance recorded for member: {}", member.getMemberId());
+                log.info("New attendance recorded for member: {}", principalMember.getMemberId());
                 return ResponseEntity.ok().body(Map.of(
                     "success", true,
                     "message", "출석이 기록되었습니다.",
                     "isNewAttendance", true
                 ));
             } else {
-                log.info("Member {} already attended today", member.getMemberId());
+                log.info("Member {} already attended today", principalMember.getMemberId());
                 return ResponseEntity.ok().body(Map.of(
                     "success", true,
                     "message", "오늘은 이미 출석하셨습니다.",
@@ -59,7 +64,7 @@ public class StatsController {
                 ));
             }
         } catch (Exception e) {
-            log.error("Failed to record attendance for member: {}", member.getMemberId(), e);
+            log.error("Failed to record attendance for member: {}", principalMember.getMemberId(), e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "출석 기록 중 오류가 발생했습니다."
@@ -72,15 +77,15 @@ public class StatsController {
      */
     @PostMapping("/study-time")
     public ResponseEntity<?> addStudyTime(
-            @AuthenticationPrincipal PrincipalMember member,
+            @AuthenticationPrincipal PrincipalMember principalMember,
             @RequestBody StudyTimeRequest request) {
         try {
-            statsService.addStudyTime(member.getMemberId(), request.getStudyMinutes());
+            statsService.addStudyTime(principalMember.getMemberId(), request.getStudyMinutes());
             
-            Integer totalMinutes = statsService.getTotalStudyMinutes(member.getMemberId());
+            int totalMinutes = statsService.getTotalStudyMinutes(principalMember.getMemberId());
             
             log.info("Added {} minutes for member: {} (Total: {})", 
-                    request.getStudyMinutes(), member.getMemberId(), totalMinutes);
+                    request.getStudyMinutes(), principalMember.getMemberId(), totalMinutes);
             
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
@@ -89,7 +94,7 @@ public class StatsController {
                 "totalMinutes", totalMinutes
             ));
         } catch (Exception e) {
-            log.error("Failed to add study time for member: {}", member.getMemberId(), e);
+            log.error("Failed to add study time for member: {}", principalMember.getMemberId(), e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "학습 시간 기록 중 오류가 발생했습니다."
@@ -101,9 +106,9 @@ public class StatsController {
      * 출석 여부 확인 API
      */
     @GetMapping("/attendance/today")
-    public ResponseEntity<?> checkTodayAttendance(@AuthenticationPrincipal PrincipalMember member) {
+    public ResponseEntity<?> checkTodayAttendance(@AuthenticationPrincipal PrincipalMember principalMember) {
         try {
-            boolean isAttended = statsService.isAttendedToday(member.getMemberId());
+            boolean isAttended = statsService.isAttendedToday(principalMember.getMemberId());
             
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
@@ -111,7 +116,7 @@ public class StatsController {
                 "date", LocalDate.now().toString()
             ));
         } catch (Exception e) {
-            log.error("Failed to check attendance for member: {}", member.getMemberId(), e);
+            log.error("Failed to check attendance for member: {}", principalMember.getMemberId(), e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "출석 확인 중 오류가 발생했습니다."
@@ -123,9 +128,9 @@ public class StatsController {
      * 총 학습 시간 조회 API
      */
     @GetMapping("/study-time/total")
-    public ResponseEntity<?> getTotalStudyTime(@AuthenticationPrincipal PrincipalMember member) {
+    public ResponseEntity<?> getTotalStudyTime(@AuthenticationPrincipal PrincipalMember principalMember) {
         try {
-            Integer totalMinutes = statsService.getTotalStudyMinutes(member.getMemberId());
+            int totalMinutes = statsService.getTotalStudyMinutes(principalMember.getMemberId());
             
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
@@ -133,10 +138,42 @@ public class StatsController {
                 "totalStudyHours", totalMinutes / 60.0
             ));
         } catch (Exception e) {
-            log.error("Failed to get total study time for member: {}", member.getMemberId(), e);
+            log.error("Failed to get total study time for member: {}", principalMember.getMemberId(), e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "학습 시간 조회 중 오류가 발생했습니다."
+            ));
+        }
+    }
+
+    /**
+     * 종합 통계 조회 API
+     */
+    @GetMapping("/summary")
+    public ResponseEntity<?> getMemberStatsSummary(@AuthenticationPrincipal PrincipalMember principalMember) {
+        try {
+            StatsService.MemberStatsSummary summary = statsService.getMemberStatsSummary(principalMember.getMemberId());
+            
+            return ResponseEntity.ok().body(Map.of(
+                "success", true,
+                "data", Map.of(
+                    "totalStudyMinutes", summary.getTotalStudyMinutes(),
+                    "totalStudyHours", summary.getTotalStudyHours(),
+                    "totalStudyDays", summary.getTotalStudyDays(),
+                    "currentStreak", summary.getCurrentStreak(),
+                    "maxStreak", summary.getMaxStreak(),
+                    "totalCardsStudied", summary.getTotalCardsStudied(),
+                    "totalNotesCreated", summary.getTotalNotesCreated(),
+                    "averageStudyMinutesPerDay", summary.getAverageStudyMinutesPerDay(),
+                    "studyLevel", summary.getStudyLevel(),
+                    "isActiveStudier", summary.getIsActiveStudier()
+                )
+            ));
+        } catch (Exception e) {
+            log.error("Failed to get member stats summary for member: {}", principalMember.getMemberId(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "통계 조회 중 오류가 발생했습니다."
             ));
         }
     }
@@ -149,110 +186,3 @@ public class StatsController {
         public void setStudyMinutes(Integer studyMinutes) { this.studyMinutes = studyMinutes; }
     }
 }
-
-// package com.cooltomato.pomki.stats.controller;
-
-// import com.cooltomato.pomki.auth.dto.PrincipalMember;
-// import com.cooltomato.pomki.stats.dto.DashboardStatsDto;
-// import com.cooltomato.pomki.stats.entity.StudyLog;
-// import com.cooltomato.pomki.stats.service.StatsService;
-// import lombok.RequiredArgsConstructor;
-// import lombok.extern.slf4j.Slf4j;
-// import org.springframework.http.ResponseEntity;
-// import org.springframework.security.core.annotation.AuthenticationPrincipal;
-// import org.springframework.web.bind.annotation.*;
-
-// @RestController
-// @RequestMapping("/api/stats")
-// @RequiredArgsConstructor
-// @Slf4j
-// public class StatsController {
-
-//     private final StatsService statsService;
-
-//     @GetMapping("/dashboard")
-//     public ResponseEntity<DashboardStatsDto> getDashboardStats(
-//             @AuthenticationPrincipal PrincipalMember principalMember) {
-        
-//         log.info("Dashboard stats requested by member: {}", principalMember.getMemberId());
-        
-//         DashboardStatsDto dashboardStats = statsService.getDashboardStats(principalMember.getMemberId());
-//         return ResponseEntity.ok(dashboardStats);
-//     }
-
-//     @PostMapping("/session")
-//     public ResponseEntity<?> recordStudySession(
-//             @AuthenticationPrincipal PrincipalMember principalMember,
-//             @RequestBody StudySessionRequest request) {
-        
-//         log.info("Study session recording requested by member: {}", principalMember.getMemberId());
-        
-//         statsService.recordStudySession(
-//                 principalMember.getMemberId(),
-//                 request.getActivityType(),
-//                 request.getActivityTitle(),
-//                 request.getStudyMinutes(),
-//                 request.getGoalMinutes(),
-//                 request.getPomodoroCompleted(),
-//                 request.getPomodoroTotal()
-//         );
-        
-//         return ResponseEntity.ok().build();
-//     }
-
-//     @GetMapping("/today-activities")
-//     public ResponseEntity<?> getTodayActivities(
-//             @AuthenticationPrincipal PrincipalMember principalMember) {
-        
-//         log.info("Today activities requested by member: {}", principalMember.getMemberId());
-        
-//         DashboardStatsDto dashboardStats = statsService.getDashboardStats(principalMember.getMemberId());
-//         return ResponseEntity.ok(dashboardStats.getTodayActivities());
-//     }
-
-//     @GetMapping("/recent-activities")
-//     public ResponseEntity<?> getRecentActivities(
-//             @AuthenticationPrincipal PrincipalMember principalMember) {
-        
-//         log.info("Recent activities requested by member: {}", principalMember.getMemberId());
-        
-//         DashboardStatsDto dashboardStats = statsService.getDashboardStats(principalMember.getMemberId());
-//         return ResponseEntity.ok(dashboardStats.getRecentActivities());
-//     }
-
-//     @GetMapping("/weekly-stats")
-//     public ResponseEntity<?> getWeeklyStats(
-//             @AuthenticationPrincipal PrincipalMember principalMember) {
-        
-//         log.info("Weekly stats requested by member: {}", principalMember.getMemberId());
-        
-//         DashboardStatsDto dashboardStats = statsService.getDashboardStats(principalMember.getMemberId());
-//         return ResponseEntity.ok(dashboardStats.getWeeklyStats());
-//     }
-
-//     // Request DTO
-//     public static class StudySessionRequest {
-//         private StudyLog.ActivityType activityType;
-//         private String activityTitle;
-//         private Integer studyMinutes;
-//         private Integer goalMinutes;
-//         private Integer pomodoroCompleted;
-//         private Integer pomodoroTotal;
-
-//         // Getters
-//         public StudyLog.ActivityType getActivityType() { return activityType; }
-//         public String getActivityTitle() { return activityTitle; }
-//         public Integer getStudyMinutes() { return studyMinutes; }
-//         public Integer getGoalMinutes() { return goalMinutes; }
-//         public Integer getPomodoroCompleted() { return pomodoroCompleted; }
-//         public Integer getPomodoroTotal() { return pomodoroTotal; }
-
-//         // Setters
-//         public void setActivityType(StudyLog.ActivityType activityType) { this.activityType = activityType; }
-//         public void setActivityTitle(String activityTitle) { this.activityTitle = activityTitle; }
-//         public void setStudyMinutes(Integer studyMinutes) { this.studyMinutes = studyMinutes; }
-//         public void setGoalMinutes(Integer goalMinutes) { this.goalMinutes = goalMinutes; }
-//         public void setPomodoroCompleted(Integer pomodoroCompleted) { this.pomodoroCompleted = pomodoroCompleted; }
-//         public void setPomodoroTotal(Integer pomodoroTotal) { this.pomodoroTotal = pomodoroTotal; }
-//     }
-// } 

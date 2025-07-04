@@ -51,23 +51,30 @@ public class ReviewController {
     }
 
     @PostMapping("/complete/{cardId}")
-    @Operation(summary = "카드 복습 완료 처리")
+    @Operation(summary = "카드 복습 완료 처리",
+               description = "⚠️ 복잡한 SM-2 알고리즘 사용. 일반적인 경우 /complete-simple 사용 권장")
     public ResponseEntity<Void> completeCardReview(
             @Parameter(description = "카드 ID") @PathVariable Long cardId,
             @Parameter(description = "난이도 (easy, good, hard, again)") 
             @RequestParam String difficulty,
             @AuthenticationPrincipal PrincipalMember principal) {
+        
+        // ⚠️ 복잡한 SM-2 알고리즘 - 특별한 경우에만 사용
+        // 일반적인 경우 POST /complete-simple/{cardId} 사용 권장
         reviewService.completeCardReview(cardId, difficulty, principal);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/complete-simple/{cardId}")
-    @Operation(summary = "카드 복습 완료 처리 (단순화된 버전)")
+    @Operation(summary = "카드 복습 완료 처리 (단순화된 버전 - 권장)",
+               description = "✅ 권장: hard(1일), confuse(3일), easy(5일) 단순 주기")
     public ResponseEntity<Void> completeCardReviewSimple(
             @Parameter(description = "카드 ID") @PathVariable Long cardId,
             @Parameter(description = "난이도 (hard: 1일, confuse: 3일, easy: 5일)") 
             @RequestParam String difficulty,
             @AuthenticationPrincipal PrincipalMember principal) {
+        
+        // ✅ 권장: 단순하고 예측 가능한 학습 주기
         reviewService.completeCardReviewSimple(cardId, difficulty, principal);
         return ResponseEntity.ok().build();
     }

@@ -40,28 +40,37 @@ public class StudyCycleDashboardController {
     }
 
     @GetMapping("/today-cards")
-    @Operation(summary = "오늘 학습할 카드 목록만 조회")
+    @Operation(summary = "오늘 학습할 카드 목록만 조회",
+               description = "⚠️ TODO: 최적화 필요 - 전체 대시보드 조회 후 일부만 반환")
     public ResponseEntity<StudyCycleDashboardDto.StudyCardInfo[]> getTodayCards(
             @AuthenticationPrincipal PrincipalMember principal) {
         
+        // ⚠️ 비효율적: 전체 대시보드 조회 후 일부만 사용
+        // TODO: studyCycleDashboardService.getTodayCardsOnly(principal) 메서드 추가 필요
         StudyCycleDashboardDto dashboard = studyCycleDashboardService.getDashboardData(principal);
         return ResponseEntity.ok(dashboard.getTodayCards().toArray(new StudyCycleDashboardDto.StudyCardInfo[0]));
     }
 
     @GetMapping("/overdue-cards")
-    @Operation(summary = "지연된 카드 목록만 조회")
+    @Operation(summary = "지연된 카드 목록만 조회",
+               description = "⚠️ TODO: 최적화 필요 - 전체 대시보드 조회 후 일부만 반환")
     public ResponseEntity<StudyCycleDashboardDto.StudyCardInfo[]> getOverdueCards(
             @AuthenticationPrincipal PrincipalMember principal) {
         
+        // ⚠️ 비효율적: 전체 대시보드 조회 후 일부만 사용
+        // TODO: studyCycleDashboardService.getOverdueCardsOnly(principal) 메서드 추가 필요
         StudyCycleDashboardDto dashboard = studyCycleDashboardService.getDashboardData(principal);
         return ResponseEntity.ok(dashboard.getOverdueCards().toArray(new StudyCycleDashboardDto.StudyCardInfo[0]));
     }
 
     @GetMapping("/stats")
-    @Operation(summary = "학습 주기 통계만 조회")
+    @Operation(summary = "학습 주기 통계만 조회",
+               description = "⚠️ TODO: 최적화 필요 - 전체 대시보드 조회 후 일부만 반환")
     public ResponseEntity<StudyCycleDashboardDto.StudyStats> getStudyCycleStats(
             @AuthenticationPrincipal PrincipalMember principal) {
         
+        // ⚠️ 비효율적: 전체 대시보드 조회 후 일부만 사용
+        // TODO: studyCycleDashboardService.getStatsOnly(principal) 메서드 추가 필요
         StudyCycleDashboardDto dashboard = studyCycleDashboardService.getDashboardData(principal);
         return ResponseEntity.ok(dashboard.getStats());
     }

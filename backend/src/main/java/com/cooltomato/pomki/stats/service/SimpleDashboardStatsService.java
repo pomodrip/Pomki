@@ -198,4 +198,32 @@ public class SimpleDashboardStatsService {
         
         return streak;
     }
+
+    /**
+     * 오늘의 학습 통계만 조회 (최적화)
+     */
+    public SimpleDashboardStatsDto.TodayStudyStats getTodayStatsOnly(PrincipalMember principal) {
+        return getTodayStudyStats(principal.getMemberInfo().getMemberId());
+    }
+
+    /**
+     * 주간 학습 통계만 조회 (최적화)
+     */
+    public SimpleDashboardStatsDto.WeeklyStats getWeeklyStatsOnly(PrincipalMember principal) {
+        return getWeeklyStats(principal.getMemberInfo().getMemberId());
+    }
+
+    /**
+     * 복습 통계만 조회 (최적화)
+     */
+    public SimpleDashboardStatsDto.ReviewStats getReviewStatsOnly(PrincipalMember principal) {
+        return getReviewStats(principal);
+    }
+
+    /**
+     * 누적 통계만 조회 (최적화)
+     */
+    public SimpleDashboardStatsDto.TotalStats getTotalStatsOnly(PrincipalMember principal) {
+        return getTotalStats(principal.getMemberInfo().getMemberId());
+    }
 } 

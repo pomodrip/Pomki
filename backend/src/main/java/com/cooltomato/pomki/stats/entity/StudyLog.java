@@ -33,20 +33,20 @@ public class StudyLog {
     @Column(name = "activity_title")
     private String activityTitle;
 
-    // 구조화된 컬럼들 - JSON 대신 명확한 타입 사용
-    @Column(name = "study_minutes", nullable = false)
+    // 기본값이 있는 선택적 필드들 - null 허용하지만 기본값으로 안전장치
+    @Column(name = "study_minutes")
     private Integer studyMinutes = 0;
 
-    @Column(name = "goal_minutes", nullable = false)
-    private Integer goalMinutes = 240;
+    @Column(name = "goal_minutes")
+    private Integer goalMinutes = 0;
 
-    @Column(name = "pomodoro_completed", nullable = false)
+    @Column(name = "pomodoro_completed")
     private Integer pomodoroCompleted = 0;
 
-    @Column(name = "pomodoro_total", nullable = false)
-    private Integer pomodoroTotal = 8;
+    @Column(name = "pomodoro_total")
+    private Integer pomodoroTotal = 0;
 
-    // 추가 메타데이터를 위한 선택적 JSON 필드 (핵심 데이터는 구조화)
+    // 추가 메타데이터를 위한 선택적 JSON 필드
     @Column(name = "additional_metadata", columnDefinition = "json")
     private String additionalMetadata;
 
@@ -62,10 +62,11 @@ public class StudyLog {
         this.member = member;
         this.activityType = activityType;
         this.activityTitle = activityTitle;
+        // null이면 기본값 사용, 값이 있으면 해당 값 사용
         this.studyMinutes = studyMinutes != null ? studyMinutes : 0;
-        this.goalMinutes = goalMinutes != null ? goalMinutes : 240;
+        this.goalMinutes = goalMinutes != null ? goalMinutes : 0;
         this.pomodoroCompleted = pomodoroCompleted != null ? pomodoroCompleted : 0;
-        this.pomodoroTotal = pomodoroTotal != null ? pomodoroTotal : 8;
+        this.pomodoroTotal = pomodoroTotal != null ? pomodoroTotal : 0;
         this.additionalMetadata = additionalMetadata;
     }
 
@@ -77,7 +78,14 @@ public class StudyLog {
         AI_POLISHING("AI 노트 정리"),
         AI_QUIZEGEN("AI 퀴즈 생성"),
         POMODORO_SESSION_COMPLETED("포모도로 세션 완료"),
-        STUDY_SESSION_COMPLETED("학습 세션 완료");
+        STUDY_SESSION_COMPLETED("학습 세션 완료"),
+        ATTENDANCE_RECORDED("출석 기록"),
+        READING_ACTIVITY("읽기 활동"),
+        WRITING_ACTIVITY("쓰기 활동"),
+        PROBLEM_SOLVING("문제 해결"),
+        DISCUSSION("토론 참여"),
+        PRESENTATION("발표"),
+        RESEARCH("조사 활동");
 
         private final String description;
 
@@ -88,6 +96,25 @@ public class StudyLog {
         public String getDescription() {
             return description;
         }
+    }
+
+    // 헬퍼 메서드들
+    public boolean hasStudyTime() {
+        return studyMinutes != null && studyMinutes > 0;
+    }
+
+    public boolean isPomodoroSession() {
+        return pomodoroTotal != null && pomodoroTotal > 0;
+    }
+
+    public double getCompletionRate() {
+        if (pomodoroTotal == null || pomodoroTotal == 0) return 0.0;
+        return (double) pomodoroCompleted / pomodoroTotal * 100;
+    }
+
+    public boolean isGoalAchieved() {
+        if (goalMinutes == null || goalMinutes == 0) return true;
+        return studyMinutes >= goalMinutes;
     }
 }
 
