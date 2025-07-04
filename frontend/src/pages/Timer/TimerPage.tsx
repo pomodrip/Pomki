@@ -570,6 +570,7 @@ const TimerPage: React.FC = () => {
   
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
@@ -850,8 +851,17 @@ const TimerPage: React.FC = () => {
   };
 
   const handleReset = () => {
+    setShowResetDialog(true);
+  };
+
+  const handleConfirmReset = () => {
     reset();
     setHasTimerStarted(false);
+    setShowResetDialog(false);
+  };
+
+  const handleCancelReset = () => {
+    setShowResetDialog(false);
   };
 
   const handleSettings = () => {
@@ -2057,8 +2067,41 @@ const TimerPage: React.FC = () => {
           </PresetsSection>
         </SettingsContainer>
       </Modal>
-              {/* Toast 알림 */}
-        <Toast />
+
+      {/* 리셋 확인 다이얼로그 */}
+      <Modal
+        open={showResetDialog}
+        onClose={handleCancelReset}
+        title="⚠️ 타이머 초기화"
+      >
+        <Box sx={{ mb: 2 }}>
+          <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
+            타이머를 초기화하시겠습니까? 현재 진행 상황이 모두 사라집니다.
+          </Text>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleCancelReset}
+            sx={{ flex: 1 }}
+          >
+            취소
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmReset}
+            sx={{ flex: 1 }}
+          >
+            초기화
+          </Button>
+        </Box>
+      </Modal>
+
+      {/* Toast 알림 */}
+      <Toast />
     </PageContainer>
   );
 };
