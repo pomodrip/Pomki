@@ -93,7 +93,7 @@ const NoteCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: 'white',
+  backgroundColor: theme.palette.background.paper,
   cursor: 'pointer',
   '&:hover': {
     boxShadow: theme.shadows[4],

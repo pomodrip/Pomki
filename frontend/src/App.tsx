@@ -59,9 +59,59 @@ function UIInitializer() {
           primary: '#ffffff',
           secondary: '#b0b0b0',
         },
+        grey: {
+          50: '#121212',
+          100: '#121212',
+          200: '#121212',
+          300: '#121212',
+          400: '#121212',
+          500: '#121212',
+          600: '#121212',
+          700: '#121212',
+          800: '#121212',
+          900: '#121212',
+        },
       }),
     },
-  });
+      components: {
+      ...(baseTheme.components || {}),
+      // TextField 컴포넌트의 색상을 다크모드에 맞게 조정
+      ...(currentTheme === 'dark' ? {
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: {
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.23)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#90caf9',
+              },
+            },
+          },
+        },
+        MuiInputLabel: {
+          styleOverrides: {
+            root: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              '&.Mui-focused': {
+                color: '#90caf9',
+              },
+            },
+          },
+        },
+        MuiInputAdornment: {
+          styleOverrides: {
+            root: {
+              color: 'rgba(255, 255, 255, 0.7)',
+            },
+          },
+        },
+      } : {}),
+    },
+   });
 
   return (
     <ThemeProvider theme={dynamicTheme}>

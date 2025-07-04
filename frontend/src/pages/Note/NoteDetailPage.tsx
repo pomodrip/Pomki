@@ -9,6 +9,7 @@ import Alert from '../../components/ui/Alert';
 import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import ListIcon from '@mui/icons-material/List';
+import theme from '../../theme/theme';
 
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
@@ -125,7 +126,7 @@ const NoteDetailPage: React.FC = () => {
                   minHeight: '150px',
                   maxHeight: '500px',
                   overflowY: 'auto',
-                  backgroundColor: '#fafafa',
+                  backgroundColor: theme => theme.palette.background.paper,
                   fontSize: '1rem',
                   lineHeight: 1.6,
                   whiteSpace: 'pre-line',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, styled } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Box, styled, useTheme } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -7,12 +7,12 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
-import { useTheme } from '../../hooks/useUI';
+import { useUI } from '../../hooks/useUI';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
-const StyledAppBar = styled(AppBar)<{ isDark?: boolean }>(({ theme, isDark }) => ({
-  backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', // 다크모드 분기: 어두운 배경 / 밝은 배경
-  borderBottom: isDark ? '1px solid #333333' : '1px solid #E5E5E7', // 다크모드 분기: 어두운 경계선 / 밝은 경계선
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
   height: '64px', // 1. 헤더 높이
   boxShadow: 'none',
   position: 'sticky',
@@ -49,11 +49,11 @@ const TomatoIcon = styled('div')(() => ({
 }));
 
 // 브랜드 섹션 - design.md 가이드 6-10번 적용
-const BrandText = styled(Typography)<{ isDark?: boolean }>(({ isDark }) => ({
+const BrandText = styled(Typography)(({ theme }) => ({
   fontFamily: "'Pretendard', sans-serif", // 6. 브랜드명 폰트
   fontSize: '20px', // 모바일 기본 크기 (24px에서 축소)
   fontWeight: 700, // 8. 브랜드명 폰트 무게
-  color: isDark ? '#FFFFFF' : '#1A1A1A', // 다크모드 분기: 흰색 텍스트 / 검은색 텍스트
+  color: theme.palette.text.primary,
   marginLeft: '8px', // 10. 토마토 아이콘과 텍스트 간격
   whiteSpace: 'nowrap', // 줄바꿈 방지
   overflow: 'hidden',
@@ -260,7 +260,8 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useResponsive();
-  const { toggleTheme, isDark } = useTheme();
+  const { toggleTheme } = useUI();
+  const theme = useTheme();
 
   const handleBack = () => {
     navigate(-1);
@@ -295,7 +296,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <StyledAppBar position="sticky" color="inherit" isDark={isDark}>
+    <StyledAppBar position="sticky" color="inherit">
       <StyledToolbar>
         {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -307,7 +308,7 @@ const Header: React.FC<HeaderProps> = ({
             <>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
                 <TomatoIcon />
-                <BrandText isDark={isDark}>
+                <BrandText>
                   Pomkist
                 </BrandText>
               </BrandSection>
@@ -323,7 +324,7 @@ const Header: React.FC<HeaderProps> = ({
             position: 'absolute',
             left: '50%',
             transform: 'translateX(-50%)',
-            color: isDark ? '#FFFFFF' : '#1A1A1A', // 다크모드 분기
+            color: theme.palette.text.primary,
             fontSize: '16px', // 기본 크기
             whiteSpace: 'nowrap', // 줄바꿈 방지
             overflow: 'hidden',
@@ -386,8 +387,8 @@ const Header: React.FC<HeaderProps> = ({
           </DesktopNav>
 
           {/* 테마 토글 버튼 */}
-          <NotificationButton onClick={toggleTheme} disableRipple title={`${isDark ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${isDark ? 'Light' : 'Dark'} 모드로 변경`}>
-            {isDark ? <Brightness7 /> : <Brightness4 />}
+          <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`}>
+            {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
           </NotificationButton>
 
           {/* 알림 아이콘 (항상 표시) */}
