@@ -4,6 +4,12 @@ package com.cooltomato.pomki.stats.service;
 // import com.cooltomato.pomki.stats.dto.DashboardStatsDto;
 import com.cooltomato.pomki.stats.entity.StudyLog;
 import com.cooltomato.pomki.stats.repository.StudyLogRepository;
+import com.cooltomato.pomki.stats.entity.Attendance;
+import com.cooltomato.pomki.stats.entity.MemberStat;
+import com.cooltomato.pomki.stats.repository.AttendanceRepository;
+import com.cooltomato.pomki.stats.repository.MemberStatRepository;
+import com.cooltomato.pomki.member.entity.Member;
+import com.cooltomato.pomki.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -233,4 +239,106 @@ public class StatsService {
         log.info("Study session recorded for member: {} - {}", memberId, activityType);
     }
 }
-*/ 
+*/
+
+// 새로운 활성 서비스 메서드들 - 출석 기록 및 학습 시간 누적
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class StatsService {
+
+    private final AttendanceRepository attendanceRepository;
+    private final MemberStatRepository memberStatRepository;
+    private final MemberRepository memberRepository;
+
+    /**
+     * 출석 기록 API
+     * 오늘 이미 출석한 경우 중복 기록하지 않음
+     */
+    @Transactional
+    public boolean recordAttendance(Long memberId) {
+        try {
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new RuntimeException("Member not found"));
+
+            LocalDate today = LocalDate.now();
+            
+            // 오늘 이미 출석했는지 확인
+            if (attendanceRepository.existsByMemberAndAttendanceDate(member, today)) {
+                log.info("Member {} already attended today", memberId);
+                return false; // 이미 출석함
+            }
+
+            // 새로운 출석 기록
+            Attendance attendance = Attendance.builder()
+                    .member(member)
+                    .build();
+            
+            attendanceRepository.save(attendance);
+            log.info("Attendance recorded for member: {} on {}", memberId, today);
+            return true; // 출석 기록 성공
+            
+        } catch (Exception e) {
+            log.error("Failed to record attendance for member: {}", memberId, e);
+            throw new RuntimeException("출석 기록 중 오류가 발생했습니다.");
+        }
+    }
+
+    /**
+     * 학습 시간 누적 API
+     * 타이머 세션 종료 시 호출
+     */
+    @Transactional
+    public void addStudyTime(Long memberId, Integer studyMinutes) {
+        try {
+            if (studyMinutes == null || studyMinutes <= 0) {
+                log.warn("Invalid study minutes: {} for member: {}", studyMinutes, memberId);
+                return;
+            }
+
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new RuntimeException("Member not found"));
+
+            // MemberStat 조회 또는 생성
+            MemberStat memberStat = memberStatRepository.findById(memberId)
+                    .orElseGet(() -> {
+                        MemberStat newStat = MemberStat.builder()
+                                .member(member)
+                                .build();
+                        return memberStatRepository.save(newStat);
+                    });
+
+            // 학습 시간 누적
+            memberStat.addStudyMinutes(studyMinutes);
+            memberStatRepository.save(memberStat);
+            
+            log.info("Added {} minutes to member: {} (Total: {})", 
+                    studyMinutes, memberId, memberStat.getTotalStudyMinutes());
+                    
+        } catch (Exception e) {
+            log.error("Failed to add study time for member: {}", memberId, e);
+            throw new RuntimeException("학습 시간 기록 중 오류가 발생했습니다.");
+        }
+    }
+
+    /**
+     * 사용자 총 학습 시간 조회
+     */
+    @Transactional(readOnly = true)
+    public Integer getTotalStudyMinutes(Long memberId) {
+        return memberStatRepository.findById(memberId)
+                .map(MemberStat::getTotalStudyMinutes)
+                .orElse(0);
+    }
+
+    /**
+     * 오늘 출석 여부 확인
+     */
+    @Transactional(readOnly = true)
+    public boolean isAttendedToday(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+        
+        return attendanceRepository.existsByMemberAndAttendanceDate(member, LocalDate.now());
+    }
+} 
