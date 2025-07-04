@@ -1232,20 +1232,30 @@ const TimerPage: React.FC = () => {
       </Box>
 
       {/* 노트 제목과 자동저장 토글 */}
-      <NotesHeader>
-        <Box>
-          <NotesTitle>
-            📝 집중 노트
-          </NotesTitle>
+      <NotesHeader
+        sx={{
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1, sm: 2 },
+        }}
+      >
+        {/* 1행: 제목 */}
+        <Box sx={{ width: '100%' }}>
+          <NotesTitle>📝 집중 노트</NotesTitle>
         </Box>
-        <Box sx={{ 
-          display: 'flex',
-          alignItems: 'center', 
-          gap: '16px' 
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-              자동 임시 저장
+        {/* 2행: 토글 + 확대버튼 */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'space-between', sm: 'flex-end' },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+              백그라운드 저장
             </Text>
             <Switch
               checked={autoSaveEnabled}
@@ -1261,58 +1271,20 @@ const TimerPage: React.FC = () => {
               }}
             />
           </Box>
-          
-          {/* 임시 저장 상태 표시 */}
-          {tempSaveStatus.hasTempData && (
-            <Text sx={{ 
-              fontSize: '11px', 
-              color: '#6B7280',
-              whiteSpace: 'nowrap',
-            }}>
-              마지막 임시 저장: {
-                tempSaveStatus.timeSinceLastSave !== null && !isNaN(tempSaveStatus.timeSinceLastSave)
-                  ? `${tempSaveStatus.timeSinceLastSave}초 전`
-                  : '방금 전'
-              }
-            </Text>
-          )}
-          
-          {/* 수동 임시 저장 버튼 (타이머 실행 중이 아닐 때만 표시) */}
-          {!isRunning && (notes.trim() || taskName.trim()) && (
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handleManualTempSave}
-              sx={{
-                fontSize: '11px',
-                padding: '4px 8px',
-                minWidth: 'auto',
-                borderColor: '#D1D5DB',
-                color: '#6B7280',
-                '&:hover': {
-                  borderColor: '#9CA3AF',
-                  backgroundColor: '#F9FAFB',
-                },
-              }}
-            >
-              임시 저장
-            </Button>
-          )}
-          
-          <IconButton 
-            size="small" 
-            sx={{ 
+          <IconButton
+            size="small"
+            onClick={() => setNotesExpanded(true)}
+            sx={{
               color: '#6B7280',
               backgroundColor: '#F3F4F6',
-              '&:hover': {
-                backgroundColor: '#E5E7EB',
-              },
-              width: '28px',
-              height: '28px',
+              borderRadius: '50%',
+              width: 32,
+              height: 32,
+              ml: { xs: 0, sm: 1 },
             }}
-            onClick={() => setNotesExpanded(false)}
+            aria-label="노트 확대"
           >
-            <CompressIcon fontSize="small" />
+            <ExpandIcon fontSize="small" />
           </IconButton>
         </Box>
       </NotesHeader>
@@ -1722,29 +1694,45 @@ const TimerPage: React.FC = () => {
       {/* 타이머가 실행 중이거나 시작된 적이 있을 때만 노트 영역 노출 */}
       {(isRunning || hasTimerStarted) && (
         <NotesSection expanded={false}>
-          <NotesHeader>
-            <Box>
-              <NotesTitle>
-                📝 집중 노트
-              </NotesTitle>
+          <NotesHeader
+            sx={{
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
+            {/* 1행: 제목 */}
+            <Box sx={{ width: '100%' }}>
+              <NotesTitle>📝 집중 노트</NotesTitle>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-                백그라운드 저장
-              </Text>
-              <Switch
-                checked={autoSaveEnabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#10B981',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#10B981',
-                  },
-                }}
-              />
+            {/* 2행: 토글 + 확대버튼 */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: { xs: 'space-between', sm: 'flex-end' },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+                  백그라운드 저장
+                </Text>
+                <Switch
+                  checked={autoSaveEnabled}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
+                  size="small"
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#10B981',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#10B981',
+                    },
+                  }}
+                />
+              </Box>
               <IconButton
                 size="small"
                 onClick={() => setNotesExpanded(true)}
@@ -1752,12 +1740,9 @@ const TimerPage: React.FC = () => {
                   color: '#6B7280',
                   backgroundColor: '#F3F4F6',
                   borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  '&:hover': {
-                    color: '#374151',
-                    backgroundColor: '#E5E7EB',
-                  },
+                  width: 32,
+                  height: 32,
+                  ml: { xs: 0, sm: 1 },
                 }}
                 aria-label="노트 확대"
               >
