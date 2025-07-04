@@ -139,7 +139,7 @@ export const AIEnhanceDialog: React.FC<AIEnhanceDialogProps> = ({
               </Paper>
             </Box>
 
-            {/* 키워드 */}
+            {/* 키워드  */}
             {aiResponse.keywords && aiResponse.keywords.length > 0 && (
               <Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1F2937', marginBottom: '12px' }}>

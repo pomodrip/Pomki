@@ -23,6 +23,7 @@ import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
+import { recordStudyTime } from '../../api/statsApi';
 import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
 import { 
   saveTempNote, 
@@ -531,16 +532,18 @@ const editorFormats = [
 
 const TimerPage: React.FC = () => {
   const {
+    status,
+    mode,
     isRunning,
     currentTime,
+    progress,
     sessionProgress,
+    settings,
+    isCompleted,
     start,
     pause,
     reset,
-    settings,
     updateTimerSettings,
-    progress,
-    mode,
   } = useTimer();
 
   const { minutes, seconds } = currentTime;
@@ -838,6 +841,15 @@ const TimerPage: React.FC = () => {
       setHasGeneratedAI(false);
     }
   }, [autoSaveEnabled]);
+
+  // 학습 시간 기록
+  useEffect(() => {
+    if (isCompleted && mode === 'FOCUS') {
+      recordStudyTime(settings.focusTime)
+        .then(() => console.log(`${settings.focusTime}분 학습 시간 기록 완료`))
+        .catch(err => console.error('학습 시간 기록 실패:', err));
+    }
+  }, [isCompleted, mode, settings.focusTime]);
 
   const handleStart = () => {
     if (isRunning) {

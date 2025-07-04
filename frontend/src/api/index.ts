@@ -25,7 +25,6 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
   withCredentials: true, // 🔥 쿠키 전송을 위해 필수
@@ -54,8 +53,13 @@ api.interceptors.request.use(
     }
     
     // CORS preflight 요청 최소화를 위한 헤더 설정
-    if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
+    const method = config.method?.toLowerCase();
+    if (method === 'post' || method === 'put' || method === 'patch') {
+      // 본문이 있는 요청만 Content-Type 헤더를 설정
       config.headers['Content-Type'] = 'application/json';
+    } else if (method === 'get' && config.headers['Content-Type']) {
+      // GET 요청에는 Content-Type 헤더 제거 (일부 서버에서 400 오류 원인)
+      delete config.headers['Content-Type'];
     }
     
     return config;
@@ -128,7 +132,7 @@ api.interceptors.response.use(
         // 현재 페이지가 로그인 페이지가 아닌 경우에만 스낵바 표시
         if (window.location.pathname !== '/login' && store) {
           const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
-          // 🔵 Axios 간접 활용 (API 인터셉터에서 트리거)
+          // 🔵  Axios 간접 활용 (API 인터셉터에서 트리거)
           const { showToast } = await import('../store/slices/toastSlice');
           store.dispatch(show401ErrorSnackbar());
           store.dispatch(showToast({ 
