@@ -29,6 +29,7 @@ import com.cooltomato.pomki.auth.dto.PrincipalMember;
 
 import java.time.DayOfWeek;
 import java.time.YearMonth;
+import java.sql.Date;
 
 // 출석 기록 및 학습 시간 누적 서비스
 @Service
@@ -286,8 +287,9 @@ public class StatsService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfWeek = now.with(DayOfWeek.MONDAY).toLocalDate().atStartOfDay();
         LocalDateTime endOfWeek = startOfWeek.plusDays(7);
-        List<LocalDate> weeklyDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+        List<Date> weeklySqlDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
                 memberId, startOfWeek, endOfWeek);
+        List<LocalDate> weeklyDates = mapToLocalDate(weeklySqlDates);
         int studyDaysThisWeek = weeklyDates.size();
         int currentStreak = calculateSimpleStreak(memberId);
         Long totalWeeklyMinutes = studyLogRepository.getWeeklyStudyMinutes(memberId, startOfWeek, endOfWeek);
@@ -345,11 +347,12 @@ public class StatsService {
 
     private List<LocalDate> getAttendanceDates(Long memberId) {
         YearMonth currentMonth = YearMonth.now();
-        return studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+        List<Date> sqlDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
                 memberId,
                 currentMonth.atDay(1).atStartOfDay(),
                 currentMonth.atEndOfMonth().atTime(23, 59, 59)
         );
+        return mapToLocalDate(sqlDates);
     }
 
     private SimpleDashboardStatsDto.TotalStats getTotalStats(Long memberId) {
@@ -364,8 +367,9 @@ public class StatsService {
                 totalCards = cardRepository.findByDeckDeckIdInAndIsDeletedFalse(deckIds).size();
             }
             LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
-            List<LocalDate> allStudyDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+            List<Date> allSqlDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
                     memberId, oneYearAgo, LocalDateTime.now());
+            List<LocalDate> allStudyDates = mapToLocalDate(allSqlDates);
             long totalStudyDays = allStudyDates.size();
             long totalFocusHours = totalStudyDays * 2;
 
@@ -388,8 +392,9 @@ public class StatsService {
 
     private int calculateSimpleStreak(Long memberId) {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        List<LocalDate> recentDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
+        List<Date> recentSqlDates = studyLogRepository.findDistinctActivityDatesByMemberAndPeriod(
                 memberId, thirtyDaysAgo, LocalDateTime.now());
+        List<LocalDate> recentDates = mapToLocalDate(recentSqlDates);
         if (recentDates.isEmpty()) return 0;
         LocalDate today = LocalDate.now();
         int streak = 0;
@@ -399,5 +404,12 @@ public class StatsService {
             else break;
         }
         return streak;
+    }
+
+    // --------------------------------------------------------------------
+    // 헬퍼: java.sql.Date 리스트 -> java.time.LocalDate 리스트 변환
+    // --------------------------------------------------------------------
+    private List<LocalDate> mapToLocalDate(List<Date> sqlDates) {
+        return sqlDates.stream().map(Date::toLocalDate).toList();
     }
 } 
