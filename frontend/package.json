@@ -24,7 +24,8 @@
     "react-quill": "^2.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "dompurify": "^3.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
@@ -39,6 +40,7 @@
     "typescript-eslint": "^8.30.1",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.0",
-    "vite-plugin-svgr": "^4.3.0"
+    "vite-plugin-svgr": "^4.3.0",
+    "@types/dompurify": "^2.4.6"
   }
 }
