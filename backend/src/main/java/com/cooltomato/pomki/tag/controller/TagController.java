@@ -18,8 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+// [Tag] TagController: 태그 관련 API를 제공하는 컨트롤러
 @RestController
-@RequestMapping("/api/tag")
+@RequestMapping("/api/tags")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Tag", description = "태그 관련 API")
@@ -27,9 +28,8 @@ public class TagController {
 
     private final TagService service;
 
-    // 모든 태그 전체 조회 - 노트 및 카드 생성시 모든 태그 추천
-    @GetMapping("/all")
     @Operation(summary = "모든 태그 조회", description = "노트 및 카드 생성시 모든 태그를 추천받기 위한 API")
+    @GetMapping("/all")
     public ResponseEntity<List<TagResponseDto>> readAllTags(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalMember principal) {
         List<TagResponseDto> response = service.readAllNoteTagService(principal) ;

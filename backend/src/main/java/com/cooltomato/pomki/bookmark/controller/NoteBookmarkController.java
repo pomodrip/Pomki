@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/bookmarks")
+@RequestMapping("/api/note-bookmarks")
 @RequiredArgsConstructor
-@Tag(name = "Bookmark", description = "노트 북마크 관련 API")
-public class BookmarkController {
+@Tag(name = "Note Bookmark", description = "노트 북마크 관련 API")
+public class NoteBookmarkController {
     
     private final BookmarkService bookmarkService;
 
-    @PostMapping("/notes/{noteId}")
     @Operation(summary = "노트 북마크 추가", description = "노트를 북마크에 추가합니다.")
+    @PostMapping("/notes/{noteId}")
     public ResponseEntity<Void> addNoteBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
             @PathVariable String noteId) {
@@ -30,8 +30,8 @@ public class BookmarkController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/notes/{noteId}")
     @Operation(summary = "노트 북마크 삭제", description = "노트를 북마크에서 삭제합니다.")
+    @DeleteMapping("/notes/{noteId}")
     public ResponseEntity<Void> removeNoteBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
             @PathVariable String noteId) {
@@ -40,8 +40,8 @@ public class BookmarkController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/notes")
     @Operation(summary = "노트 북마크 목록 조회", description = "사용자의 노트 북마크 목록을 조회합니다.")
+    @GetMapping("/notes")
     public ResponseEntity<List<BookmarkDto>> getNoteBookmarks(
             @AuthenticationPrincipal PrincipalMember principalMember) {
         
@@ -49,8 +49,8 @@ public class BookmarkController {
         return ResponseEntity.ok(bookmarks);
     }
 
-    @GetMapping("/notes/{noteId}/status")
     @Operation(summary = "노트 북마크 상태 확인", description = "특정 노트의 북마크 상태를 확인합니다.")
+    @GetMapping("/notes/{noteId}/status")
     public ResponseEntity<Boolean> isNoteBookmarked(
             @AuthenticationPrincipal PrincipalMember principalMember,
             @PathVariable String noteId) {

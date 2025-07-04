@@ -9,7 +9,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
+@Tag(name = "Study Log", description = "학습 활동 기록 API")
 @RestController
 @RequestMapping("/api/study-logs")
 @RequiredArgsConstructor
@@ -18,6 +21,7 @@ public class StudyLogController {
 
     private final StudyLogService studyLogService;
 
+    @Operation(summary = "포모도로 세션 기록", description = "포모도로 세션 완료 시 학습 활동을 기록합니다.")
     @PostMapping("/pomodoro")
     public ResponseEntity<Void> recordPomodoroSession(
             @RequestBody PomodoroSessionRequest request,
@@ -40,6 +44,7 @@ public class StudyLogController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "노트 생성 기록", description = "노트 생성 시 학습 활동을 기록합니다.")
     @PostMapping("/note-created")
     public ResponseEntity<Void> recordNoteCreation(
             @RequestBody NoteActivityRequest request,
@@ -62,6 +67,7 @@ public class StudyLogController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "카드 복습 기록", description = "카드 복습 시 학습 활동을 기록합니다.")
     @PostMapping("/card-reviewed")
     public ResponseEntity<Void> recordCardReview(
             @RequestBody CardReviewRequest request,

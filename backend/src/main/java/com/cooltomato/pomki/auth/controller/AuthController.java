@@ -15,13 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
+@Tag(name = "Authentication", description = "인증 및 토큰 관련 API")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
 
+    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하여 토큰을 발급받습니다.")
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
         TokenResponseDto tokenDto = authService.login(request);
@@ -38,6 +42,7 @@ public class AuthController {
                 .build());
     }
 
+    @Operation(summary = "토큰 재발급", description = "Refresh Token을 이용해 Access Token을 재발급받습니다.")
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponseDto> refresh(
         @Parameter(hidden = true) @CookieValue(name = "refresh_token",required = true) String refreshToken,
@@ -52,6 +57,7 @@ public class AuthController {
         return ResponseEntity.ok(newAccessToken);
     }
 
+    @Operation(summary = "로그아웃", description = "Refresh Token을 만료시켜 로그아웃합니다.")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Parameter(hidden = true) @CookieValue(name = "refresh_token") String refreshToken, HttpServletResponse response) {
         authService.logout(refreshToken);
