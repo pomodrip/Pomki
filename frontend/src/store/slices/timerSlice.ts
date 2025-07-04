@@ -89,8 +89,8 @@ interface TimerState {
 // ==========================================
 
 const defaultSettings: TimerSettings = {
-  focusTime: 25,          // 25분
-  shortBreakTime: 5,      // 5분
+  focusTime: 20,          // 20분
+  shortBreakTime: 10,      // 10분
   longBreakTime: 15,      // 15분
   longBreakInterval: 4,   // 4번의 포커스 후 긴 휴식
   autoStartBreaks: false,
@@ -105,7 +105,7 @@ const initialState: TimerState = {
   mode: 'FOCUS',
   isRunning: false,
   completedSessions: 0,
-  targetSessions: 4,
+  targetSessions: 2,  // 2세션
   currentCycle: 1,
   settings: defaultSettings,
   stats: null,

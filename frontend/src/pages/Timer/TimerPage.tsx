@@ -2084,13 +2084,13 @@ const TimerPage: React.FC = () => {
           <PresetsSection>
             <PresetsTitle>Presets</PresetsTitle>
             <PresetButton onClick={() => handlePreset('deep')}>
-              심층 학습 (3 session / 50 min / 10 min)
+              심층 학습 (3세션 / 50분 / 10분)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('pomodoro')}>
-              포모도로 학습 (4 session / 25 min / 5 min)
+              포모도로 학습 (4세션 / 25분 / 5분)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('quick')}>
-              빠른 학습 (6 session / 15 min / 3 min)
+              빠른 학습 (6세션 / 15분 / 3분)
             </PresetButton>
           </PresetsSection>
         </SettingsContainer>
