@@ -40,4 +40,4 @@ const Card: React.FC<CustomCardProps> = ({ cardVariant = 'default', children, ..
   );
 };
 
-export default Card;
+export default React.memo(Card);
