@@ -688,7 +688,7 @@ const FlashCardListPage: React.FC = () => {
             variant="filled"
           />
         ))}
-      </SelectedTagsBox>
+      </Box>
 
       {/* 검색 결과 정보 */}
       {searchResults.length > 0 && (
