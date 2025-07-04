@@ -1924,77 +1924,53 @@ const TimerPage: React.FC = () => {
       />
 
       {/* 복원 다이얼로그 */}
-      <Modal open={showRestoreDialog} onClose={() => {
-        // 다이얼로그를 그냥 닫으면 다음에 다시 나타나지 않게 처리
-        sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
-        setShowRestoreDialog(false);
-        console.log('🔒 복원 다이얼로그 무시됨 (이번 세션에서 다시 표시 안됨)');
-      }}>
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: { xs: '85%', sm: '400px' },
-          maxWidth: '400px',
-          maxHeight: { xs: '80vh', sm: '90vh' },
-          bgcolor: 'background.paper',
-          borderRadius: '12px',
-          boxShadow: 24,
-          p: { xs: 2, sm: 3 },
-          overflow: 'auto',
-        }}>
-          <Box sx={{ mb: 2 }}>
-            <Text sx={{ fontSize: '18px', fontWeight: 600, color: '#1F2937', mb: 1 }}>
-              🔄 이전 세션 데이터 발견
+      <Modal
+        open={showRestoreDialog}
+        onClose={() => {
+          // 다이얼로그를 그냥 닫으면 다음에 다시 나타나지 않게 처리
+          sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
+          setShowRestoreDialog(false);
+          console.log('🔒 복원 다이얼로그 무시됨 (이번 세션에서 다시 표시 안됨)');
+        }}
+        title="💾 이전 작성 내용 발견"
+      >
+        <Box sx={{ mb: 2 }}>
+          <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
+            이전에 작성하던 내용이 임시 저장되어 있습니다. 복원하시겠습니까?
+          </Text>
+          {tempSaveStatus.lastSaved && (
+            <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
+              마지막 저장: {
+                (() => {
+                  try {
+                    const date = new Date(tempSaveStatus.lastSaved);
+                    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                  } catch (e) {
+                    return '알 수 없음';
+                  }
+                })()
+              }
             </Text>
-            <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
-              이전에 작성하던 노트가 임시 저장되어 있습니다. 복원하시겠습니까?
-            </Text>
-            {tempSaveStatus.lastSaved && (
-              <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
-                마지막 저장: {
-                  (() => {
-                    try {
-                      const date = new Date(tempSaveStatus.lastSaved);
-                      return isNaN(date.getTime()) ? '시간 정보 없음' : date.toLocaleString();
-                    } catch (error) {
-                      return '시간 정보 없음';
-                    }
-                  })()
-                }
-              </Text>
-            )}
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              onClick={handleSkipRestore}
-              sx={{
-                borderColor: '#D1D5DB',
-                color: '#6B7280',
-                '&:hover': {
-                  borderColor: '#9CA3AF',
-                  backgroundColor: '#F9FAFB',
-                },
-              }}
-            >
-              삭제하고 새로 시작
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleRestoreData}
-              sx={{
-                backgroundColor: '#3B82F6',
-                '&:hover': {
-                  backgroundColor: '#2563EB',
-                },
-              }}
-            >
-              복원하기
-            </Button>
-          </Box>
+          )}
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleSkipRestore}
+            sx={{ flex: 1 }}
+          >
+            삭제
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleRestoreData}
+            sx={{ flex: 1 }}
+          >
+            복원하기
+          </Button>
         </Box>
       </Modal>
 
