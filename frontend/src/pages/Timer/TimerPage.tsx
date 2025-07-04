@@ -5,11 +5,11 @@ import {
   Button,
   Select,
   MenuItem,
+  CircularProgress as MuiCircularProgress,
   FormControl,
   FormControlLabel,
   Switch,
 } from '@mui/material';
-import { CircularProgress as MuiCircularProgress } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
@@ -32,6 +32,10 @@ import {
   getTempSaveStatus
 } from '../../utils/storage';
 // import theme from '../../theme/theme';
+import Toast from '../../components/common/Toast';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch } from '../../hooks/useRedux';
+import { showToast } from '../../store/slices/toastSlice';
 
 // 페이지 컨테이너 - design.md 가이드 적용
 const PageContainer = styled(Box)(() => ({
@@ -584,6 +588,9 @@ const TimerPage: React.FC = () => {
   // 자동저장을 위한 디바운싱 ref
   const autoSaveTimeoutRef = useRef<number | null>(null);
   
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
   // 페이지 로드 시 임시 저장된 노트 불러오기
   useEffect(() => {
     try {
@@ -988,13 +995,21 @@ const TimerPage: React.FC = () => {
         noteContent: notes,
         aiEnhanced: hasGeneratedAI,
       });
-      
+
       // 저장 성공 시 localStorage에서 임시 데이터 삭제
       clearTempNote();
       setHasUnsavedChanges(false);
       updateTempSaveStatus();
       console.log('✅ 백엔드 저장 완료 - 임시 데이터 정리됨');
-      alert('노트가 성공적으로 저장되었습니다!');
+      
+      // 성공 메시지와 액션 버튼이 함께 있는 토스트 표시
+      dispatch(showToast({ 
+        message: '노트가 성공적으로 저장되었습니다.', 
+        severity: 'success',
+        duration: 6000,
+        action: '노트 목록으로',
+        onAction: () => navigate('/note')
+      }));
     } catch (error) {
       console.error('❌ 노트 저장 실패:', error);
       alert('노트 저장에 실패했습니다. 다시 시도해주세요.');
@@ -2039,6 +2054,8 @@ const TimerPage: React.FC = () => {
           </PresetsSection>
         </SettingsContainer>
       </Modal>
+              {/* Toast 알림 */}
+        <Toast />
     </PageContainer>
   );
 };

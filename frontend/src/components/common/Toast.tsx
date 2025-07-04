@@ -4,6 +4,7 @@ import { Close as CloseIcon, CheckCircle, Error, Warning, Info } from '@mui/icon
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import { hideToast, updateToastProgress } from '../../store/slices/toastSlice';
 import { useResponsive } from '../../hooks/useResponsive';
+import Button from '../ui/Button';
 import type { ToastItem } from '../../store/slices/toastSlice';
 
 const HEADER_HEIGHT_DESKTOP = 72; // 실제 헤더 높이에 맞게 조정
@@ -46,7 +47,7 @@ const ToastContainer = styled(Box)<{
 
 type SeverityType = 'success' | 'error' | 'warning' | 'info';
 
-const ToastItemBox = styled(Box)<{ severity: SeverityType }>(({ theme, severity }) => {
+const ToastItemBox = styled(Box)<{ severity: SeverityType; clickable?: boolean }>(({ theme, severity, clickable }) => {
   const severityColors: Record<SeverityType, string> = {
     success: theme.palette.success.main,
     error: theme.palette.error.main,
@@ -64,13 +65,16 @@ const ToastItemBox = styled(Box)<{ severity: SeverityType }>(({ theme, severity 
     border: `1px solid ${severityColors[severity]}`,
     boxShadow: theme.shadows[4],
     pointerEvents: 'auto',
-    cursor: 'default',
+    cursor: clickable ? 'pointer' : 'default',
     overflow: 'hidden', // 프로그래스 바가 벗어나지 않도록 숨김
     transition: theme.transitions.create(['transform', 'opacity'], {
       duration: theme.transitions.duration.short,
     }),
     '&:hover': {
-      transform: 'translateX(-4px)',
+      transform: clickable ? 'translateX(-4px) scale(1.02)' : 'translateX(-4px)',
+      ...(clickable && {
+        backgroundColor: theme.palette.action.hover,
+      }),
     },
   };
 });
@@ -146,6 +150,20 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
     dispatch(hideToast(toast.id));
   };
 
+  const handleClick = () => {
+    if (toast.onClick) {
+      toast.onClick();
+      dispatch(hideToast(toast.id)); // 클릭 후 토스트 닫기
+    }
+  };
+
+  const handleAction = () => {
+    if (toast.onAction) {
+      toast.onAction();
+      dispatch(hideToast(toast.id)); // 액션 실행 후 토스트 닫기
+    }
+  };
+
   useEffect(() => {
     if (toast.duration > 0) {
       const interval = 50; // 50ms마다 업데이트
@@ -168,7 +186,11 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
   }, [toast.id, toast.duration, toast.progress, dispatch]);
 
   return (
-    <ToastItemBox severity={toast.severity}>
+    <ToastItemBox 
+      severity={toast.severity} 
+      clickable={!!toast.onClick}
+      onClick={handleClick}
+    >
       <IconContainer severity={toast.severity}>
         {getSeverityIcon(toast.severity)}
       </IconContainer>
@@ -177,17 +199,40 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
           {toast.message}
         </Typography>
       </MessageContainer>
-      <IconButton
-        size="small"
-        onClick={handleClose}
-        sx={{ 
-          padding: 0.25,
-          flexShrink: 0, // 닫기 버튼 크기 고정
-          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
-        }}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
+      {toast.action ? (
+        <Button 
+          color="inherit" 
+          size="small" 
+          onClick={(e) => {
+            e.stopPropagation(); // 부모 클릭 이벤트 방지
+            handleAction();
+          }}
+          sx={{
+            flexShrink: 0,
+            fontSize: '0.75rem',
+            padding: '4px 8px',
+            minWidth: 'auto',
+            fontWeight: 600,
+          }}
+        >
+          {toast.action}
+        </Button>
+      ) : (
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation(); // 부모 클릭 이벤트 방지
+            handleClose();
+          }}
+          sx={{ 
+            padding: 0.25,
+            flexShrink: 0, // 닫기 버튼 크기 고정
+            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
       <ProgressBar 
         variant="determinate" 
         value={toast.progress} 

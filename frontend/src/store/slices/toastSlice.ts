@@ -7,6 +7,9 @@ export interface ToastItem {
   duration: number;
   createdAt: number;
   progress: number; // 0-100, progress bar를 위한 진행률
+  onClick?: () => void; // 클릭 이벤트 핸들러
+  action?: string; // 액션 버튼 텍스트
+  onAction?: () => void; // 액션 버튼 클릭 핸들러
 }
 
 export interface ToastState {
@@ -45,6 +48,9 @@ export interface ShowToastPayload {
   message: string;
   severity?: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
+  onClick?: () => void; // 클릭 이벤트 핸들러
+  action?: string; // 액션 버튼 텍스트
+  onAction?: () => void; // 액션 버튼 클릭 핸들러
 }
 
 // Helper function to generate unique IDs
@@ -62,6 +68,9 @@ const toastSlice = createSlice({
         duration: action.payload.duration || 2000,
         createdAt: Date.now(),
         progress: 100, // 시작할 때는 100%
+        onClick: action.payload.onClick,
+        action: action.payload.action,
+        onAction: action.payload.onAction,
       };
 
       // 최대 개수 제한
