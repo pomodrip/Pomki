@@ -108,7 +108,7 @@ const DashboardPage: React.FC = () => {
 
       {/* 개발자 도구 - 개발 환경에서만 표시 */}
       {import.meta.env.DEV && (
-        <Paper sx={{ p: 3, mb: 3, backgroundColor: '#e3f2fd' }}>
+        <Paper sx={{ p: 3, mb: 3, }} >
           <Typography variant="h2" gutterBottom>
             🔧 개발자 도구
           </Typography>
@@ -258,7 +258,6 @@ const DashboardPage: React.FC = () => {
               alignItems: 'center', 
               justifyContent: 'space-between',
               p: 2,
-              backgroundColor: '#e8f5e8',
               borderRadius: 1,
               border: '1px solid #c8e6c9'
             }}>
@@ -290,7 +289,6 @@ const DashboardPage: React.FC = () => {
               alignItems: 'center', 
               justifyContent: 'space-between',
               p: 2,
-              backgroundColor: '#fff3e0',
               borderRadius: 1,
               border: '1px solid #ffcc02'
             }}>
@@ -322,7 +320,6 @@ const DashboardPage: React.FC = () => {
               alignItems: 'center', 
               justifyContent: 'space-between',
               p: 2,
-              backgroundColor: '#ffebee',
               borderRadius: 1,
               border: '1px solid #ffcdd2'
             }}>
