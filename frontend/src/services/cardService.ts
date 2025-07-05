@@ -1,4 +1,4 @@
-import type { Card, CreateCardRequest, UpdateCardRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
 import * as cardApi from '../api/cardApi';
 
 // 🎯 카드 서비스 인터페이스 정의
@@ -7,6 +7,10 @@ export interface ICardService {
   createCard(deckId: string, data: CreateCardRequest): Promise<Card>;
   updateCard(cardId: number, data: UpdateCardRequest): Promise<Card>;
   deleteCard(cardId: number): Promise<void>;
+  searchCards(keyword: string): Promise<SearchCard[]>;
+  addCardTags(data: AddCardTagRequest): Promise<void>;
+  removeCardTag(cardId: number, tagName: string): Promise<void>;
+  toggleBookmark(cardId: number, bookmarked: boolean): Promise<void>;
 }
 
 // 🎭 Mock 카드 서비스 구현
@@ -19,7 +23,10 @@ class MockCardService implements ICardService {
       deckId: 'deck-uuid-1',
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      deckName: '',
+      tags: ['React', 'JavaScript', 'Frontend'],
+      bookmarked: false
     },
     {
       cardId: 2,
@@ -28,10 +35,19 @@ class MockCardService implements ICardService {
       deckId: 'deck-uuid-1',
       isDeleted: false,
       createdAt: '2024-01-15T10:30:00',
-      updatedAt: '2024-01-15T10:30:00'
+      updatedAt: '2024-01-15T10:30:00',
+      deckName: '',
+      tags: ['React', 'JSX'],
+      bookmarked: true
     }
   ];
   private nextCardId = 10;
+
+  // Mock 덱 데이터 (deckName을 가져오기 위해)
+  private mockDecks = [
+    { deckId: 'deck-uuid-1', deckName: 'JavaScript 기초' },
+    { deckId: 'deck-uuid-2', deckName: 'React 심화' },
+  ];
 
   async getCard(cardId: number): Promise<Card> {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -53,7 +69,10 @@ class MockCardService implements ICardService {
       deckId,
       isDeleted: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      deckName: '',
+      tags: [],
+      bookmarked: false
     };
     
     this.cards.push(newCard);
@@ -86,6 +105,68 @@ class MockCardService implements ICardService {
       this.cards[cardIndex].isDeleted = true;
       this.cards[cardIndex].updatedAt = new Date().toISOString();
     }
+  }
+
+  async searchCards(keyword: string): Promise<SearchCard[]> {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const filteredCards = this.cards.filter(card => 
+      !card.isDeleted && 
+      (card.content.toLowerCase().includes(keyword.toLowerCase()) || 
+       card.answer.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    
+    // Card를 SearchCard로 변환
+    return filteredCards.map(card => {
+      const deck = this.mockDecks.find(d => d.deckId === card.deckId);
+      return {
+        ...card,
+        deckName: deck?.deckName || '알 수 없는 덱'
+      };
+    });
+  }
+
+  async addCardTags(data: AddCardTagRequest): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === data.cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 기존 태그와 중복되지 않는 새 태그만 추가
+    const existingTags = this.cards[cardIndex].tags || [];
+    const newTags = data.tagNames.filter(tag => !existingTags.includes(tag));
+    
+    this.cards[cardIndex].tags = [...existingTags, ...newTags];
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
+  }
+
+  async removeCardTag(cardId: number, tagName: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 지정된 태그 제거
+    const existingTags = this.cards[cardIndex].tags || [];
+    this.cards[cardIndex].tags = existingTags.filter(tag => tag !== tagName);
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
+  }
+
+  async toggleBookmark(cardId: number, bookmarked: boolean): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const cardIndex = this.cards.findIndex(c => c.cardId === cardId && !c.isDeleted);
+    if (cardIndex === -1) {
+      throw new Error('카드를 찾을 수 없습니다.');
+    }
+    
+    // 북마크 상태 업데이트
+    this.cards[cardIndex].bookmarked = bookmarked;
+    this.cards[cardIndex].updatedAt = new Date().toISOString();
   }
 }
 
@@ -126,6 +207,46 @@ class RealCardService implements ICardService {
     } catch (error) {
       console.warn('⚠️ Real API (deleteCard) 실패! Mock 동작으로 대체합니다.', error);
       return this.mockService.deleteCard(cardId);
+    }
+  }
+
+  async searchCards(keyword: string): Promise<SearchCard[]> {
+    try {
+      return await cardApi.searchCards(keyword);
+    } catch (error) {
+      console.warn('⚠️ Real API (searchCards) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.searchCards(keyword);
+    }
+  }
+
+  async addCardTags(data: AddCardTagRequest): Promise<void> {
+    try {
+      await cardApi.addCardTags(data);
+    } catch (error) {
+      console.warn('⚠️ Real API (addCardTags) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.addCardTags(data);
+    }
+  }
+
+  async removeCardTag(cardId: number, tagName: string): Promise<void> {
+    try {
+      await cardApi.removeCardTag(cardId, tagName);
+    } catch (error) {
+      console.warn('⚠️ Real API (removeCardTag) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.removeCardTag(cardId, tagName);
+    }
+  }
+
+  async toggleBookmark(cardId: number, bookmarked: boolean): Promise<void> {
+    try {
+      if (bookmarked) {
+        await cardApi.addCardBookmark(cardId);
+      } else {
+        await cardApi.removeCardBookmark(cardId);
+      }
+    } catch (error) {
+      console.warn('⚠️ Real API (toggleBookmark) 실패! Mock 동작으로 대체합니다.', error);
+      return this.mockService.toggleBookmark(cardId, bookmarked);
     }
   }
 }

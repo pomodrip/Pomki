@@ -13,9 +13,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Chip,
 } from '@mui/material';
+import CircularProgress from '../../components/ui/CircularProgress';
 import {
   Add as AddIcon,
   Edit as EditIcon,

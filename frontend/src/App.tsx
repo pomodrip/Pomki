@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box, CircularProgress } from '@mui/material';
+import { CssBaseline, Box } from '@mui/material';
+import CircularProgress from './components/ui/CircularProgress';
 import { useDispatch } from 'react-redux';
 import baseTheme from './theme/theme';
 import GlobalStyles from './theme/GlobalStyles';
 import AppRoutes from './routes';
 import { useUI } from './hooks/useUI';
 import { useAuth } from './hooks/useAuth';
-import GlobalNotifications from './components/common/GlobalNotifications';
 import { validateToken } from './store/slices/authSlice';
 import type { AppDispatch } from './store/store';
 import ErrorSnackbar from './components/common/ErrorSnackbar';
@@ -21,12 +21,14 @@ import { showNotification } from './utils/notificationUtils';
 function LoadingSplash() {
   return (
     <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="100vh"
-      bgcolor="background.default"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        bgcolor: 'background.default'
+      }}
     >
       <CircularProgress size={60} sx={{ mb: 2 }} />
     </Box>
@@ -73,9 +75,59 @@ function UIInitializer() {
           primary: '#ffffff',
           secondary: '#b0b0b0',
         },
+        grey: {
+          50: '#121212',
+          100: '#121212',
+          200: '#121212',
+          300: '#121212',
+          400: '#121212',
+          500: '#121212',
+          600: '#121212',
+          700: '#121212',
+          800: '#121212',
+          900: '#121212',
+        },
       }),
     },
-  });
+      components: {
+      ...(baseTheme.components || {}),
+      // TextField 컴포넌트의 색상을 다크모드에 맞게 조정
+      ...(currentTheme === 'dark' ? {
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: {
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.23)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#90caf9',
+              },
+            },
+          },
+        },
+        MuiInputLabel: {
+          styleOverrides: {
+            root: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              '&.Mui-focused': {
+                color: '#90caf9',
+              },
+            },
+          },
+        },
+        MuiInputAdornment: {
+          styleOverrides: {
+            root: {
+              color: 'rgba(255, 255, 255, 0.7)',
+            },
+          },
+        },
+      } : {}),
+    },
+   });
 
   return (
     <ThemeProvider theme={dynamicTheme}>
@@ -87,7 +139,6 @@ function UIInitializer() {
       ) : (
         <>
           <AppRoutes />
-          <GlobalNotifications />
           <ErrorSnackbar />
           <Toast />
         </>

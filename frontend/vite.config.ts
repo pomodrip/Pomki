@@ -73,7 +73,10 @@ export default defineConfig(({ mode }) => {
       '__VITE_FIREBASE_MESSAGING_SENDER_ID__': JSON.stringify(env.VITE_FIREBASE_MESSAGING_SENDER_ID),
       '__VITE_FIREBASE_APP_ID__': JSON.stringify(env.VITE_FIREBASE_APP_ID),
     },
-    server: {
+    optimizeDeps: {
+    include: ['react-quill'],
+  },
+  server: {
       proxy: {
         '/api': {
           target: 'http://localhost:8088',
@@ -92,4 +95,5 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
     },
   };
+  envPrefix: ['VITE_', 'CI'],
 });

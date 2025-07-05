@@ -109,6 +109,19 @@ export interface UIState {
   isMobile: boolean;
   screenSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   
+  // 플로팅 액션 버튼 
+  fab: {
+    visible: boolean;
+    position: {
+      bottom: number | string;
+      right: number | string;
+      top?: number | string;
+    };
+    size: 'small' | 'medium' | 'large';
+    variant: 'circular' | 'extended';
+    disabled: boolean;
+  };
+  
   // 설정
   settings: UISettings;
   
@@ -244,6 +257,16 @@ const initialState: UIState = {
   notificationQueue: [],
   isMobile: false,
   screenSize: 'md',
+  fab: {
+    visible: false,
+    position: {
+      bottom: 80,
+      right: 16,
+    },
+    size: 'medium',
+    variant: 'circular',
+    disabled: false,
+  },
   settings: {
     theme: 'system',
     themePreset: 'pomki-default',
@@ -515,6 +538,8 @@ const uiSlice = createSlice({
       }
     },
 
+
+
     // 접근성 설정
     setHighContrast: (state, action: PayloadAction<boolean>) => {
       state.settings.accessibility.highContrast = action.payload;
@@ -549,6 +574,58 @@ const uiSlice = createSlice({
     // 알림 설정
     updateNotificationSettings: (state, action: PayloadAction<Partial<UISettings['notifications']>>) => {
       state.settings.notifications = { ...state.settings.notifications, ...action.payload };
+    },
+
+    // 🔴 FAB (플로팅 액션 버튼) 관리
+    setFabVisible: (state, action: PayloadAction<boolean>) => {
+      state.fab.visible = action.payload;
+    },
+
+    updateFabPosition: (state, action: PayloadAction<{ bottom?: number; right?: number | string }>) => {
+      if (action.payload.bottom !== undefined) {
+        state.fab.position.bottom = action.payload.bottom;
+      }
+      if (action.payload.right !== undefined) {
+        state.fab.position.right = action.payload.right;
+      }
+    },
+
+    setFabSize: (state, action: PayloadAction<'small' | 'medium' | 'large'>) => {
+      state.fab.size = action.payload;
+    },
+
+    setFabDisabled: (state, action: PayloadAction<boolean>) => {
+      state.fab.disabled = action.payload;
+    },
+
+    toggleFab: (state) => {
+      state.fab.visible = !state.fab.visible;
+    },
+
+    // 화면 크기에 따른 FAB 자동 조정
+    adjustFabForScreenSize: (state, action: PayloadAction<{ isMobile: boolean; hasBottomNav: boolean }>) => {
+      const { isMobile, hasBottomNav } = action.payload;
+      
+              if (isMobile) {
+          // 1024px 미만: 모바일 바텀네비 위 하단 오른쪽 (fixed 기준)
+          state.fab.position.bottom = hasBottomNav ? 80 : 16; // 바텀네비 높이(64px) + 여백(16px)
+          state.fab.position.right = 16; // 화면 기준
+          state.fab.position.top = 'initial';
+          state.fab.size = 'medium';
+        } else {
+          // 1024px 이상: 컨테이너 기준 상단 오른쪽 (absolute 기준)
+          state.fab.position.top = 16; // 컨테이너 기준 여백
+          state.fab.position.right = 16; // 컨테이너 기준 여백
+          state.fab.position.bottom = 'initial';
+          state.fab.size = 'medium';
+        }
+      
+      console.log('🔴 adjustFabForScreenSize:', {
+        isMobile,
+        hasBottomNav,
+        position: state.fab.position,
+        visible: state.fab.visible
+      });
     },
   },
   
@@ -625,6 +702,13 @@ export const {
   addToNotificationQueue,
   processNotificationQueue,
   updateNotificationSettings,
+  // 🔴 FAB 액션들
+  setFabVisible,
+  updateFabPosition,
+  setFabSize,
+  setFabDisabled,
+  toggleFab,
+  adjustFabForScreenSize,
 } = uiSlice.actions;
 
 // 기본 셀렉터들
@@ -656,6 +740,13 @@ export const selectCurrentColors = (state: RootState) => {
 export const selectAccessibilitySettings = (state: RootState) => state.ui.settings.accessibility;
 export const selectAnimationSettings = (state: RootState) => state.ui.settings.animations;
 export const selectNotificationSettings = (state: RootState) => state.ui.settings.notifications;
+
+// 🔴 FAB 셀렉터들
+export const selectFab = (state: RootState) => state.ui.fab;
+export const selectFabVisible = (state: RootState) => state.ui.fab.visible;
+export const selectFabPosition = (state: RootState) => state.ui.fab.position;
+export const selectFabSize = (state: RootState) => state.ui.fab.size;
+export const selectFabDisabled = (state: RootState) => state.ui.fab.disabled;
 
 // ==========================================
 // 9. 편의 액션 생성자들

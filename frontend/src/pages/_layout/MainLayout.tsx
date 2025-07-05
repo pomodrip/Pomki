@@ -8,14 +8,14 @@ import { useResponsive } from '../../hooks/useResponsive';
 const MainLayout: React.FC = () => {
   const { isMobile } = useResponsive();
   
-  console.log('MainLayout rendering...', { isMobile });
+  // console.log('MainLayout rendering...', { isMobile });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Header />
       
       {/* 디버깅 정보 표시 */}
-      <Box sx={{ 
+      {/* <Box sx={{ 
         position: 'fixed', 
         top: 60, 
         right: 0, 
@@ -26,10 +26,9 @@ const MainLayout: React.FC = () => {
         fontSize: '12px'
       }}>
         MainLayout Active - {isMobile ? 'Mobile' : 'Desktop'}
-      </Box>
+      </Box> */}
       
       <Box
-    
         component="main"
         sx={{
           flexGrow: 1,
@@ -41,12 +40,11 @@ const MainLayout: React.FC = () => {
         <Outlet />
       </Box>
       
-      
       {/* BottomNav는 모바일에서만 렌더링됨 */}
       <BottomNav />
       
       {/* BottomNav 디버깅 정보 */}
-      <Box sx={{ 
+      {/* <Box sx={{ 
         position: 'fixed', 
         bottom: 70, 
         right: 0, 
@@ -57,7 +55,7 @@ const MainLayout: React.FC = () => {
         fontSize: '12px'
       }}>
         BottomNav Should Be Here
-      </Box>
+      </Box> */}
     </Box>
   );
 };

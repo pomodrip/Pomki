@@ -34,23 +34,18 @@ export const api = axios.create({
 // 🔥 요청 인터셉터 - store에서 토큰 가져오기
 api.interceptors.request.use(
   (config) => {
-    console.log('=== API 요청 인터셉터 ===');
-    console.log('요청 URL:', (config.baseURL || '') + (config.url || ''));
-    console.log('요청 메서드:', config.method);
-    console.log('요청 데이터:', config.data);
-    console.log('요청 헤더:', config.headers);
     
     // Redux store에서 토큰 가져오기
     if (store) {
       const state = store.getState();
       const accessToken = state.auth?.accessToken;
       
-      console.log('Store 상태:', !!store);
-      console.log('AccessToken 존재:', !!accessToken);
+      // console.log('Store 상태:', !!store);
+      // console.log('AccessToken 존재:', !!accessToken);
       
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
-        console.log('Authorization 헤더 설정됨');
+        //console.log('Authorization 헤더 설정됨');
       } else {
         console.log('AccessToken이 없음 - 인증 없이 요청');
       }
@@ -80,6 +75,16 @@ api.interceptors.response.use(
     // CORS 에러 처리
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
       console.error('Network error - possibly CORS issue:', error);
+      // 🔵 네트워크 오류 토스트 비활성화 (주석 처리)
+      /*
+      if (store) {
+        const { showToast } = await import('../store/slices/toastSlice');
+        store.dispatch(showToast({ 
+          message: '서버에 연결할 수 없습니다.',
+          severity: 'error'
+        }));
+      }
+      */
       return Promise.reject(new Error('서버에 연결할 수 없습니다. CORS 설정을 확인해주세요.'));
     }
 
@@ -123,7 +128,13 @@ api.interceptors.response.use(
         // 현재 페이지가 로그인 페이지가 아닌 경우에만 스낵바 표시
         if (window.location.pathname !== '/login' && store) {
           const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
+          // 🔵 Axios 간접 활용 (API 인터셉터에서 트리거)
+          const { showToast } = await import('../store/slices/toastSlice');
           store.dispatch(show401ErrorSnackbar());
+          store.dispatch(showToast({ 
+            message: '인증이 만료되었습니다. 다시 로그인해주세요.',
+            severity: 'error'
+          }));
         }
         
         return Promise.reject(error);
@@ -135,8 +146,14 @@ api.interceptors.response.use(
         if (store) {
           const { clearAuth } = await import('../store/slices/authSlice');
           const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
+          // 🔵 Axios 간접 활용 (API 인터셉터에서 트리거)
+          const { showToast } = await import('../store/slices/toastSlice');
           store.dispatch(clearAuth());
           store.dispatch(show401ErrorSnackbar());
+          store.dispatch(showToast({ 
+            message: '로그인이 필요합니다.',
+            severity: 'warning'
+          }));
         }
       }
     }
