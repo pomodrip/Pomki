@@ -255,6 +255,20 @@ const timerSlice = createSlice({
   reducers: {
     // 타이머 시작
     startTimer: (state) => {
+      // 만약 이전 사이클이 이미 완료되어 세션 카운트가 목표에 도달했다면
+      // 새로운 사이클을 시작하기 전에 값들을 초기화한다.
+      if (state.completedSessions >= state.targetSessions) {
+        state.completedSessions = 0;
+        state.currentCycle += 1;
+      }
+
+      // 완료된 세션 객체가 남아있는 경우 초기화하여 새 세션을 만들 수 있게 한다.
+      if (state.currentSession && state.currentSession.status === 'COMPLETED') {
+        state.currentSession = null;
+      }
+
+      // 항상 새 사이클은 FOCUS 모드로 시작한다.
+      state.mode = 'FOCUS';
       const now = Date.now();
       const duration = getDurationForMode(state.mode, state.settings);
       
@@ -337,7 +351,11 @@ const timerSlice = createSlice({
 
         // 두 번째 세션 이후 완료 여부 확인
         if (state.completedSessions >= state.targetSessions && upcomingMode === 'FOCUS') {
+          // 목표 세션을 모두 완료했다면 타이머를 완전히 정지시키고
+          // 다음 사이클을 위해 currentSession 을 정리한다.
           state.status = 'IDLE';
+          state.currentSession = null;
+          state.isRunning = false;
           return;
         }
 
