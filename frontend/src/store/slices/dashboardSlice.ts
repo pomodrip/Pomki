@@ -116,6 +116,9 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload.data;
+        if (state.data) {
+          state.data.studyTime.dailyGoalMinutes = 60;
+        }
         state.hasAttendedToday = action.payload.hasAttendedToday;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {

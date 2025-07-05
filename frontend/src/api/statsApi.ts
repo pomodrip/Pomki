@@ -18,7 +18,7 @@ export const getDashboardData = async (): Promise<DashboardStats> => {
 
     raw.studyTime = {
       todayStudyMinutes: totalFocusMinutes,
-      dailyGoalMinutes: goalMinutes,
+      dailyGoalMinutes: 60,
     };
   }
 
