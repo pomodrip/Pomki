@@ -12,19 +12,36 @@ import java.util.List;
 public interface StudyLogRepository extends JpaRepository<StudyLog, Long> {
 
     // 캘린더의 '출석' 날짜 조회를 위한 쿼리
-    @Query("SELECT DISTINCT CAST(s.createdAt AS date) FROM StudyLog s WHERE s.member.id = :memberId AND s.createdAt BETWEEN :startDate AND :endDate ORDER BY CAST(s.createdAt AS date) ASC")
-    List<LocalDate> findDistinctActivityDatesByMemberAndPeriod(
+    @Query("SELECT DISTINCT CAST(s.createdAt AS date) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt BETWEEN :startDate AND :endDate ORDER BY CAST(s.createdAt AS date) ASC")
+    List<java.sql.Date> findDistinctActivityDatesByMemberAndPeriod(
             @Param("memberId") Long memberId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
-    // '오늘의 학습' 통계 조회를 위한 쿼리 (Image 2 UI 대응)
-    // Hibernate 6+의 json_value 함수를 사용하여 JSON 필드를 직접 쿼리합니다.
+    // 단순하고 명확한 구조화된 컬럼 쿼리
     @Query("SELECT new com.cooltomato.pomki.stats.dto.TodayStatsDto(" +
-           "COALESCE(SUM(CAST(json_value(s.activityDetails, '$.duration_minutes') AS long)), 0), " +
-           "COUNT(CASE WHEN s.activityType = 'POMODORO_SESSION_COMPLETED' THEN 1 END)) " +
-           "FROM StudyLog s WHERE s.member.id = :memberId AND s.createdAt >= :startOfDay")
+           "COALESCE(SUM(s.studyMinutes), 0), " +
+           "COALESCE(SUM(s.pomodoroCompleted), 0)) " +
+           "FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt >= :startOfDay")
     TodayStatsDto getTodayStats(@Param("memberId") Long memberId, @Param("startOfDay") LocalDateTime startOfDay);
+    
+    // 백업 쿼리 제거 (이제 불필요)
+    
+    // 성능 최적화용 단순 쿼리들
+    @Query("SELECT COUNT(s) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt >= :startOfDay")
+    Long countTodayActivities(@Param("memberId") Long memberId, @Param("startOfDay") LocalDateTime startOfDay);
+    
+    @Query("SELECT COALESCE(SUM(s.studyMinutes), 0) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt >= :startOfDay")
+    Long getTodayStudyMinutes(@Param("memberId") Long memberId, @Param("startOfDay") LocalDateTime startOfDay);
+    
+    @Query("SELECT COALESCE(SUM(s.pomodoroCompleted), 0) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt >= :startOfDay")
+    Long getTodayPomodoroCompleted(@Param("memberId") Long memberId, @Param("startOfDay") LocalDateTime startOfDay);
+    
+    // 주간 통계를 위한 정확한 쿼리
+    @Query("SELECT COALESCE(SUM(s.studyMinutes), 0) FROM StudyLog s WHERE s.member.memberId = :memberId AND s.createdAt BETWEEN :startOfWeek AND :endOfWeek")
+    Long getWeeklyStudyMinutes(@Param("memberId") Long memberId, 
+                              @Param("startOfWeek") LocalDateTime startOfWeek,
+                              @Param("endOfWeek") LocalDateTime endOfWeek);
 }
 
 // package com.cooltomato.pomki.stats.repository;
