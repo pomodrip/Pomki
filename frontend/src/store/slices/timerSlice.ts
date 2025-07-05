@@ -412,14 +412,15 @@ const timerSlice = createSlice({
       state.status = 'IDLE';
     },
 
-    // 현재 세션에 노트 연결
+    /*
+    // 현재 세션에 노트 연결 – 현재 컴포넌트/페이지에서 호출되지 않아 주석 처리
     attachNoteToSession: (state, action: PayloadAction<string>) => {
       if (state.currentSession) {
         state.currentSession.noteId = action.payload;
       }
     },
 
-    // 현재 세션에 태그 추가
+    // 현재 세션에 태그 추가 – 현재 호출처가 없어 주석 처리
     addTagToSession: (state, action: PayloadAction<string>) => {
       if (state.currentSession) {
         const tags = state.currentSession.tags || [];
@@ -428,6 +429,7 @@ const timerSlice = createSlice({
         }
       }
     },
+    */
   },
 
   extraReducers: (builder) => {
@@ -498,8 +500,6 @@ export const {
   toggleNotification,
   clearError,
   resetSession,
-  attachNoteToSession,
-  addTagToSession,
 } = timerSlice.actions;
 
 export default timerSlice.reducer;
