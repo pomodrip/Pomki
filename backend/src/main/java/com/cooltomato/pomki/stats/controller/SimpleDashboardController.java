@@ -22,7 +22,7 @@ public class SimpleDashboardController {
 
     private final SimpleDashboardStatsService simpleDashboardStatsService;
 
-    @GetMapping("/dashboard")
+    @GetMapping("/dashboard") 
     @Operation(summary = "간단한 대시보드 통계 조회", 
                description = "7일 일정에 맞춘 핵심 통계만 제공")
     public ResponseEntity<SimpleDashboardStatsDto> getSimpleDashboardStats(
