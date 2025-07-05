@@ -18,6 +18,7 @@ export { default as FilterButton } from './FilterButton';
 export { Menu, MenuItem } from './Menu';
 export { default as FlashCard } from './FlashCard';
 export { default as CircularProgress } from './CircularProgress';
+export { default as LazyReactQuill } from './LazyReactQuill';
 
 // 타입 export
 export type { TextProps } from './Text';

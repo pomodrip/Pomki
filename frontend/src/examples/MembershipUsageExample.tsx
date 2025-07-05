@@ -26,17 +26,15 @@ import {
   TextField,
 } from '@mui/material';
 import CircularProgress from '../components/ui/CircularProgress';
-import {
-  Star,
-  CreditCard,
-  History,
-  CheckCircle,
-  Cancel,
-  Warning,
-  Upgrade,
-  Storage,
-  Psychology,
-} from '@mui/icons-material';
+import Star from '@mui/icons-material/Star';
+import CreditCard from '@mui/icons-material/CreditCard';
+import History from '@mui/icons-material/History';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import Cancel from '@mui/icons-material/Cancel';
+import Warning from '@mui/icons-material/Warning';
+import Upgrade from '@mui/icons-material/Upgrade';
+import Storage from '@mui/icons-material/Storage';
+import Psychology from '@mui/icons-material/Psychology';
 import { useMembership, useMembershipFeatures, usePaymentProcess } from '../hooks/useMembership';
 
 const MembershipUsageExample: React.FC = () => {
@@ -505,7 +503,7 @@ const MembershipUsageExample: React.FC = () => {
             <InputLabel>결제 방법</InputLabel>
             <Select
               value={selectedPaymentMethod || ''}
-              onChange={(e) => choosePaymentMethod(e.target.value as any)}
+              onChange={(e) => choosePaymentMethod(e.target.value as 'CARD' | 'KAKAOPAY' | 'TOSS')}
             >
               <MenuItem value="CARD">
                 {getPaymentMethodDisplayName('CARD')}

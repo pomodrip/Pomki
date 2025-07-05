@@ -18,13 +18,13 @@ import CompressIcon from '@mui/icons-material/CloseFullscreen';
 // import RestartAltIcon from '@mui/icons-material/RestartAlt';
 // import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import ReactQuill from 'react-quill';
+import { LazyReactQuill } from '../../components/ui';
 import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
 import { recordStudyTime } from '../../api/statsApi';
-import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
+import LazyAIEnhanceDialog from '../../components/common/LazyAIEnhanceDialog';
 import { 
   saveTempNote, 
   getTempNote, 
@@ -276,7 +276,7 @@ const NotesTitle = styled(Text)(() => ({
   color: '#1A1A1A',
 }));
 
-const QuillEditor = styled(ReactQuill, {
+const QuillEditor = styled(LazyReactQuill, {
   shouldForwardProp: (prop) => !['expanded', 'disabled', 'animate'].includes(prop as string),
 })<{ 
   expanded: boolean; 
@@ -2064,7 +2064,7 @@ const TimerPage: React.FC = () => {
       )}
 
       {/* AI 다이얼로그 */}
-      <AIEnhanceDialog
+      <LazyAIEnhanceDialog
         open={aiDialogOpen}
         onClose={() => setAiDialogOpen(false)}
         onApply={handleApplyAI}
