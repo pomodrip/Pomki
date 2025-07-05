@@ -326,14 +326,14 @@ const timerSlice = createSlice({
       if (!state.currentSession || !state.isRunning) return;
       
       const now = Date.now();
-      const elapsed = getTotalElapsedMs(state.currentSession.timeEntries);
-      const remainingTime = Math.max(0, state.currentSession.duration * 1000 - elapsed);
-      
-      state.currentSession.remainingTime = Math.ceil(remainingTime / 1000);
+
+      // CPU 지연 등으로 인해 tick 간격이 약간 달라도, UI 는 항상 1초씩 감소하도록 한다.
+      // 언제나 1초씩 감소시킨다.
+      state.currentSession.remainingTime = Math.max(0, state.currentSession.remainingTime - 1);
       state.lastTick = now;
-      
+
       // 시간 종료 체크
-      if (remainingTime <= 0) {
+      if (state.currentSession.remainingTime === 0) {
         state.currentSession.status = 'COMPLETED';
         state.currentSession.completedAt = new Date().toISOString();
         state.isRunning = false;

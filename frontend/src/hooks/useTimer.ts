@@ -74,7 +74,7 @@ export const useTimer = (options?: {
   tickInterval?: number; // 틱 간격 (기본: 1000ms)
 }): UseTimerResult => {
   const dispatch = useAppDispatch();
-  const { autoTick = true, tickInterval = 1000 } = options || {};
+  const { autoTick = false, tickInterval = 1000 } = options || {};
 
   // Redux 상태 선택
   const currentSession = useAppSelector(selectCurrentSession);
