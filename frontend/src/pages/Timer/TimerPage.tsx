@@ -31,7 +31,7 @@ import {
   TempNoteData,
   getTempSaveStatus
 } from '../../utils/storage';
-// import theme from '../../theme/theme';
+import theme from '../../theme/theme';
 
 // 페이지 컨테이너 - design.md 가이드 적용
 const PageContainer = styled(Box)(() => ({
@@ -265,10 +265,10 @@ const NotesHeader = styled(Box)(() => ({
   marginBottom: '20px',
 }));
 
-const NotesTitle = styled(Text)(() => ({
+const NotesTitle = styled(Text)(({ theme }) => ({
   fontSize: '24px',
   fontWeight: 700,
-  color: '#1A1A1A',
+  color: theme.palette.text.primary,
 }));
 
 const QuillEditor = styled(ReactQuill, {
@@ -289,8 +289,6 @@ const QuillEditor = styled(ReactQuill, {
     borderRadius: '0 0 8px 8px',
     fontFamily: "'Pretendard', sans-serif",
     fontSize: '14px',
-    color: disabled ? '#9CA3AF' : '#1A1A1A',
-    backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
     cursor: disabled ? 'not-allowed' : 'text',
     boxShadow: animate ? '0 0 0 4px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
   },
@@ -298,7 +296,6 @@ const QuillEditor = styled(ReactQuill, {
   '& .ql-toolbar': {
     border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
     borderRadius: '8px 8px 0 0',
-    backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
     borderBottom: 'none',
   },
   
@@ -396,7 +393,7 @@ const ToggleLabel = styled(Text)(() => ({
 }));
 
 // 통합된 작업 입력
-const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled }) => ({
+const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled, theme }) => ({
   width: '100%',
   padding: '12px 16px',
   border: '1px solid #E5E7EB',
@@ -404,7 +401,7 @@ const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled }) => ({
   fontSize: '14px',
   fontFamily: "'Pretendard', sans-serif",
   color: disabled ? '#9CA3AF' : '#1F2937',
-  backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
+  backgroundColor: theme.palette.background.paper,
   outline: 'none',
   transition: 'all 0.2s ease',
   cursor: disabled ? 'not-allowed' : 'text',
@@ -1774,7 +1771,6 @@ const TimerPage: React.FC = () => {
             gap: { xs: '8px', sm: '12px' },
             minHeight: '40px',
             padding: { xs: '8px 4px', sm: '16px' },
-            backgroundColor: { xs: 'transparent', sm: '#F9FAFB' },
             borderRadius: { xs: '0', sm: '8px' },
             border: { xs: 'none', sm: '1px solid #E5E7EB' },
           }}>
@@ -1789,7 +1785,7 @@ const TimerPage: React.FC = () => {
                 displayEmpty
                 MenuProps={{ disablePortal: true }}
                 sx={{
-                  backgroundColor: '#FFFFFF',
+                
                   borderRadius: { xs: '6px', sm: '8px' },
                   '& .MuiOutlinedInput-notchedOutline': {
                     borderColor: '#E5E7EB',
