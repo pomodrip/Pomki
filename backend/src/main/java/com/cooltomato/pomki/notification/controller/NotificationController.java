@@ -7,6 +7,7 @@ import com.cooltomato.pomki.notification.dto.NotificationTargetRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationTokenRequestDto;
 import com.cooltomato.pomki.notification.dto.NotificationTokenResponseDto;
 import com.cooltomato.pomki.notification.service.NotificationService;
+import com.cooltomato.pomki.notification.service.NotificationServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
