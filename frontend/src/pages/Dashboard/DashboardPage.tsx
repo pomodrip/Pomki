@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Container, styled, Paper, Chip } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
@@ -12,11 +12,14 @@ import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import Badge from '@mui/material/Badge';
 import 'dayjs/locale/ko';
-import { getDashboardData, recordAttendance } from '../../api/statsApi';
-import { checkTodayAttendance } from '../../api/analysisApi';
-import type { DashboardStats } from '../../types/study';
-import { useAppDispatch } from '../../hooks/useRedux';
-import { showToast } from '../../store/slices/toastSlice';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import {
+  fetchDashboardData,
+  recordAttendanceThunk,
+  selectDashboardData,
+  selectDashboardLoading,
+  selectDashboardHasAttendedToday,
+} from '../../store/slices/dashboardSlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -65,9 +68,9 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
-  const [hasAttendedToday, setHasAttendedToday] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const dashboardData = useAppSelector(selectDashboardData);
+  const hasAttendedToday = useAppSelector(selectDashboardHasAttendedToday);
+  const loading = useAppSelector(selectDashboardLoading);
 
   // DateCalendar에서 사용할 커스텀 Day 컴포넌트
   const CustomDay = (props: PickersDayProps<dayjs.Dayjs>) => {
@@ -104,61 +107,13 @@ const DashboardPage: React.FC = () => {
     );
   };
 
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [data, attendanceStatus] = await Promise.all([
-        getDashboardData(),
-        checkTodayAttendance(),
-      ]);
-      setDashboardData(data);
-      setHasAttendedToday(attendanceStatus.attended);
-    } catch (error) {
-      console.error('대시보드 데이터 로딩 실패:', error);
-      dispatch(showToast({ message: '데이터를 불러오는 데 실패했습니다.', severity: 'error' }));
-    } finally {
-      setLoading(false);
-    }
+  // Redux 기반 데이터 로딩
+  useEffect(() => {
+    dispatch(fetchDashboardData());
   }, [dispatch]);
 
-  useEffect(() => {
-    fetchDashboardData();
-    // 대시보드 실시간 갱신 이벤트 리스너 등록
-    const refreshHandler = () => fetchDashboardData();
-    window.addEventListener('refresh-dashboard', refreshHandler);
-
-    const updateHandler = (e: any) => {
-      const { totalMinutes, addedMinutes } = e.detail || {};
-      setDashboardData(prev => {
-        if (!prev) return prev;
-        const current = prev.studyTime?.todayStudyMinutes ?? 0;
-        const newTotal = totalMinutes ?? current + (addedMinutes || 0);
-        return {
-          ...prev,
-          studyTime: {
-            ...prev.studyTime,
-            todayStudyMinutes: newTotal,
-          },
-        } as DashboardStats;
-      });
-    };
-    window.addEventListener('update-focus-time', updateHandler);
-
-    return () => {
-      window.removeEventListener('refresh-dashboard', refreshHandler);
-      window.removeEventListener('update-focus-time', updateHandler);
-    };
-  }, [fetchDashboardData]);
-
-  const handleAttendance = async () => {
-    try {
-      await recordAttendance();
-      dispatch(showToast({ message: '출석 체크 완료!', severity: 'success' }));
-      await fetchDashboardData(); // 데이터 새로고침
-    } catch (error) {
-      console.error('출석 기록 실패:', error);
-      dispatch(showToast({ message: '출석 처리에 실패했습니다. 이미 출석했을 수 있습니다.', severity: 'error' }));
-    }
+  const handleAttendance = () => {
+    dispatch(recordAttendanceThunk());
   };
 
   console.log('DashboardPage - isMobile:', isMobile, 'pathname:', location.pathname);
@@ -302,7 +257,7 @@ const DashboardPage: React.FC = () => {
                 <Typography variant="body1">3일 내 복습 카드</Typography>
               </Box>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                 {loading ? '...' : `${dashboardData?.review?.upcomingCount ?? 0}개`}
+                {loading ? '...' : `${dashboardData?.review?.upcomingCount ?? 0}개`}
               </Typography>
             </Box>
             
@@ -325,7 +280,7 @@ const DashboardPage: React.FC = () => {
                 <Typography variant="body1">밀린 카드</Typography>
               </Box>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                 {loading ? '...' : `${dashboardData?.review?.overdueCount ?? 0}개`}
+                {loading ? '...' : `${dashboardData?.review?.overdueCount ?? 0}개`}
               </Typography>
             </Box>
           </Box>

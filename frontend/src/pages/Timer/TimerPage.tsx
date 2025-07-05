@@ -24,6 +24,7 @@ import 'react-quill/dist/quill.snow.css';
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
 import { recordStudyTime } from '../../api/statsApi';
+import { updateTodayStudyMinutes } from '../../store/slices/dashboardSlice';
 import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
 import { 
   saveTempNote, 
@@ -880,20 +881,15 @@ const TimerPage: React.FC = () => {
         const res = await recordStudyTime(minutesSpent);
         const totalMinutes = (res?.totalMinutes ?? null) as number | null;
         console.log(`✅ ${minutesSpent}분 학습 시간 기록 완료 (${reason})`, { totalMinutes });
-        window.dispatchEvent(new CustomEvent('update-focus-time', {
-          detail: {
-            addedMinutes: minutesSpent,
-            totalMinutes,
-          },
-        }));
-        window.dispatchEvent(new CustomEvent('refresh-dashboard'));
+        // Redux로 학습 시간 갱신
+        dispatch(updateTodayStudyMinutes({ addedMinutes: minutesSpent, totalMinutes }));
       } catch (err) {
         console.error('❌ 학습 시간 기록 실패:', err);
       } finally {
         modeElapsedSecRef.current = 0; // 초기화
       }
     }
-  }, []);
+  }, [dispatch]);
 
   // 2) 모드 전환 시: 이전 모드의 누적 시간을 기록
   useEffect(() => {
