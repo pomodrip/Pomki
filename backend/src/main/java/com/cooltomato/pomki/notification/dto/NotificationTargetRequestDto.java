@@ -22,7 +22,6 @@ public class NotificationTargetRequestDto {
     private FireBasePlatform platform;
     
     @NotNull(message = "알림 정보는 필수입니다")
-    @Valid
     private NotificationRequestDto notification;
     
 } 

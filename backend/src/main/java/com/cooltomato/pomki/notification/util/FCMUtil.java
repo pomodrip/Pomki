@@ -54,7 +54,7 @@ public final class FCMUtil {
         NotificationMessageType messageType = getMessageType(option);
         
         MulticastMessage.Builder messageBuilder = MulticastMessage.builder().addAllTokens(tokens);
-
+        
         switch (messageType) {
             case DATA_ONLY:
                 messageBuilder.putAllData(buildDataWithTitleBody(request, option));
@@ -109,16 +109,16 @@ public final class FCMUtil {
         NotificationOption option = request.getOption();
         
         return Notification.builder()
-                .setTitle(request.getTitle())
-                .setBody(request.getBody())
+                .setTitle(StringUtils.hasText(request.getTitle()) ? request.getTitle() : "제목이 없습니다")
+                .setBody(StringUtils.hasText(request.getBody()) ? request.getBody() : "내용이 없습니다")
                 .setImage(option != null && StringUtils.hasText(option.getImageUrl()) ? option.getImageUrl() : null)
                 .build();
     }
 
     private static Map<String, String> buildDataWithTitleBody(NotificationRequestDto request, NotificationOption option) {
         Map<String, String> data = new HashMap<>();
-        data.put("title", request.getTitle());
-        data.put("body", request.getBody());
+        data.put("title", StringUtils.hasText(request.getTitle()) ? request.getTitle() : "제목이 없습니다");
+        data.put("body", StringUtils.hasText(request.getBody()) ? request.getBody() : "내용이 없습니다");
         
         if (!CollectionUtils.isEmpty(getDataMap(option))) {
             data.putAll(getDataMap(option));
@@ -155,6 +155,8 @@ public final class FCMUtil {
             case WEB:
                 messageBuilder.setWebpushConfig(buildWebpushConfig(request, option));
                 break;
+            default:
+                break;
         }
     }
 
@@ -176,6 +178,8 @@ public final class FCMUtil {
                 break;
             case WEB:
                 messageBuilder.setWebpushConfig(buildWebpushConfig(request, option));
+                break;
+            default:
                 break;
         }
     }
@@ -221,7 +225,6 @@ public final class FCMUtil {
      */
     private static WebpushConfig buildWebpushConfig(NotificationRequestDto request, NotificationOption option) {
         WebpushConfig.Builder webpushBuilder = WebpushConfig.builder();
-        
         if (option.getTtl() != null) {
             webpushBuilder.putHeader("TTL", String.valueOf(option.getTtl()));
         }
