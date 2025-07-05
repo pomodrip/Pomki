@@ -76,6 +76,33 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': [
+            'react',
+            'react-dom'
+          ],
+          'mui-vendor': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@mui/x-date-pickers',
+            '@emotion/react',
+            '@emotion/styled'
+          ],
+          'redux-vendor': [
+            'redux',
+            '@reduxjs/toolkit',
+            'react-redux'
+          ],
+          'utility-vendor': [
+            'dayjs',
+            'framer-motion',
+            'axios'
+          ]
+        }
+      }
+    }
   },
   envPrefix: ['VITE_', 'CI'],
 });

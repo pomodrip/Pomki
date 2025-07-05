@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { styled } from '@mui/material/styles'; // alpha
 import { 
   Box, 
   Typography, 
@@ -45,37 +44,16 @@ import Button from '../../components/ui/Button';
 
 
 
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
 
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(3),
-}));
-
-const SearchBox = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-}));
-
-const FilterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(3),
-}));
-
-
-
-const SelectedTagsBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-  minHeight: theme.spacing(4),
-  flexWrap: 'wrap',
-}));
+// 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
+interface FlashcardDeck {
+  id: string;
+  category: string;
+  title: string;
+  isBookmarked: boolean;
+  tags: string[];
+  flashcards: FlashCardData[];
+}
 
 const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -546,37 +524,31 @@ const FlashCardListPage: React.FC = () => {
   // 덱이 없는 경우
   if (!selectedDeck || !deckId) {
     return (
-      <StyledContainer maxWidth="md">
-        <Box
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
-          py={8}
-          gap={2}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            덱을 찾을 수 없습니다
-          </Typography>
-          <Button 
-            variant="contained" 
-            onClick={() => navigate('/study')}
-          >
-            덱 목록으로 이동
-          </Button>
-        </Box>
-      </StyledContainer>
+      <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
+        <Typography variant="h5">덱을 찾을 수 없습니다.</Typography>
+        <Typography>
+          덱 목록으로 돌아가서 다시 시도해주세요.
+        </Typography>
+        <Button onClick={() => navigate('/study')} sx={{ mt: 2 }}>
+          덱 목록으로 돌아가기
+        </Button>
+      </Container>
     );
   }
 
   return (
-    <StyledContainer maxWidth="md">
-      {/* 헤더 */}
-      <HeaderBox>
+    <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h5" fontWeight="bold">
           {selectedDeck?.deckName || '덱 이름 없음'}
         </Typography>
-      </HeaderBox>
+        <Button
+          variant="contained"
+          onClick={handleCreateSampleCards}
+        >
+          카드 추가
+        </Button>
+      </Box>
 
       {/* API Fallback 정보 표시 */}
       {fallbackCards.length > 0 && (
@@ -599,7 +571,7 @@ const FlashCardListPage: React.FC = () => {
       )}
 
       {/* 검색 */}
-      <SearchBox>
+      <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
             fullWidth
@@ -647,26 +619,26 @@ const FlashCardListPage: React.FC = () => {
             </Typography>
           </Box>
         )}
-      </SearchBox>
+      </Box>
 
       {/* 필터 */}
-      <FilterBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Button
-          startIcon={<FilterListIcon />}
+          variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
           태그 필터
         </Button>
         <Button
-          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
+          variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
         >
-          북마크
+          북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
-      </FilterBox>
+      </Box>
 
       {/* 선택된 태그들 표시 */}
-      <SelectedTagsBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, minHeight: 4, flexWrap: 'wrap' }}>
         {filters.selectedTags.map((tag: string) => (
           <Chip
             key={tag}
@@ -677,7 +649,7 @@ const FlashCardListPage: React.FC = () => {
             variant="filled"
           />
         ))}
-      </SelectedTagsBox>
+      </Box>
 
       {/* 검색 결과 정보 */}
       {searchResults.length > 0 && (
@@ -834,7 +806,7 @@ const FlashCardListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </StyledContainer>
+    </Container>
   );
 };
 

@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Box, Typography, Container, styled, Paper, Chip } from '@mui/material';
+import { Box, Typography, Container, Paper, Grid, Alert, Chip, styled } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider, DateCalendar } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
@@ -22,7 +21,6 @@ const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(10),
 }));
-
 // 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
 const holidays = [
   '2025-01-01', // 신정
@@ -175,7 +173,7 @@ const DashboardPage: React.FC = () => {
 
       {/* 개발자 도구 - 개발 환경에서만 표시 */}
       {import.meta.env.DEV && (
-        <Paper sx={{ p: 3, mb: 3, }} >
+        <Paper sx={{ p: 3, mb: 3, backgroundColor: '#e3f2fd' }}>
           <Typography variant="h2" gutterBottom>
             🔧 개발자 도구
           </Typography>

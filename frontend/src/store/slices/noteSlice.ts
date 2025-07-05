@@ -8,6 +8,8 @@ import type {
   NoteUpdateRequest,
   NoteListItem,
 } from '../../types/note';
+import { createSelector } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 
 interface ErrorResponse {
   message: string;
@@ -183,3 +185,14 @@ const noteSlice = createSlice({
 
 export const { clearError, clearCurrentNote, setCurrentNote } = noteSlice.actions;
 export default noteSlice.reducer;
+
+// 메모이즈된 selector: 노트 제목 검색
+export const selectNotes = (state: RootState) => state.note.notes;
+
+export const selectNotesBySearch = createSelector(
+  [selectNotes, (_: RootState, q: string) => q],
+  (notes, q) =>
+    q && q.trim()
+      ? notes.filter((n: NoteListItem) => n.noteTitle.toLowerCase().includes(q.toLowerCase()))
+      : notes
+);

@@ -196,4 +196,4 @@ const FlashCard: React.FC<FlashCardProps> = ({
   );
 };
 
-export default FlashCard; 
+export default React.memo(FlashCard); 

@@ -11,6 +11,7 @@ import type {
   CreateCardRequest,
   AddCardTagRequest,
 } from '../../types/card';
+import { createSelector } from '@reduxjs/toolkit';
 
 /**
  * 🃏 Deck Slice - 카드 덱 상태관리
@@ -586,56 +587,24 @@ export const selectDeckPagination = (state: RootState) => ({
 });
 
 // 파생 상태 selector
-export const selectFilteredDecks = (state: RootState) => {
-  const decks = selectDecks(state);
-  const filters = selectDeckFilters(state);
-  
-  let filteredDecks = [...decks];
-  
-  // 검색 필터링
-  if (filters.searchQuery) {
-    const query = filters.searchQuery.toLowerCase();
-    filteredDecks = filteredDecks.filter(deck =>
-      deck.deckName.toLowerCase().includes(query)
-    );
+export const selectFilteredDecks = createSelector(
+  [(state: RootState) => state.deck.decks, (state: RootState) => state.deck.filters],
+  (decks, filters) => {
+    const { searchQuery, showBookmarked, sortBy, sortOrder } = filters;
+    return decks
+      .filter(deck => {
+        const matchesSearch = searchQuery.trim() === '' || deck.deckName.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesBookmark = !showBookmarked || (deck as any).bookmarked === true;
+        return matchesSearch && matchesBookmark;
+      })
+      .sort((a, b) => {
+        const aVal = (a as any)[sortBy];
+        const bVal = (b as any)[sortBy];
+        const compare = aVal.toString().localeCompare(bVal.toString());
+        return sortOrder === 'asc' ? compare : -compare;
+      });
   }
-  
-  // 북마크 필터링
-  if (filters.showBookmarked) {
-    // 북마크 필드가 있다면 사용
-    // filteredDecks = filteredDecks.filter(deck => deck.isBookmarked);
-  }
-  
-  // 정렬
-  filteredDecks.sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-    
-    switch (filters.sortBy) {
-      case 'deckName':
-        aValue = a.deckName;
-        bValue = b.deckName;
-        break;
-      case 'cardCnt':
-        aValue = a.cardCnt;
-        bValue = b.cardCnt;
-        break;
-      case 'createdAt':
-      default:
-        aValue = a.createdAt;
-        bValue = b.createdAt;
-        break;
-    }
-    
-    if (filters.sortOrder === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
-  });
-  
-  return filteredDecks;
-};
+);
 
 // 통계 selector
 export const selectDeckStats = (state: RootState) => {
@@ -659,61 +628,22 @@ export const selectBookmarkedCards = (state: RootState) => {
 };
 
 // 카드 필터링 selector (상태 기반)
-export const selectFilteredCards = (state: RootState) => {
-  const cards = selectCurrentDeckCards(state);
-  const filters = selectCardFilters(state);
-  
-  let filteredCards = [...cards];
-  
-  // 검색어 필터링
-  if (filters.searchQuery) {
-    const query = filters.searchQuery.toLowerCase();
-    filteredCards = filteredCards.filter(card =>
-      card.content.toLowerCase().includes(query) ||
-      card.answer.toLowerCase().includes(query) ||
-      card.tags.some(tag => tag.toLowerCase().includes(query))
-    );
+export const selectFilteredCards = createSelector(
+  [(state: RootState) => state.deck.currentDeckCards, (state: RootState) => state.deck.cardFilters],
+  (cards, cardFilters) => {
+    const { searchQuery, showBookmarkedOnly, selectedTags, sortBy, sortOrder } = cardFilters;
+    return cards
+      .filter(card => {
+        const matchesSearch = searchQuery.trim() === '' || card.content.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesBookmark = !showBookmarkedOnly || card.bookmarked === true;
+        const matchesTags = selectedTags.length === 0 || selectedTags.every(tag => card.tags.includes(tag));
+        return matchesSearch && matchesBookmark && matchesTags;
+      })
+      .sort((a, b) => {
+        const aVal = (a as any)[sortBy];
+        const bVal = (b as any)[sortBy];
+        const compare = aVal.toString().localeCompare(bVal.toString());
+        return sortOrder === 'asc' ? compare : -compare;
+      });
   }
-  
-  // 북마크 필터링
-  if (filters.showBookmarkedOnly) {
-    filteredCards = filteredCards.filter(card => card.bookmarked);
-  }
-  
-  // 태그 필터링
-  if (filters.selectedTags.length > 0) {
-    filteredCards = filteredCards.filter(card =>
-      filters.selectedTags.every(tag => card.tags.includes(tag))
-    );
-  }
-  
-  // 정렬
-  filteredCards.sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-    
-    switch (filters.sortBy) {
-      case 'content':
-        aValue = a.content;
-        bValue = b.content;
-        break;
-      case 'updatedAt':
-        aValue = a.updatedAt;
-        bValue = b.updatedAt;
-        break;
-      case 'createdAt':
-      default:
-        aValue = a.createdAt;
-        bValue = b.createdAt;
-        break;
-    }
-    
-    if (filters.sortOrder === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
-  });
-  
-  return filteredCards;
-}; 
+); 
