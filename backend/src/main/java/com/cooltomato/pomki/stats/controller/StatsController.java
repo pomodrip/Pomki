@@ -27,7 +27,7 @@ public class StatsController {
 
     private final StatsService statsService;
 
-    @Operation(summary = "대시보드 통계 조회", description = "월별 학습 통계 및 대시보드 정보를 조회합니다.")
+
     @GetMapping("/dashboard")
     @Operation(summary = "메인 대시보드 전체 데이터 조회",
                description = "메인 대시보드에 필요한 모든 통계(학습, 복습, 출석 등)를 한번에 조회합니다.")
