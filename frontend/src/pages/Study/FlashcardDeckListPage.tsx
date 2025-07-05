@@ -70,7 +70,7 @@ interface ClientSideDeckInfo {
 }
 
 
-// 🔹 스타일 컴포넌트 정의
+// 🔹 스타일 컴포넌트 정의 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
