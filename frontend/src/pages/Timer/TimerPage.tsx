@@ -5,11 +5,11 @@ import {
   Button,
   Select,
   MenuItem,
+  CircularProgress as MuiCircularProgress,
   FormControl,
   FormControlLabel,
   Switch,
 } from '@mui/material';
-import { CircularProgress as MuiCircularProgress } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
@@ -23,6 +23,7 @@ import 'react-quill/dist/quill.snow.css';
 
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
+import { recordStudyTime } from '../../api/statsApi';
 import { AIEnhanceDialog } from '../../components/common/AIEnhanceDialog';
 import { 
   saveTempNote, 
@@ -32,6 +33,10 @@ import {
   getTempSaveStatus
 } from '../../utils/storage';
 // import theme from '../../theme/theme';
+import Toast from '../../components/common/Toast';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch } from '../../hooks/useRedux';
+import { showToast } from '../../store/slices/toastSlice';
 
 // 페이지 컨테이너 - design.md 가이드 적용
 const PageContainer = styled(Box)(() => ({
@@ -527,16 +532,18 @@ const editorFormats = [
 
 const TimerPage: React.FC = () => {
   const {
+    status,
+    mode,
     isRunning,
     currentTime,
+    progress,
     sessionProgress,
+    settings,
+    isCompleted,
     start,
     pause,
     reset,
-    settings,
     updateTimerSettings,
-    progress,
-    mode,
   } = useTimer();
 
   const { minutes, seconds } = currentTime;
@@ -566,6 +573,7 @@ const TimerPage: React.FC = () => {
   
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   
   // 로컬 설정 (모달에서 편집용)
   const [localSettings, setLocalSettings] = useState<TimerSettings>({
@@ -583,6 +591,9 @@ const TimerPage: React.FC = () => {
 
   // 자동저장을 위한 디바운싱 ref
   const autoSaveTimeoutRef = useRef<number | null>(null);
+  
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   
   // 페이지 로드 시 임시 저장된 노트 불러오기
   useEffect(() => {
@@ -831,6 +842,98 @@ const TimerPage: React.FC = () => {
     }
   }, [autoSaveEnabled]);
 
+  // -------------------------------------------
+  // 📊 학습 시간 실시간 누적 & 기록 로직
+  // -------------------------------------------
+
+  // ⏱️ 현재 모드(FOCUS/SHORT_BREAK 등)에서 경과한 초 누적용 ref
+  const modeElapsedSecRef = useRef(0);
+  // 이전 렌더에서의 남은 시간을 기록하여 diff 계산
+  const prevTimeSecRef = useRef<number | null>(null);
+  // 이전 모드 기록용 ref (모드 전환 감지)
+  const prevModeRef = useRef(mode);
+
+  // 1) tick마다 경과 시간 누적 (isRunning 상태에서만)
+  useEffect(() => {
+    const currentSec = currentTime.minutes * 60 + currentTime.seconds;
+    if (isRunning && prevTimeSecRef.current !== null) {
+      const diff = prevTimeSecRef.current - currentSec;
+      if (diff > 0) {
+        modeElapsedSecRef.current += diff; // 초 단위 누적
+      }
+      // 디버깅 로그
+      console.log('[TICK]', {
+        mode,
+        diff,
+        totalElapsedSec: modeElapsedSecRef.current,
+      });
+    }
+    prevTimeSecRef.current = currentSec;
+  }, [currentTime, isRunning]);
+
+  // 🔄 누적된 시간을 서버에 기록하고 초기화하는 헬퍼
+  const flushElapsed = useCallback(async (reason: string) => {
+    console.log('[FLUSH START]', reason, 'elapsedSec', modeElapsedSecRef.current);
+    const minutesSpent = Math.round(modeElapsedSecRef.current / 60);
+    if (minutesSpent > 0) {
+      try {
+        const res = await recordStudyTime(minutesSpent);
+        const totalMinutes = (res?.totalMinutes ?? null) as number | null;
+        console.log(`✅ ${minutesSpent}분 학습 시간 기록 완료 (${reason})`, { totalMinutes });
+        window.dispatchEvent(new CustomEvent('update-focus-time', {
+          detail: {
+            addedMinutes: minutesSpent,
+            totalMinutes,
+          },
+        }));
+        window.dispatchEvent(new CustomEvent('refresh-dashboard'));
+      } catch (err) {
+        console.error('❌ 학습 시간 기록 실패:', err);
+      } finally {
+        modeElapsedSecRef.current = 0; // 초기화
+      }
+    }
+  }, []);
+
+  // 2) 모드 전환 시: 이전 모드의 누적 시간을 기록
+  useEffect(() => {
+    if (prevModeRef.current !== mode) {
+      flushElapsed('모드 전환');
+      prevModeRef.current = mode;
+      // prevTimeSec을 현재 모드의 시작 시점으로 재설정
+      prevTimeSecRef.current = currentTime.minutes * 60 + currentTime.seconds;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // 3) 페이지 언마운트 시 누적 시간 기록
+  useEffect(() => {
+    return () => {
+      flushElapsed('언마운트');
+    };
+  }, []);
+
+  // 4) 브라우저 종료/새로고침(완전 언로드) 대비: sendBeacon 사용
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const minutesSpent = Math.round(modeElapsedSecRef.current / 60);
+      if (minutesSpent > 0 && navigator.sendBeacon) {
+        try {
+          const blob = new Blob([JSON.stringify({ studyMinutes: minutesSpent })], {
+            type: 'application/json',
+          });
+          navigator.sendBeacon('/api/v1/stats/study-time', blob);
+          // 누적 초기화 (다음 unload 중복 방지)
+          modeElapsedSecRef.current = 0;
+        } catch (err) {
+          console.error('sendBeacon 실패:', err);
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   const handleStart = () => {
     if (isRunning) {
       pause();
@@ -843,8 +946,19 @@ const TimerPage: React.FC = () => {
   };
 
   const handleReset = () => {
+    setShowResetDialog(true);
+  };
+
+  const handleConfirmReset = () => {
+    // 리셋 전에 누적된 시간을 기록
+    flushElapsed('리셋');
     reset();
     setHasTimerStarted(false);
+    setShowResetDialog(false);
+  };
+
+  const handleCancelReset = () => {
+    setShowResetDialog(false);
   };
 
   const handleSettings = () => {
@@ -918,7 +1032,7 @@ const TimerPage: React.FC = () => {
         saveTempNote(tempData);
         console.log('📁 수동 임시 저장 완료:', tempData);
         updateTempSaveStatus(); // 저장 후 상태 업데이트
-        // alert 대신 콘솔 로그만 (UI 방해 최소화)
+        // alert 대신 콘씔 로그만 (UI 방해 최소화)
       }
     } catch (error) {
       console.error('❌ 수동 임시 저장 실패:', error);
@@ -988,13 +1102,21 @@ const TimerPage: React.FC = () => {
         noteContent: notes,
         aiEnhanced: hasGeneratedAI,
       });
-      
+
       // 저장 성공 시 localStorage에서 임시 데이터 삭제
       clearTempNote();
       setHasUnsavedChanges(false);
       updateTempSaveStatus();
       console.log('✅ 백엔드 저장 완료 - 임시 데이터 정리됨');
-      alert('노트가 성공적으로 저장되었습니다!');
+      
+      // 성공 메시지와 액션 버튼이 함께 있는 토스트 표시
+      dispatch(showToast({ 
+        message: '노트가 성공적으로 저장되었습니다.', 
+        severity: 'success',
+        duration: 6000,
+        action: '노트 목록으로',
+        onAction: () => navigate('/note')
+      }));
     } catch (error) {
       console.error('❌ 노트 저장 실패:', error);
       alert('노트 저장에 실패했습니다. 다시 시도해주세요.');
@@ -1107,7 +1229,7 @@ const TimerPage: React.FC = () => {
             ·
           </Text>
           <Text sx={{ fontSize: '14px', fontWeight: 600, color: '#2563EB' }}>
-            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+            {mode === 'FOCUS' ? '집중시간' : '휴식시간'}
           </Text>
           <Text sx={{ 
             fontSize: '16px', 
@@ -1171,7 +1293,7 @@ const TimerPage: React.FC = () => {
             ·
           </Text>
           <Text sx={{ fontSize: '16px', fontWeight: 600, color: '#2563EB' }}>
-            {mode === 'FOCUS' ? '집중시간' : '짧은 휴식'}
+            {mode === 'FOCUS' ? '집중시간' : '휴식시간'}
           </Text>
           <Text sx={{ 
             fontSize: '20px', 
@@ -1217,20 +1339,30 @@ const TimerPage: React.FC = () => {
       </Box>
 
       {/* 노트 제목과 자동저장 토글 */}
-      <NotesHeader>
-        <Box>
-          <NotesTitle>
-            📝 집중 노트
-          </NotesTitle>
+      <NotesHeader
+        sx={{
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1, sm: 2 },
+        }}
+      >
+        {/* 1행: 제목 */}
+        <Box sx={{ width: '100%' }}>
+          <NotesTitle>📝 집중 노트</NotesTitle>
         </Box>
-        <Box sx={{ 
-          display: 'flex',
-          alignItems: 'center', 
-          gap: '16px' 
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-              자동 임시 저장
+        {/* 2행: 토글 + 확대버튼 */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'space-between', sm: 'flex-end' },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+              백그라운드 저장
             </Text>
             <Switch
               checked={autoSaveEnabled}
@@ -1246,59 +1378,47 @@ const TimerPage: React.FC = () => {
               }}
             />
           </Box>
-          
-          {/* 임시 저장 상태 표시 */}
-          {tempSaveStatus.hasTempData && (
-            <Text sx={{ 
-              fontSize: '11px', 
-              color: '#6B7280',
-              whiteSpace: 'nowrap',
-            }}>
-              마지막 임시 저장: {
-                tempSaveStatus.timeSinceLastSave !== null && !isNaN(tempSaveStatus.timeSinceLastSave)
-                  ? `${tempSaveStatus.timeSinceLastSave}초 전`
-                  : '방금 전'
-              }
-            </Text>
-          )}
-          
-          {/* 수동 임시 저장 버튼 (타이머 실행 중이 아닐 때만 표시) */}
-          {!isRunning && (notes.trim() || taskName.trim()) && (
-            <Button
+          {/* 확대/축소 버튼 조건부 렌더링 및 hover 배경 제거 */}
+          {!notesExpanded && (
+            <IconButton
               size="small"
-              variant="outlined"
-              onClick={handleManualTempSave}
+              onClick={() => setNotesExpanded(true)}
               sx={{
-                fontSize: '11px',
-                padding: '4px 8px',
-                minWidth: 'auto',
-                borderColor: '#D1D5DB',
                 color: '#6B7280',
+                backgroundColor: 'transparent',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                ml: { xs: 0, sm: 1 },
                 '&:hover': {
-                  borderColor: '#9CA3AF',
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: 'transparent',
                 },
               }}
+              aria-label="노트 확대"
             >
-              임시 저장
-            </Button>
+              <ExpandIcon fontSize="small" />
+            </IconButton>
           )}
-          
-          <IconButton 
-            size="small" 
-            sx={{ 
-              color: '#6B7280',
-              backgroundColor: '#F3F4F6',
-              '&:hover': {
-                backgroundColor: '#E5E7EB',
-              },
-              width: '28px',
-              height: '28px',
-            }}
-            onClick={() => setNotesExpanded(false)}
-          >
-            <CompressIcon fontSize="small" />
-          </IconButton>
+          {notesExpanded && (
+            <IconButton
+              size="small"
+              onClick={() => setNotesExpanded(false)}
+              sx={{
+                color: '#6B7280',
+                backgroundColor: 'transparent',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                ml: { xs: 0, sm: 1 },
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+              }}
+              aria-label="노트 축소"
+            >
+              <CompressIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
       </NotesHeader>
 
@@ -1310,7 +1430,7 @@ const TimerPage: React.FC = () => {
         disabled={!isRunning}
         placeholder={
           isRunning
-            ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+            ? "이번 세션에서 주제나 목표를 기록해보세요..."
             : "타이머를 시작하면 입력할 수 있습니다"
         }
         aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -1707,29 +1827,86 @@ const TimerPage: React.FC = () => {
       {/* 타이머가 실행 중이거나 시작된 적이 있을 때만 노트 영역 노출 */}
       {(isRunning || hasTimerStarted) && (
         <NotesSection expanded={false}>
-          <NotesHeader>
-            <Box>
-              <NotesTitle>
-                📝 집중 노트
-              </NotesTitle>
+          <NotesHeader
+            sx={{
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
+            {/* 1행: 제목 */}
+            <Box sx={{ width: '100%' }}>
+              <NotesTitle>📝 집중 노트</NotesTitle>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF' }}>
-                백그라운드 저장
-              </Text>
-              <Switch
-                checked={autoSaveEnabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#10B981',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#10B981',
-                  },
-                }}
-              />
+            {/* 2행: 토글 + 확대버튼 */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: { xs: 'space-between', sm: 'flex-end' },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+                  백그라운드 저장
+                </Text>
+                <Switch
+                  checked={autoSaveEnabled}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoSaveEnabled(e.target.checked)}
+                  size="small"
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#10B981',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#10B981',
+                    },
+                  }}
+                />
+              </Box>
+              {/* 확대/축소 버튼 조건부 렌더링 및 hover 배경 제거 */}
+              {!notesExpanded && (
+                <IconButton
+                  size="small"
+                  onClick={() => setNotesExpanded(true)}
+                  sx={{
+                    color: '#6B7280',
+                    backgroundColor: 'transparent',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    ml: { xs: 0, sm: 1 },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                  aria-label="노트 확대"
+                >
+                  <ExpandIcon fontSize="small" />
+                </IconButton>
+              )}
+              {notesExpanded && (
+                <IconButton
+                  size="small"
+                  onClick={() => setNotesExpanded(false)}
+                  sx={{
+                    color: '#6B7280',
+                    backgroundColor: 'transparent',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    ml: { xs: 0, sm: 1 },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                  aria-label="노트 축소"
+                >
+                  <CompressIcon fontSize="small" />
+                </IconButton>
+              )}
             </Box>
           </NotesHeader>
 
@@ -1741,7 +1918,7 @@ const TimerPage: React.FC = () => {
             disabled={!isRunning}
             placeholder={
               isRunning
-                ? "이번 세션에서 떠오른 아이디어, 배운 내용, 중요한 포인트를 기록해보세요..."
+                ? "이번 세션에서 주제나 목표를 기록해보세요..."
                 : "타이머를 시작하면 입력할 수 있습니다"
             }
             aria-label={isRunning ? "현재 집중 중인 작업" : "이번 세션 집중 작업"}
@@ -1896,77 +2073,53 @@ const TimerPage: React.FC = () => {
       />
 
       {/* 복원 다이얼로그 */}
-      <Modal open={showRestoreDialog} onClose={() => {
-        // 다이얼로그를 그냥 닫으면 다음에 다시 나타나지 않게 처리
-        sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
-        setShowRestoreDialog(false);
-        console.log('🔒 복원 다이얼로그 무시됨 (이번 세션에서 다시 표시 안됨)');
-      }}>
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: { xs: '85%', sm: '400px' },
-          maxWidth: '400px',
-          maxHeight: { xs: '80vh', sm: '90vh' },
-          bgcolor: 'background.paper',
-          borderRadius: '12px',
-          boxShadow: 24,
-          p: { xs: 2, sm: 3 },
-          overflow: 'auto',
-        }}>
-          <Box sx={{ mb: 2 }}>
-            <Text sx={{ fontSize: '18px', fontWeight: 600, color: '#1F2937', mb: 1 }}>
-              🔄 이전 세션 데이터 발견
+      <Modal
+        open={showRestoreDialog}
+        onClose={() => {
+          // 다이얼로그를 그냥 닫으면 다음에 다시 나타나지 않게 처리
+          sessionStorage.setItem('pomki_restore_dialog_handled', 'true');
+          setShowRestoreDialog(false);
+          console.log('🔒 복원 다이얼로그 무시됨 (이번 세션에서 다시 표시 안됨)');
+        }}
+        title="💾 이전 작성 내용 발견"
+      >
+        <Box sx={{ mb: 2 }}>
+          <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
+            이전에 작성하던 내용이 임시 저장되어 있습니다. 복원하시겠습니까?
+          </Text>
+          {tempSaveStatus.lastSaved && (
+            <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
+              마지막 저장: {
+                (() => {
+                  try {
+                    const date = new Date(tempSaveStatus.lastSaved);
+                    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                  } catch (e) {
+                    return '알 수 없음';
+                  }
+                })()
+              }
             </Text>
-            <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
-              이전에 작성하던 노트가 임시 저장되어 있습니다. 복원하시겠습니까?
-            </Text>
-            {tempSaveStatus.lastSaved && (
-              <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
-                마지막 저장: {
-                  (() => {
-                    try {
-                      const date = new Date(tempSaveStatus.lastSaved);
-                      return isNaN(date.getTime()) ? '시간 정보 없음' : date.toLocaleString();
-                    } catch (error) {
-                      return '시간 정보 없음';
-                    }
-                  })()
-                }
-              </Text>
-            )}
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              onClick={handleSkipRestore}
-              sx={{
-                borderColor: '#D1D5DB',
-                color: '#6B7280',
-                '&:hover': {
-                  borderColor: '#9CA3AF',
-                  backgroundColor: '#F9FAFB',
-                },
-              }}
-            >
-              삭제하고 새로 시작
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleRestoreData}
-              sx={{
-                backgroundColor: '#3B82F6',
-                '&:hover': {
-                  backgroundColor: '#2563EB',
-                },
-              }}
-            >
-              복원하기
-            </Button>
-          </Box>
+          )}
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleSkipRestore}
+            sx={{ flex: 1 }}
+          >
+            삭제
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleRestoreData}
+            sx={{ flex: 1 }}
+          >
+            복원하기
+          </Button>
         </Box>
       </Modal>
 
@@ -2010,9 +2163,9 @@ const TimerPage: React.FC = () => {
               value={tempSettings.focusMinutes}
               onChange={(value) => setTempSettings(prev => ({ ...prev, focusMinutes: value }))}
               label="집중 시간"
-              min={5}
+              min={1}
               max={120}
-              step={5}
+              step={1}
               boxWidth={100}
             />
             <WheelTimeAdjuster
@@ -2028,17 +2181,52 @@ const TimerPage: React.FC = () => {
           <PresetsSection>
             <PresetsTitle>Presets</PresetsTitle>
             <PresetButton onClick={() => handlePreset('deep')}>
-              심층 학습 (50 min / 10 min)
+              심층 학습 (3세션 / 50분 / 10분)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('pomodoro')}>
-              포모도로 학습 (25 min / 5 min)
+              포모도로 학습 (4세션 / 25분 / 5분)
             </PresetButton>
             <PresetButton onClick={() => handlePreset('quick')}>
-              빠른 학습 (15 min / 3 min)
+              빠른 학습 (6세션 / 15분 / 3분)
             </PresetButton>
           </PresetsSection>
         </SettingsContainer>
       </Modal>
+
+      {/* 리셋 확인 다이얼로그 */}
+      <Modal
+        open={showResetDialog}
+        onClose={handleCancelReset}
+        title="⚠️ 타이머 초기화"
+      >
+        <Box sx={{ mb: 2 }}>
+          <Text sx={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5 }}>
+            타이머를 초기화하시겠습니까? 현재 진행 상황이 모두 사라집니다.
+          </Text>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleCancelReset}
+            sx={{ flex: 1 }}
+          >
+            취소
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmReset}
+            sx={{ flex: 1 }}
+          >
+            초기화
+          </Button>
+        </Box>
+      </Modal>
+
+      {/* Toast 알림 */}
+      <Toast />
     </PageContainer>
   );
 };
