@@ -7,10 +7,8 @@ import {
   Button,
 } from '@mui/material';
 import { Text, IconButton } from '../../components/ui';
-import {
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';

@@ -15,16 +15,14 @@ import {
 import CircularProgress from '../../components/ui/CircularProgress';
 import { Text, Button, Modal } from '../../components/ui';
 
-import { 
-  Add as AddIcon, 
-  Edit as EditIcon, 
-  Delete as DeleteIcon, 
-  Quiz as QuizIcon,
-  Search as SearchIcon,
-  BookmarkBorder,
-  Bookmark,
-  FilterList as FilterListIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import QuizIcon from '@mui/icons-material/Quiz';
+import SearchIcon from '@mui/icons-material/Search';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { deleteNoteAsync, fetchNotes, fetchNote } from '../../store/slices/noteSlice';

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, styled, useTheme } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
+import Brightness4 from '@mui/icons-material/Brightness4';
+import Brightness7 from '@mui/icons-material/Brightness7';
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';

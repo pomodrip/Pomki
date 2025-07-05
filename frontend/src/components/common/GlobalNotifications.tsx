@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { Snackbar, Alert, IconButton, Box, Typography, Button, Stack } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNotifications, useUI } from '../../hooks/useUI';
 import { styled } from '@mui/material/styles';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paper, styled } from '@mui/material';
 import { Flex, Text, IconButton } from '../ui';
-import { Close } from '@mui/icons-material';
+import Close from '@mui/icons-material/Close';
 
 const BannerContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -43,7 +43,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
   title,
   description,
   imageUrl,
-  actionText = '?�세??보기',
+  actionText = '?�세??보기',
   onAction,
   onClose,
   closeable = true,

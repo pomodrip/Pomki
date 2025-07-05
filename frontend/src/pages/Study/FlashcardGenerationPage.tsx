@@ -14,15 +14,13 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import {
-  ArrowForward,
-  ArrowBack,
-  AutoAwesome,
-  CheckBoxOutlineBlank,
-  CheckBox as CheckBoxIcon,
-  EditNote as EditNoteIcon,
-  ArrowBackIosNew,
-} from '@mui/icons-material';
+import ArrowForward from '@mui/icons-material/ArrowForward';
+import ArrowBack from '@mui/icons-material/ArrowBack';
+import AutoAwesome from '@mui/icons-material/AutoAwesome';
+import CheckBoxOutlineBlank from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ArrowBackIosNew from '@mui/icons-material/ArrowBackIosNew';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/useRedux';
 import type { QuizItem } from '../../types/quiz';

@@ -14,13 +14,10 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  FilterList as FilterListIcon,
-  BookmarkBorder,
-  Bookmark,
-  //ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';

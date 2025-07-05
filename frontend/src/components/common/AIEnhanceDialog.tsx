@@ -16,7 +16,9 @@ import {
   ListItemIcon,
   IconButton,
 } from '@mui/material';
-import { Close as CloseIcon, CheckCircle, ContentCopy } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import ContentCopy from '@mui/icons-material/ContentCopy';
 import { AIEnhanceResponse } from '../../api/noteApi';
 
 interface AIEnhanceDialogProps {
@@ -115,7 +117,7 @@ export const AIEnhanceDialog: React.FC<AIEnhanceDialogProps> = ({
                   ✨ 개선된 노트 내용
                 </Typography>
                 <IconButton onClick={handleCopyContent} size="small" title="내용 복사">
-                  <ContentCopy fontSize="small" />
+                  <ContentCopy />
                 </IconButton>
               </Box>
               <Paper sx={{ 
