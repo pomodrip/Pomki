@@ -4,6 +4,7 @@ import { getMyInfo } from '../../api/userApi';
 import { cookies } from '../../utils/cookies';
 import type { User, LoginRequest, LoginResponse } from '../../types/api';
 import type { RootState } from '../store';
+import { createSelector } from 'reselect';
 
 // 최신 인터페이스 정의 - 상태 명확화
 interface AuthState {
@@ -270,11 +271,41 @@ export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
 
-// 편의 셀렉터들
-export const selectIsLoading = (state: RootState) => state.auth.status === 'loading';
-export const selectIsLoggedIn = (state: RootState) => 
-  state.auth.isAuthenticated && state.auth.user !== null;
+// 편의 셀렉터들 - createSelector로 메모이제이션
+export const selectIsLoading = createSelector(
+  [selectAuthStatus],
+  (status) => status === 'loading'
+);
+
+export const selectIsLoggedIn = createSelector(
+  [selectIsAuthenticated, selectUser],
+  (isAuthenticated, user) => isAuthenticated && user !== null
+);
+
 export const selectIsInitialized = (state: RootState) => state.auth.isInitialized;
+
+// 복합 selector들 - createSelector로 메모이제이션
+export const selectUserProfile = createSelector(
+  [selectUser],
+  (user) => user ? {
+    email: user.email,
+    nickname: user.nickname,
+    isEmailVerified: user.isEmailVerified,
+    socialLogin: user.socialLogin,
+  } : null
+);
+
+export const selectAuthState = createSelector(
+  [selectIsAuthenticated, selectIsLoading, selectAuthError, selectIsInitialized],
+  (isAuthenticated, isLoading, error, isInitialized) => ({
+    isAuthenticated,
+    isLoading,
+    hasError: !!error,
+    error,
+    isInitialized,
+    canAccess: isAuthenticated && isInitialized,
+  })
+);
 
 // 기본 리듀서 export
 export default authSlice.reducer;

@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     svgr(),
     react(),
-    svgr(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
@@ -57,7 +56,18 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
-    include: ['react-quill'],
+    include: [
+      'react-quill',
+      'dayjs',
+      '@mui/material',
+      '@mui/icons-material',
+      'react-redux',
+      '@reduxjs/toolkit'
+    ],
+    exclude: [
+      // 개발 환경에서만 사용되는 라이브러리들 제외
+      '@vitejs/plugin-react'
+    ]
   },
   server: {
     proxy: {
@@ -76,6 +86,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info']
+      }
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -157,9 +175,32 @@ export default defineConfig({
           if (id.includes('src/utils/') || id.includes('src/hooks/')) {
             return 'utils';
           }
+        },
+        // 청크 크기 최적화
+        chunkFileNames: () => {
+          return `js/[name]-[hash].js`;
+        },
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
+          
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
+            return `media/[name]-[hash][extname]`;
+          }
+          if (/\.(png|jpe?g|gif|svg|webp|ico)(\?.*)?$/i.test(assetInfo.name)) {
+            return `img/[name]-[hash][extname]`;
+          }
+          if (ext === 'css') {
+            return `css/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
         }
       }
-    }
+    },
+    // 청크 크기 경고 임계값 조정
+    chunkSizeWarningLimit: 1000
   },
   envPrefix: ['VITE_', 'CI'],
 });

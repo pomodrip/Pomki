@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import HomeIcon  from '../../assets/icons/home.svg?react';
 import TimerIcon  from '../../assets/icons/timer.svg?react';
@@ -17,7 +17,8 @@ const BottomNav: React.FC = () => {
   const theme = useTheme();
   const { isMobile } = useResponsiveUI();
 
-  const getActiveTab = () => {
+  // 현재 활성 탭 계산 - useMemo 최적화
+  const activeTab = useMemo(() => {
     const pathname = location.pathname;
     if (pathname.startsWith('/timer')) return 0;
     if (pathname.startsWith('/note')) return 1;
@@ -25,9 +26,10 @@ const BottomNav: React.FC = () => {
     if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
     if (pathname.startsWith('/profile')) return 4;
     return 2; // default to home
-  };
+  }, [location.pathname]);
 
-  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+  // 네비게이션 핸들러 - useCallback 최적화
+  const handleChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     switch (newValue) {
       case 0:
         navigate('/timer');
@@ -45,20 +47,18 @@ const BottomNav: React.FC = () => {
         navigate('/profile');
         break;
     }
-  };
+  }, [navigate]);
 
-  // 키보드 단축키로 탭 네비게이션
-  const handleNextTab = () => {
-    const currentTab = getActiveTab();
-    const nextTab = currentTab >= 4 ? 0 : currentTab + 1;
+  // 키보드 단축키로 탭 네비게이션 - useCallback 최적화
+  const handleNextTab = useCallback(() => {
+    const nextTab = activeTab >= 4 ? 0 : activeTab + 1;
     handleChange({} as React.SyntheticEvent, nextTab);
-  };
+  }, [activeTab, handleChange]);
 
-  const handlePreviousTab = () => {
-    const currentTab = getActiveTab();
-    const previousTab = currentTab <= 0 ? 4 : currentTab - 1;
+  const handlePreviousTab = useCallback(() => {
+    const previousTab = activeTab <= 0 ? 4 : activeTab - 1;
     handleChange({} as React.SyntheticEvent, previousTab);
-  };
+  }, [activeTab, handleChange]);
 
   // Tab/Shift+Tab으로 네비게이션 이동 (모바일에서만 활성화)
   useTabNavigationKeyboardShortcuts(handleNextTab, handlePreviousTab, {
@@ -66,13 +66,14 @@ const BottomNav: React.FC = () => {
     excludeInputs: true // 입력 필드 포커스 시 비활성화
   });
 
-  const navItems = [
+  // 네비게이션 아이템들 - useMemo 최적화
+  const navItems = useMemo(() => [
     { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
     { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.text.secondary}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
     { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.text.secondary}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
     { label: '학습', inactiveIcon: <StudyIcon stroke={theme.palette.text.secondary}/>, activeIcon: <StudyIcon stroke={theme.palette.primary.main}/> },
     { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.text.secondary}/>, activeIcon: <ProfileIcon fill={theme.palette.primary.main}/> }
-  ];
+  ], [theme.palette.text.secondary, theme.palette.primary.main]);
 
   return isMobile ? (
     <Paper
@@ -89,7 +90,7 @@ const BottomNav: React.FC = () => {
     >
       <BottomNavigation
         showLabels
-        value={getActiveTab()}
+        value={activeTab}
         onChange={handleChange}
         sx={{
           height: '100%',
@@ -99,7 +100,7 @@ const BottomNav: React.FC = () => {
           <BottomNavigationAction
             key={item.label}
             label={item.label}
-            icon={getActiveTab() === index ? item.activeIcon : item.inactiveIcon}
+            icon={activeTab === index ? item.activeIcon : item.inactiveIcon}
             sx={{
               padding: '0',
               minWidth: 'auto',
@@ -113,7 +114,7 @@ const BottomNav: React.FC = () => {
               '& .MuiSvgIcon-root': {
                 fontSize: '24px',
               },
-              color: getActiveTab() === index ? theme.palette.primary.main : theme.palette.text.secondary,
+              color: activeTab === index ? theme.palette.primary.main : theme.palette.text.secondary,
             }}
           />
         ))}
@@ -122,4 +123,4 @@ const BottomNav: React.FC = () => {
   ) : null;
 };
 
-export default BottomNav;
+export default React.memo(BottomNav);

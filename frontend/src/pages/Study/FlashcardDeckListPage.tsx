@@ -3,7 +3,7 @@
 // =========================
 
 // 🔹 라이브러리 및 훅 import
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Container,
@@ -238,14 +238,14 @@ const FlashcardDeckListPage: React.FC = () => {
     });
   }, [filters, combinedDecks]);
 
-  const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
     if (event.target.value === '') {
       setSearchResults([]);
     }
-  };
+  }, []);
 
-  const handleSearchSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchSubmit = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && searchInput.trim()) {
       setSearchLoading(true);
       try {
@@ -262,14 +262,14 @@ const FlashcardDeckListPage: React.FC = () => {
         setSearchLoading(false);
       }
     }
-  };
+  }, [searchInput, dispatch]);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchInput('');
     setSearchResults([]);
-  };
+  }, []);
 
-  const handleDeckClick = (deckId: string) => {
+  const handleDeckClick = useCallback((deckId: string) => {
     let routeId = deckId;
     if (deckId.startsWith('deck_')) {
       routeId = deckId.replace('deck_', '');
@@ -279,17 +279,17 @@ const FlashcardDeckListPage: React.FC = () => {
     }
     console.log('🎯 덱 클릭:', deckId, '→ 라우팅 ID:', routeId);
     navigate(`/flashcards/${routeId}/cards`);
-  };
+  }, [navigate]);
 
-  const handleEditDeck = (deck: CardDeck, event: React.MouseEvent) => {
+  const handleEditDeck = useCallback((deck: CardDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     setIsEditMode(true);
     setEditingDeckId(deck.deckId);
     setNewDeckTitle(deck.deckName);
     setShowCreateDialog(true);
-  };
+  }, []);
 
-  const handleDeleteDeck = async (deck: CardDeck, event: React.MouseEvent) => {
+  const handleDeleteDeck = useCallback(async (deck: CardDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
       try {
@@ -311,16 +311,16 @@ const FlashcardDeckListPage: React.FC = () => {
         }));
       }
     }
-  };
+  }, [dispatch]);
   
-  const handleCreateDialogClose = () => {
+  const handleCreateDialogClose = useCallback(() => {
     setShowCreateDialog(false);
     setIsEditMode(false);
     setEditingDeckId(null);
     setNewDeckTitle('');
-  };
+  }, []);
 
-  const handleCreateDialogConfirm = async () => {
+  const handleCreateDialogConfirm = useCallback(async () => {
     if (!newDeckTitle.trim()) return;
     try {
       if (isEditMode && editingDeckId) {
@@ -334,14 +334,14 @@ const FlashcardDeckListPage: React.FC = () => {
     } catch (err) {
       dispatch(showToast({ message: '덱 생성에 실패했습니다.', severity: 'error' }));
     }
-  };
+  }, [newDeckTitle, isEditMode, editingDeckId, dispatch, handleCreateDialogClose]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleCreateDialogConfirm();
     }
-  };
+  }, [handleCreateDialogConfirm]);
 
   useDialogKeyboardShortcuts(
     handleCreateDialogConfirm,
@@ -571,4 +571,4 @@ const FlashcardDeckListPage: React.FC = () => {
   );
 };
 
-export default FlashcardDeckListPage;
+export default React.memo(FlashcardDeckListPage);

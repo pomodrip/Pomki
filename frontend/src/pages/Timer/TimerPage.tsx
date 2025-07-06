@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   styled,
   Box,
@@ -1150,13 +1150,16 @@ const TimerPage: React.FC = () => {
     }
   };
 
-  // 버튼 활성화 조건
-  const canGenerateAI = notes.trim() && !aiLoading;
-  const canSave = (notes.trim() || taskName.trim());
+  // 버튼 활성화 조건 - useMemo 최적화
+  const canGenerateAI = useMemo(() => notes.trim() && !aiLoading, [notes, aiLoading]);
+  const canSave = useMemo(() => (notes.trim() || taskName.trim()), [notes, taskName]);
 
-  // SVG 원의 중심과 반지름 계산 (반지름 기준)
-  const radius = 130; // 280px 원의 반지름에서 stroke-width 고려하여 조정
-  const circumference = 2 * Math.PI * radius;
+  // SVG 원의 중심과 반지름 계산 (반지름 기준) - useMemo 최적화
+  const circleProps = useMemo(() => {
+    const radius = 130; // 280px 원의 반지름에서 stroke-width 고려하여 조정
+    const circumference = 2 * Math.PI * radius;
+    return { radius, circumference };
+  }, []);
 
   const settingsActions = (
     <Box sx={{ display: 'flex', gap: '12px', width: '100%', marginTop: '16px' }}>
@@ -1729,7 +1732,7 @@ const TimerPage: React.FC = () => {
             <circle
               cx="140"
               cy="140"
-              r={radius}
+              r={circleProps.radius}
               fill="none"
               stroke="#E5E7EB"
               strokeWidth="8"
@@ -1738,11 +1741,11 @@ const TimerPage: React.FC = () => {
             <ProgressCircle
               cx="140"
               cy="140"
-              r={radius}
+              r={circleProps.radius}
               stroke="#2979FF" // theme의 primary.main 색상
               style={{
-                strokeDasharray: `${circumference}, ${circumference}`,
-                strokeDashoffset: circumference - (progress / 100) * circumference,
+                strokeDasharray: `${circleProps.circumference}, ${circleProps.circumference}`,
+                strokeDashoffset: circleProps.circumference - (progress / 100) * circleProps.circumference,
               }}
             />
           </CircularProgress>
@@ -2228,4 +2231,4 @@ const TimerPage: React.FC = () => {
   );
 };
 
-export default TimerPage;
+export default React.memo(TimerPage);
