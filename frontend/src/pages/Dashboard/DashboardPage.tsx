@@ -4,7 +4,8 @@ import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LocalizationProvider, DateCalendar } from '@mui/x-date-pickers';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import LazyDateCalendar from '../../components/ui/LazyDateCalendar';
 import dayjs from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Button from '../../components/ui/Button';
@@ -285,7 +286,7 @@ const DashboardPage: React.FC = () => {
         </Card>
         <Card cardVariant="default">
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
-            <DateCalendar
+            <LazyDateCalendar
               value={dayjs()}
               slots={{ day: CustomDay }}
               readOnly
