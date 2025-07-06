@@ -143,7 +143,7 @@ export const CACHE_KEY_CONFIGS: Record<string, keyof typeof CACHE_CONFIGS> = {
 };
 
 /**
- * 캐시 키별 최적화된 API 호출
+ * 캐시 키별 최적화된 API 호출 
  */
 export async function optimizedApiCall<T>(
   cacheKey: keyof typeof CACHE_KEYS,
