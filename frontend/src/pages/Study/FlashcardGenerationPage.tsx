@@ -494,14 +494,24 @@ const FlashcardGenerationPage: React.FC = () => {
 
               {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
               {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
-                  value={selectedAnswer || ''}
-                  onChange={(e) => handleAnswerSelect(e.target.value)}
-                  sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
-                />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <TextField
+                    variant="outlined"
+                    label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                    value={selectedAnswer || ''}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    sx={{
+                      width: '100%',
+                      maxWidth: 500,
+                      '& .MuiInputBase-input': {
+                        textAlign: 'center',
+                        '&::placeholder': {
+                          textAlign: 'center',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
               )}
               
               {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
@@ -848,14 +858,24 @@ const FlashcardGenerationPage: React.FC = () => {
 
                 {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
                 {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
-                    value={selectedAnswer || ''}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}
-                  />
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                    <TextField
+                      variant="outlined"
+                      label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                      value={selectedAnswer || ''}
+                      onChange={(e) => handleAnswerSelect(e.target.value)}
+                      sx={{
+                        width: '100%',
+                        maxWidth: 500,
+                        '& .MuiInputBase-input': {
+                          textAlign: 'center',
+                          '&::placeholder': {
+                            textAlign: 'center',
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
                 )}
                 {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
                 <Box 
