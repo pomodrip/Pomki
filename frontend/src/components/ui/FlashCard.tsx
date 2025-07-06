@@ -8,12 +8,10 @@ import {
   CardContent,
   Chip,
 } from '@mui/material';
-import {
-  BookmarkBorder,
-  Bookmark,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Button from './Button';
 
 // 타입 정의
@@ -196,4 +194,4 @@ const FlashCard: React.FC<FlashCardProps> = ({
   );
 };
 
-export default FlashCard; 
+export default React.memo(FlashCard); 

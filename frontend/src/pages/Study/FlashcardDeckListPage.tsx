@@ -26,18 +26,16 @@ import {
   CardActions,
 } from '@mui/material';
 import CircularProgress from '../../components/ui/CircularProgress';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  School as SchoolIcon,
-  BookmarkBorder,
-  Bookmark,
-  FilterList as FilterListIcon,
-  Info as InfoIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SchoolIcon from '@mui/icons-material/School';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import InfoIcon from '@mui/icons-material/Info';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -70,7 +68,7 @@ interface ClientSideDeckInfo {
 }
 
 
-// 🔹 스타일 컴포넌트 정의
+// 🔹 스타일 컴포넌트 정의 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
@@ -204,7 +202,7 @@ const FlashcardDeckListPage: React.FC = () => {
     setSearchResults([]);
   }, []);
 
-  // �� 컴포넌트 마운트 시 덱 목록 로드
+  // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
     dispatch(fetchDecks());
     console.log("유저", user);

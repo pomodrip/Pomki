@@ -7,10 +7,8 @@ import {
   Button,
 } from '@mui/material';
 import { Text, IconButton } from '../../components/ui';
-import {
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
@@ -18,8 +16,7 @@ import { useNotifications, useUI } from '../../hooks/useUI';
 import { useFormSaveKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import type { NoteUpdateRequest } from '../../types/note';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { LazyReactQuill } from '../../components/ui';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -273,7 +270,7 @@ const NoteCreatePage: React.FC = () => {
         {/* 내용 입력 */}
         <EditorContainer>
           <Box sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>내용</Box>
-          <ReactQuill
+          <LazyReactQuill
             value={noteContent}
             onChange={setNoteContent}
             placeholder="노트 내용을 입력하세요"

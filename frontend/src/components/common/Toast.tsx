@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Typography, IconButton, LinearProgress, styled } from '@mui/material';
-import { Close as CloseIcon, CheckCircle, Error, Warning, Info } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import Error from '@mui/icons-material/Error';
+import Warning from '@mui/icons-material/Warning';
+import Info from '@mui/icons-material/Info';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import { hideToast, updateToastProgress } from '../../store/slices/toastSlice';
 import { useResponsive } from '../../hooks/useResponsive';

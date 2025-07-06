@@ -1,7 +1,10 @@
 import React from 'react';
 import { Box, Typography, IconButton, styled } from '@mui/material';
 import Tag from '../ui/Tag';
-import { PlayArrow, Pause, Stop, Settings } from '@mui/icons-material';
+import PlayArrow from '@mui/icons-material/PlayArrow';
+import Pause from '@mui/icons-material/Pause';
+import Stop from '@mui/icons-material/Stop';
+import Settings from '@mui/icons-material/Settings';
 import Timer from '../ui/Timer';
 import { useTimer } from '../../hooks/useTimer';
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { styled } from '@mui/material';
 import { Flex, Tag } from '../ui';
-import { WorkspacePremium, Star } from '@mui/icons-material';
+import WorkspacePremium from '@mui/icons-material/WorkspacePremium';
+import Star from '@mui/icons-material/Star';
 
 const BadgeContainer = styled(Flex)({
   display: 'inline-flex',

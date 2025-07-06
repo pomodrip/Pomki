@@ -1,5 +1,4 @@
 import React from "react";
-import { styled } from "@mui/material/styles";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import kakaoImg from "../../assets/icons/kakao.png";
@@ -12,37 +11,6 @@ import type { AppDispatch, RootState } from "../../store/store";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { authApi, getMyInfo } from "../../api";
 import { LoginResponse } from "../../types/api";
-
-
-const SocialButton = styled(Button)(({ theme }) => ({
-  height: '45px',
-  justifyContent: 'center',
-  fontWeight: 'bold',
-  gap: theme.spacing(2),
-  '& .MuiButton-startIcon': {
-    margin: 0,
-  },
-}));
-
-const KakaoButton = styled(SocialButton)({
-  background: '#fee500',
-  color: 'rgba(0, 0, 0, 0.85)',
-  '&:hover': {
-    background: '#fdd835',
-  },
-});
-
-const GoogleButton = styled(SocialButton)(() => ({
-  background: '#ffffff',
-  color: '#3c4043',
-  border: '1px solid #dadce0',
-  boxShadow: '0 1px 2px rgba(60,64,67,.08)',
-  marginTop: '12px',
-  '&:hover': {
-    background: '#f5f5f5',
-    border: '1px solid #dadce0',
-  },
-}));
 
 const GoogleIcon = () => (
   <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block', width: 20, height: 20 }}>
@@ -184,18 +152,18 @@ const LoginPage = () => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        padding: { xs: '24px 8px', sm: '32px 16px' },
+        p: { xs: '3 1', sm: '4 2' },
         mt: 2,
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          padding: { xs: 3, sm: 4 },
+          p: { xs: 3, sm: 4 },
           borderRadius: 2
         }}
       >
-        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center', fontSize: '36px' }} >🍅 Pomkist</Typography>
+        <Typography variant="h1" sx={{ mb: 2, textAlign: 'center' }} >🍅 Pomkist</Typography>
         <Typography variant="body2" sx={{ mb: 8, textAlign: 'center' }}>AI와 함께 플래시 카드를 만드세요.</Typography>
 
         {loginError && (
@@ -204,8 +172,7 @@ const LoginPage = () => {
             sx={{ 
               width: '100%', 
               mb: 2,
-              borderRadius: 1,
-              // boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.12)'
+              borderRadius: 1.5,
             }}
           >
             로그인에 실패했습니다.
@@ -266,25 +233,59 @@ const LoginPage = () => {
           <Button variant="text" sx={{ color: 'text.secondary', minWidth: 'fit-content' }} disabled={isLoading}>비밀번호 찾기</Button>
         </Box>
 
-        <KakaoButton
+        <Button
           fullWidth
           variant="contained"
           startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
           disabled={isLoading}
           onClick={handleKakaoLogin}
+          sx={{
+            height: 45,
+            bgcolor: '#FEE500',
+            color: 'rgba(0, 0, 0, 0.85)',
+            fontWeight: 600,
+            gap: 1,
+            '&:hover': {
+              bgcolor: '#FDD835',
+            },
+            '&:disabled': {
+              bgcolor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
+          }}
         >
           카카오 로그인
-        </KakaoButton>
+        </Button>
 
-        <GoogleButton
+        <Button
           fullWidth
           variant="outlined"
           startIcon={<GoogleIcon />}
           disabled={isLoading}
           onClick={handleGoogleLogin}
+          sx={{
+            height: 45,
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            fontWeight: 600,
+            gap: 1,
+            mt: 1.5,
+            border: 1,
+            borderColor: 'divider',
+            boxShadow: 1,
+            '&:hover': {
+              bgcolor: 'grey.50',
+              borderColor: 'divider',
+            },
+            '&:disabled': {
+              bgcolor: 'action.disabledBackground',
+              color: 'action.disabled',
+              borderColor: 'action.disabled',
+            },
+          }}
         >
           구글 로그인
-        </GoogleButton>
+        </Button>
       </Paper>
     </Container>
   );

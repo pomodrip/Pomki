@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, IconButton, Button, Container, TextField } from '@mui/material';
 import CircularProgress from '../../components/ui/CircularProgress';
@@ -9,6 +9,7 @@ import Alert from '../../components/ui/Alert';
 import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import ListIcon from '@mui/icons-material/List';
+import DOMPurify from 'dompurify';
 import theme from '../../theme/theme';
 
 const NoteDetailPage: React.FC = () => {
@@ -59,6 +60,10 @@ const NoteDetailPage: React.FC = () => {
     flexDirection: 'column',
     gap: theme.spacing(3),
   }));
+
+  const sanitizedContent = useMemo(() => {
+    return currentNote ? DOMPurify.sanitize(currentNote.noteContent) : '';
+  }, [currentNote]);
 
   return (
     <StyledContainer maxWidth="md">
@@ -140,7 +145,7 @@ const NoteDetailPage: React.FC = () => {
                     borderRadius: '4px',
                   },
                 }}
-                dangerouslySetInnerHTML={{ __html: currentNote.noteContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizedContent }}
               />
             ) : (
               <Typography variant="body1" color="text.secondary">

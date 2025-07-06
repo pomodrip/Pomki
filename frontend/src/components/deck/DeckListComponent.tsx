@@ -20,7 +20,7 @@ import {
 import type { CreateDeckRequest } from '../../types/card';
 
 /**
- * 🃏 DeckListComponent - 덱 목록 컴포넌트
+ * 🃏 DeckListComponent - 덱 목록 컴포넌트 
  * 
  * deckSlice 사용 예시:
  * - 목록 조회/생성/삭제
