@@ -5,6 +5,7 @@ import type {
   NoteListItem,
   NoteCreateRequest,
   NoteUpdateRequest,
+  AddNoteTagRequest,
 } from '../types/note';
 
 // AI 노트 생성 요청 타입
@@ -107,4 +108,19 @@ export const updateNote = async (
 // 노트 삭제
 export const deleteNote = async (noteId: string): Promise<void> => {
   await api.delete(`/api/notes/${noteId}`);
+};
+
+// 노트에 태그 추가
+export const addNoteTags = async (data: AddNoteTagRequest): Promise<void> => {
+  await api.post('/api/note-tag', data);
+};
+
+// 노트에서 태그 제거
+export const removeNoteTag = async (noteId: string, tagName: string): Promise<void> => {
+  await api.delete('/api/note-tag', {
+    params: {
+      noteId,
+      tagName,
+    },
+  });
 };

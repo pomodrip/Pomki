@@ -11,7 +11,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote } from '../../store/slices/noteSlice';
+import { createNoteAsync, updateNoteAsync, fetchNote, clearCurrentNote, addNoteTags, removeNoteTagAsync } from '../../store/slices/noteSlice';
 import { useNotifications, useUI } from '../../hooks/useUI';
 import { useFormSaveKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -92,6 +92,7 @@ const NoteCreatePage: React.FC = () => {
 
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [noteTagsInput, setNoteTagsInput] = useState('');
 
   // 폼 요소들의 참조
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +115,11 @@ const NoteCreatePage: React.FC = () => {
     if (isEditMode && currentNote) {
       setNoteTitle(currentNote.noteTitle);
       setNoteContent(currentNote.noteContent);
+      // 태그를 쉼표로 연결하여 입력 필드에 표시 (# 제거)
+      const joinedTags = (currentNote.tags || [])
+        .map(tag => tag.startsWith('#') ? tag.slice(1) : tag)
+        .join(', ');
+      setNoteTagsInput(joinedTags);
     }
   }, [currentNote, isEditMode]);
 
@@ -132,12 +138,38 @@ const NoteCreatePage: React.FC = () => {
 
     try {
       if (isEditMode && noteId) {
+        // 🏷️ 태그 파싱: 쉼표로 구분, 자동으로 # 추가
+        const parsedTags = noteTagsInput.trim()
+          ? noteTagsInput.split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag.length > 0)
+              .map(tag => tag.startsWith('#') ? tag : `#${tag}`)
+          : [];
+
         const updateData: NoteUpdateRequest = {
           noteTitle: noteTitle.trim(),
           noteContent: noteContent.trim(),
           aiEnhanced: currentNote?.aiEnhanced ?? false,
+          // 백엔드 노트 업데이트 API에서 태그 파라미터를 무시할 수도 있으므로 일단 제외하거나 사용하지 않음
         };
         await dispatch(updateNoteAsync({ noteId, data: updateData })).unwrap();
+
+        // 🏷️ 태그 추가/삭제 동기화 (Redux & API)
+        const existingTags = currentNote?.tags || [];
+
+        const tagsToRemove = existingTags.filter(tag => !parsedTags.includes(tag));
+        const tagsToAdd = parsedTags.filter(tag => !existingTags.includes(tag));
+
+        // 삭제 태그
+        for (const tagName of tagsToRemove) {
+          await dispatch(removeNoteTagAsync({ noteId, tagName }));
+        }
+
+        // 추가 태그들 한 번에
+        if (tagsToAdd.length > 0) {
+          await dispatch(addNoteTags({ noteId, tagNames: tagsToAdd }));
+        }
+
         success('노트 수정 완료', '노트가 성공적으로 수정되었습니다.');
         navigate(`/note/${noteId}`);
       } else {
@@ -291,6 +323,19 @@ const NoteCreatePage: React.FC = () => {
             ]}
           />
         </EditorContainer>
+
+        {/* 태그 입력 (편집 모드에서만 표시) */}
+        {isEditMode && (
+          <Box>
+            <Box sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>태그 (쉼표로 구분, 자동으로 # 추가)</Box>
+            <TextField
+              fullWidth
+              placeholder="React, JavaScript, Frontend"
+              value={noteTagsInput}
+              onChange={(e) => setNoteTagsInput(e.target.value)}
+            />
+          </Box>
+        )}
       </FormBox>
     </StyledContainer>
   );

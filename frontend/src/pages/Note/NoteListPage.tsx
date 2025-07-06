@@ -41,7 +41,7 @@ import { generateQuizPreview } from '../../api/quizApi';
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
   isBookmarked: boolean;
-  tags: string[];
+  tags?: string[]; // 🏷️ 클라이언트 측 임시 태그 (노트 자체 태그 우선)
 }
 
 // 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입
@@ -196,23 +196,11 @@ const NoteListPage: React.FC = () => {
     if (notes.length > 0) {
       setClientSideInfo(prevInfo => {
         const newInfo = { ...prevInfo };
-        notes.forEach((note, index) => {
+        notes.forEach((note) => {
           if (!newInfo[note.noteId]) {
-            // 노트별로 다양한 태그 생성
-            const tagSets = [
-              ['#학습', '#중요', '#복습'],
-              ['#아이디어', '#창의', '#영감'],
-              ['#업무', '#회의', '#계획'],
-              ['#개발', '#코딩', '#기술'],
-              ['#독서', '#책', '#요약'],
-              ['#일기', '#개인', '#감정'],
-              ['#목표', '#성장', '#동기'],
-              ['#정보', '#자료', '#참고'],
-            ];
-            
+            // 📌 북마크 여부만 랜덤으로 설정 (태그는 노트 데이터 자체에서 관리)
             newInfo[note.noteId] = {
               isBookmarked: Math.random() > 0.5,
-              tags: tagSets[index % tagSets.length],
             };
           }
         });
@@ -225,8 +213,9 @@ const NoteListPage: React.FC = () => {
   const enrichedNotes: EnrichedNote[] = useMemo(() => {
     return notes.map(note => ({
       ...note,
-      ...(clientSideInfo[note.noteId] || { isBookmarked: false, tags: [] }),
-    } as EnrichedNote));
+      tags: note.tags || [], // 노트 자체 태그 우선
+      isBookmarked: clientSideInfo[note.noteId]?.isBookmarked || false,
+    })) as EnrichedNote[];
   }, [notes, clientSideInfo]);
   
   const allTags = useMemo(() => {
@@ -246,8 +235,9 @@ const NoteListPage: React.FC = () => {
     const notesToFilter = searchResults.length > 0 ? searchResults : enrichedNotes;
 
     return notesToFilter.filter(note => {
+      const noteTagsSafe = note.tags || [];
       const matchesTags = filters.selectedTags.length === 0 ||
-                         filters.selectedTags.some((tag: string) => note.tags.includes(tag));
+                         filters.selectedTags.some((tag: string) => noteTagsSafe.includes(tag));
 
       const matchesBookmark = !filters.showBookmarked || note.isBookmarked;
 
@@ -622,11 +612,11 @@ const NoteListPage: React.FC = () => {
                   gap: 0.5,
                 }}
               >
-                {(isMobile ? note.tags.slice(0, 5) : note.tags).map(tag => (
+                {(isMobile ? (note.tags || []).slice(0, 5) : (note.tags || [])).map(tag => (
                   <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
                 ))}
-                {isMobile && note.tags.length > 5 && (
-                  <TagChip label={`+${note.tags.length - 5}`} size="small" color="primary" variant="outlined" />
+                {isMobile && (note.tags && note.tags.length > 5) && (
+                  <TagChip label={`+${(note.tags || []).length - 5}`} size="small" color="primary" variant="outlined" />
                 )}
               </Box>
               
