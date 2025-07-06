@@ -14,6 +14,7 @@ import type { AppDispatch } from './store/store';
 import ErrorSnackbar from './components/common/ErrorSnackbar';
 import Toast from './components/common/Toast';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { initializePrefetch } from './utils/prefetch';
 
 // 로딩 스플래시 화면 컴포넌트
 function LoadingSplash() {
@@ -43,6 +44,11 @@ function UIInitializer() {
     initialize();
     // 앱 시작 시 refreshToken으로 인증 상태 복원
     dispatch(validateToken());
+    
+    // prefetch 초기화 (인증 후)
+    setTimeout(() => {
+      initializePrefetch();
+    }, 2000);
   }, [initialize, dispatch]);
 
   // Redux 테마에 따라 MUI 테마 동적 생성
