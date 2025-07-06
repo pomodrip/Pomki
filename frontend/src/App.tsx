@@ -14,7 +14,7 @@ import ErrorSnackbar from './components/common/ErrorSnackbar';
 import Toast from './components/common/Toast';
 import { requestPermissionAndGetToken, onForegroundMessage } from './utils/fcmUtils';
 import { openDialog } from './store/slices/dialogSlice';
-import { showNotification } from './utils/notificationUtils';
+
 
 
 // 로딩 스플래시 화면 컴포넌트
@@ -47,12 +47,11 @@ function UIInitializer() {
   }, [initialize, dispatch]);
 
   useEffect(() => {
-
+    
     // 사용자가 인증된 상태일 때만 알림 권한 요청
     if (isAuthenticated) {
       requestPermissionAndGetToken(dispatch);
-      const unsubscribe = onForegroundMessage();
-
+      const unsubscribe  = onForegroundMessage();
       return () => {
         unsubscribe();
       };

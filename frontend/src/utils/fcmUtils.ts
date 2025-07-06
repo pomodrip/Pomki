@@ -1,5 +1,5 @@
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { app } from '@/services/firebaseConfig';
+import { getMessaging, getToken, onMessage, Unsubscribe } from 'firebase/messaging';
+import { app,messaging } from '@/services/firebaseConfig';
 import { sendFcmToken } from '@/api/userApi';
 import { setFcmToken, setPermissionStatus } from '@/store/slices/notificationSlice';
 import type { AppDispatch } from '@/store/store';
@@ -8,31 +8,30 @@ import { showNotification } from './notificationUtils';
 
 export const requestPermissionAndGetToken = async (dispatch: AppDispatch) => {
   try {
-    const messaging = getMessaging(app);
     const permission = await Notification.requestPermission();
     dispatch(setPermissionStatus(permission));
 
     if (permission === 'granted') {
-      console.log('Notification permission granted.');
+      console.debug('Notification permission granted.');
 
-      // const swRegistration = await navigator.serviceWorker.ready;
+      const swRegistration = await navigator.serviceWorker.ready;
       const currentToken = await getToken(messaging, {
         vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-        // serviceWorkerRegistration: swRegistration,
+        serviceWorkerRegistration: swRegistration,
       });
 
       if (currentToken) {
-        console.log('FCM Token:', currentToken);
+        console.debug('FCM Token:', currentToken);
         dispatch(setFcmToken(currentToken));
         await sendFcmToken(currentToken);
         return currentToken;
       } else {
-        console.log('No registration token available. Request permission to generate one.');
+        console.debug('No registration token available. Request permission to generate one.');
         dispatch(setFcmToken(null));
         return null;
       }
     } else {
-      console.log('Unable to get permission to notify.');
+      console.debug('Unable to get permission to notify.');
       dispatch(setFcmToken(null));
       return null;
     }
@@ -43,12 +42,10 @@ export const requestPermissionAndGetToken = async (dispatch: AppDispatch) => {
   }
 };
 
-
 export const onForegroundMessage = () => {
-  const messaging = getMessaging(app);
 
   return onMessage(messaging, (payload) => {
-    console.log('Message received in foreground. ', payload);
+  console.debug('Message received in foreground. ', payload);
 
     const notificationTitle = payload.data?.title || 'New Notification';
     const notificationOptions = {

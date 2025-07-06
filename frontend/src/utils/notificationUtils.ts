@@ -1,15 +1,16 @@
 
 import { store } from '@/store/store';
 import { openDialog } from '@/store/slices/dialogSlice';
+import { showToast } from '@/store/slices/toastSlice';
 
 
-export const showNotification = (title: string, options: NotificationOptions) => {
+export const showNotification = (title: string, options: NotificationOptions, duration : number = 2000) => {
   if (document.visibilityState === 'visible') {
     store.dispatch(
-      openDialog({
-        title,
-        content: options.body || '',
-      }),
+      showToast({ 
+          message: `${title} : ${options.body?? "알림"}`,
+          duration: duration
+        })
     );
   } else {
     navigator.serviceWorker.ready.then((registration) => {

@@ -20,7 +20,8 @@ export default defineConfig(({ mode }) => {
           enabled: true,
         },
         workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        importScripts: ['firebase-messaging-sw.js'],
+        globPatterns: ['**/*.{js,css,html,svg}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./i,
@@ -94,6 +95,6 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       sourcemap: false,
     },
+    envPrefix: ['VITE_', 'CI'],
   };
-  envPrefix: ['VITE_', 'CI'],
 });
