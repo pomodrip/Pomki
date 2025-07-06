@@ -15,9 +15,20 @@ public class AsyncConfig {
     public Executor emailTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(5);
+        executor.setMaxPoolSize(4);
         executor.setQueueCapacity(10);
         executor.setThreadNamePrefix("Email-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "notificationTaskExecutor")
+    public Executor notificationTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(10);
+        executor.setThreadNamePrefix("Notification-");
         executor.initialize();
         return executor;
     }

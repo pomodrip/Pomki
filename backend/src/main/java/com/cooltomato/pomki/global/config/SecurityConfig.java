@@ -61,7 +61,8 @@ public class SecurityConfig {
                                         "/api/auth/refresh",
                                         "/api/auth/logout",
                                         "/api/email/verification",
-                                        "/api/email/code"
+                                        "/api/email/code",
+                                        "/api/notification/test/**" // 알림테스트용
                                 ).permitAll()
                                 .requestMatchers("/api/ai/**").permitAll()
                                 .requestMatchers("/api/images/**").hasAnyRole("ADMIN", "USER")
