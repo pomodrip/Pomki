@@ -879,7 +879,7 @@ const TimerPage: React.FC = () => {
     if (minutesSpent > 0) {
       try {
         const res = await recordStudyTime(minutesSpent);
-        const totalMinutes = (res?.totalMinutes ?? null) as number | null;
+        const totalMinutes = res?.totalMinutes;
         console.log(`✅ ${minutesSpent}분 학습 시간 기록 완료 (${reason})`, { totalMinutes });
         // Redux로 학습 시간 갱신
         dispatch(updateTodayStudyMinutes({ addedMinutes: minutesSpent, totalMinutes }));
