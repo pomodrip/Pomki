@@ -9,6 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useUI } from '../../hooks/useUI';
+import TomatoIcon from '../../assets/icons/tomato.svg?react';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -37,15 +38,20 @@ const StyledToolbar = styled(Toolbar)(() => ({
   },
 }));
 
-const TomatoIcon = styled('div')(() => ({
-  fontSize: '32px',
+const TomatoIconWrapper = styled('div')(() => ({
+  width: '32px',
+  height: '32px',
   cursor: 'pointer',
   transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
-  '&::before': {
-    content: '"🍅"',
-  },
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   '&:hover': {
     transform: 'scale(1.1)',
+  },
+  '& svg': {
+    width: '100%',
+    height: '100%',
   },
 }));
 
@@ -308,7 +314,9 @@ const Header: React.FC<HeaderProps> = ({
           ) : (
             <>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
-                <TomatoIcon />
+                <TomatoIconWrapper>
+                  <TomatoIcon />
+                </TomatoIconWrapper>
                 <BrandText>
                   Pomkist
                 </BrandText>
