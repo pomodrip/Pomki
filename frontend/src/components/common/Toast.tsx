@@ -75,8 +75,8 @@ const ToastItemBox = styled(Box)<{ severity: SeverityType; clickable?: boolean }
       duration: theme.transitions.duration.short,
     }),
     '&:hover': {
-      transform: clickable ? 'translateX(-4px) scale(1.02)' : 'translateX(-4px)',
       ...(clickable && {
+        transform: 'scale(1.02)', // 살짝 확대 효과만 적용하여 중복되는 듯한 시각 오류 방지
         backgroundColor: theme.palette.action.hover,
       }),
     },
