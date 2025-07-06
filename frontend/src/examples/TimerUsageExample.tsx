@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, Card, LinearProgress, Chip } from '@mui/material';
-import { useTimer, useTimerNotification, useTimerStats } from '../hooks/useTimer';
+import { useTimer, useTimerStats } from '../hooks/useTimer';
 
 /**
  * 🎯 타이머 Hook 사용 예시 컴포넌트
@@ -32,7 +32,7 @@ const TimerUsageExample: React.FC = () => {
   } = useTimer();
 
   // 알림 관리 Hook
-  const { hasPermission, canRequest, requestPermission } = useTimerNotification();
+  // const { hasPermission, canRequest, requestPermission } = useTimerNotification();
 
   // 통계 Hook
   const { todayFocusTime, goalProgress, completedSessions, currentCycle } = useTimerStats();
@@ -246,7 +246,7 @@ const TimerUsageExample: React.FC = () => {
       </Card>
 
       {/* 알림 설정 */}
-      <Card sx={{ p: 3 }}>
+      {/* <Card sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           브라우저 알림
         </Typography>
@@ -263,7 +263,7 @@ const TimerUsageExample: React.FC = () => {
         ) : (
           <Typography color="error.main">❌ 알림 권한이 거부되었습니다</Typography>
         )}
-      </Card>
+      </Card> */}
 
       {/* 사용법 설명 */}
       <Card sx={{ p: 3, mt: 3, backgroundColor: '#f5f5f5' }}>
