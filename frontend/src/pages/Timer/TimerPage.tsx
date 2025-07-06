@@ -451,7 +451,6 @@ const PresetsSection = styled(Box)(() => ({
 const PresetsTitle = styled(Text)(() => ({
   fontSize: '16px',
   fontWeight: 600,
-  color: '#1A1A1A',
   marginBottom: '8px',
 }));
 
