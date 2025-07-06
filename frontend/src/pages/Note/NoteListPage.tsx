@@ -22,7 +22,6 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SearchIcon from '@mui/icons-material/Search';
 import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
 import Bookmark from '@mui/icons-material/Bookmark';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { deleteNoteAsync, fetchNotes, fetchNote } from '../../store/slices/noteSlice';
@@ -171,6 +170,11 @@ const NoteListPage: React.FC = () => {
     note: EnrichedNote | null;
   }>({ open: false, note: null });
 
+  // 🔍 검색 관련 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<EnrichedNote[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
     dispatch(fetchNotes());
   }, [dispatch]);
@@ -237,22 +241,51 @@ const NoteListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [enrichedNotes]);
 
+  // 🔍 검색/필터 조합 메모이제이션
   const filteredNotes = useMemo(() => {
-    return enrichedNotes.filter((note) => {
-      const matchesTags = filters.selectedTags.length === 0 || 
+    const notesToFilter = searchResults.length > 0 ? searchResults : enrichedNotes;
+
+    return notesToFilter.filter(note => {
+      const matchesTags = filters.selectedTags.length === 0 ||
                          filters.selectedTags.some((tag: string) => note.tags.includes(tag));
-      
+
       const matchesBookmark = !filters.showBookmarked || note.isBookmarked;
 
-      const matchesSearch = filters.searchQuery.trim() === '' || 
-                            note.noteTitle.toLowerCase().includes(filters.searchQuery.toLowerCase());
-
-      return matchesTags && matchesBookmark && matchesSearch;
+      return matchesTags && matchesBookmark;
     });
-  }, [filters, enrichedNotes]);
+  }, [filters.selectedTags, filters.showBookmarked, searchResults, enrichedNotes]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFilters({ searchQuery: event.target.value }));
+    setSearchQuery(event.target.value);
+  };
+
+  // 🔍 검색 실행
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+
+    const queryLower = searchQuery.trim().toLowerCase();
+    const results = enrichedNotes.filter(note =>
+      note.noteTitle.toLowerCase().includes(queryLower) ||
+      (note.noteContent ? note.noteContent.toLowerCase().includes(queryLower) : false)
+    );
+
+    setSearchResults(results);
+    setIsSearching(false);
+
+    dispatch(showToast({
+      message: `${results.length}개의 노트를 찾았습니다.`,
+      severity: 'info',
+    }));
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -415,36 +448,90 @@ const NoteListPage: React.FC = () => {
         </FloatingFab>
       )}
 
-      {/* 🔹 검색창 */}
+      {/* 검색 */}
       <SearchBox>
-        <TextField
-          variant="outlined"
-          placeholder="노트 제목으로 검색..."
-          value={filters.searchQuery}
-          onChange={handleSearchChange}
-          sx={{ width: '100%' }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="노트 검색..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            disabled={isSearching}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={isSearching}
+            sx={{ minWidth: 80, height: 56 }}
+          >
+            검색
+          </Button>
+          {searchResults.length > 0 && (
+            <Button
+              variant="outlined"
+              onClick={handleClearSearch}
+              disabled={isSearching}
+              sx={{ minWidth: 80, height: 56 }}
+            >
+              초기화
+            </Button>
+          )}
+        </Box>
+        {isSearching && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              검색 중...
+            </Typography>
+          </Box>
+        )}
       </SearchBox>
+
+      {/* 검색 결과 정보 */}
+      {searchResults.length > 0 && (
+        <Box
+          sx={{
+            bgcolor: '#e8f5e8',
+            border: '1px solid #4caf50',
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="#2e7d32">
+            🔍 검색 결과: "{searchQuery}" 키워드로 {searchResults.length}개의 노트를 찾았습니다.
+          </Typography>
+        </Box>
+      )}
+
       {/* 🔹 필터 영역 */}
       <FilterBox>
         <Button
-          startIcon={<FilterListIcon />}
+          variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
-          태그 필터 ({filters.selectedTags.length})
+          태그 필터
         </Button>
         <Button
-          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
+          variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
         >
-          북마크
+          북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
       </FilterBox>
 
