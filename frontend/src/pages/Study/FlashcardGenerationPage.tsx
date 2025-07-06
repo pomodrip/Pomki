@@ -22,9 +22,9 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ArrowBackIosNew from '@mui/icons-material/ArrowBackIosNew';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/useRedux';
+import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import type { QuizItem } from '../../types/quiz';
-import * as cardApi from '../../api/cardApi';
+import { createCard } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import DeckSelectionDialog from '../../components/deck/DeckSelectionDialog';
 import { useSnackbar } from '../../hooks/useSnackbar';
@@ -50,6 +50,7 @@ interface FlashcardGenerationSession {
 }
 
 const FlashcardGenerationPage: React.FC = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -243,10 +244,16 @@ const FlashcardGenerationPage: React.FC = () => {
       // Promise.all을 사용하여 여러 카드를 병렬로 생성
       await Promise.all(
         selectedQuizData.map(cardData =>
-          cardApi.createCard(deck.deckId, {
-            deckId: deck.deckId,
-            ...cardData,
-          })
+          dispatch(
+            createCard({
+              deckId: deck.deckId,
+              data: {
+                deckId: deck.deckId,
+                content: cardData.content,
+                answer: cardData.answer,
+              },
+            })
+          ).unwrap()
         )
       );
       

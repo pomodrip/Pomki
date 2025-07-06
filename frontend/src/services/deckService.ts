@@ -176,7 +176,13 @@ class MockDeckService implements IDeckService {
     console.log('🎭 MockDeckService: getDecks 호출', { memberId });
     // 실제 API 지연 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 500));
-    const result = this.decks.filter(deck => deck.memberId === memberId && !deck.isDeleted);
+    // 카드 수(cardCnt)를 항상 최신 상태로 계산하여 반환
+    const result = this.decks
+      .filter(deck => deck.memberId === memberId && !deck.isDeleted)
+      .map(deck => ({
+        ...deck,
+        cardCnt: (this.cards[deck.deckId] || []).filter(c => !c.isDeleted).length,
+      }));
     console.log('🎭 MockDeckService: getDecks 결과', result);
     return result;
   }
