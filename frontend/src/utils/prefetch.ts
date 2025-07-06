@@ -17,9 +17,16 @@ class PrefetchManager {
   private items: Map<string, PrefetchItem> = new Map();
   private loadingItems: Set<string> = new Set();
   private observer: IntersectionObserver | null = null;
-  private isOnline = navigator.onLine;
+  private isOnline = true;
 
   constructor() {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      this.isOnline = false;
+      return;
+    }
+    
+    this.isOnline = navigator.onLine;
+
     // 네트워크 상태 모니터링
     window.addEventListener('online', () => {
       this.isOnline = true;
@@ -242,7 +249,10 @@ class PrefetchManager {
 }
 
 // 싱글톤 인스턴스
-const prefetchManager = new PrefetchManager();
+let prefetchManager: PrefetchManager | null = null;
+if (typeof window !== 'undefined') {
+  prefetchManager = new PrefetchManager();
+}
 
 // 편의 함수들
 export const prefetch = {
@@ -254,7 +264,7 @@ export const prefetch = {
     importFunction: () => Promise<any>,
     config: Partial<PrefetchConfig> = {}
   ) => {
-    prefetchManager.register(`page-${name}`, importFunction, {
+    prefetchManager?.register(`page-${name}`, importFunction, {
       priority: 'medium',
       ...config,
     });
@@ -268,7 +278,7 @@ export const prefetch = {
     importFunction: () => Promise<any>,
     config: Partial<PrefetchConfig> = {}
   ) => {
-    prefetchManager.register(`component-${name}`, importFunction, {
+    prefetchManager?.register(`component-${name}`, importFunction, {
       priority: 'low',
       ...config,
     });
@@ -282,7 +292,7 @@ export const prefetch = {
     importFunction: () => Promise<any>,
     config: Partial<PrefetchConfig> = {}
   ) => {
-    prefetchManager.register(`critical-${name}`, importFunction, {
+    prefetchManager?.register(`critical-${name}`, importFunction, {
       priority: 'high',
       delay: 0,
       ...config,
@@ -298,7 +308,7 @@ export const prefetch = {
     condition: () => boolean,
     config: Partial<PrefetchConfig> = {}
   ) => {
-    prefetchManager.register(name, importFunction, {
+    prefetchManager?.register(name, importFunction, {
       priority: 'medium',
       condition,
       ...config,
@@ -309,18 +319,18 @@ export const prefetch = {
    * 뷰포트 기반 prefetch
    */
   onVisible: (element: HTMLElement, prefetchId: string) => {
-    prefetchManager.observeElement(element, prefetchId);
+    prefetchManager?.observeElement(element, prefetchId);
   },
 
   /**
    * 수동 로드
    */
-  load: (id: string) => prefetchManager.load(id),
+  load: (id: string) => prefetchManager?.load(id),
 
   /**
    * 통계 조회
    */
-  getStats: () => prefetchManager.getStats(),
+  getStats: () => prefetchManager?.getStats(),
 };
 
 // 사전 정의된 prefetch 설정

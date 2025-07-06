@@ -19,6 +19,9 @@ class ApiCache {
   };
 
   private getStorage(storage: CacheConfig['storage']) {
+    if (typeof window === 'undefined') {
+      return null;
+    }
     switch (storage) {
       case 'localStorage':
         return localStorage;
