@@ -30,7 +30,7 @@ import {
 import { useUI, useTheme, useNotifications, useResponsiveUI } from '../hooks/useUI';
 
 /**
- * 🎨 확장된 UI 시스템 사용 예제
+ * 🎨 확장된 UI 시스템 사용 예제 
  * 
  * 새로운 기능들:
  * - 테마 프리셋 선택
