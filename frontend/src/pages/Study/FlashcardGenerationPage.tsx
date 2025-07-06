@@ -349,12 +349,13 @@ const FlashcardGenerationPage: React.FC = () => {
             }}
           >
             <Box sx={{ flex: 1, p: { xs: 1.5, sm: 2 }, overflow: 'auto' }}>
-              {/* 네비게이션 */}
+              {/* 네비게이션 (아래로 이동) */}
               <Box 
                 sx={{ 
-                  display: 'flex', 
+                  display: 'none', /* 상단 네비게이션은 숨김 처리 */
                   alignItems: 'center', 
                   justifyContent: 'space-between',
+                  mt: 3,
                   mb: 3,
                   py: 1,
                 }}
@@ -394,7 +395,6 @@ const FlashcardGenerationPage: React.FC = () => {
                                 ? 'warning.main' 
                                 : 'grey.300',
                             boxShadow: isCurrent ? 1 : 0,
-                            transition: 'all 0.2s',
                           }}
                         />
                       );
@@ -504,8 +504,38 @@ const FlashcardGenerationPage: React.FC = () => {
                 />
               )}
               
-              {/* 문제 선택 버튼 */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1.5,
+                  mb: 3,
+                }}
+              >
+                {/* 이전 */}
+                <IconButton
+                  onClick={handlePrevious}
+                  size="medium"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowBack />
+                </IconButton>
+
+                {/* 진행률 (숨김) */}
+                {/**
+                <Typography variant="body2" fontWeight={600} color="primary.main">
+                  {session.currentQuestionIndex + 1}/{session.questions.length}
+                </Typography>
+                */}
+
+                {/* 문제 선택 */}
                 <Button
                   variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
                   startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
@@ -519,6 +549,20 @@ const FlashcardGenerationPage: React.FC = () => {
                 >
                   {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택'}
                 </Button>
+
+                {/* 다음 */}
+                <IconButton
+                  onClick={handleNext}
+                  size="medium"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowForward />
+                </IconButton>
               </Box>
               
               {/* 피드백 입력란 */}
@@ -662,9 +706,10 @@ const FlashcardGenerationPage: React.FC = () => {
                 {/* 네비게이션 */}
                 <Box 
                   sx={{ 
-                    display: 'flex', 
+                    display: 'none', /* 상단 네비게이션은 숨김 처리 */
                     alignItems: 'center', 
                     justifyContent: 'space-between',
+                    mt: 4,
                     mb: 3,
                   }}
                 >
@@ -703,7 +748,6 @@ const FlashcardGenerationPage: React.FC = () => {
                                   ? 'warning.main' 
                                   : 'grey.300',
                               boxShadow: isCurrent ? 2 : 0,
-                              transition: 'all 0.3s',
                               transform: isCurrent ? 'scale(1.3)' : 'scale(1)',
                             }}
                           />
@@ -813,8 +857,37 @@ const FlashcardGenerationPage: React.FC = () => {
                     sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}
                   />
                 )}
-                {/* 문제 선택 버튼 */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    mt: 4,
+                    mb: 3,
+                  }}
+                >
+                  <IconButton 
+                    onClick={handlePrevious}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
+                    }}
+                  >
+                    <ArrowBack />
+                  </IconButton>
+
+                  {/* 진행률 (숨김) */}
+                  {/**
+                  <Typography variant="h5" fontWeight={700} color="primary.main">
+                    {session.currentQuestionIndex + 1}/{session.questions.length}
+                  </Typography>
+                  */}
+
                   <Button
                     variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
                     startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
@@ -829,12 +902,26 @@ const FlashcardGenerationPage: React.FC = () => {
                   >
                     {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택하기'}
                   </Button>
+
+                  <IconButton 
+                    onClick={handleNext}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
+                    }}
+                  >
+                    <ArrowForward />
+                  </IconButton>
                 </Box>
               </Box>
 
               {/* 오른쪽 컬럼: 피드백 및 생성 버튼 */}
               <Box sx={{ flex: '0 0 420px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* 피드백 섹션 */}
+                {/* 피드백 섹션 (숨김) */}
+                {/**
                 <Paper
                   elevation={2}
                   sx={{
@@ -906,6 +993,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     </Box>
                   </Stack>
                 </Paper>
+                */}
 
                 {/* 생성 버튼 */}
                 <Paper
