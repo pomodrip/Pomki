@@ -15,9 +15,32 @@ import 'dayjs/locale/ko';
 import { getTodayCardsCount, getWithin3DaysCardsCount, getOverdueCardsCount } from '../../api/studyApi';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
+  position: 'relative',
+  width: '100%',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  paddingLeft: theme.spacing(1),
+  paddingRight: theme.spacing(1),
+  [theme.breakpoints.up('sm')]: {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
+  [theme.breakpoints.up('md')]: {
+    paddingLeft: theme.spacing(3),
+    paddingRight: theme.spacing(3),
+  },
 }));
+
+const HeaderBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: theme.spacing(3),
+}));
+
 
 // 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
 const holidays = [
@@ -102,9 +125,11 @@ const DashboardPage: React.FC = () => {
 
   return (
     <StyledContainer maxWidth="md">
-      <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
-        대시보드
-      </Typography>
+      <HeaderBox>
+        <Typography variant="h4" fontWeight="bold">
+          Dashboard
+        </Typography>
+      </HeaderBox>
 
       {/* 개발자 도구 - 개발 환경에서만 표시 */}
       {import.meta.env.DEV && (
