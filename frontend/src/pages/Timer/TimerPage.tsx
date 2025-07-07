@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
-  styled,
   Box,
-  Button,
   Select,
   MenuItem,
   CircularProgress as MuiCircularProgress,
@@ -10,16 +8,36 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
-import { Text, IconButton, WheelTimeAdjuster } from '../../components/ui';
+import { Text, IconButton, WheelTimeAdjuster, Button, Container } from '../../components/ui';
+import Modal from '../../components/ui/Modal';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
-// import PauseIcon from '@mui/icons-material/Pause';
-// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-// import RestartAltIcon from '@mui/icons-material/RestartAlt';
-// import Input from '../../components/ui/Input';
-import Modal from '../../components/ui/Modal';
-import { LazyReactQuill } from '../../components/ui';
 import 'react-quill/dist/quill.snow.css';
+import { styled } from '@mui/material/styles';
+
+// Timer 전용 컴포넌트들 import
+import {
+  TimerCircle,
+  QuillEditor,
+  NotesSection,
+  NotesHeader,
+  NotesTitle,
+  TaskInput,
+  SettingsContainer,
+  SettingsRow,
+  PresetsSection,
+  PresetsTitle,
+  PresetButton,
+  PageContainer,
+  FocusTimeSection,
+  RunningHeader,
+  ButtonContainer,
+  PageTitle,
+  FocusTimeLabel,
+  SessionProgress,
+  ElapsedTime,
+  TimerDisplay,
+} from '../../components/timer';
 
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
@@ -35,330 +53,10 @@ import {
   getTempSaveStatus
 } from '../../utils/storage';
 import theme from '../../theme/theme';
-// import theme from '../../theme/theme';
 import Toast from '../../components/common/Toast';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../hooks/useRedux';
 import { showToast } from '../../store/slices/toastSlice';
-
-// 페이지 컨테이너 - design.md 가이드 적용
-const PageContainer = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',  
-  alignItems: 'center',
-  padding: '32px 24px', // Large Spacing
-  minHeight: 'calc(100vh - 128px)', // 헤더/푸터 제외
-
-  '@media (min-width: 600px)': {
-    padding: '48px 32px',
-  },
-}));
-
-// 페이지 제목 - theme 활용
-const PageTitle = styled(Text)(({ theme }) => ({
-  fontSize: '24px', // H2 크기
-  fontWeight: 700, // Bold
-  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
-  marginBottom: '48px', // Extra Large Spacing
-  textAlign: 'center',
-  
-  '@media (min-width: 600px)': {
-    fontSize: '28px', // H1 크기 (태블릿 이상)
-  },
-}));
-
-// 집중시간 섹션
-const FocusTimeSection = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '32px',
-}));
-
-const FocusTimeLabel = styled(Text)(({ theme }) => ({
-  fontSize: '20px', // H3 크기
-  fontWeight: 600, // Semibold
-  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
-  marginBottom: '8px', // Small Spacing
-  textAlign: 'center',
-}));
-
-// 실행 중 상태 헤더
-const RunningHeader = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '32px',
-  width: '100%',
-}));
-
-const SessionProgress = styled(Text)(({ theme }) => ({
-  fontSize: '18px',
-  fontWeight: 600,
-  color: theme.palette.text.primary,
-  marginBottom: '8px',
-}));
-
-const ElapsedTime = styled(Text)(({ theme }) => ({
-  fontSize: '16px',
-  fontWeight: 500,
-  color: theme.palette.primary.main, // theme에서 가져온 Primary 색상
-  marginBottom: '16px',
-}));
-
-const ProgressCircle = styled('circle')(() => ({
-  fill: 'none',
-  strokeWidth: '8',
-  strokeLinecap: 'round',
-  transition: 'stroke-dashoffset 0.3s ease',
-}));
-
-// 타이머 원형 컨테이너  
-const TimerCircle = styled(Box)(() => ({
-  position: 'relative',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: '32px', // Large Spacing
-  width: '280px', // 기본 크기 설정
-  height: '280px', // 기본 크기 설정
-  
-  '@media (min-width: 600px)': {
-    width: '320px',
-    height: '320px',
-  },
-}));
-
-// SVG 기반 원형 프로그레스
-const CircularProgress = styled('svg')(() => ({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  width: '100%',
-  height: '100%',
-  transform: 'translate(-50%, -50%) rotate(-90deg)', // 중앙 정렬 후 12시 방향부터 시작
-}));
-
-// const BackgroundCircle = styled('circle')(() => ({
-//   fill: 'none',
-//   stroke: '#E5E7EB',
-//   strokeWidth: '8px',
-//   '@media (min-width: 600px)': {
-//     strokeWidth: '12px',
-//   },
-// }));
-
-// 타이머 시간 표시 - theme 활용
-const TimerDisplay = styled(Text)(({ theme }) => ({
-  fontSize: '48px', // 큰 디스플레이 크기
-  fontWeight: 700, // Bold
-  color: theme.palette.text.primary, // theme에서 가져온 텍스트 색상
-  lineHeight: 1,
-  // fontFamily는 theme에서 자동으로 적용됨 (KoddiUD 폰트)
-  zIndex: 1,
-  
-  '@media (min-width: 600px)': {
-    fontSize: '56px',
-  },
-}));
-
-// 버튼 컨테이너
-const ButtonContainer = styled(Box)(() => ({
-  display: 'flex',
-  gap: '16px', // Medium Spacing
-  marginBottom: '48px', // Extra Large Spacing
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  
-  '@media (max-width: 480px)': {
-    flexDirection: 'column',
-    width: '100%',
-    maxWidth: '280px',
-  },
-}));
-
-// 작업 입력 섹션
-// const TaskInputSection = styled(Box)(() => ({
-//   width: '100%',
-//   maxWidth: '400px',
-//   display: 'flex',
-//   flexDirection: 'column',
-//   alignItems: 'center',
-// }));
-
-// 노트 섹션
-const NotesSection = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'expanded',
-})<{ expanded: boolean }>(({ expanded, theme }) => ({
-  width: '100%',
-  maxWidth: expanded ? 'none' : '400px',
-  marginTop: '32px',
-  transition: 'all 0.3s ease',
-  padding: expanded ? 0 : '0 8px',
-  [theme.breakpoints.up('sm')]: {
-    padding: 0,
-  },
-  ...(expanded && {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FFFFFF',
-    zIndex: 9999,
-    margin: 0,
-    padding: 0,
-    overflow: 'auto',
-  }),
-}));
-
-// 확장된 노트의 타이머 바 - 사용하지 않음 (주석 처리)
-// const ExpandedTimerBar = styled(Box)(() => ({
-//   display: 'flex',
-//   alignItems: 'center',
-//   justifyContent: 'space-between',
-//   padding: '20px 24px',
-//   backgroundColor: '#FFFFFF',
-//   borderRadius: '16px',
-//   marginBottom: '24px',
-//   border: '2px solid #E5E7EB',
-//   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
-//   position: 'sticky',
-//   top: 0,
-//   zIndex: 10,
-// }));
-
-// const ExpandedTimerInfo = styled(Box)(() => ({
-//   display: 'flex',
-//   alignItems: 'center',
-//   gap: '20px',
-// }));
-
-// const ExpandedTimerDisplay = styled(Text)(() => ({
-//   fontSize: '28px',
-//   fontWeight: 700,
-//   color: '#1A1A1A',
-//   fontFamily: "'Pretendard', monospace",
-// }));
-
-// const ExpandedSessionInfo = styled(Text)(() => ({
-//   fontSize: '16px',
-//   fontWeight: 500,
-//   color: '#6B7280',
-// }));
-
-// const ExpandedProgressBar = styled(Box)(() => ({
-//   flex: 1,
-//   height: '12px',
-//   backgroundColor: '#F3F4F6',
-//   borderRadius: '6px',
-//   overflow: 'hidden',
-//   margin: '0 20px',
-//   border: '1px solid #E5E7EB',
-// }));
-
-// const ExpandedProgressFill = styled(Box)<{ progress: number }>(({ progress }) => ({
-//   width: `${progress}%`,
-//   height: '100%',
-//   backgroundColor: '#2563EB',
-//   transition: 'width 0.3s ease',
-//   borderRadius: '6px',
-//   boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
-// }));
-
-const NotesHeader = styled(Box)(() => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: '20px',
-}));
-
-const NotesTitle = styled(Text)(({ theme }) => ({
-  fontSize: '24px',
-  fontWeight: 700,
-  color: theme.palette.text.primary,
-}));
-
-const QuillEditor = styled(LazyReactQuill, {
-  shouldForwardProp: (prop) => !['expanded', 'disabled', 'animate'].includes(prop as string),
-})<{ 
-  expanded: boolean; 
-  disabled?: boolean; 
-  animate?: boolean 
-}>(({ expanded, disabled, animate }) => ({
-  width: '100%',
-  flex: expanded ? 1 : 'none',
-  transition: 'all 0.3s ease, box-shadow 0.6s ease',
-  transform: animate ? 'translateY(-2px)' : 'translateY(0)',
-  
-  '& .ql-container': {
-    minHeight: expanded ? '60vh' : '120px',
-    border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
-    borderRadius: '0 0 8px 8px',
-    fontFamily: "'Pretendard', sans-serif",
-    fontSize: '14px',
-    cursor: disabled ? 'not-allowed' : 'text',
-    boxShadow: animate ? '0 0 0 4px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.15)' : 'none',
-  },
-  
-  '& .ql-toolbar': {
-    border: `1px solid ${disabled ? '#E5E7EB' : '#E5E7EB'}`,
-    borderRadius: '8px 8px 0 0',
-    borderBottom: 'none',
-  },
-  
-  '& .ql-editor': {
-    padding: '16px',
-    minHeight: expanded ? 'calc(60vh - 42px)' : '88px',
-    
-    '&.ql-blank::before': {
-      color: disabled ? '#D1D5DB' : '#9CA3AF',
-      fontStyle: disabled ? 'italic' : 'normal',
-    },
-  },
-  
-  '& .ql-toolbar .ql-formats': {
-    marginRight: '8px',
-  },
-  
-  '& .ql-toolbar .ql-picker-label': {
-    color: disabled ? '#9CA3AF' : '#374151',
-  },
-  
-  '& .ql-toolbar .ql-stroke': {
-    stroke: disabled ? '#9CA3AF' : '#374151',
-  },
-  
-  '& .ql-toolbar .ql-fill': {
-    fill: disabled ? '#9CA3AF' : '#374151',
-  },
-  
-  '& .ql-toolbar button:hover': {
-    color: disabled ? '#9CA3AF' : '#2563EB',
-  },
-  
-  '& .ql-toolbar button:hover .ql-stroke': {
-    stroke: disabled ? '#9CA3AF' : '#2563EB',
-  },
-  
-  '& .ql-toolbar button:hover .ql-fill': {
-    fill: disabled ? '#9CA3AF' : '#2563EB',
-  },
-  
-  '& .ql-toolbar button.ql-active': {
-    color: '#2563EB',
-  },
-  
-  '& .ql-toolbar button.ql-active .ql-stroke': {
-    stroke: '#2563EB',
-  },
-  
-  '& .ql-toolbar button.ql-active .ql-fill': {
-    fill: '#2563EB',
-  },
-}));
-
-
 
 const StudyModeSection = styled(Box)(() => ({
   display: 'flex',
@@ -400,120 +98,12 @@ const ToggleLabel = styled(Text)(() => ({
   fontWeight: 500,
 }));
 
-// 통합된 작업 입력
-const TaskInput = styled('input')<{ disabled?: boolean }>(({ disabled, theme }) => ({
-  width: '100%',
-  padding: '12px 16px',
-  border: '1px solid #E5E7EB',
-  borderRadius: '8px',
-  fontSize: '14px',
-  fontFamily: "'Pretendard', sans-serif",
-  color: disabled ? '#9CA3AF' : '#1F2937',
-  backgroundColor: theme.palette.background.paper,
-  outline: 'none',
-  transition: 'all 0.2s ease',
-  cursor: disabled ? 'not-allowed' : 'text',
-  
-  '&:focus': {
-    borderColor: disabled ? '#E5E7EB' : '#2563EB',
-    boxShadow: disabled ? 'none' : '0 0 0 3px rgba(37, 99, 235, 0.1)',
-  },
-  
-  '&::placeholder': {
-    color: '#9CA3AF',
-    fontSize: '14px',
-  },
-}));
-
-// 설정 다이얼로그 스타일
-const SettingsContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '24px',
-  minWidth: '300px',
-  
-  [theme.breakpoints.down('sm')]: {
-    minWidth: 'auto',
-    width: '100%',
-  },
-}));
-
-const SettingsRow = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '16px',
-  
-  [theme.breakpoints.down('sm')]: {
-    gap: '4px', // 모바일에서 간격 더 줄임
-    justifyContent: 'space-around', // 균등 분배
-  },
-}));
-
-const PresetsSection = styled(Box)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-}));
-
-const PresetsTitle = styled(Text)(() => ({
-  fontSize: '16px',
-  fontWeight: 600,
-  marginBottom: '8px',
-}));
-
-const PresetButton = styled(Button)(() => ({
-  justifyContent: 'flex-start',
-  backgroundColor: '#F3F4F6',
-  color: '#1A1A1A',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  textTransform: 'none',
-  
-  '&:hover': {
-    backgroundColor: '#E5E7EB',
-  },
-}));
-
 interface TimerSettings {
   sessions: number;
   focusMinutes: number;
   breakMinutes: number;
   targetSessions?: number;
 }
-
-// Quill 이미지 업로드 커스텀 핸들러 (주석처리)
-/*
-const imageHandler = function (this: any) {
-  const input = document.createElement('input');
-  input.setAttribute('type', 'file');
-  input.setAttribute('accept', 'image/*');
-  input.click();
-
-  input.onchange = async () => {
-    const file = input.files?.[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const res = await fetch('/api/images/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        const imageUrl = data.url || data.path || data.imageUrl; // 서버 반환값에 따라 조정
-        if (imageUrl) {
-          const quill = this.quill;
-          const range = quill.getSelection();
-          quill.insertEmbed(range.index, 'image', imageUrl);
-        }
-      } catch (err) {
-        alert('이미지 업로드에 실패했습니다.');
-      }
-    }
-  };
-};
-*/
 
 const editorModules = {
   toolbar: [
@@ -803,8 +393,6 @@ const TimerPage: React.FC = () => {
     };
   }, []);
 
-
-
   // 노트 임팩트 효과
   useEffect(() => {
     if (isRunning) {
@@ -813,8 +401,6 @@ const TimerPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isRunning]);
-
-
 
   // 타이머 시작 추적
   useEffect(() => {
@@ -1006,8 +592,6 @@ const TimerPage: React.FC = () => {
   const formatTime = (min: number, sec: number) => {
     return `${min.toString().padStart(2, '0')} : ${sec.toString().padStart(2, '0')}`;
   };
-
-
 
   // 수동 임시 저장 핸들러 (타이머 실행 중이 아닐 때)
   const handleManualTempSave = useCallback(() => {
@@ -1722,54 +1306,12 @@ const TimerPage: React.FC = () => {
         </FocusTimeSection>
       )}
 
-      <TimerCircle>
-        {isRunning && (
-          <CircularProgress width="280" height="280" viewBox="0 0 280 280">
-            {/* 배경 원 */}
-            <circle
-              cx="140"
-              cy="140"
-              r={circleProps.radius}
-              fill="none"
-              stroke="#E5E7EB"
-              strokeWidth="8"
-            />
-            {/* 진행률 원 */}
-            <ProgressCircle
-              cx="140"
-              cy="140"
-              r={circleProps.radius}
-              stroke="#2979FF" // theme의 primary.main 색상
-              style={{
-                strokeDasharray: `${circleProps.circumference}, ${circleProps.circumference}`,
-                strokeDashoffset: circleProps.circumference - (progress / 100) * circleProps.circumference,
-              }}
-            />
-          </CircularProgress>
-        )}
-        
-        {!isRunning && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '100%',
-              height: '100%',
-              border: '8px solid #E5E7EB',
-              borderRadius: '50%',
-              '@media (min-width: 600px)': {
-                border: '12px solid #E5E7EB',
-              },
-            }}
-          />
-        )}
-        
-        <TimerDisplay>
-          {formatTime(minutes, seconds)}
-        </TimerDisplay>
-      </TimerCircle>
+      <TimerCircle
+        isRunning={isRunning}
+        progress={progress}
+        minutes={minutes}
+        seconds={seconds}
+      />
 
       <ButtonContainer>
         <Button
@@ -2139,7 +1681,6 @@ const TimerPage: React.FC = () => {
           <Text sx={{ 
             fontSize: '0.75rem', 
             fontWeight: 400, 
-            color: '#6B7280'
           }}>
             (휠 또는 터치로 조정 가능)
           </Text>

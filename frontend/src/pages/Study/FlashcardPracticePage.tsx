@@ -197,6 +197,9 @@ const FlashcardPracticePage: React.FC = () => {
         const filtered = prev.filter(result => result.cardId !== currentCard.cardId);
         return [...filtered, newResult];
       });
+      
+      // 난이도 선택 시 자동으로 다음 카드로 이동
+      handleNext();
     } else if (!newDifficulty && currentCard) {
       setCardDifficultyResults(prev => prev.filter(result => result.cardId !== currentCard.cardId));
     }
@@ -348,7 +351,7 @@ const FlashcardPracticePage: React.FC = () => {
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {/* 카드 내용 */}
               <Typography
-                variant={showAnswer ? "body2" : "h5"}
+                variant="h5"
                 textAlign="center"
                 sx={{
                   lineHeight: 1.6,

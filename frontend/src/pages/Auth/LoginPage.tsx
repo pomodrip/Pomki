@@ -67,13 +67,13 @@ const LoginPage = () => {
           // URL에서 파라미터 제거
           setSearchParams({});
 
-          // 대시보드로 이동
-          navigate('/dashboard');
+          // 타이머 페이지로 이동
+          navigate('/timer');
         } catch (error) {
           console.error('OAuth2 사용자 정보 가져오기 실패:', error);
           // 토큰은 있지만 사용자 정보를 가져올 수 없는 경우에도 localStorage 사용하지 않음
           setSearchParams({});
-          navigate('/dashboard');
+          navigate('/timer');
         }
       }
     };
@@ -126,7 +126,8 @@ const LoginPage = () => {
             user
           }));
 
-          navigate('/dashboard');
+          // 타이머 페이지로 이동
+          navigate('/timer');
           
       } catch (err: unknown) {
         // unwrapResult가 에러를 throw하므로 여기서 별도 처리가 필요 없습니다.

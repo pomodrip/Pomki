@@ -3,7 +3,7 @@ import { Snackbar as MuiSnackbar, Alert, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import { hideSnackbar } from '../../store/slices/snackbarSlice';
-// import { useSnackbarRedirect } from '../../hooks/useSnackbarRedirect';
+import { useSnackbarRedirect } from '../../hooks/useSnackbarRedirect';
 import Button from '../ui/Button';
 import LoginIcon from '@mui/icons-material/Login';
 
@@ -38,7 +38,7 @@ const ErrorSnackbar: React.FC = () => {
   const snackbar = useAppSelector((state) => state.snackbar);
 
   // 🟡 React Hooks 활용 - 자동 리디렉션 로직을 커스텀 훅으로 분리
-  // const { isRedirecting } = useSnackbarRedirect();
+  const { isRedirecting } = useSnackbarRedirect();
 
   const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {

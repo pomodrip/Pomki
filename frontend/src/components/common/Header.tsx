@@ -1,15 +1,15 @@
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, styled, useTheme } from '@mui/material';
-import Brightness4 from '@mui/icons-material/Brightness4';
-import Brightness7 from '@mui/icons-material/Brightness7';
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useUI } from '../../hooks/useUI';
-import TomatoIcon from '../../assets/icons/tomato.svg?react';
+import tomatoImg from '../../assets/icons/tomato.png';
+import Brightness4Img from '../../assets/icons/brightness_4_196dp_1F1F1F.png';
+import BrightnessLowImg from '../../assets/icons/brightness_low_196dp_1F1F1F.png';
+import NotificationsImg from '../../assets/icons/notifications_none_196dp_1F1F1F.png';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -53,6 +53,10 @@ const TomatoIconWrapper = styled('div')(() => ({
     width: '100%',
     height: '100%',
   },
+  '& img': {
+    width: '100%',
+    height: '100%',
+  },
 }));
 
 // 브랜드 섹션 - design.md 가이드 6-10번 적용
@@ -93,127 +97,38 @@ const DesktopNav = styled(Box)(() => ({
 }));
 
 const NavButton = styled(Button)(({ theme }) => ({
-  fontSize: '14px', // 모바일/태블릿용 축소 크기 (16px → 14px)
-  fontWeight: 500, // 12. 네비게이션 메뉴 폰트 무게
-  color: '#6B7280', // 13. 네비게이션 메뉴 기본 색상
+  fontSize: '14px',
+  fontWeight: 500,
+  color: theme.palette.text.primary,
   textTransform: 'none',
-  padding: '6px 12px', // 패딩 축소 (8px 16px → 6px 12px)
-  borderRadius: '8px', // 19. 네비게이션 메뉴 border-radius
-  transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
-  whiteSpace: 'nowrap', // 줄바꿈 방지
-  minWidth: 'auto', // 최소 너비 제거
-  position: 'relative', // 가상 요소를 위한 상대 위치
+  padding: '6px 12px',
+  borderRadius: '8px',
+  transition: 'all 0.2s ease',
+  whiteSpace: 'nowrap',
+  minWidth: 'auto',
 
-  // 기본 상태의 언더바 (투명하게 숨김)
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    bottom: '2px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '80%',
-    height: '2px',
-    backgroundColor: theme.palette.primary.main,
-    borderRadius: '1px',
-    opacity: 0,
-    transition: 'opacity 0.3s ease, transform 0.3s ease',
-  },
-
-
-  // 새로운 호버 효과 - 연한 파란색 배경
+  // 간단한 호버 효과
   '&:hover': {
-    backgroundColor: theme.palette.primary.light, // E3F2FD 연한 파란색 배경
-    color: theme.palette.primary.main, // 파란색 텍스트
-    fontSize: '15px', // 폰트 크기 증가
-    '&::after': {
-      opacity: 0, // 일반 호버 시에는 언더바 숨김
-    },
+    backgroundColor: theme.palette.primary.light,
+    color: theme.palette.primary.main,
   },
 
-  // 선택된 상태에서 호버 시 - 밑줄 + 배경색 함께
-  '&.active:hover': {
-    backgroundColor: theme.palette.primary.light, // 연한 파란색 배경
-    '&::after': {
-      opacity: 1, // 선택된 상태에서 호버 시에는 언더바 유지
-    },
-  },
-
-  '&:active': {
-    backgroundColor: 'transparent', // 배경색 변화 없음
-    color: theme.palette.primary.main, // 파란색으로 변경
-    fontSize: '15px', // 폰트 크기 증가
-    '&::after': {
-      opacity: 1, // 언더바 나타남
-      transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
-    },
-  },
-
+  // 활성 상태 - 하단 보더로 표시
   '&.active': {
-    backgroundColor: 'transparent', // 배경색 변화 없음
-    color: theme.palette.primary.main, // 활성화 시 파란색
-    fontSize: '15px', // 폰트 크기 증가
-    fontWeight: 700, // 활성화 시 폰트 굵기 증가
-    '&::after': {
-      opacity: 1, // 언더바 항상 표시
-      transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
-    },
+    color: theme.palette.primary.main,
+    fontWeight: 700,
+    borderBottom: `2px solid ${theme.palette.primary.main}`,
   },
 
-  // 데스크톱에서는 원래 크기
+  // 반응형 폰트 크기
   '@media (min-width: 1024px)': {
     fontSize: '15px',
     padding: '8px 14px',
-
-    // 새로운 호버 효과
-    '&:hover': {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
-      fontSize: '16px',
-      '&::after': {
-        opacity: 0,
-      },
-    },
-    '&.active:hover': {
-      backgroundColor: theme.palette.primary.light,
-      '&::after': {
-        opacity: 1,
-      },
-    },
-    '&:active': {
-      fontSize: '16px',
-    },
-    '&.active': {
-      fontSize: '16px',
-      fontWeight: 700,
-    },
   },
 
   '@media (min-width: 1200px)': {
-    fontSize: '16px', // 큰 화면에서는 원래 크기
+    fontSize: '16px',
     padding: '8px 16px',
-
-    // 새로운 호버 효과
-    '&:hover': {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
-      fontSize: '17px',
-      '&::after': {
-        opacity: 0,
-      },
-    },
-    '&.active:hover': {
-      backgroundColor: theme.palette.primary.light,
-      '&::after': {
-        opacity: 1,
-      },
-    },
-    '&:active': {
-      fontSize: '17px',
-    },
-    '&.active': {
-      fontSize: '17px',
-      fontWeight: 700,
-    },
   },
 }));
 
@@ -315,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({
             <>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
                 <TomatoIconWrapper>
-                  <TomatoIcon />
+                  <img src={tomatoImg} alt="Pomkist logo" />
                 </TomatoIconWrapper>
                 <BrandText>
                   Pomkist
@@ -397,13 +312,17 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* 테마 토글 버튼 */}
           <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`}>
-            {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            {theme.palette.mode === 'dark' ? (
+              <img src={BrightnessLowImg} alt="라이트 모드 아이콘" style={{ width: 24, height: 24 }} />
+            ) : (
+              <img src={Brightness4Img} alt="다크 모드 아이콘" style={{ width: 24, height: 24 }} />
+            )}
           </NotificationButton>
 
           {/* 알림 아이콘 (항상 표시) */}
           {rightContent || (
             <NotificationButton disableRipple aria-label="알림">
-              <NotificationsNoneIcon />
+              <img src={NotificationsImg} alt="알림 아이콘" style={{ width: 24, height: 24 }} />
             </NotificationButton>
           )}
         </Box>

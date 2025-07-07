@@ -26,6 +26,7 @@ import {
   selectTimerError,
   type TimerMode,
 } from '../store/slices/timerSlice';
+import { showNotification } from '@/utils/notificationUtils';
 
 /**
  * 🎯 useTimer Hook - 타이머 상태관리 통합 Hook
@@ -140,14 +141,22 @@ export const useTimer = (options?: {
 
     return () => clearInterval(interval);
   }, [autoTick, isRunning, tickInterval, dispatch]);
-
-  // 세션 완료 알림 처리 (브라우저 알림)
   useEffect(() => {
-    if (isCompleted && 'Notification' in window && Notification.permission === 'granted') {
+    console.log("타이머 이펙트 호출?")
+    console.log(isCompleted, mode, nextSessionInfo)
+    const modeText = mode === 'FOCUS' ? '집중시간' : mode === 'SHORT_BREAK' ? '짧은 휴식' : '긴 휴식';
+    showNotification(`${modeText} 완료!`, {
+        body: `${nextSessionInfo.duration/60}분 ${nextSessionInfo.mode === 'FOCUS' ? '집중시간' : '휴식시간'}이 시작됩니다.`,
+        icon: '/logo192.png',
+        data: { innerLink: "/timer" },
+        tag:"timer"
+      });
+    if (isCompleted) {
       const modeText = mode === 'FOCUS' ? '집중시간' : mode === 'SHORT_BREAK' ? '짧은 휴식' : '긴 휴식';
-      new Notification(`${modeText} 완료!`, {
+      console.log("타이머 이펙트 호출2?")
+      showNotification(`${modeText} 완료!`, {
         body: `${nextSessionInfo.duration}분 ${nextSessionInfo.mode === 'FOCUS' ? '집중시간' : '휴식시간'}이 시작됩니다.`,
-        icon: '/favicon.ico',
+        icon: '/logo192.png',
       });
     }
   }, [isCompleted, mode, nextSessionInfo]);
@@ -180,30 +189,6 @@ export const useTimer = (options?: {
     /* attachNote, */
     /* addTag, */
     clearTimerError,
-  };
-};
-
-/**
- * 🎯 useTimerNotification - 타이머 알림 관리 Hook
- * 
- * 브라우저 알림 권한 요청 및 관리
- */
-export const useTimerNotification = () => {
-  const requestPermission = useCallback(async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      return permission === 'granted';
-    }
-    return Notification.permission === 'granted';
-  }, []);
-
-  const hasPermission = 'Notification' in window && Notification.permission === 'granted';
-  const canRequest = 'Notification' in window && Notification.permission === 'default';
-
-  return {
-    hasPermission,
-    canRequest,
-    requestPermission,
   };
 };
 

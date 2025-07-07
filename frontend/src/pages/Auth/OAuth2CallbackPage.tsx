@@ -58,12 +58,12 @@ const OAuth2CallbackPage = () => {
             }
           }));
 
-          navigate('/dashboard');
+          navigate('/timer');
           
         } catch (apiError) {
           console.error('사용자 정보 가져오기 실패:', apiError);
-          // 토큰은 있으니까 대시보드로 이동
-          navigate('/dashboard');
+          // 토큰은 있으니까 타이머 페이지로 이동
+          navigate('/timer');
         }
         
       } catch (err) {

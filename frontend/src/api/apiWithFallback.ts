@@ -1,4 +1,3 @@
-import { NoteListItem } from '../types/note';
 import mockData from './mockData';
 
 // 환경 변수로 Mock 모드 제어
