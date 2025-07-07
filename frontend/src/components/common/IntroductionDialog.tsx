@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Box, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { Text } from '../ui';
@@ -19,31 +21,46 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
   };
 
   const actions = (
-    <>
-      <Button onClick={onClose} variant="text">
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%' }}>
+      <Button onClick={onClose} variant="text" color="inherit" sx={{ color: 'text.secondary' }}>
         닫기
       </Button>
-      <Button onClick={onDontShowToday} variant="outlined">
+      <Button onClick={onDontShowToday} variant="outlined" color="primary">
         오늘 하루 보지 않기
       </Button>
-      <Button onClick={handleGoToIntroduction} variant="contained">
-        소개 보러가기
+      <Button onClick={handleGoToIntroduction} variant="contained" color="primary">
+        소개 보러 가기
       </Button>
-    </>
+    </Box>
   );
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="새로운 소식"
+      title=""
       actions={actions}
+      hideTitle
     >
-      <Text sx={{ color: 'text.secondary' }}>
-        저희 서비스의 새로운 기능들을 확인해보시겠어요?
-        <br />
-        더욱 편리해진 기능들을 소개 페이지에서 만나보세요!
-      </Text>
+      <Box sx={{ textAlign: 'left', width: '100%' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Text variant="h6" fontWeight="bold">
+            새로운 소식
+          </Text>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Text sx={{
+          color: 'text.secondary',
+          display: 'block',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          더욱 편리해진 Pomki의 새로운 기능들을 소개 페이지에서 만나보세요!
+        </Text>
+      </Box>
     </Modal>
   );
 };

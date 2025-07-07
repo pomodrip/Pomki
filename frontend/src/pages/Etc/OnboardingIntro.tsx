@@ -11,7 +11,7 @@ import { tomato } from '../../assets/icons';
 const placeholders = {
   hero: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop',
   ai: 'https://images.unsplash.com/photo-1677756119517-756a188d2d94?q=80&w=2070&auto=format&fit=crop',
-  timer: 'https://images.unsplash.com/photo-1508359509848-1341c045b4ea?q=80&w=2070&auto=format&fit=crop',
+  timer: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?q=80&w=2070&auto=format&fit=crop',
   dashboard: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
 };
 

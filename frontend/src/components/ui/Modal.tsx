@@ -81,6 +81,7 @@ export interface ModalProps extends Omit<DialogProps, 'title'> {
   actions?: React.ReactNode;
   showCloseButton?: boolean;
   variant?: 'dialog' | 'bottomSheet';
+  hideTitle?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -90,6 +91,7 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   children,
   variant = 'dialog',
+  hideTitle = false,
   ...props
 }) => {
   const DialogComponent = variant === 'bottomSheet' ? BottomSheetDialog : StyledDialog;
@@ -99,7 +101,7 @@ const Modal: React.FC<ModalProps> = ({
       onClose={onClose}
       {...props}
     >
-      {title && (
+      {!hideTitle && title && (
         <StyledDialogTitle>
           {title}
           {showCloseButton && onClose && (
