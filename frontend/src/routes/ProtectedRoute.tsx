@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/useRedux';
 import { RootState } from '../store/store';
 import { show401ErrorSnackbar } from '../store/slices/snackbarSlice';
@@ -7,8 +7,17 @@ import { Box, Typography } from '@mui/material';
 import CircularProgress from '../components/ui/CircularProgress';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, accessToken } = useAppSelector((state: RootState) => state.auth);
+  const { isAuthenticated, accessToken, user } = useAppSelector((state: RootState) => state.auth);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // 사용자가 인증되었고, 소개 페이지를 아직 보지 않았다면 리디렉션
+    if (isAuthenticated && user && user.hasSeenIntroduction === false && location.pathname !== '/introduction') {
+      navigate('/introduction', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location]);
 
   useEffect(() => {
     // 🔵 Axios 간접 활용을 대신해 ProtectedRoute에서 스낵바 트리거

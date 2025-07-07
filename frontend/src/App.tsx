@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
@@ -17,8 +17,9 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { initializePrefetch } from './utils/prefetch';
 import { requestPermissionAndGetToken, onForegroundMessage } from './utils/fcmUtils';
 import { openDialog } from './store/slices/dialogSlice';
+import IntroductionDialog from './components/common/IntroductionDialog';
 
-
+const INTRO_POPUP_STORAGE_KEY = 'pomki-intro-popup-last-seen';
 
 // 로딩 스플래시 화면 컴포넌트
 function LoadingSplash() {
@@ -37,11 +38,13 @@ function LoadingSplash() {
     </Box>
   );
 }
+
 // UI 초기화 컴포넌트
 function UIInitializer() {
   const { initialize, theme: currentTheme } = useUI();
   const { isInitialized, isAuthenticated } = useAuth(); // isAuthenticated 추가
   const dispatch = useDispatch<AppDispatch>();
+  const [isIntroDialogOpen, setIntroDialogOpen] = useState(false);
 
   useEffect(() => {
     initialize();
@@ -53,6 +56,29 @@ function UIInitializer() {
     //   initializePrefetch();
     // }, 2000);
   }, [initialize, dispatch]);
+
+  useEffect(() => {
+    // 팝업 로직: 인증된 사용자에게만 하루에 한 번 보여줌
+    if (isAuthenticated) {
+      const lastSeen = localStorage.getItem(INTRO_POPUP_STORAGE_KEY);
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+      if (lastSeen !== today) {
+        // 테스트를 위해 잠시 주석 처리. 필요시 주석 해제하여 사용
+        setIntroDialogOpen(true);
+      }
+    }
+  }, [isAuthenticated]);
+
+  const handleCloseIntroDialog = () => {
+    setIntroDialogOpen(false);
+  };
+
+  const handleDontShowToday = () => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    localStorage.setItem(INTRO_POPUP_STORAGE_KEY, today);
+    handleCloseIntroDialog();
+  };
 
   useEffect(() => {
     
@@ -148,6 +174,11 @@ function UIInitializer() {
           <AppRoutes />
           <ErrorSnackbar />
           <Toast />
+          <IntroductionDialog
+            open={isIntroDialogOpen}
+            onClose={handleCloseIntroDialog}
+            onDontShowToday={handleDontShowToday}
+          />
         </>
       )}
     </ThemeProvider>

@@ -41,6 +41,9 @@ const NoteDetailPage = lazy(() => import('../pages/Note/NoteDetailPage'));
 
 // Etc
 const NotFoundPage = lazy(() => import('../pages/Etc/NotFoundPage'));
+const OnboardingIntro = lazy(
+  () => import('../pages/Etc/OnboardingIntro'),
+);
 
 // Examples (개발 환경에서만 유용할 수 있으나, 일단 동적으로 로드)
 const AdUsageExample = lazy(() => import('../examples/AdUsageExample'));
@@ -84,6 +87,7 @@ const AppRoutes = () => {
         <Route path="/auth/login" element={<OAuth2CallbackPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/set-goal" element={<SetGoalPage />} />
+        <Route path="/introduction" element={<OnboardingIntro />} />
         <Route path="/study/:noteId/flashcard-generation" element={<FlashcardGenerationPage />} />
         
         {/* 메인 애플리케이션 (MainLayout + ProtectedRoute 적용) */}

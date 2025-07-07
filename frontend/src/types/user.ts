@@ -9,6 +9,7 @@ export interface Member {
   memberRoles: string;
   emailVerified: boolean;
   isSocialLogin: boolean;
+  hasSeenIntroduction?: boolean;
   createdAt: string;
   updatedAt: string;
   isDeleted: boolean;

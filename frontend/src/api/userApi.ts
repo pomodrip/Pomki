@@ -43,3 +43,9 @@ export const verifyChangedEmail = async (data: { newEmail: string; token: string
   const response: AxiosResponse<ApiResponse> = await api.put('/api/members/my/email/verification', data);
   return response.data;
 };
+
+// 사용자가 소개 페이지를 봤음을 서버에 기록
+export const markIntroductionAsSeen = async (): Promise<ApiResponse> => {
+  const response: AxiosResponse<ApiResponse> = await api.patch('/api/members/my/introduction-seen');
+  return response.data;
+};

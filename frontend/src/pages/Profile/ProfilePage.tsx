@@ -193,6 +193,9 @@ const ProfilePage: React.FC = () => {
               gridTemplateColumns: '1fr',
               gap: 2
             }}>
+            <NavListButton onClick={() => navigate('/introduction')}>
+              소개 가이드
+            </NavListButton>
             <NavListButton onClick={handleEditProfile}>
               프로필 편집
             </NavListButton>

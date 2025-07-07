@@ -36,6 +36,7 @@ export interface User {
   nickname: string;
   isEmailVerified: boolean;
   socialLogin: boolean;
+  hasSeenIntroduction?: boolean;
 }
 
 // 로그인 응답
