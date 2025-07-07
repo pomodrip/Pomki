@@ -18,7 +18,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   return response.data;
 };
 
-// 로그아웃
+// 로그아웃 
 export const logout = async (): Promise<void> => {
   await api.post('/api/auth/logout');
 };
@@ -53,6 +53,11 @@ export const verifyEmailCode = async (data: VerificationCodeRequest): Promise<Ve
   return response.data;
 };
 
+// 회원 탈퇴
+export const deleteUser = async (): Promise<void> => {
+  await api.delete('/api/members/me');
+};
+
 // 구글 로그인 - 브라우저 리다이렉트
 export const redirectToGoogleLogin = (): void => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 
@@ -78,4 +83,5 @@ export const authApi = {
   signup,
   sendEmailVerification,
   verifyEmailCode,
+  deleteUser
 };

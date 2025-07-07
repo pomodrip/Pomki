@@ -20,6 +20,7 @@ const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
 // Profile
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'));
 const EditProfilePage = lazy(() => import('../pages/Profile/EditProfilePage'));
+const WithdrawalPage = lazy(() => import('../pages/Profile/WithdrawalPage'));
 
 // Study (자주 사용되는 페이지들)
 const FlashcardGenerationPage = lazy(() => import('../pages/Study/FlashcardGenerationPage'));
@@ -113,6 +114,7 @@ const AppRoutes = () => {
             {/* Profile 관련 라우트 */}
             <Route path="profile" element={<ProfilePage />} />
             <Route path="profile/edit" element={<EditProfilePage />} />
+            <Route path="profile/withdrawal" element={<WithdrawalPage />} />
 
             {/* 개발/테스트 페이지 */}
             <Route path="examples/ad" element={<AdUsageExample />} />
