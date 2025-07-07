@@ -55,7 +55,7 @@ export const verifyEmailCode = async (data: VerificationCodeRequest): Promise<Ve
 
 // 회원 탈퇴
 export const deleteUser = async (): Promise<void> => {
-  await api.delete('/api/members/me');
+  await api.delete('/api/members');
 };
 
 // 구글 로그인 - 브라우저 리다이렉트

@@ -201,13 +201,11 @@ const ProfilePage: React.FC = () => {
             </NavListButton>
             <NavListButton
               onClick={() => navigate('/profile/withdrawal')}
-              sx={{ 
-                color: 'text.disabled', 
-                fontSize: '0.9rem',
-                justifyContent: 'center',
+              sx={{
+                color: 'text.secondary',
                 '&:hover': {
                   color: 'error.main',
-                  backgroundColor: 'action.hover'
+                  backgroundColor: 'transparent'
                 }
               }}
             >
