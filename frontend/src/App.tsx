@@ -49,9 +49,9 @@ function UIInitializer() {
     dispatch(validateToken());
     
     // prefetch 초기화 (인증 후)
-    setTimeout(() => {
-      initializePrefetch();
-    }, 2000);
+    // setTimeout(() => {
+    //   initializePrefetch();
+    // }, 2000);
   }, [initialize, dispatch]);
 
   useEffect(() => {
