@@ -76,6 +76,7 @@ const ValueText = styled('span')(() => ({
   fontSize: '32px',
   fontWeight: 700,
   paddingRight: '20px', // 화살표 영역 확보
+  color: 'black',
 }));
 
 const WheelTimeAdjuster: React.FC<WheelTimeAdjusterProps> = ({
