@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Box, Typography, Container, Paper, Grid, Alert, Chip, styled } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Box, Typography, Container, Paper, Chip, styled } from '@mui/material';
 import Card from '../../components/ui/Card';
 import ProgressBar from '../../components/ui/ProgressBar';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -22,9 +22,33 @@ import {
 } from '../../store/slices/dashboardSlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
+  paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
+  position: 'relative',
+  width: '100%',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  paddingLeft: theme.spacing(1),
+  paddingRight: theme.spacing(1),
+  [theme.breakpoints.up('sm')]: {
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+  },
+  [theme.breakpoints.up('md')]: {
+    paddingLeft: theme.spacing(3),
+    paddingRight: theme.spacing(3),
+  },
 }));
+
+const HeaderBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: theme.spacing(3),
+}));
+
+
 // 대한민국 법정 공휴일 예시 (2025년, 설날/추석 연휴 포함)
 const holidays = [
   '2025-01-01', // 신정
@@ -46,6 +70,7 @@ const holidays = [
 ];
 
 // 임시 출석/학습 현황 데이터 (실제 서비스에서는 API로 받아야 함)
+/*
 const attendanceDays = [
   '2025-07-02', '2025-07-03', '2025-01-04',
   '2025-07-28', '2025-07-29', '2025-07-30', 
@@ -53,6 +78,7 @@ const attendanceDays = [
 const studyDays = [
   '2025-07-04', '2025-07-05', // 학습 완료 예시
 ];
+*/
 
 // 임시 학습 주기 데이터 (실제 서비스에서는 API로 받아야 함)
 // const studyScheduleData = {
@@ -123,9 +149,11 @@ const DashboardPage: React.FC = () => {
 
   return (
     <StyledContainer maxWidth="md">
-      <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
-        대시보드
-      </Typography>
+      <HeaderBox>
+        <Typography variant="h4" fontWeight="bold">
+          Dashboard
+        </Typography>
+      </HeaderBox>
 
       {/* 개발자 도구 - 개발 환경에서만 표시 */}
       {import.meta.env.DEV && (
