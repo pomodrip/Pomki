@@ -99,6 +99,27 @@ export const logoutUser = createAsyncThunk<
   }
 });
 
+// 회원 탈퇴 thunk
+export const deleteUserAccount = createAsyncThunk<
+  void,
+  void,
+  {
+    state: RootState;
+    rejectValue: string;
+  }
+>('auth/deleteUserAccount', async (_, { rejectWithValue }) => {
+  try {
+    await authApi.deleteUser();
+    cookies.clearAuthCookies();
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message ||
+        error.message ||
+        'Failed to delete account',
+    );
+  }
+});
+
 // 토큰 검증 및 자동 로그인 thunk - 쿠키 기반으로 수정
 export const validateToken = createAsyncThunk<
   { user: User; accessToken: string },
@@ -236,6 +257,22 @@ const authSlice = createSlice({
         state.user = null;
         state.status = 'idle';
         state.error = null;
+      })
+      
+      // 회원 탈퇴 케이스들
+      .addCase(deleteUserAccount.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(deleteUserAccount.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.accessToken = null;
+        state.user = null;
+        state.status = 'idle';
+        state.error = null;
+      })
+      .addCase(deleteUserAccount.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? 'Failed to delete account';
       })
       
       // 토큰 검증 케이스들

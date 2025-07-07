@@ -199,6 +199,18 @@ const ProfilePage: React.FC = () => {
             <NavListButton onClick={handleLogout} sx={{ color: 'error.main' }}>
               로그아웃
             </NavListButton>
+            <NavListButton
+              onClick={() => navigate('/profile/withdrawal')}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'error.main',
+                  backgroundColor: 'transparent'
+                }
+              }}
+            >
+              회원 탈퇴
+            </NavListButton>
             </Box>
           </Box>
         </Box>
