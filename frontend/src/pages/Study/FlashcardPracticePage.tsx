@@ -54,6 +54,7 @@ const FlashcardCard = styled(MuiCard)(({ theme }) => ({
   padding: theme.spacing(3),
   transition: 'all 0.2s',
   position: 'relative', // 태그를 절대 위치로 배치하기 위해
+  perspective: 1000, // 3D 플립 효과를 위한 원근감
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: theme.shadows[4],
@@ -86,6 +87,33 @@ const ProgressFill = styled(Box)<{ value: number }>(({ theme, value }) => ({
 }));
 
 type PracticeDifficulty = 'easy' | 'confusing' | 'hard';
+
+// 🔄 플립 애니메이션용 내부 래퍼 및 앞/뒤 면 정의
+const FlashcardInner = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'flipped',
+})<{ flipped: boolean }>(({ flipped }) => ({
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  transformStyle: 'preserve-3d',
+  transition: 'transform 0.6s',
+  transform: flipped ? 'rotateX(180deg)' : 'rotateX(0deg)',
+}));
+
+const FlashcardFace = styled(Box)(() => ({
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  backfaceVisibility: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+}));
+
+const FlashcardBack = styled(FlashcardFace)(() => ({
+  transform: 'rotateX(180deg)',
+}));
 
 const FlashcardPracticePage: React.FC = () => {
   const navigate = useNavigate();
@@ -367,33 +395,30 @@ const FlashcardPracticePage: React.FC = () => {
             </ProgressBar>
           </Box>
           
-          {/* 플래시카드 */}
+          {/* 플래시카드 (앞면/뒷면 플립) */}
           <FlashcardCard onClick={handleCardClick}>
-            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              {/* 카드 내용 */}
-              <Typography
-                variant="h5"
-                textAlign="center"
-                sx={{
-                  lineHeight: 1.6,
-                  fontWeight: showAnswer ? 700 : 500,
-                  mb: !showAnswer ? 2 : 0,
-                }}
-              >
-                {showAnswer ? currentCard.answer : currentCard.question}
-              </Typography>
-              
-              {/* 태그들 - 카드 하단에 고정 */}
-              {!showAnswer && (
+            <FlashcardInner flipped={showAnswer}>
+              {/* 앞면 */}
+              <FlashcardFace>
+                <Typography
+                  variant="h5"
+                  textAlign="center"
+                  sx={{
+                    lineHeight: 1.6,
+                    fontWeight: 500,
+                  }}
+                >
+                  {currentCard.question}
+                </Typography>
+
+                {/* 태그들 - 카드 하단에 고정 */}
                 <Box sx={{ 
-                  position: 'absolute',
-                  bottom: theme => theme.spacing(2.5), // 카드 바닥에서 조금 더 위로
-                  left: theme => theme.spacing(3),
-                  right: theme => theme.spacing(3),
+                  position: 'static',
+                  mt: 2,
                   display: 'flex', 
                   flexWrap: 'wrap', 
                   gap: 0.5, 
-                  justifyContent: 'center'
+                  justifyContent: 'center',
                 }}>
                   {currentCard.tags.slice(0, 3).map((tag, index) => (
                     <TagChip 
@@ -413,8 +438,22 @@ const FlashcardPracticePage: React.FC = () => {
                     />
                   )}
                 </Box>
-              )}
-            </Box>
+              </FlashcardFace>
+
+              {/* 뒷면 */}
+              <FlashcardBack>
+                <Typography
+                  variant="h5"
+                  textAlign="center"
+                  sx={{
+                    lineHeight: 1.6,
+                    fontWeight: 700,
+                  }}
+                >
+                  {currentCard.answer}
+                </Typography>
+              </FlashcardBack>
+            </FlashcardInner>
           </FlashcardCard>
 
           {/* 네비게이션: 이전/다음 버튼만 (미니멀리즘 적용) */}
@@ -488,7 +527,7 @@ const FlashcardPracticePage: React.FC = () => {
 
           {/* 난이도 선택 버튼들 (항상 표시) */}
           {showAnswer && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2 }}>
               <Button
                 variant="outlined"
                 onClick={() => handleDifficultySelect('easy')}
