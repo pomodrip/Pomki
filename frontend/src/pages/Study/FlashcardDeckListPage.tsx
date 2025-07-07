@@ -66,7 +66,7 @@ interface ClientSideDeckInfo {
   isBookmarked: boolean;
   tags: string[];
 }
-
+ 
 
 // 🔹 스타일 컴포넌트 정의 
 const StyledContainer = styled(Container)(({ theme }) => ({
