@@ -9,7 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useUI } from '../../hooks/useUI';
-import TomatoIcon from '../../assets/icons/tomato.svg?react';
+import tomatoImg from '../../assets/icons/tomato.png';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -50,6 +50,10 @@ const TomatoIconWrapper = styled('div')(() => ({
     transform: 'scale(1.1)',
   },
   '& svg': {
+    width: '100%',
+    height: '100%',
+  },
+  '& img': {
     width: '100%',
     height: '100%',
   },
@@ -315,7 +319,7 @@ const Header: React.FC<HeaderProps> = ({
             <>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
                 <TomatoIconWrapper>
-                  <TomatoIcon />
+                  <img src={tomatoImg} alt="Pomkist logo" />
                 </TomatoIconWrapper>
                 <BrandText>
                   Pomkist
