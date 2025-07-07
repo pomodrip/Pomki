@@ -2,7 +2,7 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ "dev-be","release","main" ]
+    branches: [ "dev-be","release","main","be/testtest" ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-cicd.yml'
