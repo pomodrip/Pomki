@@ -124,18 +124,26 @@ const FlashcardPracticePage: React.FC = () => {
     const startPracticeSession = async () => {
       setSessionLoading(true);
       try {
-        // 특정 덱 학습인 경우 해당 덱의 카드들을 가져올 수 있지만,
-        // 우선순위는 복습 세션 카드를 가져오는 것입니다.
-        // deckId가 'all' 같은 특정한 값일 때 세션 카드를 가져오도록 분기할 수 있습니다.
-        const cards = await getSessionCards();
-        setSessionCards(cards);
-        if (cards.length === 0) {
-          dispatch(showToast({ message: '오늘 복습할 카드가 없습니다!', severity: 'info' }));
-          navigate('/study');
+        if (deckId) {
+          // 특정 덱의 카드들을 가져오기
+          const result = await dispatch(fetchCardsInDeck(deckId)).unwrap();
+          setSessionCards(result);
+          if (result.length === 0) {
+            dispatch(showToast({ message: '이 덱에는 학습할 카드가 없습니다!', severity: 'info' }));
+            navigate('/study');
+          }
+        } else {
+          // 전체 복습 세션 카드 가져오기
+          const cards = await getSessionCards();
+          setSessionCards(cards);
+          if (cards.length === 0) {
+            dispatch(showToast({ message: '오늘 복습할 카드가 없습니다!', severity: 'info' }));
+            navigate('/study');
+          }
         }
       } catch (error) {
         console.error('학습 세션 카드 로드 실패:', error);
-        dispatch(showToast({ message: '복습 카드를 불러오는 데 실패했습니다.', severity: 'error' }));
+        dispatch(showToast({ message: '카드를 불러오는 데 실패했습니다.', severity: 'error' }));
       } finally {
         setSessionLoading(false);
       }

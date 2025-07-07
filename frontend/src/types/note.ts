@@ -11,6 +11,7 @@ export interface Note {
   originalContent: string | null;
   createdAt: string;
   updatedAt: string;
+  tags?: string[]; // 🏷️ 노트 태그 (선택)
 }
 
 // 노트 목록의 아이템 (NoteListResponseDto 기반)
@@ -20,6 +21,7 @@ export interface NoteListItem {
   aiEnhanced: boolean;
   createdAt: string;
   updatedAt: string;
+  tags?: string[]; // 🏷️ 노트 태그 (선택)
 }
 
 // 노트 생성 요청 (NoteCreateRequestDto 기반)
@@ -28,6 +30,7 @@ export interface NoteCreateRequest {
   noteContent: string;
   aiEnhanced?: boolean;
   originalContent?: string;
+  tags?: string[]; // 🏷️ 노트 태그 (선택)
 }
 
 // 노트 수정 요청 (NoteUpdateRequestDto 기반)
@@ -35,6 +38,16 @@ export interface NoteUpdateRequest {
   noteTitle: string;
   noteContent: string;
   aiEnhanced: boolean;
+  tags?: string[]; // 🏷️ 노트 태그 (선택)
+}
+
+/**
+ * 노트 태그 추가 요청 DTO
+ * API: POST /api/note-tag
+ */
+export interface AddNoteTagRequest {
+  noteId: string;
+  tagNames: string[];
 }
 
 // Redux 슬라이스에서 사용될 노트 상태

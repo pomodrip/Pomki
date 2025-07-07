@@ -356,9 +356,23 @@ const deckSlice = createSlice({
       })
       .addCase(fetchDecks.fulfilled, (state, action) => {
         state.loading = false;
-        state.decks = action.payload;
-        state.totalElements = action.payload.length;
-        state.totalPages = Math.ceil(action.payload.length / state.pageSize);
+
+        // 기존 상태와 병합하여 cardCnt가 로컬에서 더 최신이라면 유지
+        const mergedDecks = action.payload.map((apiDeck) => {
+          const localDeck = state.decks.find((d) => d.deckId === apiDeck.deckId);
+          if (localDeck && localDeck.cardCnt !== undefined) {
+            return {
+              ...apiDeck,
+              // 서버 값과 로컬 값 중 더 큰 값을 사용 (로컬이 앞서 있을 가능성)
+              cardCnt: Math.max(apiDeck.cardCnt, localDeck.cardCnt),
+            };
+          }
+          return apiDeck;
+        });
+
+        state.decks = mergedDecks;
+        state.totalElements = mergedDecks.length;
+        state.totalPages = Math.ceil(mergedDecks.length / state.pageSize);
         state.error = null;
       })
       .addCase(fetchDecks.rejected, (state, action) => {
@@ -448,7 +462,24 @@ const deckSlice = createSlice({
       .addCase(fetchCardsInDeck.fulfilled, (state, action) => {
         state.loading = false;
         // 안전장치: payload가 배열인지 확인
-        state.currentDeckCards = Array.isArray(action.payload) ? action.payload : [];
+        const fetchedCards = Array.isArray(action.payload) ? action.payload : [];
+        state.currentDeckCards = fetchedCards;
+
+        // ✅ 덱의 카드 개수를 실제 카드 개수와 동기화
+        const deckId = action.meta.arg; // thunk 인자로 전달된 deckId
+        const actualCnt = fetchedCards.filter(card => !card.isDeleted).length;
+
+        // decks 배열 내 해당 덱 cardCnt 업데이트
+        const deckIndex = state.decks.findIndex(deck => deck.deckId === deckId);
+        if (deckIndex !== -1) {
+          state.decks[deckIndex].cardCnt = actualCnt;
+        }
+
+        // 선택된 덱이 현재 덱인 경우 cardCnt 업데이트
+        if (state.selectedDeck?.deckId === deckId) {
+          state.selectedDeck.cardCnt = actualCnt;
+        }
+
         state.error = null;
       })
       .addCase(fetchCardsInDeck.rejected, (state, action) => {

@@ -13,11 +13,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
 import Bookmark from '@mui/icons-material/Bookmark';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -508,6 +510,11 @@ const FlashCardListPage: React.FC = () => {
     }
   );
 
+  // 뒤로가기 (덱 목록으로 이동)
+  const handleBack = () => {
+    navigate('/study');
+  };
+
   // 덱이 없는 경우
   if (!selectedDeck || !deckId) {
     return (
@@ -526,9 +533,14 @@ const FlashCardListPage: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">
-          {selectedDeck?.deckName || '덱 이름 없음'}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton onClick={handleBack} sx={{ mr: 0.5 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h5" fontWeight="bold">
+            {selectedDeck?.deckName || '덱 이름 없음'}
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           onClick={handleCreateSampleCards}

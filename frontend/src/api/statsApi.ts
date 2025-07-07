@@ -6,7 +6,7 @@ import type { ApiResponse } from '../types/api';
  * 메인 대시보드에 필요한 모든 통계를 한번에 조회합니다.
  */
 export const getDashboardData = async (): Promise<DashboardStats> => {
-  const response = await api.get<ApiResponse<any>>('/api/v1/stats/dashboard');
+  const response = await api.get<ApiResponse<any>>('/api/stats/dashboard');
   const raw = (response.data as ApiResponse<any>).data;
 
   // 새로운 백엔드 구조(todayStudy) ↔ 구 구조(studyTime) 매핑
@@ -31,7 +31,7 @@ export const getDashboardData = async (): Promise<DashboardStats> => {
  * 하루에 한 번만 기록됩니다.
  */
 export const recordAttendance = async (): Promise<any> => {
-  const response = await api.post('/api/v1/stats/attendance');
+  const response = await api.post('/api/stats/attendance');
   return response.data;
 };
 
@@ -40,6 +40,6 @@ export const recordAttendance = async (): Promise<any> => {
  * @param studyMinutes 학습 시간(분)
  */
 export const recordStudyTime = async (studyMinutes: number): Promise<any> => {
-  const response = await api.post('/api/v1/stats/study-time', { studyMinutes });
+  const response = await api.post('/api/stats/study-time', { studyMinutes });
   return response.data;
 }; 

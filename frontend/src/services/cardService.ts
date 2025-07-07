@@ -1,5 +1,6 @@
 import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
 import * as cardApi from '../api/cardApi';
+import { deckService } from './deckService';
 
 // 🎯 카드 서비스 인터페이스 정의
 export interface ICardService {
@@ -76,6 +77,20 @@ class MockCardService implements ICardService {
     };
     
     this.cards.push(newCard);
+
+    // === MockDeckService 데이터 동기화 ===
+    // deckService가 Mock 모드일 때, 같은 메모리 내의 cards 배열을 업데이트하여
+    // getDecks 호출 시 cardCnt가 정확히 계산되도록 합니다.
+    const dsAny = deckService as any;
+    if ('cards' in dsAny) {
+      if (!dsAny.cards) dsAny.cards = {};
+      if (!dsAny.cards[deckId]) dsAny.cards[deckId] = [];
+      dsAny.cards[deckId].push({ ...newCard });
+    } else if ('mockService' in dsAny && dsAny.mockService && 'cards' in dsAny.mockService) {
+      const mockSvc = dsAny.mockService as any;
+      if (!mockSvc.cards[deckId]) mockSvc.cards[deckId] = [];
+      mockSvc.cards[deckId].push({ ...newCard });
+    }
     return newCard;
   }
 
