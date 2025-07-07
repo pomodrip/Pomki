@@ -14,19 +14,17 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import {
-  ArrowForward,
-  ArrowBack,
-  AutoAwesome,
-  CheckBoxOutlineBlank,
-  CheckBox as CheckBoxIcon,
-  EditNote as EditNoteIcon,
-  ArrowBackIosNew,
-} from '@mui/icons-material';
+import ArrowForward from '@mui/icons-material/ArrowForward';
+import ArrowBack from '@mui/icons-material/ArrowBack';
+import AutoAwesome from '@mui/icons-material/AutoAwesome';
+import CheckBoxOutlineBlank from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ArrowBackIosNew from '@mui/icons-material/ArrowBackIosNew';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/useRedux';
+import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import type { QuizItem } from '../../types/quiz';
-import * as cardApi from '../../api/cardApi';
+import { createCard } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import DeckSelectionDialog from '../../components/deck/DeckSelectionDialog';
 import { useSnackbar } from '../../hooks/useSnackbar';
@@ -52,6 +50,7 @@ interface FlashcardGenerationSession {
 }
 
 const FlashcardGenerationPage: React.FC = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -245,10 +244,16 @@ const FlashcardGenerationPage: React.FC = () => {
       // Promise.all을 사용하여 여러 카드를 병렬로 생성
       await Promise.all(
         selectedQuizData.map(cardData =>
-          cardApi.createCard(deck.deckId, {
-            deckId: deck.deckId,
-            ...cardData,
-          })
+          dispatch(
+            createCard({
+              deckId: deck.deckId,
+              data: {
+                deckId: deck.deckId,
+                content: cardData.content,
+                answer: cardData.answer,
+              },
+            })
+          ).unwrap()
         )
       );
       
@@ -344,12 +349,13 @@ const FlashcardGenerationPage: React.FC = () => {
             }}
           >
             <Box sx={{ flex: 1, p: { xs: 1.5, sm: 2 }, overflow: 'auto' }}>
-              {/* 네비게이션 */}
+              {/* 네비게이션 (아래로 이동) */}
               <Box 
                 sx={{ 
-                  display: 'flex', 
+                  display: 'none', /* 상단 네비게이션은 숨김 처리 */
                   alignItems: 'center', 
                   justifyContent: 'space-between',
+                  mt: 3,
                   mb: 3,
                   py: 1,
                 }}
@@ -389,7 +395,6 @@ const FlashcardGenerationPage: React.FC = () => {
                                 ? 'warning.main' 
                                 : 'grey.300',
                             boxShadow: isCurrent ? 1 : 0,
-                            transition: 'all 0.2s',
                           }}
                         />
                       );
@@ -489,18 +494,58 @@ const FlashcardGenerationPage: React.FC = () => {
 
               {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
               {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
-                  value={selectedAnswer || ''}
-                  onChange={(e) => handleAnswerSelect(e.target.value)}
-                  sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
-                />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <TextField
+                    variant="outlined"
+                    label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                    value={selectedAnswer || ''}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    sx={{
+                      width: '100%',
+                      maxWidth: 500,
+                      '& .MuiInputBase-input': {
+                        textAlign: 'center',
+                        '&::placeholder': {
+                          textAlign: 'center',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
               )}
               
-              {/* 문제 선택 버튼 */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1.5,
+                  mb: 3,
+                }}
+              >
+                {/* 이전 */}
+                <IconButton
+                  onClick={handlePrevious}
+                  size="medium"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowBack />
+                </IconButton>
+
+                {/* 진행률 (숨김) */}
+                {/**
+                <Typography variant="body2" fontWeight={600} color="primary.main">
+                  {session.currentQuestionIndex + 1}/{session.questions.length}
+                </Typography>
+                */}
+
+                {/* 문제 선택 */}
                 <Button
                   variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
                   startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
@@ -514,6 +559,20 @@ const FlashcardGenerationPage: React.FC = () => {
                 >
                   {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택'}
                 </Button>
+
+                {/* 다음 */}
+                <IconButton
+                  onClick={handleNext}
+                  size="medium"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    boxShadow: 1,
+                  }}
+                >
+                  <ArrowForward />
+                </IconButton>
               </Box>
               
               {/* 피드백 입력란 */}
@@ -657,9 +716,10 @@ const FlashcardGenerationPage: React.FC = () => {
                 {/* 네비게이션 */}
                 <Box 
                   sx={{ 
-                    display: 'flex', 
+                    display: 'none', /* 상단 네비게이션은 숨김 처리 */
                     alignItems: 'center', 
                     justifyContent: 'space-between',
+                    mt: 4,
                     mb: 3,
                   }}
                 >
@@ -698,7 +758,6 @@ const FlashcardGenerationPage: React.FC = () => {
                                   ? 'warning.main' 
                                   : 'grey.300',
                               boxShadow: isCurrent ? 2 : 0,
-                              transition: 'all 0.3s',
                               transform: isCurrent ? 'scale(1.3)' : 'scale(1)',
                             }}
                           />
@@ -799,17 +858,56 @@ const FlashcardGenerationPage: React.FC = () => {
 
                 {/* FILL_IN_THE_BLANK / SHORT_ANSWER */}
                 {(currentQuestion?.type === 'FILL_IN_THE_BLANK' || currentQuestion?.type === 'SHORT_ANSWER') && (
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
-                    value={selectedAnswer || ''}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}
-                  />
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                    <TextField
+                      variant="outlined"
+                      label={currentQuestion.type === 'FILL_IN_THE_BLANK' ? "빈칸에 들어갈 말을 입력하세요" : "답변을 입력하세요"}
+                      value={selectedAnswer || ''}
+                      onChange={(e) => handleAnswerSelect(e.target.value)}
+                      sx={{
+                        width: '100%',
+                        maxWidth: 500,
+                        '& .MuiInputBase-input': {
+                          textAlign: 'center',
+                          '&::placeholder': {
+                            textAlign: 'center',
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
                 )}
-                {/* 문제 선택 버튼 */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                {/* 네비게이션 + 문제 선택 버튼 (한 줄) */}
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    mt: 4,
+                    mb: 3,
+                  }}
+                >
+                  <IconButton 
+                    onClick={handlePrevious}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
+                    }}
+                  >
+                    <ArrowBack />
+                  </IconButton>
+
+                  {/* 진행률 (숨김) */}
+                  {/**
+                  <Typography variant="h5" fontWeight={700} color="primary.main">
+                    {session.currentQuestionIndex + 1}/{session.questions.length}
+                  </Typography>
+                  */}
+
                   <Button
                     variant={isCurrentQuestionSelected ? 'outlined' : 'contained'}
                     startIcon={isCurrentQuestionSelected ? <CheckBoxIcon /> : <CheckBoxOutlineBlank />}
@@ -824,12 +922,26 @@ const FlashcardGenerationPage: React.FC = () => {
                   >
                     {isCurrentQuestionSelected ? '선택 해제' : '이 문제 선택하기'}
                   </Button>
+
+                  <IconButton 
+                    onClick={handleNext}
+                    size="large"
+                    sx={{ 
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      boxShadow: 2,
+                    }}
+                  >
+                    <ArrowForward />
+                  </IconButton>
                 </Box>
               </Box>
 
               {/* 오른쪽 컬럼: 피드백 및 생성 버튼 */}
               <Box sx={{ flex: '0 0 420px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* 피드백 섹션 */}
+                {/* 피드백 섹션 (숨김) */}
+                {/**
                 <Paper
                   elevation={2}
                   sx={{
@@ -901,6 +1013,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     </Box>
                   </Stack>
                 </Paper>
+                */}
 
                 {/* 생성 버튼 */}
                 <Paper

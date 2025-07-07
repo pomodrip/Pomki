@@ -1,7 +1,8 @@
 import React from 'react';
 import { Paper, styled } from '@mui/material';
 import { Flex, Text, IconButton } from '../ui';
-import { Close } from '@mui/icons-material';
+import Close from '@mui/icons-material/Close';
+import OptimizedImage from '../ui/OptimizedImage';
 
 const BannerContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -43,7 +44,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
   title,
   description,
   imageUrl,
-  actionText = '?�세??보기',
+  actionText = '?�세??보기',
   onAction,
   onClose,
   closeable = true,
@@ -52,7 +53,17 @@ const AdBanner: React.FC<AdBannerProps> = ({
     <BannerContainer elevation={0}>
       <ContentContainer>
         {imageUrl && (
-          <AdImage src={imageUrl} alt="Advertisement" />
+          <OptimizedImage
+            src={imageUrl}
+            alt="Advertisement"
+            width="48px"
+            height="48px"
+            quality={80}
+            lazy={false}
+            style={{
+              borderRadius: '8px',
+            }}
+          />
         )}
         
         <Flex sx={{ flex: 1 }}>

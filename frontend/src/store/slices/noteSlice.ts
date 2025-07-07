@@ -1,13 +1,16 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { AxiosError } from 'axios';
-import { getNotes, getNote, createNote, updateNote, deleteNote } from '../../api/noteApi';
+import { getNotes, getNote, createNote, updateNote, deleteNote, addNoteTags as apiAddNoteTags, removeNoteTag as apiRemoveNoteTag } from '../../api/noteApi';
 import type {
   Note,
   NoteState,
   NoteCreateRequest,
   NoteUpdateRequest,
   NoteListItem,
+  AddNoteTagRequest,
 } from '../../types/note';
+import { createSelector } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 
 interface ErrorResponse {
   message: string;
@@ -70,6 +73,32 @@ export const deleteNoteAsync = createAsyncThunk(
   },
 );
 
+export const addNoteTags = createAsyncThunk<
+  { noteId: string; addedTags: string[] },
+  AddNoteTagRequest
+>('note/addNoteTags', async (data, { rejectWithValue }) => {
+  try {
+    await apiAddNoteTags(data);
+    return { noteId: data.noteId, addedTags: data.tagNames };
+  } catch (error) {
+    const err = error as AxiosError<ErrorResponse>;
+    return rejectWithValue(err.response?.data.message || err.message || 'Failed to add tags');
+  }
+});
+
+export const removeNoteTagAsync = createAsyncThunk<
+  { noteId: string; removedTag: string },
+  { noteId: string; tagName: string }
+>('note/removeNoteTag', async ({ noteId, tagName }, { rejectWithValue }) => {
+  try {
+    await apiRemoveNoteTag(noteId, tagName);
+    return { noteId, removedTag: tagName };
+  } catch (error) {
+    const err = error as AxiosError<ErrorResponse>;
+    return rejectWithValue(err.response?.data.message || err.message || 'Failed to remove tag');
+  }
+});
+
 const noteSlice = createSlice({
   name: 'note',
   initialState,
@@ -128,6 +157,7 @@ const noteSlice = createSlice({
           aiEnhanced: action.payload.aiEnhanced,
           createdAt: action.payload.createdAt || now,
           updatedAt: action.payload.updatedAt || now,
+          tags: action.payload.tags || [],
         };
         state.notes.unshift(newNote);
       })
@@ -151,12 +181,14 @@ const noteSlice = createSlice({
             noteTitle: action.payload.noteTitle,
             aiEnhanced: action.payload.aiEnhanced,
             updatedAt: action.payload.updatedAt || now,
+            tags: action.payload.tags || state.notes[index].tags,
           };
         }
         if (state.currentNote?.noteId === action.payload.noteId) {
           state.currentNote = {
             ...action.payload,
             updatedAt: action.payload.updatedAt || now,
+            tags: action.payload.tags || state.currentNote?.tags,
           };
         }
       })
@@ -177,9 +209,61 @@ const noteSlice = createSlice({
       .addCase(deleteNoteAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to delete note.';
+      })
+
+      // Add Note Tags
+      .addCase(addNoteTags.fulfilled, (state, action) => {
+        const { noteId, addedTags } = action.payload;
+        if (!addedTags || addedTags.length === 0) return;
+
+        // Update currentNote
+        if (state.currentNote?.noteId === noteId) {
+          const currentTags = state.currentNote.tags || [];
+          state.currentNote.tags = Array.from(new Set([...currentTags, ...addedTags]));
+        }
+
+        // Update notes list
+        const idx = state.notes.findIndex(n => n.noteId === noteId);
+        if (idx !== -1) {
+          const listTags = (state.notes[idx] as any).tags || [];
+          (state.notes[idx] as any).tags = Array.from(new Set([...listTags, ...addedTags]));
+        }
+      })
+      .addCase(addNoteTags.rejected, (state, action) => {
+        state.error = (action.payload as string) || 'Failed to add tags';
+      })
+
+      // Remove Note Tag
+      .addCase(removeNoteTagAsync.fulfilled, (state, action) => {
+        const { noteId, removedTag } = action.payload;
+
+        // Update currentNote
+        if (state.currentNote?.noteId === noteId) {
+          state.currentNote.tags = (state.currentNote.tags || []).filter(t => t !== removedTag);
+        }
+
+        // Update notes list
+        const idx = state.notes.findIndex(n => n.noteId === noteId);
+        if (idx !== -1) {
+          (state.notes[idx] as any).tags = ((state.notes[idx] as any).tags || []).filter((t: string) => t !== removedTag);
+        }
+      })
+      .addCase(removeNoteTagAsync.rejected, (state, action) => {
+        state.error = (action.payload as string) || 'Failed to remove tag';
       });
   },
 });
 
 export const { clearError, clearCurrentNote, setCurrentNote } = noteSlice.actions;
 export default noteSlice.reducer;
+
+// 메모이즈된 selector: 노트 제목 검색
+export const selectNotes = (state: RootState) => state.note.notes;
+
+export const selectNotesBySearch = createSelector(
+  [selectNotes, (_: RootState, q: string) => q],
+  (notes, q) =>
+    q && q.trim()
+      ? notes.filter((n: NoteListItem) => n.noteTitle.toLowerCase().includes(q.toLowerCase()))
+      : notes
+);

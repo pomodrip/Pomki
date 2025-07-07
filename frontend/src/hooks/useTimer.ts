@@ -9,8 +9,8 @@ import {
   updateSettings,
   clearError,
   resetSession,
-  attachNoteToSession,
-  addTagToSession,
+  /* attachNoteToSession, */
+  /* addTagToSession, */
   selectCurrentSession,
   selectTimerStatus,
   selectTimerMode,
@@ -64,8 +64,8 @@ export interface UseTimerResult {
   reset: () => void;
   changeMode: (mode: TimerMode) => void;
   updateTimerSettings: (settings: Partial<ReturnType<typeof selectTimerSettings>>) => void;
-  attachNote: (noteId: string) => void;
-  addTag: (tag: string) => void;
+  /* attachNote?: (noteId: string) => void; */
+  /* addTag?: (tag: string) => void; */
   clearTimerError: () => void;
 }
 
@@ -74,7 +74,7 @@ export const useTimer = (options?: {
   tickInterval?: number; // 틱 간격 (기본: 1000ms)
 }): UseTimerResult => {
   const dispatch = useAppDispatch();
-  const { autoTick = true, tickInterval = 1000 } = options || {};
+  const { autoTick = false, tickInterval = 1000 } = options || {};
 
   // Redux 상태 선택
   const currentSession = useAppSelector(selectCurrentSession);
@@ -116,6 +116,7 @@ export const useTimer = (options?: {
     dispatch(updateSettings(newSettings));
   }, [dispatch]);
 
+  /*
   const attachNote = useCallback((noteId: string) => {
     dispatch(attachNoteToSession(noteId));
   }, [dispatch]);
@@ -123,6 +124,7 @@ export const useTimer = (options?: {
   const addTag = useCallback((tag: string) => {
     dispatch(addTagToSession(tag));
   }, [dispatch]);
+  */
 
   const clearTimerError = useCallback(() => {
     dispatch(clearError());
@@ -175,8 +177,8 @@ export const useTimer = (options?: {
     reset,
     changeMode,
     updateTimerSettings,
-    attachNote,
-    addTag,
+    /* attachNote, */
+    /* addTag, */
     clearTimerError,
   };
 };

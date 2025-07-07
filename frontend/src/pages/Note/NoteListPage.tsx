@@ -15,16 +15,13 @@ import {
 import CircularProgress from '../../components/ui/CircularProgress';
 import { Text, Button, Modal } from '../../components/ui';
 
-import { 
-  Add as AddIcon, 
-  Edit as EditIcon, 
-  Delete as DeleteIcon, 
-  Quiz as QuizIcon,
-  Search as SearchIcon,
-  BookmarkBorder,
-  Bookmark,
-  FilterList as FilterListIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import QuizIcon from '@mui/icons-material/Quiz';
+import SearchIcon from '@mui/icons-material/Search';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { deleteNoteAsync, fetchNotes, fetchNote } from '../../store/slices/noteSlice';
@@ -44,7 +41,7 @@ import { generateQuizPreview } from '../../api/quizApi';
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
   isBookmarked: boolean;
-  tags: string[];
+  tags?: string[]; // 🏷️ 클라이언트 측 임시 태그 (노트 자체 태그 우선)
 }
 
 // 🎯 API 데이터와 클라이언트 측 데이터를 합친 타입
@@ -93,7 +90,7 @@ const NoteCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: 'white',
+  backgroundColor: theme.palette.background.paper,
   cursor: 'pointer',
   '&:hover': {
     boxShadow: theme.shadows[4],
@@ -173,6 +170,11 @@ const NoteListPage: React.FC = () => {
     note: EnrichedNote | null;
   }>({ open: false, note: null });
 
+  // 🔍 검색 관련 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<EnrichedNote[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
     dispatch(fetchNotes());
   }, [dispatch]);
@@ -194,23 +196,11 @@ const NoteListPage: React.FC = () => {
     if (notes.length > 0) {
       setClientSideInfo(prevInfo => {
         const newInfo = { ...prevInfo };
-        notes.forEach((note, index) => {
+        notes.forEach((note) => {
           if (!newInfo[note.noteId]) {
-            // 노트별로 다양한 태그 생성
-            const tagSets = [
-              ['#학습', '#중요', '#복습'],
-              ['#아이디어', '#창의', '#영감'],
-              ['#업무', '#회의', '#계획'],
-              ['#개발', '#코딩', '#기술'],
-              ['#독서', '#책', '#요약'],
-              ['#일기', '#개인', '#감정'],
-              ['#목표', '#성장', '#동기'],
-              ['#정보', '#자료', '#참고'],
-            ];
-            
+            // 📌 북마크 여부만 랜덤으로 설정 (태그는 노트 데이터 자체에서 관리)
             newInfo[note.noteId] = {
               isBookmarked: Math.random() > 0.5,
-              tags: tagSets[index % tagSets.length],
             };
           }
         });
@@ -223,8 +213,9 @@ const NoteListPage: React.FC = () => {
   const enrichedNotes: EnrichedNote[] = useMemo(() => {
     return notes.map(note => ({
       ...note,
-      ...(clientSideInfo[note.noteId] || { isBookmarked: false, tags: [] }),
-    } as EnrichedNote));
+      tags: note.tags || [], // 노트 자체 태그 우선
+      isBookmarked: clientSideInfo[note.noteId]?.isBookmarked || false,
+    })) as EnrichedNote[];
   }, [notes, clientSideInfo]);
   
   const allTags = useMemo(() => {
@@ -239,22 +230,52 @@ const NoteListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [enrichedNotes]);
 
+  // 🔍 검색/필터 조합 메모이제이션
   const filteredNotes = useMemo(() => {
-    return enrichedNotes.filter((note) => {
-      const matchesTags = filters.selectedTags.length === 0 || 
-                         filters.selectedTags.some((tag: string) => note.tags.includes(tag));
-      
+    const notesToFilter = searchResults.length > 0 ? searchResults : enrichedNotes;
+
+    return notesToFilter.filter(note => {
+      const noteTagsSafe = note.tags || [];
+      const matchesTags = filters.selectedTags.length === 0 ||
+                         filters.selectedTags.some((tag: string) => noteTagsSafe.includes(tag));
+
       const matchesBookmark = !filters.showBookmarked || note.isBookmarked;
 
-      const matchesSearch = filters.searchQuery.trim() === '' || 
-                            note.noteTitle.toLowerCase().includes(filters.searchQuery.toLowerCase());
-
-      return matchesTags && matchesBookmark && matchesSearch;
+      return matchesTags && matchesBookmark;
     });
-  }, [filters, enrichedNotes]);
+  }, [filters.selectedTags, filters.showBookmarked, searchResults, enrichedNotes]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFilters({ searchQuery: event.target.value }));
+    setSearchQuery(event.target.value);
+  };
+
+  // 🔍 검색 실행
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+
+    const queryLower = searchQuery.trim().toLowerCase();
+    const results = enrichedNotes.filter(note =>
+      note.noteTitle.toLowerCase().includes(queryLower) ||
+      (note.noteContent ? note.noteContent.toLowerCase().includes(queryLower) : false)
+    );
+
+    setSearchResults(results);
+    setIsSearching(false);
+
+    dispatch(showToast({
+      message: `${results.length}개의 노트를 찾았습니다.`,
+      severity: 'info',
+    }));
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -417,36 +438,90 @@ const NoteListPage: React.FC = () => {
         </FloatingFab>
       )}
 
-      {/* 🔹 검색창 */}
+      {/* 검색 */}
       <SearchBox>
-        <TextField
-          variant="outlined"
-          placeholder="노트 제목으로 검색..."
-          value={filters.searchQuery}
-          onChange={handleSearchChange}
-          sx={{ width: '100%' }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="노트 검색..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            disabled={isSearching}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={isSearching}
+            sx={{ minWidth: 80, height: 56 }}
+          >
+            검색
+          </Button>
+          {searchResults.length > 0 && (
+            <Button
+              variant="outlined"
+              onClick={handleClearSearch}
+              disabled={isSearching}
+              sx={{ minWidth: 80, height: 56 }}
+            >
+              초기화
+            </Button>
+          )}
+        </Box>
+        {isSearching && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              검색 중...
+            </Typography>
+          </Box>
+        )}
       </SearchBox>
+
+      {/* 검색 결과 정보 */}
+      {searchResults.length > 0 && (
+        <Box
+          sx={{
+            bgcolor: '#e8f5e8',
+            border: '1px solid #4caf50',
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="#2e7d32">
+            🔍 검색 결과: "{searchQuery}" 키워드로 {searchResults.length}개의 노트를 찾았습니다.
+          </Typography>
+        </Box>
+      )}
+
       {/* 🔹 필터 영역 */}
       <FilterBox>
         <Button
-          startIcon={<FilterListIcon />}
+          variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
-          태그 필터 ({filters.selectedTags.length})
+          태그 필터
         </Button>
         <Button
-          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
+          variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
         >
-          북마크
+          북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
       </FilterBox>
 
@@ -537,11 +612,11 @@ const NoteListPage: React.FC = () => {
                   gap: 0.5,
                 }}
               >
-                {(isMobile ? note.tags.slice(0, 5) : note.tags).map(tag => (
+                {(isMobile ? (note.tags || []).slice(0, 5) : (note.tags || [])).map(tag => (
                   <TagChip key={tag} label={tag} size="small" color="primary" variant="outlined" />
                 ))}
-                {isMobile && note.tags.length > 5 && (
-                  <TagChip label={`+${note.tags.length - 5}`} size="small" color="primary" variant="outlined" />
+                {isMobile && (note.tags && note.tags.length > 5) && (
+                  <TagChip label={`+${(note.tags || []).length - 5}`} size="small" color="primary" variant="outlined" />
                 )}
               </Box>
               

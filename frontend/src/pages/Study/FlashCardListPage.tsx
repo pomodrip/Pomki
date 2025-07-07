@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { styled } from '@mui/material/styles'; // alpha
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,14 +13,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  FilterList as FilterListIcon,
-  BookmarkBorder,
-  Bookmark,
-  //ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -45,37 +43,16 @@ import Button from '../../components/ui/Button';
 
 
 
-const StyledContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(10),
-}));
 
-const HeaderBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(3),
-}));
-
-const SearchBox = styled(Box)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-}));
-
-const FilterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(3),
-}));
-
-
-
-const SelectedTagsBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-  minHeight: theme.spacing(4),
-  flexWrap: 'wrap',
-}));
+// 🎯 기존 구조 유지: FlashcardDeck 인터페이스 (원본과 동일)
+interface FlashcardDeck {
+  id: string;
+  category: string;
+  title: string;
+  isBookmarked: boolean;
+  tags: string[];
+  flashcards: FlashCardData[];
+}
 
 const FlashCardListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -111,7 +88,7 @@ const FlashCardListPage: React.FC = () => {
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
 
-  // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거)
+  // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거) - useMemo 최적화
   const allCards = useMemo(() => {
     const combinedCards = new Map<string, Card>();
     
@@ -139,32 +116,31 @@ const FlashCardListPage: React.FC = () => {
     return result;
   }, [currentDeckCards, fallbackCards]);
 
+  // 🎯 컴포넌트 마운트 시 카드 데이터 로드 - useCallback 최적화
+  const loadCardsWithFallback = useCallback(async () => {
+    if (!deckId) return;
+    
+    console.log("setFallbackLoading(true); 주석처리함.");
+    try {
+      const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
+      setFallbackCards(fallbackData);
+    } catch (error) {
+      console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
+    }
+  }, [deckId]);
 
-
-  // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
     if (deckId) {
       // Redux를 통한 기존 로드 (deckId를 그대로 사용)
       dispatch(setCurrentDeck(deckId));
       dispatch(fetchCardsInDeck(deckId));
       
-              // API Fallback으로 카드 데이터 로드
-        const loadCardsWithFallback = async () => {
-          //setFallbackLoading(true);
-          console.log("setFallbackLoading(true); 주석처리함.");
-          try {
-            const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
-          setFallbackCards(fallbackData);
-        } catch (error) {
-          console.error('❌ FlashCardListPage API Fallback 카드 로드 실패:', error);
-        }
-      };
-
+      // API Fallback으로 카드 데이터 로드
       loadCardsWithFallback();
     }
-  }, [dispatch, deckId]);
+  }, [dispatch, deckId, loadCardsWithFallback]);
 
-  // 🎯 플래시카드 목록 (Redux 데이터에서 직접 생성)
+  // 🎯 플래시카드 목록 (Redux 데이터에서 직접 생성) - useMemo 최적화
   const flashCards = useMemo(() => {
     return allCards
       .filter(card => card.deckId === deckId)
@@ -179,7 +155,7 @@ const FlashCardListPage: React.FC = () => {
       });
   }, [allCards, deckId]);
 
-  // 모든 태그 목록 추출 (기존 로직 유지)
+  // 모든 태그 목록 추출 (기존 로직 유지) - useMemo 최적화
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     flashCards.forEach((card) => {
@@ -188,7 +164,7 @@ const FlashCardListPage: React.FC = () => {
     return Array.from(tagSet);
   }, [flashCards]);
 
-  // 🔍 검색 결과를 FlashCard 형태로 변환
+  // 🔍 검색 결과를 FlashCard 형태로 변환 - useMemo 최적화
   const convertSearchResultsToFlashCards = useMemo(() => {
     return searchResults.map(searchCard => ({
       id: searchCard.cardId,
@@ -198,7 +174,7 @@ const FlashCardListPage: React.FC = () => {
     }));
   }, [searchResults]);
 
-  // 필터링된 카드 목록 - 검색 결과가 있으면 검색 결과 사용, 없으면 전체 카드 사용
+  // 필터링된 카드 목록 - 검색 결과가 있으면 검색 결과 사용, 없으면 전체 카드 사용 - useMemo 최적화
   const filteredCards = useMemo(() => {
     const cardsToFilter = searchResults.length > 0 ? convertSearchResultsToFlashCards : flashCards;
     
@@ -212,12 +188,13 @@ const FlashCardListPage: React.FC = () => {
     });
   }, [filters.selectedTags, filters.showBookmarked, flashCards, allCards, convertSearchResultsToFlashCards, searchResults]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // 이벤트 핸들러들 - useCallback 최적화
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
-  };
+  }, []);
 
-  // 🔍 검색 함수
-  const handleSearch = async () => {
+  // 🔍 검색 함수 - useCallback 최적화
+  const handleSearch = useCallback(async () => {
     if (!deckId || !searchQuery.trim()) {
       // 검색어가 없으면 검색 결과 초기화
       setSearchResults([]);
@@ -244,27 +221,27 @@ const FlashCardListPage: React.FC = () => {
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [deckId, searchQuery, dispatch]);
 
-  // 🔄 검색 초기화
-  const handleClearSearch = () => {
+  // 🔄 검색 초기화 - useCallback 최적화
+  const handleClearSearch = useCallback(() => {
     setSearchQuery('');
     setSearchResults([]);
-  };
+  }, []);
 
-  const handleTagSelect = (tag: string) => {
+  const handleTagSelect = useCallback((tag: string) => {
     const newSelectedTags = filters.selectedTags.includes(tag)
       ? filters.selectedTags.filter((t: string) => t !== tag)
       : [...filters.selectedTags, tag];
     
     dispatch(setFilters({ selectedTags: newSelectedTags }));
     setTagMenuAnchor(null);
-  };
+  }, [filters.selectedTags, dispatch]);
 
-  const handleBookmarkFilter = (showBookmarkedValue: boolean) => {
+  const handleBookmarkFilter = useCallback((showBookmarkedValue: boolean) => {
     dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
-  };
+  }, [dispatch]);
 
   // 카드 선택 기능 (현재 사용하지 않음)
   // const handleCardSelect = (id: number, selected: boolean) => {
@@ -275,7 +252,7 @@ const FlashCardListPage: React.FC = () => {
   //   }
   // };
 
-  const handleEditCard = (id: number, event: React.MouseEvent) => {
+  const handleEditCard = useCallback((id: number, event: React.MouseEvent) => {
     event.stopPropagation();
     const card = flashCards.find(c => c.id === id);
     if (card) {
@@ -286,9 +263,9 @@ const FlashCardListPage: React.FC = () => {
       setEditCardTags(card.tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag).join(', '));
       setShowEditDialog(true);
     }
-  };
+  }, [flashCards]);
 
-  const handleDeleteCard = async (id: number, event: React.MouseEvent) => {
+  const handleDeleteCard = useCallback(async (id: number, event: React.MouseEvent) => {
     event.stopPropagation();
     
     const confirmed = window.confirm('이 카드를 정말 삭제하시겠습니까?');
@@ -302,16 +279,6 @@ const FlashCardListPage: React.FC = () => {
               dispatch(fetchCardsInDeck(deckId));
               
               // API Fallback으로도 카드 데이터 다시 로드
-              const loadCardsWithFallback = async () => {
-                try {
-                  const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
-                  setFallbackCards(fallbackData);
-                  console.log('✅ 카드 삭제 후 API Fallback으로 카드 목록 재로드:', fallbackData);
-                } catch (error) {
-                  console.error('❌ 카드 삭제 후 API Fallback 카드 재로드 실패:', error);
-                }
-              };
-              
               loadCardsWithFallback();
             }
             
@@ -330,9 +297,9 @@ const FlashCardListPage: React.FC = () => {
           }));
         }
     }
-  };
+  }, [dispatch, deckId, loadCardsWithFallback]);
 
-  const handleToggleBookmark = async (cardId: number, event: React.MouseEvent) => {
+  const handleToggleBookmark = useCallback(async (cardId: number, event: React.MouseEvent) => {
     event.stopPropagation();
     try {
       const result = await dispatch(toggleCardBookmark(cardId));
@@ -352,15 +319,15 @@ const FlashCardListPage: React.FC = () => {
         severity: 'error'
       }));
     }
-  };
+  }, [dispatch]);
 
-  const handleEditDialogClose = () => {
+  const handleEditDialogClose = useCallback(() => {
     setShowEditDialog(false);
     setEditingCardId(null);
     setEditCardFront('');
     setEditCardBack('');
     setEditCardTags('');
-  };
+  }, []);
 
   const handleEditDialogConfirm = async () => {
     const confirmed = window.confirm('플래시카드를 정말 수정하시겠습니까?');
@@ -543,40 +510,44 @@ const FlashCardListPage: React.FC = () => {
     }
   );
 
+  // 뒤로가기 (덱 목록으로 이동)
+  const handleBack = () => {
+    navigate('/study');
+  };
+
   // 덱이 없는 경우
   if (!selectedDeck || !deckId) {
     return (
-      <StyledContainer maxWidth="md">
-        <Box
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center"
-          py={8}
-          gap={2}
-        >
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            덱을 찾을 수 없습니다
-          </Typography>
-          <Button 
-            variant="contained" 
-            onClick={() => navigate('/study')}
-          >
-            덱 목록으로 이동
-          </Button>
-        </Box>
-      </StyledContainer>
+      <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
+        <Typography variant="h5">덱을 찾을 수 없습니다.</Typography>
+        <Typography>
+          덱 목록으로 돌아가서 다시 시도해주세요.
+        </Typography>
+        <Button onClick={() => navigate('/study')} sx={{ mt: 2 }}>
+          덱 목록으로 돌아가기
+        </Button>
+      </Container>
     );
   }
 
   return (
-    <StyledContainer maxWidth="md">
-      {/* 헤더 */}
-      <HeaderBox>
-        <Typography variant="h5" fontWeight="bold">
-          {selectedDeck?.deckName || '덱 이름 없음'}
-        </Typography>
-      </HeaderBox>
+    <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton onClick={handleBack} sx={{ mr: 0.5 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h5" fontWeight="bold">
+            {selectedDeck?.deckName || '덱 이름 없음'}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={handleCreateSampleCards}
+        >
+          카드 추가
+        </Button>
+      </Box>
 
       {/* API Fallback 정보 표시 */}
       {fallbackCards.length > 0 && (
@@ -599,7 +570,7 @@ const FlashCardListPage: React.FC = () => {
       )}
 
       {/* 검색 */}
-      <SearchBox>
+      <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
             fullWidth
@@ -647,26 +618,26 @@ const FlashCardListPage: React.FC = () => {
             </Typography>
           </Box>
         )}
-      </SearchBox>
+      </Box>
 
       {/* 필터 */}
-      <FilterBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Button
-          startIcon={<FilterListIcon />}
+          variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
         >
           태그 필터
         </Button>
         <Button
-          startIcon={filters.showBookmarked ? <Bookmark /> : <BookmarkBorder />}
+          variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
         >
-          북마크
+          북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
-      </FilterBox>
+      </Box>
 
       {/* 선택된 태그들 표시 */}
-      <SelectedTagsBox>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, minHeight: 4, flexWrap: 'wrap' }}>
         {filters.selectedTags.map((tag: string) => (
           <Chip
             key={tag}
@@ -677,7 +648,7 @@ const FlashCardListPage: React.FC = () => {
             variant="filled"
           />
         ))}
-      </SelectedTagsBox>
+      </Box>
 
       {/* 검색 결과 정보 */}
       {searchResults.length > 0 && (
@@ -834,8 +805,8 @@ const FlashCardListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </StyledContainer>
+    </Container>
   );
 };
 
-export default FlashCardListPage;
+export default React.memo(FlashCardListPage);

@@ -18,20 +18,19 @@ import {
   Button,
   Tooltip,
 } from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  ArrowForward as ArrowForwardIcon,
-  EditNote as EditNoteIcon,
-  ExpandMore as ExpandMoreIcon,
-  Info as InfoIcon,
-} from '@mui/icons-material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useNavigationKeyboardShortcuts, useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { fetchCardsInDeck, setCurrentDeck } from '../../store/slices/deckSlice';
 import { showToast } from '../../store/slices/toastSlice';
-import { deckApiWithFallback } from '../../api/apiWithFallback';
+import { getSessionCards, batchCompleteReview } from '../../api/reviewApi';
 import type { Card } from '../../types/card';
+import type { ReviewResult, ReviewDifficulty } from '../../types/study';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -86,7 +85,7 @@ const ProgressFill = styled(Box)<{ value: number }>(({ theme, value }) => ({
   transition: 'width 0.3s ease',
 }));
 
-type Difficulty = 'easy' | 'confusing' | 'hard' | null;
+type PracticeDifficulty = 'easy' | 'confusing' | 'hard';
 
 const FlashcardPracticePage: React.FC = () => {
   const navigate = useNavigate();
@@ -98,13 +97,12 @@ const FlashcardPracticePage: React.FC = () => {
     (state) => state.deck
   );
 
-  // 🎯 API Fallback을 위한 상태
-  const [fallbackCards, setFallbackCards] = useState<Card[]>([]);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [sessionCards, setSessionCards] = useState<Card[]>([]);
+  const [sessionLoading, setSessionLoading] = useState(false);
 
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<PracticeDifficulty | null>(null);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [currentQuestionFeedback, setCurrentQuestionFeedback] = useState('');
   const [globalFeedback, setGlobalFeedback] = useState('');
@@ -113,8 +111,7 @@ const FlashcardPracticePage: React.FC = () => {
   // 🎯 각 카드별 난이도 선택 결과 저장용 상태 추가
   const [cardDifficultyResults, setCardDifficultyResults] = useState<Array<{
     cardId: number;
-    difficulty: Difficulty;
-    timestamp: string;
+    difficulty: PracticeDifficulty;
   }>>([]);
 
   // 🎯 deckId로 현재 덱 찾기
@@ -124,58 +121,50 @@ const FlashcardPracticePage: React.FC = () => {
 
   // 🎯 컴포넌트 마운트 시 카드 데이터 로드
   useEffect(() => {
+    const startPracticeSession = async () => {
+      setSessionLoading(true);
+      try {
+        if (deckId) {
+          // 특정 덱의 카드들을 가져오기
+          const result = await dispatch(fetchCardsInDeck(deckId)).unwrap();
+          setSessionCards(result);
+          if (result.length === 0) {
+            dispatch(showToast({ message: '이 덱에는 학습할 카드가 없습니다!', severity: 'info' }));
+            navigate('/study');
+          }
+        } else {
+          // 전체 복습 세션 카드 가져오기
+          const cards = await getSessionCards();
+          setSessionCards(cards);
+          if (cards.length === 0) {
+            dispatch(showToast({ message: '오늘 복습할 카드가 없습니다!', severity: 'info' }));
+            navigate('/study');
+          }
+        }
+      } catch (error) {
+        console.error('학습 세션 카드 로드 실패:', error);
+        dispatch(showToast({ message: '카드를 불러오는 데 실패했습니다.', severity: 'error' }));
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+
+    startPracticeSession();
+    
     if (deckId) {
       dispatch(setCurrentDeck(deckId));
-      dispatch(fetchCardsInDeck(deckId));
-      
-      // API Fallback으로 카드 데이터 로드
-      const loadCardsWithFallback = async () => {
-        setFallbackLoading(true);
-        try {
-          const fallbackData = await deckApiWithFallback.getCardsInDeck(deckId);
-          setFallbackCards(fallbackData);
-          console.log('✅ API Fallback으로 카드 목록 로드:', fallbackData);
-        } catch (error) {
-          console.error('❌ API Fallback 카드 로드 실패:', error);
-        } finally {
-          setFallbackLoading(false);
-        }
-      };
-
-      loadCardsWithFallback();
     }
-  }, [dispatch, deckId]);
+  }, [dispatch, deckId, navigate]);
 
-  // 🎯 Redux와 Fallback 카드를 합치기
-  const combinedCards = useMemo(() => {
-    const cardMap = new Map<number, Card>();
-    
-    // Redux 카드 추가
-    currentDeckCards.forEach(card => {
-      cardMap.set(card.cardId, card);
-    });
-    
-    // Fallback 카드 추가 (중복되지 않는 경우만)
-    fallbackCards.forEach(card => {
-      if (!cardMap.has(card.cardId)) {
-        cardMap.set(card.cardId, card);
-      }
-    });
-    
-    return Array.from(cardMap.values());
-  }, [currentDeckCards, fallbackCards]);
-
-  // 🎯 API 데이터를 UI에 맞게 변환
   const flashcards = useMemo(() => {
-    if (!currentDeck && fallbackCards.length === 0) return [];
-    return combinedCards.map(card => ({
+    return sessionCards.map(card => ({
       ...card,
       id: card.cardId,
-      question: card.content, // content -> question
-      answer: card.answer,   // answer -> answer
-      tags: [`#카드${card.cardId}`, '#학습'], // FlashCardListPage와 동일한 태그
+      question: card.content,
+      answer: card.answer,
+      tags: [`덱: ${card.deckName}`],
     }));
-  }, [currentDeck, combinedCards, fallbackCards.length]);
+  }, [sessionCards]);
 
   const currentCard = flashcards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
@@ -194,39 +183,22 @@ const FlashcardPracticePage: React.FC = () => {
     setShowAnswer(!showAnswer);
   };
 
-  const handleDifficultySelect = (difficulty: Difficulty) => {
+  const handleDifficultySelect = (difficulty: PracticeDifficulty) => {
     const newDifficulty = selectedDifficulty === difficulty ? null : difficulty;
     setSelectedDifficulty(newDifficulty);
     
-    // 🎯 콘솔에 deckId와 선택한 난이도 출력
-    console.log('=== 난이도 선택 결과 ===');
-    console.log('Deck ID:', deckId);
-    console.log('Card ID:', currentCard?.cardId);
-    console.log('Card Index:', currentCardIndex + 1);
-    console.log('Selected Difficulty:', newDifficulty);
-    console.log('Timestamp:', new Date().toISOString());
-    
-    // 🎯 선택된 난이도가 있을 때만 결과 배열에 저장
     if (newDifficulty && currentCard) {
       const newResult = {
         cardId: currentCard.cardId,
         difficulty: newDifficulty,
-        timestamp: new Date().toISOString()
       };
       
       setCardDifficultyResults(prev => {
-        // 같은 카드의 이전 선택 제거 후 새로운 선택 추가
         const filtered = prev.filter(result => result.cardId !== currentCard.cardId);
-        const updated = [...filtered, newResult];
-        
-        return updated;
+        return [...filtered, newResult];
       });
     } else if (!newDifficulty && currentCard) {
-      // 난이도 선택 해제 시 해당 카드 결과 제거
-      setCardDifficultyResults(prev => {
-        const filtered = prev.filter(result => result.cardId !== currentCard.cardId);
-        return filtered;
-      });
+      setCardDifficultyResults(prev => prev.filter(result => result.cardId !== currentCard.cardId));
     }
   };
 
@@ -234,7 +206,6 @@ const FlashcardPracticePage: React.FC = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1);
       setShowAnswer(false);
-      // 🎯 난이도 선택은 useEffect에서 자동으로 복원됨
     } else {
       // 첫 번째 카드에서 이전 버튼 클릭 시 마지막 카드로 이동
       setCurrentCardIndex(flashcards.length - 1);
@@ -245,52 +216,35 @@ const FlashcardPracticePage: React.FC = () => {
     if (currentCardIndex < flashcards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
-      // 🎯 난이도 선택은 useEffect에서 자동으로 복원됨
     } else {
       setShowCompletionDialog(true);
     }
   };
 
-  const handleCompletionConfirm = () => {
+  const handleCompletionConfirm = async () => {
     try {
       setShowCompletionDialog(false);
       
-      // 🎯 학습 완료 시 전체 결과 콘솔 출력
-      console.log('=== 학습 완료 - 전체 결과 ==='); 
+      const resultsToSubmit: ReviewResult[] = cardDifficultyResults.map(result => ({
+        cardId: result.cardId,
+        difficulty: result.difficulty === 'confusing' ? 'confuse' : result.difficulty,
+      }));
 
-      const study_data = {
-        deckId: deckId,
-        cardDifficultyResults
-      }
-      console.log('study_data:', study_data);
+      await batchCompleteReview(resultsToSubmit);
 
-      // 학습 완료 토스트 알림
       dispatch(showToast({
         message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
         severity: 'success',
         duration: 4000
       }));
       
-      // 상태 초기화
-      setCurrentCardIndex(0);
-      setShowAnswer(false);
-      setSelectedDifficulty(null);
-      setCurrentQuestionFeedback('');
-      setGlobalFeedback('');
-      setIsFeedbackOpen(false);
-      // 🎯 난이도 결과도 초기화
-      setCardDifficultyResults([]);
-      
-      console.log('학습 완료 - 덱 목록으로 이동');
       navigate('/study');
     } catch (error) {
-      console.error('학습 완료 처리 중 오류:', error);
-      // 에러 토스트
+      console.error('학습 결과 제출 중 오류:', error);
       dispatch(showToast({
-        message: '학습 완료 처리 중 오류가 발생했습니다.',
+        message: '학습 결과 전송 중 오류가 발생했습니다.',
         severity: 'error'
       }));
-      // 에러가 발생해도 기본 동작은 수행
       navigate('/study');
     }
   };
@@ -332,7 +286,7 @@ const FlashcardPracticePage: React.FC = () => {
     }
   };
 
-  const getDifficultyButtonStyle = (difficulty: Difficulty) => {
+  const getDifficultyButtonStyle = (difficulty: PracticeDifficulty) => {
     const isSelected = selectedDifficulty === difficulty;
     switch (difficulty) {
       case 'easy':
@@ -371,39 +325,13 @@ const FlashcardPracticePage: React.FC = () => {
       {/* 헤더 */}
       <HeaderBox>
         <Typography variant="h5" fontWeight="bold">
-          {currentDeck?.deckName}
+          {currentDeck?.deckName || '오늘의 복습'}
         </Typography>
       </HeaderBox>
 
-      {/* API Fallback 정보 표시 */}
-      {fallbackCards.length > 0 && (
-        <Box 
-          sx={{ 
-            mb: 2, 
-            p: 2, 
-            backgroundColor: '#e3f2fd', 
-            border: '1px solid #2196f3',
-            borderRadius: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}
-        >
-          <InfoIcon color="primary" />
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-              🎉 API Fallback 시스템 작동 중!
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {fallbackCards.length}개의 Mock 카드를 사용하여 학습 기능을 체험하고 있습니다.
-            </Typography>
-          </Box>
-        </Box>
-      )}
+      {(loading || sessionLoading) && <Typography>카드를 불러오는 중...</Typography>}
 
-      {(loading || fallbackLoading) && <Typography>카드를 불러오는 중...</Typography>}
-
-      {!loading && !fallbackLoading && flashcards.length > 0 && (
+      {!loading && !sessionLoading && flashcards.length > 0 && (
         <>
           {/* 진행률: 상단에만 표시 (미니멀리즘 적용) */}
           <Box sx={{ mb: 3 }}>
@@ -535,7 +463,7 @@ const FlashcardPracticePage: React.FC = () => {
           </Box>
 
           {/* 난이도 선택 버튼들 (항상 표시) */}
-          <Box sx={{ mb: 3 }}>
+          {showAnswer && (
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
               <Button
                 variant="outlined"
@@ -571,7 +499,7 @@ const FlashcardPracticePage: React.FC = () => {
                 Hard
               </Button>
             </Box>
-          </Box>
+          )}
 
           {/* 피드백 섹션 (아코디언 드롭다운) */}
           <Accordion
@@ -633,12 +561,12 @@ const FlashcardPracticePage: React.FC = () => {
         </>
       )}
 
-      {!loading && !fallbackLoading && !flashcards.length && (
+      {(!loading && !sessionLoading && flashcards.length === 0) && (
         <Box textAlign="center" py={5}>
           <Typography variant="h6" color="text.secondary">
-            {currentDeck || fallbackCards.length > 0
+            {currentDeck
               ? '이 덱에는 카드가 없습니다.'
-              : '덱을 찾을 수 없습니다.'}
+              : '오늘 복습할 카드가 없습니다.'}
           </Typography>
           <Button
             variant="contained"
@@ -660,7 +588,7 @@ const FlashcardPracticePage: React.FC = () => {
         <DialogTitle>학습 완료</DialogTitle>
         <DialogContent>
           <Typography>
-            마지막 카드입니다. 계속 학습하시겠습니까?
+            마지막 카드입니다. 덱 목록으로 돌아가시겠습니까?
           </Typography>
         </DialogContent>
         <DialogActions>

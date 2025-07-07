@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector } from 'reselect';
 import type { RootState } from '../store';
 
 // ==========================================
@@ -721,25 +722,85 @@ export const selectGlobalLoading = (state: RootState) => state.ui.globalLoading;
 export const selectNotifications = (state: RootState) => state.ui.notifications;
 export const selectUISettings = (state: RootState) => state.ui.settings;
 
-// 편의 셀렉터들
+// 편의 셀렉터들 - createSelector로 메모이제이션
 export const selectIsInitialized = (state: RootState) => state.ui.initialized;
 export const selectScreenSize = (state: RootState) => state.ui.screenSize;
-export const selectHasNotifications = (state: RootState) => state.ui.notifications.length > 0;
-export const selectUnreadNotificationCount = (state: RootState) => state.ui.notifications.length;
+
+export const selectHasNotifications = createSelector(
+  [selectNotifications],
+  (notifications) => notifications.length > 0
+);
+
+export const selectUnreadNotificationCount = createSelector(
+  [selectNotifications],
+  (notifications) => notifications.length
+);
 
 // 새로운 셀렉터들
 export const selectThemePresets = (state: RootState) => state.ui.themePresets;
 export const selectCurrentPreset = (state: RootState) => state.ui.currentPreset;
 export const selectLoadingStack = (state: RootState) => state.ui.loadingStack;
 export const selectNotificationQueue = (state: RootState) => state.ui.notificationQueue;
-export const selectCurrentColors = (state: RootState) => {
-  const preset = state.ui.currentPreset;
-  const theme = state.ui.resolvedTheme;
-  return preset ? preset.colors[theme] : null;
-};
+
+export const selectCurrentColors = createSelector(
+  [selectCurrentPreset, selectTheme],
+  (preset, theme) => preset ? preset.colors[theme] : null
+);
+
 export const selectAccessibilitySettings = (state: RootState) => state.ui.settings.accessibility;
 export const selectAnimationSettings = (state: RootState) => state.ui.settings.animations;
 export const selectNotificationSettings = (state: RootState) => state.ui.settings.notifications;
+
+// 복합 selector들 - createSelector로 메모이제이션
+export const selectResponsiveState = createSelector(
+  [selectIsMobile, selectScreenSize],
+  (isMobile, screenSize) => ({
+    isMobile,
+    screenSize,
+    isXs: screenSize === 'xs',
+    isSm: screenSize === 'sm',
+    isMd: screenSize === 'md',
+    isLg: screenSize === 'lg',
+    isXl: screenSize === 'xl',
+    isDesktop: !isMobile,
+    isTablet: isMobile && (screenSize === 'md' || screenSize === 'lg'),
+    isPhone: isMobile && (screenSize === 'xs' || screenSize === 'sm'),
+  })
+);
+
+export const selectNavigationState = createSelector(
+  [selectSidebarOpen, (state: RootState) => state.ui.sidebarCollapsed, selectBottomNavVisible],
+  (sidebarOpen, sidebarCollapsed, bottomNavVisible) => ({
+    sidebarOpen,
+    sidebarCollapsed,
+    bottomNavVisible,
+    sidebarExpanded: sidebarOpen && !sidebarCollapsed,
+  })
+);
+
+export const selectLoadingState = createSelector(
+  [selectGlobalLoading, (state: RootState) => state.ui.loadingText, selectLoadingStack],
+  (globalLoading, loadingText, loadingStack) => ({
+    isLoading: globalLoading || loadingStack.length > 0,
+    loadingText,
+    loadingCount: loadingStack.length,
+    hasMultipleLoading: loadingStack.length > 1,
+  })
+);
+
+export const selectNotificationState = createSelector(
+  [selectNotifications, selectNotificationQueue, selectNotificationSettings],
+  (notifications, queue, settings) => ({
+    notifications,
+    queue,
+    settings,
+    hasNotifications: notifications.length > 0,
+    hasQueue: queue.length > 0,
+    totalCount: notifications.length + queue.length,
+    visibleCount: Math.min(notifications.length, settings.maxVisible),
+    canShowMore: notifications.length < settings.maxVisible && queue.length > 0,
+  })
+);
 
 // 🔴 FAB 셀렉터들
 export const selectFab = (state: RootState) => state.ui.fab;

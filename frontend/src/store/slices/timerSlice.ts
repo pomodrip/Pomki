@@ -89,8 +89,8 @@ interface TimerState {
 // ==========================================
 
 const defaultSettings: TimerSettings = {
-  focusTime: 25,          // 25분
-  shortBreakTime: 5,      // 5분
+  focusTime: 20,          // 20분
+  shortBreakTime: 10,      // 10분
   longBreakTime: 15,      // 15분
   longBreakInterval: 4,   // 4번의 포커스 후 긴 휴식
   autoStartBreaks: false,
@@ -105,7 +105,7 @@ const initialState: TimerState = {
   mode: 'FOCUS',
   isRunning: false,
   completedSessions: 0,
-  targetSessions: 4,
+  targetSessions: 2,  // 2세션
   currentCycle: 1,
   settings: defaultSettings,
   stats: null,
@@ -255,6 +255,20 @@ const timerSlice = createSlice({
   reducers: {
     // 타이머 시작
     startTimer: (state) => {
+      // 만약 이전 사이클이 이미 완료되어 세션 카운트가 목표에 도달했다면
+      // 새로운 사이클을 시작하기 전에 값들을 초기화한다.
+      if (state.completedSessions >= state.targetSessions) {
+        state.completedSessions = 0;
+        state.currentCycle += 1;
+      }
+
+      // 완료된 세션 객체가 남아있는 경우 초기화하여 새 세션을 만들 수 있게 한다.
+      if (state.currentSession && state.currentSession.status === 'COMPLETED') {
+        state.currentSession = null;
+      }
+
+      // 항상 새 사이클은 FOCUS 모드로 시작한다.
+      state.mode = 'FOCUS';
       const now = Date.now();
       const duration = getDurationForMode(state.mode, state.settings);
       
@@ -312,14 +326,14 @@ const timerSlice = createSlice({
       if (!state.currentSession || !state.isRunning) return;
       
       const now = Date.now();
-      const elapsed = getTotalElapsedMs(state.currentSession.timeEntries);
-      const remainingTime = Math.max(0, state.currentSession.duration * 1000 - elapsed);
-      
-      state.currentSession.remainingTime = Math.ceil(remainingTime / 1000);
+
+      // CPU 지연 등으로 인해 tick 간격이 약간 달라도, UI 는 항상 1초씩 감소하도록 한다.
+      // 언제나 1초씩 감소시킨다.
+      state.currentSession.remainingTime = Math.max(0, state.currentSession.remainingTime - 1);
       state.lastTick = now;
-      
+
       // 시간 종료 체크
-      if (remainingTime <= 0) {
+      if (state.currentSession.remainingTime === 0) {
         state.currentSession.status = 'COMPLETED';
         state.currentSession.completedAt = new Date().toISOString();
         state.isRunning = false;
@@ -337,7 +351,11 @@ const timerSlice = createSlice({
 
         // 두 번째 세션 이후 완료 여부 확인
         if (state.completedSessions >= state.targetSessions && upcomingMode === 'FOCUS') {
+          // 목표 세션을 모두 완료했다면 타이머를 완전히 정지시키고
+          // 다음 사이클을 위해 currentSession 을 정리한다.
           state.status = 'IDLE';
+          state.currentSession = null;
+          state.isRunning = false;
           return;
         }
 
@@ -412,14 +430,15 @@ const timerSlice = createSlice({
       state.status = 'IDLE';
     },
 
-    // 현재 세션에 노트 연결
+    /*
+    // 현재 세션에 노트 연결 – 현재 컴포넌트/페이지에서 호출되지 않아 주석 처리
     attachNoteToSession: (state, action: PayloadAction<string>) => {
       if (state.currentSession) {
         state.currentSession.noteId = action.payload;
       }
     },
 
-    // 현재 세션에 태그 추가
+    // 현재 세션에 태그 추가 – 현재 호출처가 없어 주석 처리
     addTagToSession: (state, action: PayloadAction<string>) => {
       if (state.currentSession) {
         const tags = state.currentSession.tags || [];
@@ -428,6 +447,7 @@ const timerSlice = createSlice({
         }
       }
     },
+    */
   },
 
   extraReducers: (builder) => {
@@ -498,8 +518,6 @@ export const {
   toggleNotification,
   clearError,
   resetSession,
-  attachNoteToSession,
-  addTagToSession,
 } = timerSlice.actions;
 
 export default timerSlice.reducer;

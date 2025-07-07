@@ -3,7 +3,7 @@
 // =========================
 
 // 🔹 라이브러리 및 훅 import
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Container,
@@ -26,18 +26,16 @@ import {
   CardActions,
 } from '@mui/material';
 import CircularProgress from '../../components/ui/CircularProgress';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  School as SchoolIcon,
-  BookmarkBorder,
-  Bookmark,
-  FilterList as FilterListIcon,
-  Info as InfoIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SchoolIcon from '@mui/icons-material/School';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Bookmark from '@mui/icons-material/Bookmark';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import InfoIcon from '@mui/icons-material/Info';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { useDialogKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -70,7 +68,7 @@ interface ClientSideDeckInfo {
 }
 
 
-// 🔹 스타일 컴포넌트 정의
+// 🔹 스타일 컴포넌트 정의 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(10),
@@ -112,7 +110,7 @@ const DeckCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: 'white',
+  backgroundColor: theme.palette.background.paper,
   cursor: 'pointer',
   width: '100%',
   maxWidth: '100%',
@@ -204,7 +202,7 @@ const FlashcardDeckListPage: React.FC = () => {
     setSearchResults([]);
   }, []);
 
-  // �� 컴포넌트 마운트 시 덱 목록 로드
+  // 🎯 컴포넌트 마운트 시 덱 목록 로드
   useEffect(() => {
     dispatch(fetchDecks());
     console.log("유저", user);
@@ -240,14 +238,14 @@ const FlashcardDeckListPage: React.FC = () => {
     });
   }, [filters, combinedDecks]);
 
-  const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(event.target.value);
     if (event.target.value === '') {
       setSearchResults([]);
     }
-  };
+  }, []);
 
-  const handleSearchSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchSubmit = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && searchInput.trim()) {
       setSearchLoading(true);
       try {
@@ -264,14 +262,14 @@ const FlashcardDeckListPage: React.FC = () => {
         setSearchLoading(false);
       }
     }
-  };
+  }, [searchInput, dispatch]);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchInput('');
     setSearchResults([]);
-  };
+  }, []);
 
-  const handleDeckClick = (deckId: string) => {
+  const handleDeckClick = useCallback((deckId: string) => {
     let routeId = deckId;
     if (deckId.startsWith('deck_')) {
       routeId = deckId.replace('deck_', '');
@@ -281,17 +279,17 @@ const FlashcardDeckListPage: React.FC = () => {
     }
     console.log('🎯 덱 클릭:', deckId, '→ 라우팅 ID:', routeId);
     navigate(`/flashcards/${routeId}/cards`);
-  };
+  }, [navigate]);
 
-  const handleEditDeck = (deck: CardDeck, event: React.MouseEvent) => {
+  const handleEditDeck = useCallback((deck: CardDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     setIsEditMode(true);
     setEditingDeckId(deck.deckId);
     setNewDeckTitle(deck.deckName);
     setShowCreateDialog(true);
-  };
+  }, []);
 
-  const handleDeleteDeck = async (deck: CardDeck, event: React.MouseEvent) => {
+  const handleDeleteDeck = useCallback(async (deck: CardDeck, event: React.MouseEvent) => {
     event.stopPropagation();
     if (window.confirm(`'${deck.deckName}' 덱을 정말 삭제하시겠습니까?`)) {
       try {
@@ -313,16 +311,16 @@ const FlashcardDeckListPage: React.FC = () => {
         }));
       }
     }
-  };
+  }, [dispatch]);
   
-  const handleCreateDialogClose = () => {
+  const handleCreateDialogClose = useCallback(() => {
     setShowCreateDialog(false);
     setIsEditMode(false);
     setEditingDeckId(null);
     setNewDeckTitle('');
-  };
+  }, []);
 
-  const handleCreateDialogConfirm = async () => {
+  const handleCreateDialogConfirm = useCallback(async () => {
     if (!newDeckTitle.trim()) return;
     try {
       if (isEditMode && editingDeckId) {
@@ -336,14 +334,14 @@ const FlashcardDeckListPage: React.FC = () => {
     } catch (err) {
       dispatch(showToast({ message: '덱 생성에 실패했습니다.', severity: 'error' }));
     }
-  };
+  }, [newDeckTitle, isEditMode, editingDeckId, dispatch, handleCreateDialogClose]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleCreateDialogConfirm();
     }
-  };
+  }, [handleCreateDialogConfirm]);
 
   useDialogKeyboardShortcuts(
     handleCreateDialogConfirm,
@@ -573,4 +571,4 @@ const FlashcardDeckListPage: React.FC = () => {
   );
 };
 
-export default FlashcardDeckListPage;
+export default React.memo(FlashcardDeckListPage);

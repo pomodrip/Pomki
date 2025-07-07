@@ -29,6 +29,13 @@ export interface StudyFilters {
 
 export type PracticeGrade = 0 | 1 | 2 | 3 | 4 | 5;
 
+export type ReviewDifficulty = 'easy' | 'confuse' | 'hard';
+
+export interface ReviewResult {
+  cardId: number;
+  difficulty: ReviewDifficulty;
+}
+
 export interface CreateDeckRequest {
   title: string;
   category: string;
@@ -43,4 +50,20 @@ export interface UpdateDeckRequest {
   tags?: string[];
   isBookmarked?: boolean;
   flashcards?: Flashcard[];
+}
+
+export interface DashboardStats {
+  studyTime: {
+    todayStudyMinutes: number;
+    dailyGoalMinutes: number;
+  };
+  attendance: {
+    consecutiveDays: number;
+    attendedDates: string[];
+  };
+  review: {
+    todayCount: number;
+    upcomingCount: number;
+    overdueCount: number;
+  };
 }

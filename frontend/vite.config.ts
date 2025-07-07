@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     svgr(),
     react(),
-    svgr(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

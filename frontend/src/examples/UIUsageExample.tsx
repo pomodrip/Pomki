@@ -18,19 +18,17 @@ import {
   Stack,
   Alert,
 } from '@mui/material';
-import {
-  Palette as PaletteIcon,
-  Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
-  Brightness4 as DarkModeIcon,
-  Brightness7 as LightModeIcon,
-  Phone as MobileIcon,
-  Computer as DesktopIcon,
-} from '@mui/icons-material';
+import PaletteIcon from '@mui/icons-material/Palette';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DarkModeIcon from '@mui/icons-material/Brightness4';
+import LightModeIcon from '@mui/icons-material/Brightness7';
+import MobileIcon from '@mui/icons-material/Phone';
+import DesktopIcon from '@mui/icons-material/Computer';
 import { useUI, useTheme, useNotifications, useResponsiveUI } from '../hooks/useUI';
 
 /**
- * 🎨 확장된 UI 시스템 사용 예제
+ * 🎨 확장된 UI 시스템 사용 예제 
  * 
  * 새로운 기능들:
  * - 테마 프리셋 선택

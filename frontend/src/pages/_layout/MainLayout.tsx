@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Header from '../../components/common/Header';
 import BottomNav from '../../components/common/BottomNav';
+import TimerTicker from '../../components/common/TimerTicker';
 import { useResponsive } from '../../hooks/useResponsive';
 
 const MainLayout: React.FC = () => {
@@ -42,6 +43,9 @@ const MainLayout: React.FC = () => {
       
       {/* BottomNav는 모바일에서만 렌더링됨 */}
       <BottomNav />
+      
+      {/* 전역 타이머 틱커 (보이지 않는 컴포넌트) */}
+      <TimerTicker />
       
       {/* BottomNav 디버깅 정보 */}
       {/* <Box sx={{ 
