@@ -22,7 +22,7 @@ import com.cooltomato.pomki.stats.repository.StudyLogRepository;
 import com.cooltomato.pomki.note.repository.NoteRepository;
 import com.cooltomato.pomki.deck.repository.DeckRepository;
 import com.cooltomato.pomki.card.repository.CardRepository;
-import com.cooltomato.pomki.card.repository.CardStatRepository;
+import com.cooltomato.pomki.stats.repository.CardStatRepository;
 import com.cooltomato.pomki.card.service.ReviewService;
 import com.cooltomato.pomki.deck.entity.Deck;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;

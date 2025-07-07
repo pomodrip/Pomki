@@ -15,7 +15,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/analysis/member")
+@RequestMapping("/api/analysis/member")
 @RequiredArgsConstructor
 @Tag(name = "Member Analysis API", description = "사용자(멤버) 활동에 대한 종합 분석 및 편의 기능 API")
 public class MemberAnalysisController {

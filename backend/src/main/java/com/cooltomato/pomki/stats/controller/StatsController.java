@@ -19,7 +19,7 @@ import java.util.Map;
 
 @Tag(name = "Statistics", description = "학습 통계 및 대시보드 API")
 @RestController
-@RequestMapping("/api/v1/stats")
+@RequestMapping("/api/stats")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Stats & Dashboard API", description = "사용자 활동 통계, 출석, 대시보드 관련 API")

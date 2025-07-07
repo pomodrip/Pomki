@@ -1,12 +1,13 @@
-package com.cooltomato.pomki.card.entity;
+package com.cooltomato.pomki.stats.entity;
 
+import com.cooltomato.pomki.card.entity.Card;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.deck.entity.Deck;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;   
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;

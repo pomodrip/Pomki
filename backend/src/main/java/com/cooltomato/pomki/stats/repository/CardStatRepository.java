@@ -1,6 +1,6 @@
-package com.cooltomato.pomki.card.repository;
+package com.cooltomato.pomki.stats.repository;
 
-import com.cooltomato.pomki.card.entity.CardStat;
+import com.cooltomato.pomki.stats.entity.CardStat;
 import com.cooltomato.pomki.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
