@@ -1,15 +1,15 @@
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, styled, useTheme } from '@mui/material';
-import Brightness4 from '@mui/icons-material/Brightness4';
-import Brightness7 from '@mui/icons-material/Brightness7';
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useUI } from '../../hooks/useUI';
-import TomatoIcon from '../../assets/icons/tomato.svg?react';
+import tomatoImg from '../../assets/icons/tomato.png';
+import Brightness4Img from '../../assets/icons/brightness_4_196dp_1F1F1F.png';
+import BrightnessLowImg from '../../assets/icons/brightness_low_196dp_1F1F1F.png';
+import NotificationsImg from '../../assets/icons/notifications_none_196dp_1F1F1F.png';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -50,6 +50,10 @@ const TomatoIconWrapper = styled('div')(() => ({
     transform: 'scale(1.1)',
   },
   '& svg': {
+    width: '100%',
+    height: '100%',
+  },
+  '& img': {
     width: '100%',
     height: '100%',
   },
@@ -226,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({
             <>
               <BrandSection onClick={handleBrandClick} sx={{ ml: 1 }}>
                 <TomatoIconWrapper>
-                  <TomatoIcon />
+                  <img src={tomatoImg} alt="Pomkist logo" />
                 </TomatoIconWrapper>
                 <BrandText>
                   Pomkist
@@ -308,13 +312,17 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* 테마 토글 버튼 */}
           <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`}>
-            {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            {theme.palette.mode === 'dark' ? (
+              <img src={BrightnessLowImg} alt="라이트 모드 아이콘" style={{ width: 24, height: 24 }} />
+            ) : (
+              <img src={Brightness4Img} alt="다크 모드 아이콘" style={{ width: 24, height: 24 }} />
+            )}
           </NotificationButton>
 
           {/* 알림 아이콘 (항상 표시) */}
           {rightContent || (
             <NotificationButton disableRipple aria-label="알림">
-              <NotificationsNoneIcon />
+              <img src={NotificationsImg} alt="알림 아이콘" style={{ width: 24, height: 24 }} />
             </NotificationButton>
           )}
         </Box>

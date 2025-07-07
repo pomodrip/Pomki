@@ -88,7 +88,7 @@ const AppRoutes = () => {
         {/* 메인 애플리케이션 (MainLayout + ProtectedRoute 적용) */}
         <Route path="/" element={<ProtectedRoute />}>
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Navigate replace to="/dashboard" />} />
+            <Route index element={<Navigate replace to="/timer" />} />
             
             {/* 핵심 페이지들 (자주 사용됨) */}
             <Route path="dashboard" element={<DashboardPage />} />

@@ -1,15 +1,105 @@
 import React, { useCallback, useMemo } from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
-import HomeIcon  from '../../assets/icons/home.svg?react';
-import TimerIcon  from '../../assets/icons/timer.svg?react';
-import NoteIcon  from '../../assets/icons/note.svg?react';
-import StudyIcon  from '../../assets/icons/study.svg?react';
-import ProfileIcon  from '../../assets/icons/profile.svg?react';
+import HomePng from '../../assets/icons/home_196dp_1F1F1F.png';
+import NotePng from '../../assets/icons/sticky_note_2_196dp_1F1F1F.png';
+import SchoolPng from '../../assets/icons/school_196dp_1F1F1F.png';
+import PersonPng from '../../assets/icons/account_circle_196dp_1F1F1F.png';
 import { useTheme } from '@mui/material/styles';
+import TimerPng from '../../assets/icons/timer_196dp_1F1F1F.png';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsiveUI } from '../../hooks/useUI';
 import { useTabNavigationKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+
+// 파란색으로 칠해진 활성 상태 아이콘을 만들기 위한 마스크 컴포넌트
+const TimerActiveIcon: React.FC<{ color: string }> = ({ color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 28,
+      height: 28,
+      backgroundColor: color,
+      WebkitMaskImage: `url(${TimerPng})`,
+      maskImage: `url(${TimerPng})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+    }}
+  />
+);
+
+// 파란색으로 칠해진 Note 활성 아이콘
+const NoteActiveIcon: React.FC<{ color: string }> = ({ color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 28,
+      height: 28,
+      backgroundColor: color,
+      WebkitMaskImage: `url(${NotePng})`,
+      maskImage: `url(${NotePng})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+    }}
+  />
+);
+
+// Home 활성 아이콘
+const HomeActiveIcon: React.FC<{ color: string }> = ({ color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 28,
+      height: 28,
+      backgroundColor: color,
+      WebkitMaskImage: `url(${HomePng})`,
+      maskImage: `url(${HomePng})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+    }}
+  />
+);
+
+// 학습(학교) 활성 아이콘
+const StudyActiveIcon: React.FC<{ color: string }> = ({ color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 28,
+      height: 28,
+      backgroundColor: color,
+      WebkitMaskImage: `url(${SchoolPng})`,
+      maskImage: `url(${SchoolPng})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+    }}
+  />
+);
+
+// 프로필 활성 아이콘
+const ProfileActiveIcon: React.FC<{ color: string }> = ({ color }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 28,
+      height: 28,
+      backgroundColor: color,
+      WebkitMaskImage: `url(${PersonPng})`,
+      maskImage: `url(${PersonPng})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+    }}
+  />
+);
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
@@ -68,11 +158,11 @@ const BottomNav: React.FC = () => {
 
   // 네비게이션 아이템들 - useMemo 최적화
   const navItems = useMemo(() => [
-    { label: '타이머', inactiveIcon: <TimerIcon fill={theme.palette.text.secondary}/>, activeIcon: <TimerIcon fill={theme.palette.primary.main}/> },
-    { label: '노트', inactiveIcon: <NoteIcon fill={theme.palette.text.secondary}/>, activeIcon: <NoteIcon fill={theme.palette.primary.main}/> },
-    { label: '홈', inactiveIcon: <HomeIcon fill={theme.palette.text.secondary}/>, activeIcon: <HomeIcon fill={theme.palette.primary.main}/> },
-    { label: '학습', inactiveIcon: <StudyIcon stroke={theme.palette.text.secondary}/>, activeIcon: <StudyIcon stroke={theme.palette.primary.main}/> },
-    { label: '프로필', inactiveIcon: <ProfileIcon fill={theme.palette.text.secondary}/>, activeIcon: <ProfileIcon fill={theme.palette.primary.main}/> }
+    { label: '타이머', inactiveIcon: <img src={TimerPng} alt="타이머" style={{ width: 28, height: 28 }} />, activeIcon: <TimerActiveIcon color={theme.palette.primary.main} /> },
+    { label: '노트', inactiveIcon: <img src={NotePng} alt="노트" style={{ width: 28, height: 28 }} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
+    { label: '홈', inactiveIcon: <img src={HomePng} alt="홈" style={{ width: 28, height: 28 }} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
+    { label: '학습', inactiveIcon: <img src={SchoolPng} alt="학습" style={{ width: 28, height: 28 }} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
+    { label: '프로필', inactiveIcon: <img src={PersonPng} alt="프로필" style={{ width: 28, height: 28 }} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
   ], [theme.palette.text.secondary, theme.palette.primary.main]);
 
   return isMobile ? (
