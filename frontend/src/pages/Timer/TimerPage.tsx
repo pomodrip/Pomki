@@ -1985,7 +1985,6 @@ const TimerPage: React.FC = () => {
           <Text sx={{ 
             fontSize: '0.75rem', 
             fontWeight: 400, 
-            color: '#6B7280'
           }}>
             (휠 또는 터치로 조정 가능)
           </Text>

@@ -86,127 +86,38 @@ const DesktopNav = styled(Box)(() => ({
 }));
 
 const NavButton = styled(Button)(({ theme }) => ({
-  fontSize: '14px', // 모바일/태블릿용 축소 크기 (16px → 14px)
-  fontWeight: 500, // 12. 네비게이션 메뉴 폰트 무게
-  color: '#6B7280', // 13. 네비게이션 메뉴 기본 색상
+  fontSize: '14px',
+  fontWeight: 500,
+  color: theme.palette.text.primary,
   textTransform: 'none',
-  padding: '6px 12px', // 패딩 축소 (8px 16px → 6px 12px)
-  borderRadius: '8px', // 19. 네비게이션 메뉴 border-radius
-  transition: 'all 0.2s ease', // 20. 네비게이션 메뉴 transition
-  whiteSpace: 'nowrap', // 줄바꿈 방지
-  minWidth: 'auto', // 최소 너비 제거
-  position: 'relative', // 가상 요소를 위한 상대 위치
+  padding: '6px 12px',
+  borderRadius: '8px',
+  transition: 'all 0.2s ease',
+  whiteSpace: 'nowrap',
+  minWidth: 'auto',
 
-  // 기본 상태의 언더바 (투명하게 숨김)
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    bottom: '2px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '80%',
-    height: '2px',
-    backgroundColor: theme.palette.primary.main,
-    borderRadius: '1px',
-    opacity: 0,
-    transition: 'opacity 0.3s ease, transform 0.3s ease',
-  },
-
-
-  // 새로운 호버 효과 - 연한 파란색 배경
+  // 간단한 호버 효과
   '&:hover': {
-    backgroundColor: theme.palette.primary.light, // E3F2FD 연한 파란색 배경
-    color: theme.palette.primary.main, // 파란색 텍스트
-    fontSize: '15px', // 폰트 크기 증가
-    '&::after': {
-      opacity: 0, // 일반 호버 시에는 언더바 숨김
-    },
+    backgroundColor: theme.palette.primary.light,
+    color: theme.palette.primary.main,
   },
 
-  // 선택된 상태에서 호버 시 - 밑줄 + 배경색 함께
-  '&.active:hover': {
-    backgroundColor: theme.palette.primary.light, // 연한 파란색 배경
-    '&::after': {
-      opacity: 1, // 선택된 상태에서 호버 시에는 언더바 유지
-    },
-  },
-
-  '&:active': {
-    backgroundColor: 'transparent', // 배경색 변화 없음
-    color: theme.palette.primary.main, // 파란색으로 변경
-    fontSize: '15px', // 폰트 크기 증가
-    '&::after': {
-      opacity: 1, // 언더바 나타남
-      transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
-    },
-  },
-
+  // 활성 상태 - 하단 보더로 표시
   '&.active': {
-    backgroundColor: 'transparent', // 배경색 변화 없음
-    color: theme.palette.primary.main, // 활성화 시 파란색
-    fontSize: '15px', // 폰트 크기 증가
-    fontWeight: 700, // 활성화 시 폰트 굵기 증가
-    '&::after': {
-      opacity: 1, // 언더바 항상 표시
-      transform: 'translateX(-50%) scaleX(1)', // 스케일 효과
-    },
+    color: theme.palette.primary.main,
+    fontWeight: 700,
+    borderBottom: `2px solid ${theme.palette.primary.main}`,
   },
 
-  // 데스크톱에서는 원래 크기
+  // 반응형 폰트 크기
   '@media (min-width: 1024px)': {
     fontSize: '15px',
     padding: '8px 14px',
-
-    // 새로운 호버 효과
-    '&:hover': {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
-      fontSize: '16px',
-      '&::after': {
-        opacity: 0,
-      },
-    },
-    '&.active:hover': {
-      backgroundColor: theme.palette.primary.light,
-      '&::after': {
-        opacity: 1,
-      },
-    },
-    '&:active': {
-      fontSize: '16px',
-    },
-    '&.active': {
-      fontSize: '16px',
-      fontWeight: 700,
-    },
   },
 
   '@media (min-width: 1200px)': {
-    fontSize: '16px', // 큰 화면에서는 원래 크기
+    fontSize: '16px',
     padding: '8px 16px',
-
-    // 새로운 호버 효과
-    '&:hover': {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.main,
-      fontSize: '17px',
-      '&::after': {
-        opacity: 0,
-      },
-    },
-    '&.active:hover': {
-      backgroundColor: theme.palette.primary.light,
-      '&::after': {
-        opacity: 1,
-      },
-    },
-    '&:active': {
-      fontSize: '17px',
-    },
-    '&.active': {
-      fontSize: '17px',
-      fontWeight: 700,
-    },
   },
 }));
 
