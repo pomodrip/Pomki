@@ -1,10 +1,19 @@
-import { Box, styled } from '@mui/material';
+import { Box, styled, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Flex, Text } from '../../components/ui';
+import { Button, Flex } from '../../components/ui';
 import { useAppDispatch } from '../../hooks/useRedux';
 import { markIntroductionAsSeen } from '../../api/userApi';
 import { updateUser } from '../../store/slices/authSlice';
+import { tomato } from '../../assets/icons';
+
+// Placeholder images for a professional look
+const placeholders = {
+  hero: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop',
+  ai: 'https://images.unsplash.com/photo-1677756119517-756a188d2d94?q=80&w=2070&auto=format&fit=crop',
+  timer: 'https://images.unsplash.com/photo-1508359509848-1341c045b4ea?q=80&w=2070&auto=format&fit=crop',
+  dashboard: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+};
 
 const OnboardingIntro = () => {
   const navigate = useNavigate();
@@ -12,128 +21,87 @@ const OnboardingIntro = () => {
 
   const handleStart = async () => {
     try {
-      // 1. 서버에 "소개 페이지 봤음" 상태 전송
       await markIntroductionAsSeen();
-      
-      // 2. Redux 스토어의 사용자 상태 업데이트
       dispatch(updateUser({ hasSeenIntroduction: true }));
-
-      // 3. 대시보드로 이동
-      navigate('/dashboard', { replace: true });
+      navigate('/timer', { replace: true });
     } catch (error) {
       console.error("Failed to mark introduction as seen:", error);
-      // 에러가 발생하더라도 일단 대시보드로 이동시켜서 사용자 경험을 막지 않음
-      navigate('/dashboard', { replace: true });
+      navigate('/timer', { replace: true });
     }
   };
 
   return (
     <OnboardingWrapper>
-      <Section color="#F0F6FF">
-        <Header>
-          <Text variant="h4" fontWeight="bold">
-            OneTime
-          </Text>
-          <Text
-            onClick={() => navigate('/login')}
-            style={{ cursor: 'pointer' }}
-          >
-            로그인
-          </Text>
-        </Header>
-        <Flex direction="column" align="center" gap={2} style={{ flex: 1 }}>
-          <Text variant="h4" fontWeight="bold">
-            일정을 쉽고 빠르게
-          </Text>
-          <Text>
-            링크 공유 한 번으로 여러 사람과 일정을 정리하고, 가장 적합한 시간을
-            찾아보세요.
-          </Text>
-          <img
-            src="https://i.imgur.com/uGgT51j.png"
-            alt="schedule management"
-            width="80%"
-          />
-          <Button onClick={handleStart}>시작하기</Button>
-        </Flex>
-      </Section>
+      {/* Hero Section */}
+      <HeroSection>
+        <img src={tomato} alt="Pomki Logo" width="60px" style={{ marginBottom: '16px' }} />
+        <Typography variant="h2" component="h1" fontWeight={700} sx={{ mb: 2 }}>
+          학습의 모든 과정을 하나의 도구로
+        </Typography>
+        <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '600px', mb: 4 }}>
+          Pomki는 AI 기반 플래시카드 생성부터 뽀모도로 타이머, 학습 노트, 성장 분석까지, 당신의 잠재력을 최대로 이끌어낼 완벽한 학습 파트너입니다.
+        </Typography>
+        <Button onClick={handleStart} variant="contained" size="large">
+          지금 바로 시작하기
+        </Button>
+      </HeroSection>
 
-      <Section>
-        <Flex direction="column" align="center" gap={2}>
-          <Text variant="h3" fontWeight="bold">
-            가능한 시간은 더 명확하게, 선택은 더 간편하게
-          </Text>
-          <Text>
-            가능한 시간을 가늠하기 어려우신가요? 그렇다면 '안되는 시간'을
-            지워보세요.
-          </Text>
-          <img
-            src="https://i.imgur.com/2wn43aC.png"
-            alt="time selection"
-            width="80%"
-          />
-        </Flex>
-      </Section>
+      {/* Feature 1: AI Flashcards */}
+      <FeatureSection>
+        <FeatureImage src={placeholders.ai} alt="AI-generated flashcards" />
+        <FeatureContent>
+          <Typography variant="overline" color="primary">AI 기반 학습</Typography>
+          <Typography variant="h4" component="h2" fontWeight={700} sx={{ mt: 1, mb: 2 }}>
+            노트만 하세요, 암기는 AI가 도울게요
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            복잡한 내용을 학습 노트에 정리하기만 하면, Pomki의 AI가 핵심 내용을 파악하여 중요한 질문과 답변으로 구성된 플래시카드를 자동으로 생성해줍니다. 더 이상 카드 만드느라 시간 낭비하지 마세요.
+          </Typography>
+        </FeatureContent>
+      </FeatureSection>
 
-      <Section>
-        <Flex direction="column" align="center" gap={2}>
-          <Text variant="h3" fontWeight="bold">
-            내 일정에 맞게 자동으로 시간 조율, <br />더 이상 고민하지 마세요!
-          </Text>
-          <Flex justify="center" gap={4} style={{ width: '100%' }}>
-            <FeatureBox>
-              <Text variant="h6" fontWeight="bold">
-                내 스케줄 등록
-              </Text>
-              <Text>
-                단 한 번 등록으로 반복 작업 없이 간편하게 내 스케줄을 미리
-                등록하면 불가능한 시간은 자동으로 제외돼요.
-              </Text>
-            </FeatureBox>
-            <FeatureBox>
-              <Text variant="h6" fontWeight="bold">
-                QR 코드 생성
-              </Text>
-              <Text>
-                오프라인에서는 QR코드로 쉽고 빠른 일정관리 오프라인에서는 링크
-                공유 필요 없이 QR코드 하나로 시간을 조율해보세요.
-              </Text>
-            </FeatureBox>
-          </Flex>
-          <img
-            src="https://i.imgur.com/9v6Tsyn.png"
-            alt="auto scheduling"
-            width="60%"
-          />
-        </Flex>
-      </Section>
+      {/* Feature 2: Smart Timer */}
+      <FeatureSection swap>
+        <FeatureContent>
+          <Typography variant="overline" color="primary">스마트 집중 관리</Typography>
+          <Typography variant="h4" component="h2" fontWeight={700} sx={{ mt: 1, mb: 2 }}>
+            집중과 휴식의 완벽한 리듬
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            과학적인 뽀모도로 기법으로 학습 효율을 극대화하세요. 커스터마이징 가능한 타이머로 나만의 집중 사이클을 만들고, 각 세션의 목표를 설정하여 몰입도를 높일 수 있습니다.
+          </Typography>
+        </FeatureContent>
+        <FeatureImage src={placeholders.timer} alt="Smart Pomodoro Timer" />
+      </FeatureSection>
+      
+      {/* Feature 3: Analytics Dashboard */}
+      <FeatureSection>
+        <FeatureImage src={placeholders.dashboard} alt="Analytics Dashboard" />
+        <FeatureContent>
+          <Typography variant="overline" color="primary">데이터 기반 성장</Typography>
+          <Typography variant="h4" component="h2" fontWeight={700} sx={{ mt: 1, mb: 2 }}>
+            당신의 노력을 한눈에
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            학습 시간, 집중도, 퀴즈 성과 등 모든 기록이 대시보드에 자동으로 쌓입니다. 데이터를 통해 자신의 학습 패턴을 파악하고, 더 나은 전략을 세워 꾸준히 성장하는 자신을 발견하세요.
+          </Typography>
+        </FeatureContent>
+      </FeatureSection>
 
-      <Section color="#4A4A7F" style={{ color: 'white' }}>
-        <Flex direction="column" align="center" gap={2}>
-          <img
-            src="https://i.imgur.com/w2C3z7G.png"
-            alt="clock"
-            width="100px"
-          />
-          <Text variant="h4" fontWeight="bold">
-            원타임에서 더 이상 스트레스 없는 간편한 일정조율을 경험하세요
-          </Text>
-          <Button onClick={handleStart} color="secondary">
-            이벤트 생성하기
-          </Button>
-        </Flex>
-      </Section>
+      {/* Final CTA Section */}
+      <CtaSection>
+        <Typography variant="h3" component="h2" fontWeight={700} sx={{ mb: 2, color: 'white' }}>
+          이제, 똑똑하게 학습할 시간
+        </Typography>
+        <Button onClick={handleStart} variant="contained" size="large" sx={{ backgroundColor: 'white', color: 'primary.main', '&:hover': { backgroundColor: 'grey.200' }}}>
+          Pomki로 학습 효율 높이기
+        </Button>
+      </CtaSection>
 
       <Footer>
-        <Text variant="h6" fontWeight="bold">
-          OneTime
-        </Text>
-        <Text>@OneTime. ALL RIGHTS RESERVED</Text>
-        <Flex gap={2}>
-          <Text>버그 및 불편사항 제보</Text>
-          <Text>개인정보처리방침</Text>
-          <Text>서비스 이용약관</Text>
-        </Flex>
+        <Typography variant="body2" color="text.secondary">
+          © Pomki. ALL RIGHTS RESERVED
+        </Typography>
       </Footer>
     </OnboardingWrapper>
   );
@@ -142,39 +110,69 @@ const OnboardingIntro = () => {
 export default OnboardingIntro;
 
 const OnboardingWrapper = styled(Box)({
-  textAlign: 'center',
+  backgroundColor: '#fff',
 });
 
-const Section = styled(Box)<{ color?: string }>(({ color, theme }) => ({
-  padding: '4rem 2rem',
-  backgroundColor: color || theme.palette.background.paper,
+const HeroSection = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  minHeight: '100vh',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: '70vh',
+  padding: theme.spacing(4),
+  textAlign: 'center',
+  backgroundColor: theme.palette.grey[50],
 }));
 
-const Header = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
+const FeatureSection = styled(Box)<{ swap?: boolean }>(({ theme, swap }) => ({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
   alignItems: 'center',
-  padding: '0 1rem 2rem',
-});
+  gap: theme.spacing(8),
+  margin: '0 auto',
+  padding: theme.spacing(10, 4),
+  maxWidth: '1200px',
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    textAlign: 'center',
+    gap: theme.spacing(4),
+    padding: theme.spacing(6, 2),
+  },
+  flexDirection: swap ? 'row-reverse' : 'row',
+}));
 
-const FeatureBox = styled(Box)(({ theme }) => ({
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  padding: '2rem',
+const FeatureContent = styled(Box)(({ theme }) => ({
+  [theme.breakpoints.down('md')]: {
+    order: 2,
+  },
+}));
+
+const FeatureImage = styled('img')(({ theme }) => ({
+  width: '100%',
+  height: 'auto',
   borderRadius: '16px',
-  flex: 1,
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  objectFit: 'cover',
+  maxHeight: '400px',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+  [theme.breakpoints.down('md')]: {
+    order: 1,
+    maxHeight: '300px',
+  },
+}));
+
+const CtaSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(10, 4),
+  textAlign: 'center',
+  backgroundColor: theme.palette.primary.main,
+  backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
 }));
 
 const Footer = styled('footer')(({ theme }) => ({
-  backgroundColor: theme.palette.grey[900],
-  color: theme.palette.grey[400],
-  padding: '4rem 2rem',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '1rem',
+  padding: theme.spacing(3),
+  textAlign: 'center',
+  backgroundColor: theme.palette.grey[100],
 }));
