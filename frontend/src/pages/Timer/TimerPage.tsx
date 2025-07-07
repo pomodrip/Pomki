@@ -919,7 +919,7 @@ const TimerPage: React.FC = () => {
           const blob = new Blob([JSON.stringify({ studyMinutes: minutesSpent })], {
             type: 'application/json',
           });
-          navigator.sendBeacon('/api/v1/stats/study-time', blob);
+          navigator.sendBeacon('/api/stats/study-time', blob);
           // 누적 초기화 (다음 unload 중복 방지)
           modeElapsedSecRef.current = 0;
         } catch (err) {

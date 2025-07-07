@@ -23,7 +23,7 @@ export interface TodayAttendance {
  * 사용자의 종합 프로필 통계를 조회합니다.
  */
 export const getMemberSummary = async (): Promise<MemberSummary> => {
-  const response = await api.get<MemberSummary>('/api/v1/analysis/member/summary');
+  const response = await api.get<MemberSummary>('/api/analysis/member/summary');
   return response.data;
 };
 
@@ -31,7 +31,7 @@ export const getMemberSummary = async (): Promise<MemberSummary> => {
  * 사용자의 전체 누적 학습 시간을 조회합니다.
  */
 export const getTotalStudyTime = async (): Promise<TotalStudyTime> => {
-  const response = await api.get<TotalStudyTime>('/api/v1/analysis/member/study-time/total');
+  const response = await api.get<TotalStudyTime>('/api/analysis/member/study-time/total');
   return response.data;
 };
 
@@ -39,6 +39,6 @@ export const getTotalStudyTime = async (): Promise<TotalStudyTime> => {
  * 오늘 출석했는지 여부를 간단히 확인합니다.
  */
 export const checkTodayAttendance = async (): Promise<TodayAttendance> => {
-  const response = await api.get<TodayAttendance>('/api/v1/analysis/member/attendance/today');
+  const response = await api.get<TodayAttendance>('/api/analysis/member/attendance/today');
   return response.data;
 }; 
