@@ -297,18 +297,39 @@ const FlashcardPracticePage: React.FC = () => {
           backgroundColor: isSelected ? '#4caf50' : 'transparent',
           color: isSelected ? 'white' : '#4caf50',
           border: '2px solid #4caf50',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': {
+            backgroundColor: isSelected ? '#43a047' : '#e8f5e9',
+            color: isSelected ? 'white' : '#4caf50',
+            border: '2px solid #4caf50',
+            transform: 'translateY(-1px) scale(1.3)',
+          },
         };
       case 'confusing':
         return {
           backgroundColor: isSelected ? '#ff9800' : 'transparent',
           color: isSelected ? 'white' : '#ff9800',
           border: '2px solid #ff9800',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': {
+            backgroundColor: isSelected ? '#fb8c00' : '#fff3e0',
+            color: isSelected ? 'white' : '#ff9800',
+            border: '2px solid #ff9800',
+            transform: 'translateY(-1px) scale(1.3)',
+          },
         };
       case 'hard':
         return {
           backgroundColor: isSelected ? '#f44336' : 'transparent',
           color: isSelected ? 'white' : '#f44336',
           border: '2px solid #f44336',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': {
+            backgroundColor: isSelected ? '#e53935' : '#ffebee',
+            color: isSelected ? 'white' : '#f44336',
+            border: '2px solid #f44336',
+            transform: 'translateY(-1px) scale(1.3)',
+          },
         };
       default:
         return {};
