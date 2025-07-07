@@ -11,6 +11,7 @@ import membershipReducer from './slices/membershipSlice';
 import timerReducer from './slices/timerSlice';
 import uiReducer from './slices/uiSlice';
 import adReducer from './slices/adSlice';
+import notificationReducer from './slices/notificationSlice'; // 🔔 알림 슬라이스 추가
 import dashboardReducer from './slices/dashboardSlice';
 
 export const store = configureStore({
@@ -27,6 +28,7 @@ export const store = configureStore({
     ui: uiReducer, // 🎨 UI 상태 관리 슬라이스 추가
     ad: adReducer, // 🎯 새로운 광고 슬라이스 추가
     dashboard: dashboardReducer, // 🆕 대시보드 슬라이스 추가
+    notification: notificationReducer, // 🔔 알림 리듀서 추가
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

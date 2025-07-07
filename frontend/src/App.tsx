@@ -15,6 +15,10 @@ import ErrorSnackbar from './components/common/ErrorSnackbar';
 import Toast from './components/common/Toast';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { initializePrefetch } from './utils/prefetch';
+import { requestPermissionAndGetToken, onForegroundMessage } from './utils/fcmUtils';
+import { openDialog } from './store/slices/dialogSlice';
+
+
 
 // 로딩 스플래시 화면 컴포넌트
 function LoadingSplash() {
@@ -33,11 +37,10 @@ function LoadingSplash() {
     </Box>
   );
 }
-
 // UI 초기화 컴포넌트
 function UIInitializer() {
   const { initialize, theme: currentTheme } = useUI();
-  const { isInitialized } = useAuth();
+  const { isInitialized, isAuthenticated } = useAuth(); // isAuthenticated 추가
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -50,6 +53,18 @@ function UIInitializer() {
       initializePrefetch();
     }, 2000);
   }, [initialize, dispatch]);
+
+  useEffect(() => {
+    
+    // 사용자가 인증된 상태일 때만 알림 권한 요청
+    if (isAuthenticated) {
+      requestPermissionAndGetToken(dispatch);
+      const unsubscribe  = onForegroundMessage();
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [isAuthenticated]);
 
   // Redux 테마에 따라 MUI 테마 동적 생성
   const dynamicTheme = createTheme({
