@@ -18,27 +18,17 @@ import 'react-quill/dist/quill.snow.css';
 // Timer 전용 컴포넌트들 import
 import {
   TimerCircle,
-  CircularProgress,
-  ProgressCircle,
   QuillEditor,
   NotesSection,
   NotesHeader,
-  NotesTitle,
   TaskInput,
   SettingsContainer,
   SettingsRow,
   PresetsSection,
-  PresetsTitle,
   PresetButton,
-  PageContainer,
   FocusTimeSection,
   RunningHeader,
   ButtonContainer,
-  PageTitle,
-  FocusTimeLabel,
-  SessionProgress,
-  ElapsedTime,
-  TimerDisplay,
 } from '../../components/timer';
 
 import { useTimer } from '../../hooks/useTimer';
@@ -617,7 +607,9 @@ const TimerPage: React.FC = () => {
   const canGenerateAI = notes.trim() && !aiLoading;
   const canSave = (notes.trim() || taskName.trim());
 
-
+  // SVG 원의 중심과 반지름 계산 (반지름 기준)
+  const radius = 130; // 280px 원의 반지름에서 stroke-width 고려하여 조정
+  const circumference = 2 * Math.PI * radius;
 
   const settingsActions = (
     <Box sx={{ display: 'flex', gap: '12px', width: '100%', marginTop: '16px' }}>
@@ -1185,12 +1177,54 @@ const TimerPage: React.FC = () => {
         </FocusTimeSection>
       )}
 
-      <TimerCircle
-        isRunning={isRunning}
-        progress={progress}
-        minutes={minutes}
-        seconds={seconds}
-      />
+      <TimerCircle>
+        {isRunning && (
+          <CircularProgress width="280" height="280" viewBox="0 0 280 280">
+            {/* 배경 원 */}
+            <circle
+              cx="140"
+              cy="140"
+              r={radius}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth="8"
+            />
+            {/* 진행률 원 */}
+            <ProgressCircle
+              cx="140"
+              cy="140"
+              r={radius}
+              stroke="#2979FF" // theme의 primary.main 색상
+              style={{
+                strokeDasharray: `${circumference}, ${circumference}`,
+                strokeDashoffset: circumference - (progress / 100) * circumference,
+              }}
+            />
+          </CircularProgress>
+        )}
+        
+        {!isRunning && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '100%',
+              height: '100%',
+              border: '8px solid #E5E7EB',
+              borderRadius: '50%',
+              '@media (min-width: 600px)': {
+                border: '12px solid #E5E7EB',
+              },
+            }}
+          />
+        )}
+        
+        <TimerDisplay>
+          {formatTime(minutes, seconds)}
+        </TimerDisplay>
+      </TimerCircle>
 
       <ButtonContainer>
         <Button
