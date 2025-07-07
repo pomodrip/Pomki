@@ -30,4 +30,4 @@ dist-ssr
 .vite/
 
 .env
-
+dev-dist/
