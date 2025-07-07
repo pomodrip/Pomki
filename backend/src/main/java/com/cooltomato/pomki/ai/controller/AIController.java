@@ -1,5 +1,7 @@
 package com.cooltomato.pomki.ai.controller;
 
+import com.cooltomato.pomki.ai.dto.AiQuestionRequestDto;
+import com.cooltomato.pomki.ai.dto.AiQuestionResponseDto;
 import com.cooltomato.pomki.ai.dto.NotePolishRequestDto;
 import com.cooltomato.pomki.ai.dto.NotePolishResponseDto;
 import com.cooltomato.pomki.ai.service.AIService;
@@ -105,5 +107,39 @@ public class AIController {
             public final boolean available = !aiService.toString().contains("not configured");
             public final String message = available ? "AI 기능이 사용 가능합니다" : "AI 기능을 사용하려면 API 키를 설정해주세요";
         });
+    }
+    
+    /**
+     * AI에게 질문하고 답변 받기
+     * 노트 작성 중 궁금한 내용을 질문
+     */
+    @PostMapping("/ask")
+    public ResponseEntity<AiQuestionResponseDto> askQuestion(
+            @Valid @RequestBody AiQuestionRequestDto request,
+            @AuthenticationPrincipal PrincipalMember principalMember) {
+        
+        try {
+            log.info("User {} asking question: {}", principalMember.getMemberId(), request.getQuestion());
+            
+            String answer = aiService.answerQuestion(
+                request.getQuestion(), 
+                request.getContext()
+            );
+            
+            return ResponseEntity.ok(
+                AiQuestionResponseDto.success(
+                    request.getQuestion(), 
+                    answer
+                )
+            );
+            
+        } catch (Exception e) {
+            log.error("AI question answering failed for user: {}", principalMember.getMemberId(), e);
+            return ResponseEntity.internalServerError()
+                .body(AiQuestionResponseDto.failure(
+                    request.getQuestion(), 
+                    e.getMessage()
+                ));
+        }
     }
 }
