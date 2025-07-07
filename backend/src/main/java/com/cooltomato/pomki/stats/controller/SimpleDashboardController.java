@@ -2,7 +2,7 @@ package com.cooltomato.pomki.stats.controller;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.stats.dto.SimpleDashboardStatsDto;
-import com.cooltomato.pomki.stats.service.SimpleDashboardStatsService;
+import com.cooltomato.pomki.stats.service.StatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Simple Dashboard Stats", description = "간단한 대시보드 통계 API")
 public class SimpleDashboardController {
 
-    private final SimpleDashboardStatsService simpleDashboardStatsService;
+    private final StatsService statsService;
 
-    @GetMapping("/dashboard")
+    @GetMapping("/dashboard") 
     @Operation(summary = "간단한 대시보드 통계 조회", 
                description = "7일 일정에 맞춘 핵심 통계만 제공")
     public ResponseEntity<SimpleDashboardStatsDto> getSimpleDashboardStats(
@@ -31,7 +31,7 @@ public class SimpleDashboardController {
         log.info("Simple dashboard stats requested by member: {}", 
                 principal.getMemberInfo().getMemberId());
         
-        SimpleDashboardStatsDto stats = simpleDashboardStatsService.getDashboardStats(principal);
+        SimpleDashboardStatsDto stats = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(stats);
     }
 
@@ -40,7 +40,7 @@ public class SimpleDashboardController {
     public ResponseEntity<SimpleDashboardStatsDto.TodayStudyStats> getTodayStats(
             @AuthenticationPrincipal PrincipalMember principal) {
         
-        SimpleDashboardStatsDto stats = simpleDashboardStatsService.getDashboardStats(principal);
+        SimpleDashboardStatsDto stats = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(stats.getTodayStudy());
     }
 
@@ -49,7 +49,7 @@ public class SimpleDashboardController {
     public ResponseEntity<SimpleDashboardStatsDto.WeeklyStats> getWeeklyStats(
             @AuthenticationPrincipal PrincipalMember principal) {
         
-        SimpleDashboardStatsDto stats = simpleDashboardStatsService.getDashboardStats(principal);
+        SimpleDashboardStatsDto stats = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(stats.getWeeklyStats());
     }
 
@@ -58,7 +58,7 @@ public class SimpleDashboardController {
     public ResponseEntity<SimpleDashboardStatsDto.ReviewStats> getReviewStats(
             @AuthenticationPrincipal PrincipalMember principal) {
         
-        SimpleDashboardStatsDto stats = simpleDashboardStatsService.getDashboardStats(principal);
+        SimpleDashboardStatsDto stats = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(stats.getReviewStats());
     }
 
@@ -67,7 +67,7 @@ public class SimpleDashboardController {
     public ResponseEntity<SimpleDashboardStatsDto.TotalStats> getTotalStats(
             @AuthenticationPrincipal PrincipalMember principal) {
         
-        SimpleDashboardStatsDto stats = simpleDashboardStatsService.getDashboardStats(principal);
+        SimpleDashboardStatsDto stats = statsService.getDashboardStats(principal);
         return ResponseEntity.ok(stats.getTotalStats());
     }
 } 

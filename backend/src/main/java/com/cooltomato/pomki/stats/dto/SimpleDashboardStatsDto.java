@@ -47,10 +47,20 @@ public class SimpleDashboardStatsDto {
     @Getter
     @Builder
     public static class ReviewStats {
-        private final int todayReviewCards;       // 오늘 복습할 카드 수
-        private final int completedReviews;       // 오늘 완료한 복습 수
-        private final int upcomingCards;          // 예정된 복습 카드 수 (7일 내)
-        private final String mostDifficultCard;   // 가장 어려운 카드
+        private final int todayReviewCards;
+        private final int completedReviews;
+        private final int overdueCards;
+        private final int upcoming3DaysCards;
+        private final String mostDifficultCard;
+
+        @Builder
+        public ReviewStats(int todayReviewCards, int completedReviews, int overdueCards, int upcoming3DaysCards, String mostDifficultCard) {
+            this.todayReviewCards = todayReviewCards;
+            this.completedReviews = completedReviews;
+            this.overdueCards = overdueCards;
+            this.upcoming3DaysCards = upcoming3DaysCards;
+            this.mostDifficultCard = mostDifficultCard;
+        }
     }
 
     @Getter
