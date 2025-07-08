@@ -54,9 +54,9 @@ const EditorComparisonPage = lazy(() => import('../pages/Etc/EditorComparisonPag
 // 페이지 Preload 함수들 (성능 최적화)
 // ==========================================
 
-// 자주 사용되는 페이지들을 미리 로드
+// 자주 사용되는 페이지들을 미리 로드 
 const preloadCriticalPages = () => {
-  // 사용자가 로그인 후 가장 먼저 접근할 가능성이 높은 페이지들
+  // 사용자가 로그인 후 가장 먼저 접근  할 가능성이 높은 페이지들
   const criticalPages = [
     () => import('../pages/Dashboard/DashboardPage'),
     () => import('../pages/Study/FlashcardDeckListPage'),
