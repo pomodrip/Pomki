@@ -4,10 +4,12 @@ import HomePng from '../../assets/icons/home_196dp_1F1F1F.png';
 import NotePng from '../../assets/icons/sticky_note_2_196dp_1F1F1F.png';
 import SchoolPng from '../../assets/icons/school_196dp_1F1F1F.png';
 import PersonPng from '../../assets/icons/account_circle_196dp_1F1F1F.png';
-import { useTheme } from '@mui/material/styles';
 import TimerPng from '../../assets/icons/timer_196dp_1F1F1F.png';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { useTheme } from '@mui/material/styles';
 
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useDialog } from '../../hooks/useDialog';
 import { useResponsiveUI } from '../../hooks/useUI';
 import { useTabNavigationKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
@@ -106,6 +108,7 @@ const BottomNav: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const { isMobile } = useResponsiveUI();
+  const { openDialog } = useDialog();
 
   // 현재 활성 탭 계산 - useMemo 최적화
   const activeTab = useMemo(() => {
@@ -114,7 +117,8 @@ const BottomNav: React.FC = () => {
     if (pathname.startsWith('/note')) return 1;
     if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
     if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
-    if (pathname.startsWith('/profile')) return 4;
+    // AI 버튼은 특정 경로와 매핑되지 않으므로 active 상태가 되지 않습니다.
+    if (pathname.startsWith('/profile')) return 5;
     return 2; // default to home
   }, [location.pathname]);
 
@@ -133,20 +137,23 @@ const BottomNav: React.FC = () => {
       case 3:
         navigate('/study');
         break;
-      case 4:
+      case 4: // AI 검색 버튼
+        openDialog({ id: 'aiSearch', title: 'AI에게 무엇이든 물어보세요', content: '' });
+        break;
+      case 5:
         navigate('/profile');
         break;
     }
-  }, [navigate]);
+  }, [navigate, openDialog]);
 
   // 키보드 단축키로 탭 네비게이션 - useCallback 최적화
   const handleNextTab = useCallback(() => {
-    const nextTab = activeTab >= 4 ? 0 : activeTab + 1;
+    const nextTab = activeTab >= 5 ? 0 : activeTab + 1;
     handleChange({} as React.SyntheticEvent, nextTab);
   }, [activeTab, handleChange]);
 
   const handlePreviousTab = useCallback(() => {
-    const previousTab = activeTab <= 0 ? 4 : activeTab - 1;
+    const previousTab = activeTab <= 0 ? 5 : activeTab - 1;
     handleChange({} as React.SyntheticEvent, previousTab);
   }, [activeTab, handleChange]);
 
@@ -162,6 +169,7 @@ const BottomNav: React.FC = () => {
     { label: '노트', inactiveIcon: <img src={NotePng} alt="노트" style={{ width: 28, height: 28 }} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
     { label: '홈', inactiveIcon: <img src={HomePng} alt="홈" style={{ width: 28, height: 28 }} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
     { label: '학습', inactiveIcon: <img src={SchoolPng} alt="학습" style={{ width: 28, height: 28 }} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
+    { label: 'AI 검색', inactiveIcon: <AutoAwesomeIcon />, activeIcon: <AutoAwesomeIcon sx={{ color: theme.palette.primary.main }} /> },
     { label: '프로필', inactiveIcon: <img src={PersonPng} alt="프로필" style={{ width: 28, height: 28 }} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
   ], [theme.palette.text.secondary, theme.palette.primary.main]);
 

@@ -18,6 +18,7 @@ import { initializePrefetch } from './utils/prefetch';
 import { requestPermissionAndGetToken, onForegroundMessage } from './utils/fcmUtils';
 import { openDialog } from './store/slices/dialogSlice';
 import IntroductionDialog from './components/common/IntroductionDialog';
+import AISearchDialog from './components/common/AISearchDialog';
 
 const INTRO_POPUP_STORAGE_KEY = 'pomki-intro-popup-last-seen';
 
@@ -174,6 +175,7 @@ function UIInitializer() {
           <AppRoutes />
           <ErrorSnackbar />
           <Toast />
+          <AISearchDialog />
           <IntroductionDialog
             open={isIntroDialogOpen}
             onClose={handleCloseIntroDialog}

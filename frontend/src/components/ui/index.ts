@@ -20,6 +20,7 @@ export { Menu, MenuItem } from './Menu';
 export { default as FlashCard } from './FlashCard';
 export { default as CircularProgress } from './CircularProgress';
 export { default as LazyReactQuill } from './LazyReactQuill';
+export { default as Alert } from './Alert';
 
 // 타입 export
 export type { TextProps } from './Text';

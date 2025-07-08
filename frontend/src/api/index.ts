@@ -176,5 +176,6 @@ export * from './membershipApi';
 export * from './timerApi';
 export * from './adApi';
 export * from './trashApi';
+export * from './aiApi';
 
 export default api;

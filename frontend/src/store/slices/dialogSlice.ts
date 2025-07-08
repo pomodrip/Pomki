@@ -1,23 +1,27 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import type { ReactNode } from 'react';
 
 export interface DialogState {
+  id: string | null;
   isOpen: boolean;
   title: string;
-  content: string;
+  content: ReactNode | null;
   onConfirm?: () => void;
 }
 
 export interface DialogPayload {
+  id: string;
   title: string;
-  content: string;
+  content: ReactNode;
   onConfirm?: () => void;
 }
 
 const initialState: DialogState = {
+  id: null,
   isOpen: false,
   title: '',
-  content: '',
+  content: null,
   onConfirm: undefined,
 };
 
@@ -27,14 +31,16 @@ const dialogSlice = createSlice({
   reducers: {
     openDialog: (state, action: PayloadAction<DialogPayload>) => {
       state.isOpen = true;
+      state.id = action.payload.id;
       state.title = action.payload.title;
       state.content = action.payload.content;
       state.onConfirm = action.payload.onConfirm;
     },
     closeDialog: (state) => {
       state.isOpen = false;
+      state.id = null;
       state.title = '';
-      state.content = '';
+      state.content = null;
       state.onConfirm = undefined;
     },
   },

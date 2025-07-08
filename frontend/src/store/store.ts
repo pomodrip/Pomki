@@ -13,6 +13,7 @@ import uiReducer from './slices/uiSlice';
 import adReducer from './slices/adSlice';
 import notificationReducer from './slices/notificationSlice'; // 🔔 알림 슬라이스 추가
 import dashboardReducer from './slices/dashboardSlice';
+import aiReducer from './slices/aiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +30,7 @@ export const store = configureStore({
     ad: adReducer, // 🎯 새로운 광고 슬라이스 추가
     dashboard: dashboardReducer, // 🆕 대시보드 슬라이스 추가
     notification: notificationReducer, // 🔔 알림 리듀서 추가
+    ai: aiReducer, // 🤖 AI 검색 슬라이스 추가
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
