@@ -15,6 +15,7 @@ import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
 import com.cooltomato.pomki.noteimage.entity.NoteImage;
+import com.cooltomato.pomki.noteimage.repository.NoteImageRepository;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
 import com.cooltomato.pomki.tag.entity.Tag;
@@ -47,6 +48,7 @@ public class NoteService {
     private final CardTagRepository cardTagRepository;
     private final AIService aiService;
     private final BookmarkRepository bookmarkRepository;
+    private final NoteImageRepository noteImageRepository;
 
     @Transactional
     public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
@@ -109,6 +111,9 @@ public class NoteService {
         note.setIsDeleted(true);
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
+
+        List<NoteImage> noteImages = noteImageRepository.findByNote_NoteId(id);
+        noteImageRepository.deleteAll(noteImages);
 
         bookmarkRepository.deleteByMemberMemberIdAndNoteNoteId(memberInfoDto.getMemberId(), id);
 
