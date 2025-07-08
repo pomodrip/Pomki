@@ -9,8 +9,11 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.deck.entity.Deck;
-import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.cardtag.entity.CardTag;
+// import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.trash.entity.TrashCard;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -55,14 +58,17 @@ public class Card {
     )
     private Deck deck;
 
+    // CardTag와의 양방향 관계
+    @OneToMany(mappedBy = "card", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CardTag> cardTags = new ArrayList<>();
+
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    private List<TrashCard> trashCards = new ArrayList<>();
 
-    
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CardBookmark> cardBookmarks = new ArrayList<>();
 
-    // // deck_id를 가져오는 편의 메서드
-    // public String getDeckId() {
-    //     return deck != null ? deck.getDeckId() : null;
-    // }
 } 

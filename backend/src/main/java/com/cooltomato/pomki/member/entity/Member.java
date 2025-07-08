@@ -14,6 +14,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,9 +26,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.cooltomato.pomki.bookmark.entity.Bookmark;
+import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
-import com.cooltomato.pomki.tag.entity.Tag;
+// import com.cooltomato.pomki.tag.entity.Tag;
+import com.cooltomato.pomki.trash.entity.Trash;
 
 @Entity
 @Table(name = "MEMBER", uniqueConstraints = {
@@ -37,8 +41,6 @@ import com.cooltomato.pomki.tag.entity.Tag;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Member {
 
@@ -52,7 +54,7 @@ public class Member {
     @Column(nullable = false)
     private String currentEmail;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "VARCHAR(100)")
     private String memberNickname;
 
     @Column(name = "social_provider_user_id")
@@ -86,9 +88,18 @@ public class Member {
 
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Tag> tags = new ArrayList<>();
+    // @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @Builder.Default
+    // private List<Tag> tags = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Trash> trashItems;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Bookmark> bookmarks;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<CardBookmark> cardBookmarks;
 
     @Builder
     public Member(String memberEmail, String currentEmail, String memberNickname,
@@ -104,5 +115,8 @@ public class Member {
         this.emailVerified = emailVerified;
         this.isSocialLogin = isSocialLogin;
         this.isDeleted = isDeleted;
+        this.bookmarks = bookmarks == null ? new ArrayList<>() : bookmarks;
+        this.trashItems = trashItems == null ? new ArrayList<>() : trashItems;
+        this.cardBookmarks = cardBookmarks == null ? new ArrayList<>() : cardBookmarks;
     }
 }

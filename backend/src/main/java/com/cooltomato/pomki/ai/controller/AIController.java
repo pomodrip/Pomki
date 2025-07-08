@@ -18,7 +18,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
+@Tag(name = "AI", description = "AI 관련 기능 API")
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
@@ -28,9 +31,7 @@ public class AIController {
     private final AIService aiService;
     private final NoteService noteService;
     
-    /**
-     * 노트 내용을 AI로 폴리싱
-     */
+    @Operation(summary = "노트 AI 폴리싱", description = "노트 내용을 AI로 다듬어 반환합니다.")
     @PostMapping("/polish-note")
     public ResponseEntity<NotePolishResponseDto> polishNote(
             @Valid @RequestBody NotePolishRequestDto request,
@@ -69,9 +70,7 @@ public class AIController {
         }
     }
     
-    /**
-     * 폴리싱된 내용으로 노트 업데이트
-     */
+    @Operation(summary = "AI 폴리싱 적용", description = "AI로 다듬어진 내용을 노트에 반영합니다.")
     @PostMapping("/apply-polish/{noteId}")
     public ResponseEntity<String> applyPolish(
             @PathVariable String noteId,
@@ -98,9 +97,7 @@ public class AIController {
         }
     }
     
-    /**
-     * AI 기능 사용 가능 여부 확인
-     */
+    @Operation(summary = "AI 기능 사용 가능 여부 확인", description = "AI 기능이 사용 가능한지 상태를 반환합니다.")
     @GetMapping("/status")
     public ResponseEntity<Object> getAIStatus() {
         return ResponseEntity.ok(new Object() {

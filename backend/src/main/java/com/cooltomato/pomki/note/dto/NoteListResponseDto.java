@@ -3,10 +3,13 @@ package com.cooltomato.pomki.note.dto;
 import com.cooltomato.pomki.note.entity.Note;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
+@Setter
 @Builder
 public class NoteListResponseDto {
     private String noteId;
@@ -14,6 +17,8 @@ public class NoteListResponseDto {
     private Boolean aiEnhanced;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<String> tags;
+    private boolean isBookmarked;
 
     public static NoteListResponseDto from(Note note) {
         return NoteListResponseDto.builder()
@@ -23,5 +28,9 @@ public class NoteListResponseDto {
                 .createdAt(note.getCreatedAt())
                 .updatedAt(note.getUpdatedAt())
                 .build();
+    }
+
+    public void setIsBookmarked(boolean isBookmarked) {
+        this.isBookmarked = isBookmarked;
     }
 } 

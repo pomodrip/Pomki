@@ -64,6 +64,8 @@ dependencies {
 
 	//	 WebClient 사용을 위해 추가
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// fcm
+	implementation 'com.google.firebase:firebase-admin:9.5.0'
 }
 
 tasks.named('test') {

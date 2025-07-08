@@ -63,9 +63,10 @@ public class CardController {
     })
     @GetMapping("/{cardId}")
     public ResponseEntity<CardResponseDto> readOneCard(
+        @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal,
         @Parameter(description = "카드 ID") @PathVariable("cardId") Long cardId) {
         log.info("debug >>> CardCtrl readAsingleCard 카드 한 장 내용 조회");
-        CardResponseDto aCard = service.readOnecardService(cardId);
+        CardResponseDto aCard = service.readOnecardService(principal, cardId);
         return ResponseEntity.ok(aCard);
     }
 
@@ -94,7 +95,7 @@ public class CardController {
     public ResponseEntity<Void> deleteOneCard(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal, 
         @Parameter(description = "카드 ID") @PathVariable("cardId") Long cardId) {
-        service.deleteOnecardService(principal, cardId);
+        service.deleteOneCardService(principal, cardId);
         return ResponseEntity.noContent().build() ;
     }
 
