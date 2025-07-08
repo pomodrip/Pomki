@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-// [Tag] TagController: 태그 관련 API를 제공하는 컨트롤러
+// [Tag] TagController: 태그 관련 API를 제공하는 컨트롤러 
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
