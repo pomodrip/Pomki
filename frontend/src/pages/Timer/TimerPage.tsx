@@ -1034,9 +1034,7 @@ const TimerPage: React.FC = () => {
         value={notes}
         onChange={handleEditorChange}
         readOnly={!isRunning}
-        sx={{
-          marginBottom: { xs: '120px', sm: '16px' }, // 모바일에서 하단 툴바 공간 확보
-        }}
+
       />
 
       {/* 데스크톱 확장된 기능들 */}

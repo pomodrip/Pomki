@@ -10,6 +10,9 @@ const StyledButton = styled(MuiButton)<ButtonProps>(({ theme, variant, color }) 
   fontWeight: 600,
   minHeight: '44px', // 39. Button Height
   fontSize: '1rem', // 40. Button Text Size
+  whiteSpace: 'nowrap', // 텍스트 줄바꿈 방지
+  overflow: 'hidden', // 오버플로우 숨김
+  textOverflow: 'ellipsis', // 오버플로우 시 ... 표시
   
   ...(variant === 'contained' &&
     color === 'primary' && {

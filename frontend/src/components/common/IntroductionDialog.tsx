@@ -21,16 +21,16 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
   };
 
   const actions = (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%' }}>
-      <Button onClick={onClose} variant="text" color="inherit" sx={{ color: 'text.secondary' }}>
-        닫기
-      </Button>
-      <Button onClick={onDontShowToday} variant="outlined" color="primary">
-        오늘 하루 보지 않기
-      </Button>
+    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, width: '100%', flexWrap: 'wrap' }}>
+
       <Button onClick={handleGoToIntroduction} variant="contained" color="primary">
         소개 보러 가기
       </Button>
+
+      <Button onClick={onDontShowToday} variant="outlined" color="primary">
+        오늘 하루 보지 않기
+      </Button>
+
     </Box>
   );
 
@@ -54,9 +54,6 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
         <Text sx={{
           color: 'text.secondary',
           display: 'block',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
         }}>
           더욱 편리해진 Pomki의 새로운 기능들을 소개 페이지에서 만나보세요!
         </Text>

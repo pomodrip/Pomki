@@ -3,13 +3,13 @@ import { AppBar, Toolbar, IconButton, Typography, Box, styled, useTheme } from '
 import Button from '../ui/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import MenuIcon from '@mui/icons-material/Menu';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import BrightnessLowIcon from '@mui/icons-material/BrightnessLow';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useUI } from '../../hooks/useUI';
 import tomatoImg from '../../assets/icons/tomato.png';
-import Brightness4Img from '../../assets/icons/brightness_4_196dp_1F1F1F.png';
-import BrightnessLowImg from '../../assets/icons/brightness_low_196dp_1F1F1F.png';
-import NotificationsImg from '../../assets/icons/notifications_none_196dp_1F1F1F.png';
 
 // design.md 가이드 1-25번 적용 - Header 섹션
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -117,7 +117,18 @@ const NavButton = styled(Button)(({ theme }) => ({
   '&.active': {
     color: theme.palette.primary.main,
     fontWeight: 700,
-    borderBottom: `2px solid ${theme.palette.primary.main}`,
+    position: 'relative',
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: '-2px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '80%',
+      height: '2px',
+      backgroundColor: theme.palette.primary.main,
+      borderRadius: '1px',
+    },
   },
 
   // 반응형 폰트 크기
@@ -133,14 +144,15 @@ const NavButton = styled(Button)(({ theme }) => ({
 }));
 
 // 우측 영역 - design.md 가이드 21-25번 적용
-const NotificationButton = styled(IconButton)(() => ({
+const NotificationButton = styled(IconButton)(({ theme }) => ({
   width: '40px', // 24. 알림 아이콘 배경 크기
   height: '40px', // 24. 알림 아이콘 배경 크기
   borderRadius: '8px', // 25. 알림 아이콘 border-radius
-  color: '#6B7280', // 22. 알림 아이콘 색상
+  color: theme.palette.text.primary, // 22. 테마 색상 사용
 
   '&:hover': {
-    backgroundColor: 'rgba(107, 114, 128, 0.1)', // 23. 알림 아이콘 hover 배경
+    backgroundColor: theme.palette.primary.light,
+    color: theme.palette.primary.main,
   },
 
   '& .MuiSvgIcon-root': {
@@ -149,14 +161,14 @@ const NotificationButton = styled(IconButton)(() => ({
 }));
 
 // 햄버거 메뉴 버튼
-const MenuButton = styled(IconButton)(() => ({
+const MenuButton = styled(IconButton)(({ theme }) => ({
   width: '40px',
   height: '40px',
   borderRadius: '8px',
-  color: '#6B7280',
+  color: theme.palette.text.primary,
 
   '&:hover': {
-    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+    backgroundColor: theme.palette.action.hover,
   },
 
   '& .MuiSvgIcon-root': {
@@ -223,7 +235,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {shouldShowBackButton && isMobile ? (
-            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1 }} disableRipple aria-label="뒤로가기">
+            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1, color: 'text.primary' }} disableRipple aria-label="뒤로가기">
               <ArrowBackIosNewIcon />
             </IconButton>
           ) : (
@@ -310,19 +322,19 @@ const Header: React.FC<HeaderProps> = ({
             </NavButton>
           </DesktopNav>
 
-          {/* 테마 토글 버튼 */}
+                    {/* 테마 토글 버튼 */}
           <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`}>
             {theme.palette.mode === 'dark' ? (
-              <img src={BrightnessLowImg} alt="라이트 모드 아이콘" style={{ width: 24, height: 24 }} />
+              <BrightnessLowIcon />
             ) : (
-              <img src={Brightness4Img} alt="다크 모드 아이콘" style={{ width: 24, height: 24 }} />
+              <Brightness4Icon />
             )}
           </NotificationButton>
 
           {/* 알림 아이콘 (항상 표시) */}
           {rightContent || (
             <NotificationButton disableRipple aria-label="알림">
-              <img src={NotificationsImg} alt="알림 아이콘" style={{ width: 24, height: 24 }} />
+              <NotificationsNoneIcon />
             </NotificationButton>
           )}
         </Box>

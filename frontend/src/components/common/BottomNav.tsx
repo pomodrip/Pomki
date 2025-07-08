@@ -158,11 +158,11 @@ const BottomNav: React.FC = () => {
 
   // 네비게이션 아이템들 - useMemo 최적화
   const navItems = useMemo(() => [
-    { label: '타이머', inactiveIcon: <img src={TimerPng} alt="타이머" style={{ width: 28, height: 28 }} />, activeIcon: <TimerActiveIcon color={theme.palette.primary.main} /> },
-    { label: '노트', inactiveIcon: <img src={NotePng} alt="노트" style={{ width: 28, height: 28 }} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
-    { label: '홈', inactiveIcon: <img src={HomePng} alt="홈" style={{ width: 28, height: 28 }} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
-    { label: '학습', inactiveIcon: <img src={SchoolPng} alt="학습" style={{ width: 28, height: 28 }} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
-    { label: '프로필', inactiveIcon: <img src={PersonPng} alt="프로필" style={{ width: 28, height: 28 }} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
+    { label: '타이머', inactiveIcon: <TimerActiveIcon color={theme.palette.text.secondary} />, activeIcon: <TimerActiveIcon color={theme.palette.primary.main} /> },
+    { label: '노트', inactiveIcon: <NoteActiveIcon color={theme.palette.text.secondary} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
+    { label: '홈', inactiveIcon: <HomeActiveIcon color={theme.palette.text.secondary} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
+    { label: '학습', inactiveIcon: <StudyActiveIcon color={theme.palette.text.secondary} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
+    { label: '프로필', inactiveIcon: <ProfileActiveIcon color={theme.palette.text.secondary} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
   ], [theme.palette.text.secondary, theme.palette.primary.main]);
 
   return isMobile ? (

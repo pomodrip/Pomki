@@ -6,7 +6,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
-import { Text, IconButton } from '../../components/ui';
+import { Text, IconButton, QuillEditor } from '../../components/ui';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -16,7 +16,6 @@ import { useNotifications, useUI } from '../../hooks/useUI';
 import { useFormSaveKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import type { NoteUpdateRequest } from '../../types/note';
-import { LazyReactQuill } from '../../components/ui';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -36,50 +35,7 @@ const FormBox = styled(Box)(({ theme }) => ({
   gap: theme.spacing(3),
 }));
 
-const EditorContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  marginBottom: theme.spacing(2),
-  '.quill': {
-    display: 'flex',
-    flexDirection: 'column',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    border: '1px solid rgba(0, 0, 0, 0.23)',
-    '&:hover': {
-      border: '1px solid rgba(0, 0, 0, 0.87)',
-    },
-    '&:focus-within': {
-      border: '2px solid #1976d2',
-      margin: '-1px',
-    },
-    '.ql-toolbar': {
-      border: 'none',
-      borderBottom: '1px solid rgba(0, 0, 0, 0.23)',
-    },
-    '.ql-container': {
-      overflow: 'hidden',
-      border: 'none',
-      '.ql-editor': {
-        overflowY: 'auto',
-        minHeight: '300px',
-        maxHeight: '500px',
-        padding: theme.spacing(5),
-        '&::-webkit-scrollbar': {
-          width: '8px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
-          borderRadius: '4px',
-        },
-        '&.ql-blank::before': {
-          fontStyle: 'normal',
-          color: 'rgba(0, 0, 0, 0.38)'
-        }
-      }
-    }
-  }
-}));
+
 
 const NoteCreatePage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
@@ -300,9 +256,9 @@ const NoteCreatePage: React.FC = () => {
         />
 
         {/* 내용 입력 */}
-        <EditorContainer>
+        <Box>
           <Box sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>내용</Box>
-          <LazyReactQuill
+          <QuillEditor
             value={noteContent}
             onChange={setNoteContent}
             placeholder="노트 내용을 입력하세요"
@@ -321,8 +277,10 @@ const NoteCreatePage: React.FC = () => {
               'list', 'bullet',
               'blockquote', 'link'
             ]}
+            minHeight="300px"
+            maxHeight="500px"
           />
-        </EditorContainer>
+        </Box>
 
         {/* 태그 입력 (편집 모드에서만 표시) */}
         {isEditMode && (
