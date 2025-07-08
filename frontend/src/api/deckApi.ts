@@ -58,6 +58,34 @@ export const deleteDeck = async (deckId: string): Promise<void> => {
  * @param deckId 덱 ID
  */
 export const searchCardsInDeck = async (keyword: string, deckId: string): Promise<SearchCard[]> => {
-  const response: AxiosResponse<SearchCard[]> = await api.get(`/api/decks/search/${keyword}?deckId=${deckId}`);
+  // 우선 새로운 AI 검색 엔드포인트를 시도합니다.
+  try {
+    const response = await api.get(`/api/decks/${deckId}/ai-search/${encodeURIComponent(keyword)}`);
+    const data = response.data;
+
+    // 백엔드가 객체 형태로 감싸서 응답할 수도 있으므로 방어적 처리
+    if (Array.isArray(data)) {
+      return data as SearchCard[];
+    }
+
+    // 흔한 패턴: { results: [...] } 혹은 { data: [...] }
+    if (Array.isArray(data?.results)) return data.results as SearchCard[];
+    if (Array.isArray(data?.data)) return data.data as SearchCard[];
+
+    // 예상과 다른 구조라면 예외를 발생시켜 폴백 로직으로 이동
+    throw new Error('Unexpected AI search response structure');
+  } catch (error) {
+    console.warn('[searchCardsInDeck] AI 검색 실패, 기존 검색으로 폴백', error);
+    const fallbackResponse = await api.get(`/api/decks/search/${encodeURIComponent(keyword)}?deckId=${deckId}`);
+    return fallbackResponse.data as SearchCard[];
+  }
+};
+
+/**
+ * (선택) AI 기반 덱 검색 – 복잡한 프롬프트나 여러 덱을 동시에 검색할 때 사용
+ * @param payload 검색 요청 페이로드 (백엔드 명세에 맞춰 확장 가능)
+ */
+export const aiSearchDecks = async <T = unknown, R = SearchCard[]>(payload: T): Promise<R> => {
+  const response: AxiosResponse<R> = await api.post('/api/decks/ai-search', payload);
   return response.data;
 }; 

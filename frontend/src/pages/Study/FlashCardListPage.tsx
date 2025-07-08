@@ -8,7 +8,7 @@ import {
   MenuItem,
   Chip,
   TextField,
-  // CircularProgress,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,6 +39,7 @@ import { showToast } from '../../store/slices/toastSlice';
 import { FlashCard, type FlashCardData } from '../../components/ui';
 import { deckService } from '../../services/deckService';
 import { cardService } from '../../services/cardService';
+import { recommendTags, recommendTagsByCardId } from '../../api/tagApi';
 import Button from '../../components/ui/Button';
 
 
@@ -87,6 +88,58 @@ const FlashCardListPage: React.FC = () => {
   const [editCardFront, setEditCardFront] = useState('');
   const [editCardBack, setEditCardBack] = useState('');
   const [editCardTags, setEditCardTags] = useState('');
+
+  // 🏷️ AI 태그 추천 상태
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [tagLoading, setTagLoading] = useState(false);
+
+  // ➕ 추천 태그 추가 헬퍼
+  const handleAddSuggestedTag = useCallback((tag: string) => {
+    const currentTags = editCardTags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+    if (!currentTags.includes(tag)) {
+      const updated = [...currentTags, tag];
+      setEditCardTags(updated.join(', '));
+    }
+  }, [editCardTags]);
+
+  // 🔮 AI 태그 추천 호출
+  const handleRecommendTags = useCallback(async () => {
+    if (!editCardFront.trim() && !editCardBack.trim()) return;
+    setTagLoading(true);
+    try {
+      let tags: string[] = [];
+      // 1️⃣ 카드 ID로 직접 추천 (백엔드가 지원할 때)
+      if (editingCardId !== null) {
+        try {
+          tags = await recommendTagsByCardId(editingCardId);
+        } catch (_) {
+          // 무시하고 내용 기반 추천으로 폴백
+        }
+      }
+      // 2️⃣ 내용 기반 추천 (fallback)
+      if (tags.length === 0) {
+        tags = await recommendTags({
+          cardId: editingCardId ?? undefined,
+          cardContent: editCardFront,
+          cardAnswer: editCardBack,
+        });
+      }
+      setTagSuggestions(tags);
+      if (tags.length === 0) {
+        dispatch(showToast({ message: '추천 가능한 태그가 없습니다.', severity: 'info' }));
+      } else {
+        dispatch(showToast({ message: `${tags.length}개의 태그를 추천했습니다.`, severity: 'success' }));
+      }
+    } catch (error: any) {
+      console.error('❌ 태그 추천 실패:', error);
+      dispatch(showToast({ message: error?.message || '태그 추천에 실패했습니다.', severity: 'error' }));
+    } finally {
+      setTagLoading(false);
+    }
+  }, [editingCardId, editCardFront, editCardBack, dispatch]);
 
   // 🎯 Redux 데이터와 Fallback 데이터를 합치기 (중복 제거) - useMemo 최적화
   const allCards = useMemo(() => {
@@ -327,6 +380,8 @@ const FlashCardListPage: React.FC = () => {
     setEditCardFront('');
     setEditCardBack('');
     setEditCardTags('');
+    setTagSuggestions([]);
+    setTagLoading(false);
   }, []);
 
   const handleEditDialogConfirm = async () => {
@@ -796,6 +851,29 @@ const FlashCardListPage: React.FC = () => {
               onChange={(e) => setEditCardTags(e.target.value)}
               sx={{ mb: 2 }}
             />
+
+            {/* AI 태그 추천 버튼 & 로딩 표시 */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Button variant="outlined" size="small" onClick={handleRecommendTags} disabled={tagLoading}>
+                AI 태그 추천
+              </Button>
+              {tagLoading && <CircularProgress size={20} />}
+            </Box>
+
+            {/* 추천 태그 Chip 목록 */}
+            {tagSuggestions.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                {tagSuggestions.map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    clickable
+                    onClick={() => handleAddSuggestedTag(tag)}
+                    variant="outlined"
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
