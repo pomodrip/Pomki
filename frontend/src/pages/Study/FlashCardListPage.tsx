@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -79,6 +79,9 @@ const FlashCardListPage: React.FC = () => {
   
   const [tagMenuAnchor, setTagMenuAnchor] = useState<HTMLElement | null>(null);
   const [bookmarkMenuAnchor, setBookmarkMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const tagFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const bookmarkFilterButtonRef = useRef<HTMLButtonElement>(null);
 
   
   // 수정 다이얼로그 상태
@@ -235,12 +238,18 @@ const FlashCardListPage: React.FC = () => {
       : [...filters.selectedTags, tag];
     
     dispatch(setFilters({ selectedTags: newSelectedTags }));
-    setTagMenuAnchor(null);
+    // 메뉴를 닫지 않고 여러 태그를 선택할 수 있도록 setTagMenuAnchor(null) 제거
   }, [filters.selectedTags, dispatch]);
+
+  const handleCloseTagMenu = () => {
+    setTagMenuAnchor(null);
+    tagFilterButtonRef.current?.focus();
+  };
 
   const handleBookmarkFilter = useCallback((showBookmarkedValue: boolean) => {
     dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
+    bookmarkFilterButtonRef.current?.focus();
   }, [dispatch]);
 
   // 카드 선택 기능 (현재 사용하지 않음)
@@ -623,14 +632,22 @@ const FlashCardListPage: React.FC = () => {
       {/* 필터 */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Button
+          ref={tagFilterButtonRef}
           variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
+          aria-controls={tagMenuAnchor ? 'tags-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={tagMenuAnchor ? 'true' : undefined}
         >
           태그 필터
         </Button>
         <Button
+          ref={bookmarkFilterButtonRef}
           variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
+          aria-controls={bookmarkMenuAnchor ? 'bookmark-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={bookmarkMenuAnchor ? 'true' : undefined}
         >
           북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
@@ -672,9 +689,13 @@ const FlashCardListPage: React.FC = () => {
 
       {/* 태그 메뉴 */}
       <Menu
+        id="tags-menu"
         anchorEl={tagMenuAnchor}
         open={Boolean(tagMenuAnchor)}
-        onClose={() => setTagMenuAnchor(null)}
+        onClose={handleCloseTagMenu}
+        MenuListProps={{
+          'aria-labelledby': 'tags-button',
+        }}
       >
         {allTags.map(tag => (
           <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
@@ -685,9 +706,16 @@ const FlashCardListPage: React.FC = () => {
 
       {/* 북마크 메뉴 */}
       <Menu
+        id="bookmark-menu"
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
-        onClose={() => setBookmarkMenuAnchor(null)}
+        onClose={() => {
+          setBookmarkMenuAnchor(null);
+          bookmarkFilterButtonRef.current?.focus();
+        }}
+        MenuListProps={{
+          'aria-labelledby': 'bookmark-button',
+        }}
       >
         <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
