@@ -98,6 +98,13 @@ jobs:
         PLAYWRIGHT_CONFIG_EOF
         echo "✅ Playwright config file created"
 
+    - name: Frontend environment
+      working-directory: ${{ env.FE_DIR }}
+      run: |
+        cat << 'EOF' > .env
+        ${{ secrets.FE_ENV_DEV }}
+        EOF
+      
     - name: Build application
       working-directory: ${{ env.FE_DIR }}
       run: yarn build
@@ -125,6 +132,7 @@ jobs:
         GITHUB_SHA: ${{ github.sha }}
         GITHUB_RUN_NUMBER: ${{ github.run_number }}
         CI: true
+        VITE_USE_MOCK_DATA: true
       run: |
         echo "🧪 Running axe accessibility tests..."
         mkdir -p screenshots accessibility-reports
