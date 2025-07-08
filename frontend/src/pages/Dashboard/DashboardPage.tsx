@@ -20,6 +20,7 @@ import {
   selectDashboardLoading,
   selectDashboardHasAttendedToday,
 } from '../../store/slices/dashboardSlice';
+import { calculateReviewCounts } from '../../utils/reviewUtils';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
@@ -147,6 +148,22 @@ const DashboardPage: React.FC = () => {
     ? (dashboardData.studyTime.todayStudyMinutes / dashboardData.studyTime.dailyGoalMinutes) * 100
     : 0;
 
+  // 🔄 로컬 스토리지 기반 복습 일정 계산
+  const [reviewCounts, setReviewCounts] = React.useState(() => calculateReviewCounts());
+
+  // storage 이벤트 리스너를 통해 다른 탭에서 변경 시 동기화
+  React.useEffect(() => {
+    const updateCounts = () => setReviewCounts(calculateReviewCounts());
+    // 최초 계산
+    updateCounts();
+    window.addEventListener('storage', updateCounts);
+    return () => window.removeEventListener('storage', updateCounts);
+  }, []);
+
+  const todayCards = dashboardData?.review?.todayCount ?? reviewCounts.todayCount;
+  const within3DaysCards = dashboardData?.review?.upcomingCount ?? reviewCounts.upcomingCount;
+  const overdueCards = dashboardData?.review?.overdueCount ?? reviewCounts.overdueCount;
+
   return (
     <StyledContainer maxWidth="md">
       <HeaderBox>
@@ -261,7 +278,7 @@ const DashboardPage: React.FC = () => {
                 <Typography variant="body1">오늘 복습할 카드</Typography>
               </Box>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                {loading ? '...' : `${dashboardData?.review?.todayCount ?? 0}개`}
+                {loading ? '...' : `${todayCards}개`}
               </Typography>
             </Box>
 
@@ -284,7 +301,7 @@ const DashboardPage: React.FC = () => {
                 <Typography variant="body1">3일 내 복습 카드</Typography>
               </Box>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                {loading ? '...' : `${dashboardData?.review?.upcomingCount ?? 0}개`}
+                {loading ? '...' : `${within3DaysCards}개`}
               </Typography>
             </Box>
             
@@ -307,7 +324,7 @@ const DashboardPage: React.FC = () => {
                 <Typography variant="body1">밀린 카드</Typography>
               </Box>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                {loading ? '...' : `${dashboardData?.review?.overdueCount ?? 0}개`}
+                {loading ? '...' : `${overdueCards}개`}
               </Typography>
             </Box>
           </Box>
