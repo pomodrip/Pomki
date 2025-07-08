@@ -62,10 +62,9 @@ const BottomNav: React.FC = () => {
     handleChange({} as React.SyntheticEvent, previousTab);
   }, [activeTab, handleChange]);
 
-  // Tab/Shift+Tab으로 네비게이션 이동 (모바일에서만 활성화)
+  // 하단 바는 키보드 탭 포커스 대상이 아니므로 Tab 기반 단축키를 비활성화
   useTabNavigationKeyboardShortcuts(handleNextTab, handlePreviousTab, {
-    enabled: isMobile,
-    excludeInputs: true // 입력 필드 포커스 시 비활성화
+    enabled: false,
   });
 
   // 네비게이션 아이템 타입 정의
@@ -122,6 +121,7 @@ const BottomNav: React.FC = () => {
               key={item.label}
               label={item.label}
               icon={IconElement}
+              tabIndex={-1}
               sx={{
                 padding: '0',
                 minWidth: 'auto',

@@ -235,7 +235,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* 왼쪽: 햄버거 메뉴 + 브랜드 (또는 뒤로가기) */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           {shouldShowBackButton && isMobile ? (
-            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1, color: 'text.primary' }} disableRipple aria-label="뒤로가기">
+            <IconButton onClick={handleBack} edge="start" sx={{ mr: 1, color: 'text.primary' }} disableRipple aria-label="뒤로가기" tabIndex={-1}>
               <ArrowBackIosNewIcon />
             </IconButton>
           ) : (
@@ -323,7 +323,7 @@ const Header: React.FC<HeaderProps> = ({
           </DesktopNav>
 
                     {/* 테마 토글 버튼 */}
-          <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`}>
+          <NotificationButton onClick={toggleTheme} disableRipple title={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} aria-label={`${theme.palette.mode === 'dark' ? 'Light' : 'Dark'} 모드로 변경`} tabIndex={isMobile ? -1 : undefined}>
             {theme.palette.mode === 'dark' ? (
               <BrightnessLowIcon />
             ) : (
@@ -333,7 +333,7 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* 알림 아이콘 (항상 표시) */}
           {rightContent || (
-            <NotificationButton disableRipple aria-label="알림">
+            <NotificationButton disableRipple aria-label="알림" tabIndex={isMobile ? -1 : undefined}>
               <NotificationsNoneIcon />
             </NotificationButton>
           )}
