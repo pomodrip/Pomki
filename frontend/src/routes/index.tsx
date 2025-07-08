@@ -97,9 +97,9 @@ const preloadCriticalPagesOnIdle = () => {
 
 const AppRoutes = () => {
   // 컴포넌트 마운트 시 중요한 페이지들을 preload
-  React.useEffect(() => {
+  /* React.useEffect(() => {
     preloadCriticalPagesOnIdle(); // 유휴 시간에 핵심 페이지 preload 실행
-  }, []);
+  }, []); */
 
   return (
     <Suspense fallback={<Spinner fullScreen />}>
