@@ -27,7 +27,7 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
         소개 보러 가기
       </Button>
 
-      <Button onClick={onDontShowToday} variant="outlined" color="primary">
+      <Button onClick={onDontShowToday} variant="text" color="inherit" sx={{ color: 'text.secondary', fontSize: '0.875rem', padding: '0.5rem' }}>
         오늘 하루 보지 않기
       </Button>
 
@@ -47,13 +47,14 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
           <Text variant="h6" fontWeight="bold">
             새로운 소식
           </Text>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }} aria-label="닫기">
             <CloseIcon />
           </IconButton>
         </Box>
         <Text sx={{
           color: 'text.secondary',
           display: 'block',
+          marginBottom: 2,
         }}>
           더욱 편리해진 Pomki의 새로운 기능들을 소개 페이지에서 만나보세요!
         </Text>

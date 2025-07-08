@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import { 
   Container, 
@@ -156,6 +156,9 @@ const NoteListPage: React.FC = () => {
   const fab = useAppSelector(selectFab);
   const { bottomNavVisible } = useAppSelector((state) => state.ui);
 
+  const tagFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const bookmarkFilterButtonRef = useRef<HTMLButtonElement>(null);
+
   // 🎯 클라이언트 측 상태 (북마크, 태그) 및 퀴즈 생성 로딩 상태
   const [clientSideInfo, setClientSideInfo] = useState<{ [noteId: string]: ClientSideNoteInfo }>({});
   const [generatingQuizId, setGeneratingQuizId] = useState<string | null>(null);
@@ -284,7 +287,12 @@ const NoteListPage: React.FC = () => {
       : [...filters.selectedTags, tag];
     
     dispatch(setFilters({ selectedTags: newSelectedTags }));
+    // 메뉴를 닫지 않고 여러 태그를 선택할 수 있도록 setTagMenuAnchor(null) 제거
+  };
+
+  const handleCloseTagMenu = () => {
     setTagMenuAnchor(null);
+    tagFilterButtonRef.current?.focus();
   };
 
   const handleClearTags = () => {
@@ -294,6 +302,7 @@ const NoteListPage: React.FC = () => {
   const handleBookmarkFilter = (showBookmarkedValue: boolean) => {
     dispatch(setFilters({ showBookmarked: showBookmarkedValue }));
     setBookmarkMenuAnchor(null);
+    bookmarkFilterButtonRef.current?.focus();
   };
 
   const handleToggleBookmark = (noteId: string, event: React.MouseEvent) => {
@@ -512,14 +521,24 @@ const NoteListPage: React.FC = () => {
       {/* 🔹 필터 영역 */}
       <FilterBox>
         <Button
+          id="tags-button"
+          ref={tagFilterButtonRef}
           variant="outlined"
           onClick={(e) => setTagMenuAnchor(e.currentTarget)}
+          aria-controls={tagMenuAnchor ? 'tags-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={tagMenuAnchor ? 'true' : undefined}
         >
           태그 필터
         </Button>
         <Button
+          id="bookmark-button"
+          ref={bookmarkFilterButtonRef}
           variant="outlined"
           onClick={(e) => setBookmarkMenuAnchor(e.currentTarget)}
+          aria-controls={bookmarkMenuAnchor ? 'bookmark-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={bookmarkMenuAnchor ? 'true' : undefined}
         >
           북마크만 보기 ({filters.showBookmarked ? 'ON' : 'OFF'})
         </Button>
@@ -541,9 +560,13 @@ const NoteListPage: React.FC = () => {
 
       {/* 태그 메뉴 */}
       <Menu
+        id="tags-menu"
         anchorEl={tagMenuAnchor}
         open={Boolean(tagMenuAnchor)}
-        onClose={() => setTagMenuAnchor(null)}
+        onClose={handleCloseTagMenu}
+        MenuListProps={{
+          'aria-labelledby': 'tags-button',
+        }}
       >
         {allTags.map(tag => (
           <MenuItem key={tag} onClick={() => handleTagSelect(tag)}>
@@ -554,9 +577,16 @@ const NoteListPage: React.FC = () => {
 
       {/* 북마크 메뉴 */}
       <Menu
+        id="bookmark-menu"
         anchorEl={bookmarkMenuAnchor}
         open={Boolean(bookmarkMenuAnchor)}
-        onClose={() => setBookmarkMenuAnchor(null)}
+        onClose={() => {
+          setBookmarkMenuAnchor(null);
+          bookmarkFilterButtonRef.current?.focus();
+        }}
+        MenuListProps={{
+          'aria-labelledby': 'bookmark-button',
+        }}
       >
         <MenuItem onClick={() => handleBookmarkFilter(true)}>북마크된 항목만 보기</MenuItem>
         <MenuItem onClick={() => handleBookmarkFilter(false)}>모든 항목 보기</MenuItem>
@@ -592,7 +622,7 @@ const NoteListPage: React.FC = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ minHeight: 40 }}>
                 <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{note.noteTitle}</Typography>
                 <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)}>
-                  {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  {note.isBookmarked ? <Bookmark color="primary" aria-label="북마크 해제" /> : <BookmarkBorder aria-label="북마크 추가" />}
                 </IconButton>
               </Box>
               

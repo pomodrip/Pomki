@@ -1060,10 +1060,15 @@ const TimerPage: React.FC = () => {
           }}>
             <FormControl size="small" variant="outlined">
               <Select
+                id="ai-summary-style-select-desktop"
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
-                MenuProps={{ disablePortal: true }}
+                aria-label="AI 노트 생성 스타일 선택"
+                MenuProps={{ 
+                  disablePortal: true,
+                  'aria-labelledby': 'ai-summary-style-select-desktop',
+                }}
                 sx={{
                   minWidth: '150px',
                   backgroundColor: '#FFFFFF',
@@ -1179,10 +1184,15 @@ const TimerPage: React.FC = () => {
             maxWidth: '160px',
           }}>
             <Select
+              id="ai-summary-style-select-mobile"
               value={summaryStyle}
               onChange={(e) => setSummaryStyle(e.target.value as string)}
               displayEmpty
-              MenuProps={{ disablePortal: true }}
+              aria-label="AI 노트 생성 스타일 선택"
+              MenuProps={{ 
+                disablePortal: true,
+                'aria-labelledby': 'ai-summary-style-select-mobile',
+              }}
               sx={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '6px',
@@ -1512,10 +1522,15 @@ const TimerPage: React.FC = () => {
               maxWidth: { xs: '100px', sm: '160px' },
             }}>
               <Select
+                id="ai-summary-style-select-main"
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
-                MenuProps={{ disablePortal: true }}
+                aria-label="AI 노트 생성 스타일 선택"
+                MenuProps={{ 
+                  disablePortal: true,
+                  'aria-labelledby': 'ai-summary-style-select-main',
+                }}
                 sx={{
                 
                   borderRadius: { xs: '6px', sm: '8px' },
