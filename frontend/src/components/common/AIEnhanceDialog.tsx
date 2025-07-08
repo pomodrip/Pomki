@@ -55,6 +55,7 @@ export const AIEnhanceDialog: React.FC<AIEnhanceDialogProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      style={{ zIndex: 10000 }}
       PaperProps={{
         sx: {
           borderRadius: '12px',

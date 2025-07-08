@@ -21,7 +21,7 @@ const CenterWrapper = styled(Box)<{ isMobile: boolean }>(({ theme, isMobile }) =
   transform: 'translateX(-50%)',
   width: '100%',
   maxWidth: theme.breakpoints.values.md, // md(900px) 기준 중앙 정렬
-  zIndex: theme.zIndex.modal || 1300,
+  zIndex: 10001,
   pointerEvents: 'none',
   display: 'flex',
   flexDirection: 'column',

@@ -1278,9 +1278,21 @@ const TimerPage: React.FC = () => {
     </NotesSection>
   );
 
-  // 확대된 노트가 표시 중일 때는 오버레이만 렌더링
   if (notesExpanded) {
-    return renderExpandedNotes();
+    return (
+      <>
+        {renderExpandedNotes()}
+        <LazyAIEnhanceDialog
+          open={aiDialogOpen}
+          onClose={() => setAiDialogOpen(false)}
+          onApply={handleApplyAI}
+          aiResponse={aiResponse}
+          loading={aiLoading}
+        />
+        {/* Toast 알림 (확대 모드에서도 표시) */}
+        <Toast />
+      </>
+    );
   }
 
   return (
