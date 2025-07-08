@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-// 62-67번 디자인 가이드 적용
+// 62-67번 디자인 가이드 적용 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: '16px', // 62. Modal Border Radius
