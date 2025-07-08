@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../pages/_layout/MainLayout';
 import ProtectedRoute from './ProtectedRoute';
 import Spinner from '../components/ui/Spinner';
+import { pageLoaders } from '../utils/preloadUtils';
 
 // ==========================================
 // 동적 임포트를 위한 페이지 컴포넌트
@@ -53,30 +54,51 @@ const ApiWithFallbackExample = lazy(() => import('../examples/ApiWithFallbackExa
 // 페이지 Preload 함수들 (성능 최적화)
 // ==========================================
 
-// 자주 사용되는 페이지들을 미리 로드
-const preloadCriticalPages = () => {
-  // 사용자가 로그인 후 가장 먼저 접근할 가능성이 높은 페이지들
-  const criticalPages = [
-    () => import('../pages/Dashboard/DashboardPage'),
-    () => import('../pages/Study/FlashcardDeckListPage'),
-    () => import('../pages/Timer/TimerPage'),
-    () => import('../pages/Note/NoteListPage'),
-  ];
+/**
+ * 브라우저가 유휴 상태일 때 핵심 페이지들을 미리 로드합니다.
+ * 초기 로딩 성능에 영향을 주지 않으면서 후속 탐색 속도를 향상시킵니다.
+ */
+const preloadCriticalPagesOnIdle = () => {
+  // 유휴 상태일 때 미리 로드할 페이지들의 경로 배열
+  const criticalPaths = ['/dashboard', '/timer', '/note', '/study'];
 
-  // 1초 후에 preload 시작 (초기 로딩에 방해되지 않도록)
-  setTimeout(() => {
-    criticalPages.forEach(importPage => {
-      importPage().catch(() => {
-        // preload 실패는 무시 (사용자 경험에 영향 없음)
+  const preload = (deadline: IdleDeadline) => {
+    // 유휴 시간이 남아있거나 작업이 긴급할 때 (타임아웃 발생 시) 루프 실행
+    while ((deadline.timeRemaining() > 0 || deadline.didTimeout) && criticalPaths.length > 0) {
+      const path = criticalPaths.shift(); // 배열에서 경로 하나를 꺼냄
+      if (path) {
+        const loader = pageLoaders[path];
+        if (loader) {
+          loader().catch(() => { /* preloading 실패는 무시 */ });
+        }
+      }
+    }
+
+    // 아직 로드할 페이지가 남아있다면, 다음 유휴 시간에 다시 작업을 요청
+    if (criticalPaths.length > 0) {
+      requestIdleCallback(preload);
+    }
+  };
+
+  // 브라우저가 지원하는 경우에만 유휴 콜백 등록
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preload);
+  } else {
+    // 지원하지 않는 경우, 2초 후 약간의 지연을 두고 로드 (폴백)
+    setTimeout(() => {
+      criticalPaths.forEach(path => {
+        const loader = pageLoaders[path];
+        if(loader) loader().catch(() => {});
       });
-    });
-  }, 1000);
+    }, 2000);
+  }
 };
+
 
 const AppRoutes = () => {
   // 컴포넌트 마운트 시 중요한 페이지들을 preload
   React.useEffect(() => {
-    preloadCriticalPages();
+    preloadCriticalPagesOnIdle(); // 유휴 시간에 핵심 페이지 preload 실행
   }, []);
 
   return (

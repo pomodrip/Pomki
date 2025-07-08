@@ -10,6 +10,7 @@ import TimerPng from '../../assets/icons/timer_196dp_1F1F1F.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsiveUI } from '../../hooks/useUI';
 import { useTabNavigationKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { preloadPage } from '../../utils/preloadUtils';
 
 // 파란색으로 칠해진 활성 상태 아이콘을 만들기 위한 마스크 컴포넌트
 const TimerActiveIcon: React.FC<{ color: string }> = ({ color }) => (
@@ -101,6 +102,14 @@ const ProfileActiveIcon: React.FC<{ color: string }> = ({ color }) => (
   />
 );
 
+const navConfig = [
+  { path: '/timer', label: '타이머', icon: TimerActiveIcon, preload: () => preloadPage('/timer') },
+  { path: '/note', label: '노트', icon: NoteActiveIcon, preload: () => preloadPage('/note') },
+  { path: '/dashboard', label: '홈', icon: HomeActiveIcon, preload: () => preloadPage('/dashboard') },
+  { path: '/study', label: '학습', icon: StudyActiveIcon, preload: () => preloadPage('/study') },
+  { path: '/profile', label: '프로필', icon: ProfileActiveIcon, preload: () => preloadPage('/profile') },
+];
+
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,60 +119,42 @@ const BottomNav: React.FC = () => {
   // 현재 활성 탭 계산 - useMemo 최적화
   const activeTab = useMemo(() => {
     const pathname = location.pathname;
-    if (pathname.startsWith('/timer')) return 0;
-    if (pathname.startsWith('/note')) return 1;
-    if (pathname === '/' || pathname.startsWith('/dashboard')) return 2;
-    if (pathname.startsWith('/study') || pathname.startsWith('/flashcards')) return 3;
-    if (pathname.startsWith('/profile')) return 4;
-    return 2; // default to home
+    const activeIndex = navConfig.findIndex(item => item.path !== '/dashboard' && pathname.startsWith(item.path));
+    if (activeIndex !== -1) return activeIndex;
+    
+    // /dashboard 또는 / 일 경우 홈 탭을 활성화
+    if (pathname.startsWith('/dashboard') || pathname === '/') {
+      const homeIndex = navConfig.findIndex(item => item.path === '/dashboard');
+      if (homeIndex !== -1) return homeIndex;
+    }
+    
+    return navConfig.findIndex(item => item.path === '/dashboard'); // default to home
   }, [location.pathname]);
 
   // 네비게이션 핸들러 - useCallback 최적화
-  const handleChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
-    switch (newValue) {
-      case 0:
-        navigate('/timer');
-        break;
-      case 1:
-        navigate('/note');
-        break;
-      case 2:
-        navigate('/dashboard');
-        break;
-      case 3:
-        navigate('/study');
-        break;
-      case 4:
-        navigate('/profile');
-        break;
-    }
-  }, [navigate]);
+  const handleChange = useCallback(
+    (_: React.SyntheticEvent, newValue: number) => {
+      navigate(navConfig[newValue].path);
+    },
+    [navigate],
+  );
 
   // 키보드 단축키로 탭 네비게이션 - useCallback 최적화
   const handleNextTab = useCallback(() => {
-    const nextTab = activeTab >= 4 ? 0 : activeTab + 1;
+    const nextTab = activeTab >= navConfig.length - 1 ? 0 : activeTab + 1;
     handleChange({} as React.SyntheticEvent, nextTab);
   }, [activeTab, handleChange]);
 
   const handlePreviousTab = useCallback(() => {
-    const previousTab = activeTab <= 0 ? 4 : activeTab - 1;
+    const previousTab = activeTab <= 0 ? navConfig.length - 1 : activeTab - 1;
     handleChange({} as React.SyntheticEvent, previousTab);
   }, [activeTab, handleChange]);
 
   // Tab/Shift+Tab으로 네비게이션 이동 (모바일에서만 활성화)
   useTabNavigationKeyboardShortcuts(handleNextTab, handlePreviousTab, {
     enabled: isMobile,
-    excludeInputs: true // 입력 필드 포커스 시 비활성화
+    excludeInputs: true, // 입력 필드 포커스 시 비활성화
   });
-
-  // 네비게이션 아이템들 - useMemo 최적화
-  const navItems = useMemo(() => [
-    { label: '타이머', inactiveIcon: <TimerActiveIcon color={theme.palette.text.secondary} />, activeIcon: <TimerActiveIcon color={theme.palette.primary.main} /> },
-    { label: '노트', inactiveIcon: <NoteActiveIcon color={theme.palette.text.secondary} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
-    { label: '홈', inactiveIcon: <HomeActiveIcon color={theme.palette.text.secondary} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
-    { label: '학습', inactiveIcon: <StudyActiveIcon color={theme.palette.text.secondary} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
-    { label: '프로필', inactiveIcon: <ProfileActiveIcon color={theme.palette.text.secondary} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
-  ], [theme.palette.text.secondary, theme.palette.primary.main]);
 
   return isMobile ? (
     <Paper
@@ -186,28 +177,33 @@ const BottomNav: React.FC = () => {
           height: '100%',
         }}
       >
-        {navItems.map((item, index) => (
-          <BottomNavigationAction
-            key={item.label}
-            label={item.label}
-            icon={activeTab === index ? item.activeIcon : item.inactiveIcon}
-            sx={{
-              padding: '0',
-              minWidth: 'auto',
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '10px',
-                marginTop: '4px',
-                '&.Mui-selected': {
+        {navConfig.map((item, index) => {
+          const IconComponent = item.icon;
+          const isActive = activeTab === index;
+          return (
+            <BottomNavigationAction
+              key={item.label}
+              label={item.label}
+              icon={<IconComponent color={isActive ? theme.palette.primary.main : theme.palette.text.secondary} />}
+              onMouseEnter={item.preload}
+              sx={{
+                padding: '0',
+                minWidth: 'auto',
+                '& .MuiBottomNavigationAction-label': {
                   fontSize: '10px',
+                  marginTop: '4px',
+                  '&.Mui-selected': {
+                    fontSize: '10px',
+                  },
                 },
-              },
-              '& .MuiSvgIcon-root': {
-                fontSize: '24px',
-              },
-              color: activeTab === index ? theme.palette.primary.main : theme.palette.text.secondary,
-            }}
-          />
-        ))}
+                '& .MuiSvgIcon-root': {
+                  fontSize: '24px',
+                },
+                color: isActive ? theme.palette.primary.main : theme.palette.text.secondary,
+              }}
+            />
+          );
+        })}
       </BottomNavigation>
     </Paper>
   ) : null;
