@@ -1,105 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
-import HomePng from '../../assets/icons/home_196dp_1F1F1F.png';
-import NotePng from '../../assets/icons/sticky_note_2_196dp_1F1F1F.png';
-import SchoolPng from '../../assets/icons/school_196dp_1F1F1F.png';
-import PersonPng from '../../assets/icons/account_circle_196dp_1F1F1F.png';
 import { useTheme } from '@mui/material/styles';
-import TimerPng from '../../assets/icons/timer_196dp_1F1F1F.png';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsiveUI } from '../../hooks/useUI';
 import { useTabNavigationKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
-// 파란색으로 칠해진 활성 상태 아이콘을 만들기 위한 마스크 컴포넌트
-const TimerActiveIcon: React.FC<{ color: string }> = ({ color }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      width: 28,
-      height: 28,
-      backgroundColor: color,
-      WebkitMaskImage: `url(${TimerPng})`,
-      maskImage: `url(${TimerPng})`,
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-    }}
-  />
-);
-
-// 파란색으로 칠해진 Note 활성 아이콘
-const NoteActiveIcon: React.FC<{ color: string }> = ({ color }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      width: 28,
-      height: 28,
-      backgroundColor: color,
-      WebkitMaskImage: `url(${NotePng})`,
-      maskImage: `url(${NotePng})`,
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-    }}
-  />
-);
-
-// Home 활성 아이콘
-const HomeActiveIcon: React.FC<{ color: string }> = ({ color }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      width: 28,
-      height: 28,
-      backgroundColor: color,
-      WebkitMaskImage: `url(${HomePng})`,
-      maskImage: `url(${HomePng})`,
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-    }}
-  />
-);
-
-// 학습(학교) 활성 아이콘
-const StudyActiveIcon: React.FC<{ color: string }> = ({ color }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      width: 28,
-      height: 28,
-      backgroundColor: color,
-      WebkitMaskImage: `url(${SchoolPng})`,
-      maskImage: `url(${SchoolPng})`,
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-    }}
-  />
-);
-
-// 프로필 활성 아이콘
-const ProfileActiveIcon: React.FC<{ color: string }> = ({ color }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      width: 28,
-      height: 28,
-      backgroundColor: color,
-      WebkitMaskImage: `url(${PersonPng})`,
-      maskImage: `url(${PersonPng})`,
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-    }}
-  />
-);
+// Custom timer icon (SVG) provided by designer
+import TimerSvg from '../../assets/icons/timer.svg?react';
+import NoteSvg from '../../assets/icons/note.svg?react';
+import HomeSvg from '../../assets/icons/home.svg?react';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import ProfileSvg from '../../assets/icons/profile.svg?react';
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
@@ -156,14 +68,23 @@ const BottomNav: React.FC = () => {
     excludeInputs: true // 입력 필드 포커스 시 비활성화
   });
 
+  // 네비게이션 아이템 타입 정의
+  interface NavItem {
+    label: string;
+    Icon: React.ElementType;
+    route: string;
+    isSvg?: boolean;
+    size?: number; // optional custom icon size
+  }
+
   // 네비게이션 아이템들 - useMemo 최적화
-  const navItems = useMemo(() => [
-    { label: '타이머', inactiveIcon: <TimerActiveIcon color={theme.palette.text.secondary} />, activeIcon: <TimerActiveIcon color={theme.palette.primary.main} /> },
-    { label: '노트', inactiveIcon: <NoteActiveIcon color={theme.palette.text.secondary} />, activeIcon: <NoteActiveIcon color={theme.palette.primary.main} /> },
-    { label: '홈', inactiveIcon: <HomeActiveIcon color={theme.palette.text.secondary} />, activeIcon: <HomeActiveIcon color={theme.palette.primary.main} /> },
-    { label: '학습', inactiveIcon: <StudyActiveIcon color={theme.palette.text.secondary} />, activeIcon: <StudyActiveIcon color={theme.palette.primary.main} /> },
-    { label: '프로필', inactiveIcon: <ProfileActiveIcon color={theme.palette.text.secondary} />, activeIcon: <ProfileActiveIcon color={theme.palette.primary.main} /> }
-  ], [theme.palette.text.secondary, theme.palette.primary.main]);
+  const navItems: NavItem[] = useMemo(() => [
+    { label: '타이머', Icon: TimerSvg, isSvg: true, route: '/timer' },
+    { label: '노트', Icon: NoteSvg, isSvg: true, route: '/note' },
+    { label: '홈', Icon: HomeSvg, isSvg: true, route: '/dashboard' },
+    { label: '학습', Icon: SchoolOutlinedIcon, route: '/study', size: 28 },
+    { label: '프로필', Icon: ProfileSvg, isSvg: true, route: '/profile' },
+  ], []);
 
   return isMobile ? (
     <Paper
@@ -186,28 +107,35 @@ const BottomNav: React.FC = () => {
           height: '100%',
         }}
       >
-        {navItems.map((item, index) => (
-          <BottomNavigationAction
-            key={item.label}
-            label={item.label}
-            icon={activeTab === index ? item.activeIcon : item.inactiveIcon}
-            sx={{
-              padding: '0',
-              minWidth: 'auto',
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '10px',
-                marginTop: '4px',
-                '&.Mui-selected': {
+        {navItems.map((item, index) => {
+          const color = activeTab === index ? theme.palette.primary.main : theme.palette.text.secondary;
+          const IconComponent = item.Icon;
+          const size = item.size ?? 24;
+          const IconElement = item.isSvg ? (
+            <IconComponent style={{ width: size, height: size, fill: color }} />
+          ) : (
+            <IconComponent sx={{ fontSize: size, color }} />
+          );
+
+          return (
+            <BottomNavigationAction
+              key={item.label}
+              label={item.label}
+              icon={IconElement}
+              sx={{
+                padding: '0',
+                minWidth: 'auto',
+                '& .MuiBottomNavigationAction-label': {
                   fontSize: '10px',
+                  marginTop: '4px',
+                  '&.Mui-selected': {
+                    fontSize: '10px',
+                  },
                 },
-              },
-              '& .MuiSvgIcon-root': {
-                fontSize: '24px',
-              },
-              color: activeTab === index ? theme.palette.primary.main : theme.palette.text.secondary,
-            }}
-          />
-        ))}
+              }}
+            />
+          );
+        })}
       </BottomNavigation>
     </Paper>
   ) : null;
