@@ -19,7 +19,7 @@ public class DeckContextSearchResponseDto {
     private String answer;
     private List<RelatedCardDto> relatedCards;
     private List<String> suggestions;
-    private String confidence; // 높음/보통/낮음
+    private String confidence; // 높음/보통/낮음 
     private boolean success;
     private String errorMessage;
     private Integer totalCardsAnalyzed;
