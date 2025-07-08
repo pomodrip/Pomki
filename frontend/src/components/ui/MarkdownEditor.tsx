@@ -31,7 +31,7 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import TitleIcon from '@mui/icons-material/Title';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
-import SplitScreenIcon from '@mui/icons-material/SplitScreen';
+import SplitscreenIcon from '@mui/icons-material/Splitscreen';
 
 const MarkdownEditorWrapper = styled(Box)<{ 
   minHeight?: string;
@@ -608,7 +608,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
               className={mode === 'split' ? 'active' : ''}
               onClick={() => setMode('split')}
             >
-              <SplitScreenIcon fontSize="small" />
+              <SplitscreenIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           
