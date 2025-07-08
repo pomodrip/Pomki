@@ -217,11 +217,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
       const handleMouseLeave = (e: MouseEvent) => {
         const related = e.relatedTarget as HTMLElement | null;
-        if (!related || (
-          related !== overlay &&
-          related.tagName !== 'IMG' &&
-          !container.contains(related)
-        )) {
+        // overlay를 벗어나거나 이미지 영역을 벗어나면 숨김
+        if (!related || (related !== overlay && related.tagName !== 'IMG')) {
           hideOverlay();
         }
       };

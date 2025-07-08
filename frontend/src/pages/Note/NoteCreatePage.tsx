@@ -267,7 +267,7 @@ const NoteCreatePage: React.FC = () => {
                 [{ 'header': [1, 2, false] }],
                 ['bold', 'italic', 'underline', 'strike'],
                 [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['blockquote', 'link'],
+                ['blockquote', 'link', 'image'],
                 ['clean']
               ],
             }}
@@ -275,7 +275,7 @@ const NoteCreatePage: React.FC = () => {
               'header',
               'bold', 'italic', 'underline', 'strike',
               'list', 'bullet',
-              'blockquote', 'link'
+              'blockquote', 'link', 'image'
             ]}
             minHeight="300px"
             maxHeight="500px"

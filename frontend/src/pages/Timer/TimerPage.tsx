@@ -107,16 +107,19 @@ interface TimerSettings {
 
 const editorModules = {
   toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline'],
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['image'],
+    ['blockquote', 'link', 'image'],
+    ['clean'],
   ],
 };
 
 const editorFormats = [
-  'header', 'bold', 'italic', 'underline',
-  'list', 'bullet', 'link', 'image'
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet',
+  'blockquote', 'link', 'image'
 ];
 
 const TimerPage: React.FC = () => {
