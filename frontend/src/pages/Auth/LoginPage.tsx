@@ -153,8 +153,10 @@ const LoginPage = () => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh', 
         p: { xs: '3 1', sm: '4 2' },
-        mt: 2,
       }}
     >
       <Paper

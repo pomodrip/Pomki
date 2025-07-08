@@ -126,8 +126,10 @@ const SignupPage = () => {
     sx={{
       display: 'flex',
       flexDirection: 'column',
-      padding: { xs: '24px 8px', sm: '32px 16px' },
-      mt: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh', 
+      p: { xs: '3 1', sm: '4 2' },
     }}>
       <Paper 
         elevation={3} 
