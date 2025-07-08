@@ -8,7 +8,7 @@ import { useTimer } from '../../hooks/useTimer';
  */
 const TimerTicker: React.FC = () => {
   // autoTick 을 true 로 하여 매 초 tick() 을 dispatch 한다.
-  useTimer({ autoTick: true });
+  useTimer({ autoTick: true, notify: true });
   return null;
 };
 
