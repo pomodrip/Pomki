@@ -47,7 +47,7 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
           <Text variant="h6" fontWeight="bold">
             새로운 소식
           </Text>
-          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }} aria-label="닫기">
             <CloseIcon />
           </IconButton>
         </Box>

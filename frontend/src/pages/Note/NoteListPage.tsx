@@ -592,7 +592,7 @@ const NoteListPage: React.FC = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ minHeight: 40 }}>
                 <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{note.noteTitle}</Typography>
                 <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)}>
-                  {note.isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                  {note.isBookmarked ? <Bookmark color="primary" aria-label="북마크 해제" /> : <BookmarkBorder aria-label="북마크 추가" />}
                 </IconButton>
               </Box>
               
