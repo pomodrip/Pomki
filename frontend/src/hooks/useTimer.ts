@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from './useRedux';
 import {
   startTimer,
@@ -73,9 +73,10 @@ export interface UseTimerResult {
 export const useTimer = (options?: {
   autoTick?: boolean; // 자동으로 1초마다 틱 처리 (기본: true)
   tickInterval?: number; // 틱 간격 (기본: 1000ms)
+  notify?: boolean; // 세션 완료 알림 활성화 (기본: false)
 }): UseTimerResult => {
   const dispatch = useAppDispatch();
-  const { autoTick = false, tickInterval = 1000 } = options || {};
+  const { autoTick = false, tickInterval = 1000, notify = false } = options || {};
 
   // Redux 상태 선택
   const currentSession = useAppSelector(selectCurrentSession);
@@ -141,25 +142,43 @@ export const useTimer = (options?: {
 
     return () => clearInterval(interval);
   }, [autoTick, isRunning, tickInterval, dispatch]);
+
+  // 세션 완료 시 알림
+  const prevModeRef = useRef<TimerMode>(mode);
+  const prevIsRunningRef = useRef<boolean>(isRunning);
+
   useEffect(() => {
-    console.log("타이머 이펙트 호출?")
-    console.log(isCompleted, mode, nextSessionInfo)
-    const modeText = mode === 'FOCUS' ? '집중시간' : mode === 'SHORT_BREAK' ? '짧은 휴식' : '긴 휴식';
-    showNotification(`${modeText} 완료!`, {
-        body: `${nextSessionInfo.duration/60}분 ${nextSessionInfo.mode === 'FOCUS' ? '집중시간' : '휴식시간'}이 시작됩니다.`,
+    if (!notify) return; // 알림 비활성화 시 아무 것도 하지 않음
+
+    const prevMode = prevModeRef.current;
+    const prevIsRunning = prevIsRunningRef.current;
+
+    // 세션이 진행 중이었고(mode 변경 발생) → 세션 완료로 간주
+    if (prevIsRunning && isRunning && mode !== prevMode) {
+      const completedMode = prevMode;
+      const completedModeText =
+        completedMode === 'FOCUS'
+          ? '집중시간'
+          : completedMode === 'SHORT_BREAK'
+          ? '짧은 휴식'
+          : '긴 휴식';
+
+      const nextModeText = mode === 'FOCUS' ? '집중시간' : '휴식시간';
+
+      const nextDurationMinutes = Math.round(nextSessionInfo.duration / 60);
+
+      showNotification(`${completedModeText} 완료!`, {
+        body: `${nextDurationMinutes}분 ${nextModeText}이 시작됩니다.`,
         icon: '/logo192.png',
-        data: { innerLink: "/timer" },
-        tag:"timer"
-      });
-    if (isCompleted) {
-      const modeText = mode === 'FOCUS' ? '집중시간' : mode === 'SHORT_BREAK' ? '짧은 휴식' : '긴 휴식';
-      console.log("타이머 이펙트 호출2?")
-      showNotification(`${modeText} 완료!`, {
-        body: `${nextSessionInfo.duration}분 ${nextSessionInfo.mode === 'FOCUS' ? '집중시간' : '휴식시간'}이 시작됩니다.`,
-        icon: '/logo192.png',
+        data: { innerLink: '/timer' },
+        tag: 'timer',
       });
     }
-  }, [isCompleted, mode, nextSessionInfo]);
+
+    // 레퍼런스 업데이트
+    prevModeRef.current = mode;
+    prevIsRunningRef.current = isRunning;
+  }, [mode, isRunning, nextSessionInfo, notify]);
 
   return {
     // 상태
