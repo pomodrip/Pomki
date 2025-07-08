@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
         strategies: 'generateSW',
         injectRegister: 'auto',
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
         workbox: {
         importScripts: ['firebase-messaging-sw.js'],
