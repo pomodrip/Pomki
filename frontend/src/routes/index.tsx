@@ -48,6 +48,7 @@ const OnboardingIntro = lazy(
 // Examples (개발 환경에서만 유용할 수 있으나, 일단 동적으로 로드)
 const AdUsageExample = lazy(() => import('../examples/AdUsageExample'));
 const ApiWithFallbackExample = lazy(() => import('../examples/ApiWithFallbackExample'));
+const EditorComparisonPage = lazy(() => import('../pages/Etc/EditorComparisonPage'));
 
 // ==========================================
 // 페이지 Preload 함수들 (성능 최적화)
@@ -123,6 +124,7 @@ const AppRoutes = () => {
             {/* 개발/테스트 페이지 */}
             <Route path="examples/ad" element={<AdUsageExample />} />
             <Route path="examples/api-fallback" element={<ApiWithFallbackExample />} />
+            <Route path="examples/editor-comparison" element={<EditorComparisonPage />} />
           </Route>
         </Route>
         

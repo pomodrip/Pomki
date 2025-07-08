@@ -21,6 +21,7 @@ export { default as FlashCard } from './FlashCard';
 export { default as CircularProgress } from './CircularProgress';
 export { default as LazyReactQuill } from './LazyReactQuill';
 export { default as QuillEditor } from './QuillEditor';
+export { default as MarkdownEditor } from './MarkdownEditor';
 
 // 타입 export
 export type { TextProps } from './Text';

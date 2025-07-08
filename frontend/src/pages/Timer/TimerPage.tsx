@@ -12,13 +12,11 @@ import { Text, IconButton, WheelTimeAdjuster, Button, Container } from '../../co
 import Modal from '../../components/ui/Modal';
 import ExpandIcon from '@mui/icons-material/OpenInFull';
 import CompressIcon from '@mui/icons-material/CloseFullscreen';
-import 'react-quill/dist/quill.snow.css';
 import { styled } from '@mui/material/styles';
 
 // Timer 전용 컴포넌트들 import
 import {
   TimerCircle,
-  QuillEditor,
   NotesSection,
   NotesHeader,
   NotesTitle,
@@ -38,6 +36,9 @@ import {
   ElapsedTime,
   TimerDisplay,
 } from '../../components/timer';
+
+// MarkdownEditor import
+import { MarkdownEditor } from '../../components/ui';
 
 import { useTimer } from '../../hooks/useTimer';
 import { createNote, enhanceNoteWithAI, AIEnhanceResponse } from '../../api/noteApi';
@@ -105,22 +106,7 @@ interface TimerSettings {
   targetSessions?: number;
 }
 
-const editorModules = {
-  toolbar: [
-    [{ 'header': [1, 2, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['blockquote', 'link', 'image'],
-    ['clean'],
-  ],
-};
-
-const editorFormats = [
-  'header',
-  'bold', 'italic', 'underline', 'strike',
-  'list', 'bullet',
-  'blockquote', 'link', 'image'
-];
+// Quill 에디터 설정 제거됨 - MarkdownEditor 사용
 
 const TimerPage: React.FC = () => {
   const {
@@ -1022,10 +1008,7 @@ const TimerPage: React.FC = () => {
       />
       
       {/* 노트 에디터 영역 */}
-      <QuillEditor
-        theme={"snow" as any}
-        modules={editorModules}
-        formats={editorFormats}
+      <MarkdownEditor
         expanded={true}
         disabled={!isRunning}
         animate={noteImpact}
@@ -1037,7 +1020,9 @@ const TimerPage: React.FC = () => {
         value={notes}
         onChange={handleEditorChange}
         readOnly={!isRunning}
-
+        onImageUpload={(imageUrl) => {
+          console.log('타이머 페이지 이미지 업로드:', imageUrl);
+        }}
       />
 
       {/* 데스크톱 확장된 기능들 */}
@@ -1488,10 +1473,7 @@ const TimerPage: React.FC = () => {
           />
           
           {/* 노트 에디터 영역 */}
-          <QuillEditor
-            theme={"snow" as any}
-            modules={editorModules}
-            formats={editorFormats}
+          <MarkdownEditor
             expanded={false}
             disabled={!isRunning}
             animate={noteImpact}
@@ -1503,6 +1485,9 @@ const TimerPage: React.FC = () => {
             value={notes}
             onChange={handleEditorChange}
             readOnly={!isRunning}
+            onImageUpload={(imageUrl) => {
+              console.log('타이머 페이지 이미지 업로드:', imageUrl);
+            }}
           />
           
           {/* 하단 버튼 섹션 */}

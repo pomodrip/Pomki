@@ -6,7 +6,7 @@ import {
   TextField,
   Button,
 } from '@mui/material';
-import { Text, IconButton, QuillEditor } from '../../components/ui';
+import { Text, IconButton, MarkdownEditor } from '../../components/ui';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -258,27 +258,15 @@ const NoteCreatePage: React.FC = () => {
         {/* 내용 입력 */}
         <Box>
           <Box sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>내용</Box>
-          <QuillEditor
+          <MarkdownEditor
             value={noteContent}
             onChange={setNoteContent}
-            placeholder="노트 내용을 입력하세요"
-            modules={{
-              toolbar: [
-                [{ 'header': [1, 2, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['blockquote', 'link', 'image'],
-                ['clean']
-              ],
-            }}
-            formats={[
-              'header',
-              'bold', 'italic', 'underline', 'strike',
-              'list', 'bullet',
-              'blockquote', 'link', 'image'
-            ]}
+            placeholder="노트 내용을 마크다운으로 입력하세요"
             minHeight="300px"
             maxHeight="500px"
+            onImageUpload={(imageUrl) => {
+              console.log('노트 페이지 이미지 업로드:', imageUrl);
+            }}
           />
         </Box>
 
