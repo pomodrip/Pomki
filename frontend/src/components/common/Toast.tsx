@@ -194,12 +194,27 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
       severity={toast.severity} 
       clickable={!!toast.onClick}
       onClick={handleClick}
+      role="alert"
+      aria-live={toast.severity === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
+      aria-describedby={`toast-message-${toast.id}`}
+      tabIndex={toast.onClick ? 0 : -1}
+      onKeyDown={(e) => {
+        if (toast.onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
     >
-      <IconContainer severity={toast.severity}>
+      <IconContainer severity={toast.severity} aria-hidden="true">
         {getSeverityIcon(toast.severity)}
       </IconContainer>
       <MessageContainer>
-        <Typography variant="body2" sx={{ fontWeight: 600, margin: 0 }}>
+        <Typography 
+          variant="body2" 
+          sx={{ fontWeight: 600, margin: 0 }}
+          id={`toast-message-${toast.id}`}
+        >
           {toast.message}
         </Typography>
       </MessageContainer>
@@ -211,6 +226,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
             e.stopPropagation(); // 부모 클릭 이벤트 방지
             handleAction();
           }}
+          aria-label={`${toast.action} 액션 수행`}
           sx={{
             flexShrink: 0,
             fontSize: '0.75rem',
@@ -241,6 +257,10 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         variant="determinate" 
         value={toast.progress} 
         severity={toast.severity}
+        role="progressbar"
+        aria-valuenow={Math.round(toast.progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
       />
     </ToastItemBox>
   );
@@ -254,7 +274,12 @@ const Toast: React.FC = () => {
 
   return (
     <CenterWrapper isMobile={isMobile}>
-      <ToastContainer isMobile={isMobile}>
+      <ToastContainer 
+        isMobile={isMobile}
+        role="region"
+        aria-label="토스트 알림 영역"
+        aria-live="polite"
+      >
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} />
         ))}

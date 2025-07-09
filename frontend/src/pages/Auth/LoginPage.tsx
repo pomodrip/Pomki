@@ -239,7 +239,7 @@ const LoginPage = () => {
         <Button
           fullWidth
           variant="contained"
-          startIcon={<img src={kakaoImg} alt="카카오 심볼" style={{ width: 20, height: 20 }} />}
+          startIcon={<img src={kakaoImg} alt="" style={{ width: 20, height: 20 }} />}
           disabled={isLoading}
           onClick={handleKakaoLogin}
           sx={{

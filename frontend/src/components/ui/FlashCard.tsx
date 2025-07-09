@@ -108,8 +108,14 @@ const FlashCard: React.FC<FlashCardProps> = ({
             {card.front}
           </Typography>
           {onToggleBookmark && (
-            <IconButton size="small" onClick={handleToggleBookmark}>
-              {isBookmarked ? <Bookmark color="primary" aria-label="북마크 해제" /> : <BookmarkBorder aria-label="북마크 추가" />}
+            <IconButton 
+              size="small" 
+              onClick={handleToggleBookmark}
+              aria-label={isBookmarked ? "북마크 해제" : "북마크 추가"}
+              role="button"
+              tabIndex={0}
+            >
+              {isBookmarked ? <Bookmark color="primary" /> : <BookmarkBorder />}
             </IconButton>
           )}
         </Box>

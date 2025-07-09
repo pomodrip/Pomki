@@ -43,11 +43,21 @@ const Snackbar: React.FC<SnackbarProps> = ({
   };
 
   const actionComponent = action ? (
-    <Button color="inherit" size="small" onClick={onAction}>
+    <Button 
+      color="inherit" 
+      size="small" 
+      onClick={onAction}
+      aria-label={`${action} 액션 수행`}
+    >
       {action}
     </Button>
   ) : (
-    <IconButton size="small" color="inherit" onClick={onClose}>
+    <IconButton 
+      size="small" 
+      color="inherit" 
+      onClick={onClose}
+      aria-label="알림 닫기"
+    >
       <CloseIcon fontSize="small" />
     </IconButton>
   );
@@ -58,14 +68,20 @@ const Snackbar: React.FC<SnackbarProps> = ({
       autoHideDuration={autoHideDuration}
       onClose={handleClose}
       anchorOrigin={anchorOrigin}
+      aria-describedby="snackbar-message"
     >
       <StyledAlert
         onClose={handleClose}
         severity={severity}
         variant="filled"
         action={actionComponent}
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
       >
-        {message}
+        <span id="snackbar-message" style={{ display: 'contents' }}>
+          {message}
+        </span>
       </StyledAlert>
     </MuiSnackbar>
   );
