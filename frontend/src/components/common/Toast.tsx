@@ -195,7 +195,6 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
       clickable={!!toast.onClick}
       onClick={handleClick}
       role="alert"
-      aria-live={toast.severity === 'error' ? 'assertive' : 'polite'}
       aria-atomic="true"
       aria-describedby={`toast-message-${toast.id}`}
       tabIndex={toast.onClick ? 0 : -1}
@@ -261,6 +260,8 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         aria-valuenow={Math.round(toast.progress)}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-label="토스트 진행률"
+        aria-live="off"
       />
     </ToastItemBox>
   );
@@ -278,7 +279,8 @@ const Toast: React.FC = () => {
         isMobile={isMobile}
         role="region"
         aria-label="토스트 알림 영역"
-        aria-live="polite"
+        aria-live={toasts.length > 0 ? 'polite' : 'off'}
+        aria-atomic="false"
       >
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} />

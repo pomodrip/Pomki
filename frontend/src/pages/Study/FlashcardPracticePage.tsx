@@ -404,10 +404,21 @@ const FlashcardPracticePage: React.FC = () => {
           </Box>
           
           {/* 플래시카드 (앞면/뒷면 플립) */}
-          <FlashcardCard onClick={handleCardClick}>
+          <FlashcardCard 
+            onClick={handleCardClick}
+            role="button"
+            tabIndex={0}
+            aria-describedby={`card-instruction-${currentCard.cardId}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick();
+              }
+            }}
+          >
             <FlashcardInner flipped={showAnswer}>
               {/* 앞면 */}
-              <FlashcardFace>
+              <FlashcardFace aria-hidden={showAnswer}>
                 <Typography
                   variant="h5"
                   textAlign="center"
@@ -417,6 +428,20 @@ const FlashcardPracticePage: React.FC = () => {
                   }}
                 >
                   {currentCard.question}
+                </Typography>
+                
+                {/* 스크린리더용 설명 (화면에는 보이지 않음) */}
+                <Typography
+                  id={`card-instruction-${currentCard.cardId}`}
+                  sx={{
+                    position: 'absolute',
+                    left: '-10000px',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  활성화하면 정답을 확인할 수 있습니다.
                 </Typography>
 
                 {/* 태그들 - 카드 하단에 고정 */}
@@ -449,7 +474,7 @@ const FlashcardPracticePage: React.FC = () => {
               </FlashcardFace>
 
               {/* 뒷면 */}
-              <FlashcardBack>
+              <FlashcardBack aria-hidden={!showAnswer}>
                 <Typography
                   variant="h5"
                   textAlign="center"
