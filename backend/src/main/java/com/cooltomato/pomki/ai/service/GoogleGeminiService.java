@@ -2,7 +2,7 @@ package com.cooltomato.pomki.ai.service;
 
 import com.cooltomato.pomki.ai.dto.gemini.GeminiReqDto;
 import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
-import com.cooltomato.pomki.ai.service.LLMService;
+import com.cooltomato.pomki.ai.dto.gemini.GenerationConfig;
 import com.cooltomato.pomki.global.config.GeminiProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,10 +16,12 @@ public class GoogleGeminiService implements LLMService {
     private final WebClient webClient;
     private final String apiKey;
     private final String defaultModel;
+    private final GeminiProperties geminiProperties;
 
     public GoogleGeminiService(WebClient.Builder webClientBuilder, GeminiProperties geminiProperties) {
         this.apiKey = geminiProperties.getApi().getKey();
         this.defaultModel = geminiProperties.getApi().getDefaultModel();
+        this.geminiProperties = geminiProperties;
         this.webClient = webClientBuilder
              .baseUrl(geminiProperties.getApi().getBaseUrl())
              .build();
@@ -35,9 +37,13 @@ public class GoogleGeminiService implements LLMService {
         }
 
         try {
+            GenerationConfig generationConfig = GenerationConfig.builder()
+                .maxOutputTokens(geminiProperties.getApi().getMaxTokens())
+                .temperature(geminiProperties.getApi().getTemperature())
+                .build();
             // Gemini 요청 DTO 생성
             GeminiReqDto requestDto = new GeminiReqDto();
-            requestDto.createGeminiReqDto(prompt);
+            requestDto.createGeminiReqDto(prompt, generationConfig);
 
             // 모델명 기본값 설정
             String model = (modelName != null && !modelName.isEmpty()) ? modelName : defaultModel;

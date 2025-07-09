@@ -13,6 +13,7 @@ import java.util.List;
 public class GeminiReqDto {
 
     private List<Content> contents;
+    private GenerationConfig generationConfig;
 
     @Data
     public class Content{
@@ -33,9 +34,10 @@ public class GeminiReqDto {
         }
     }
 
-    public void createGeminiReqDto(String text){
+    public void createGeminiReqDto(String text, GenerationConfig config){
         this.contents = new ArrayList<>();
         Content content = new Content(text);
         contents.add(content);
+        this.generationConfig = config;
     }
 }
