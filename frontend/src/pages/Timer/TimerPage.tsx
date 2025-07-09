@@ -6,6 +6,7 @@ import {
   CircularProgress as MuiCircularProgress,
   FormControl,
   FormControlLabel,
+  InputLabel,
   Switch,
 } from '@mui/material';
 import { Text, IconButton, WheelTimeAdjuster, Button, Container } from '../../components/ui';
@@ -1044,15 +1045,23 @@ const TimerPage: React.FC = () => {
             flex: 1,
           }}>
             <FormControl size="small" variant="outlined">
+              <InputLabel 
+                id="ai-summary-style-label-desktop"
+                sx={{ 
+                  display: 'none' // Hide visually but keep for screen readers
+                }}
+              >
+                AI 노트 생성 스타일
+              </InputLabel>
               <Select
                 id="ai-summary-style-select-desktop"
+                labelId="ai-summary-style-label-desktop"
                 value={summaryStyle}
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
                 aria-label="AI 노트 생성 스타일 선택"
                 MenuProps={{ 
                   disablePortal: true,
-                  'aria-labelledby': 'ai-summary-style-select-desktop',
                 }}
                 sx={{
                   minWidth: '150px',
@@ -1168,15 +1177,30 @@ const TimerPage: React.FC = () => {
             flex: 1,
             maxWidth: '160px',
           }}>
+            <InputLabel 
+              id="ai-summary-style-label-mobile"
+              sx={{ 
+                display: 'none' // Hide visually but keep for screen readers
+              }}
+            >
+              AI 노트 생성 스타일
+            </InputLabel>
             <Select
               id="ai-summary-style-select-mobile"
+              labelId="ai-summary-style-label-mobile"
               value={summaryStyle}
               onChange={(e) => setSummaryStyle(e.target.value as string)}
               displayEmpty
               aria-label="AI 노트 생성 스타일 선택"
+              aria-describedby="ai-summary-style-description-mobile"
               MenuProps={{ 
-                disablePortal: true,
-                'aria-labelledby': 'ai-summary-style-select-mobile',
+                disablePortal: false,
+                'aria-labelledby': 'ai-summary-style-label-mobile',
+                role: 'listbox',
+                MenuListProps: {
+                  role: 'listbox',
+                  'aria-label': 'AI 노트 생성 스타일 옵션',
+                },
               }}
               sx={{
                 backgroundColor: '#FFFFFF',
@@ -1197,9 +1221,9 @@ const TimerPage: React.FC = () => {
                 },
               }}
             >
-              <MenuItem value="concept">개념 정리</MenuItem>
-              <MenuItem value="detail">상세 분석</MenuItem>
-              <MenuItem value="summary">핵심 요약</MenuItem>
+              <MenuItem value="concept" role="option" aria-label="개념 정리 스타일">개념 정리</MenuItem>
+              <MenuItem value="detail" role="option" aria-label="상세 분석 스타일">상세 분석</MenuItem>
+              <MenuItem value="summary" role="option" aria-label="핵심 요약 스타일">핵심 요약</MenuItem>
             </Select>
           </FormControl>
           
@@ -1512,9 +1536,15 @@ const TimerPage: React.FC = () => {
                 onChange={(e) => setSummaryStyle(e.target.value as string)}
                 displayEmpty
                 aria-label="AI 노트 생성 스타일 선택"
+                aria-describedby="ai-summary-style-description"
                 MenuProps={{ 
-                  disablePortal: true,
+                  disablePortal: false,
                   'aria-labelledby': 'ai-summary-style-select-main',
+                  role: 'listbox',
+                  MenuListProps: {
+                    role: 'listbox',
+                    'aria-label': 'AI 노트 생성 스타일 옵션',
+                  },
                 }}
                 sx={{
                 
@@ -1536,9 +1566,9 @@ const TimerPage: React.FC = () => {
                   },
                 }}
               >
-                <MenuItem value="concept">개념 정리</MenuItem>
-                <MenuItem value="detail">상세 분석</MenuItem>
-                <MenuItem value="summary">핵심 요약</MenuItem>
+                <MenuItem value="concept" role="option" aria-label="개념 정리 스타일">개념 정리</MenuItem>
+                <MenuItem value="detail" role="option" aria-label="상세 분석 스타일">상세 분석</MenuItem>
+                <MenuItem value="summary" role="option" aria-label="핵심 요약 스타일">핵심 요약</MenuItem>
               </Select>
             </FormControl>
             

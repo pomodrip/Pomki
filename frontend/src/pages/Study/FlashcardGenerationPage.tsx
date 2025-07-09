@@ -318,6 +318,7 @@ const FlashcardGenerationPage: React.FC = () => {
               bgcolor: 'action.hover',
             }
           }}
+          aria-label='뒤로가기'
         >
           <ArrowBackIosNew />
         </IconButton>
@@ -369,6 +370,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     '&:hover': { bgcolor: 'primary.dark' },
                     boxShadow: 1,
                   }}
+                  aria-label='이전'
                 >
                   <ArrowBack />
                 </IconButton>
@@ -411,6 +413,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     '&:hover': { bgcolor: 'primary.dark' },
                     boxShadow: 1,
                   }}
+                  aria-label='다음'
                 >
                   <ArrowForward />
                 </IconButton>
@@ -534,7 +537,9 @@ const FlashcardGenerationPage: React.FC = () => {
                     '&:hover': { bgcolor: 'primary.dark' },
                     boxShadow: 1,
                   }}
+                  aria-label='이전'
                 >
+                  
                   <ArrowBack />
                 </IconButton>
 
@@ -570,6 +575,7 @@ const FlashcardGenerationPage: React.FC = () => {
                     '&:hover': { bgcolor: 'primary.dark' },
                     boxShadow: 1,
                   }}
+                  aria-label="다음"
                 >
                   <ArrowForward />
                 </IconButton>
@@ -732,6 +738,7 @@ const FlashcardGenerationPage: React.FC = () => {
                       '&:hover': { bgcolor: 'primary.dark' },
                       boxShadow: 2,
                     }}
+                    aria-label='이전'
                   >
                     <ArrowBack />
                   </IconButton>
@@ -775,6 +782,7 @@ const FlashcardGenerationPage: React.FC = () => {
                       '&:hover': { bgcolor: 'primary.dark' },
                       boxShadow: 2,
                     }}
+                    aria-label="다음"
                   >
                     <ArrowForward />
                   </IconButton>
@@ -897,6 +905,7 @@ const FlashcardGenerationPage: React.FC = () => {
                       '&:hover': { bgcolor: 'primary.dark' },
                       boxShadow: 2,
                     }}
+                    aria-label='이전'
                   >
                     <ArrowBack />
                   </IconButton>
@@ -932,6 +941,7 @@ const FlashcardGenerationPage: React.FC = () => {
                       '&:hover': { bgcolor: 'primary.dark' },
                       boxShadow: 2,
                     }}
+                    aria-label="다음"
                   >
                     <ArrowForward />
                   </IconButton>

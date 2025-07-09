@@ -64,6 +64,7 @@ const ErrorSnackbar: React.FC = () => {
       autoHideDuration={snackbar.autoHideDuration}
       onClose={handleClose}
       anchorOrigin={snackbar.anchorOrigin}
+      aria-describedby="error-snackbar-message"
       // 위치 조정: 데스크탑에서는 헤더 아래, 모바일에서는 바텀 네비게이션 위
       sx={{ 
         ...(snackbar.anchorOrigin?.vertical === 'bottom' && {
@@ -78,12 +79,16 @@ const ErrorSnackbar: React.FC = () => {
         severity="error"
         variant="filled"
         onClose={handleClose}
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
         action={
           <Button
             color="inherit"
             size="small"
             startIcon={<LoginIcon fontSize="small" />}
             onClick={handleLoginClick}
+            aria-label="로그인 페이지로 이동"
             sx={{
               color: 'inherit',
               fontWeight: 600,
@@ -96,9 +101,10 @@ const ErrorSnackbar: React.FC = () => {
           >
             로그인
           </Button>
-        }
-      >
-        {snackbar.message}
+        }        >
+        <span id="error-snackbar-message" style={{ display: 'contents' }}>
+          {snackbar.message}
+        </span>
       </StyledAlert>
     </MuiSnackbar>
   );
