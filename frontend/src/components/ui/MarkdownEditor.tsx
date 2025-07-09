@@ -36,9 +36,17 @@ import SplitscreenIcon from '@mui/icons-material/Splitscreen';
 const MarkdownEditorWrapper = styled(Box)<{ 
   minHeight?: string;
   maxHeight?: string;
-}>(({ theme, minHeight = '300px', maxHeight = '500px' }) => ({
+}>(({ theme, minHeight = '300px', maxHeight = '400px' }) => ({
   width: '100%',
   position: 'relative',
+  // Apply size constraints so the editor does not push other content down
+  minHeight,
+  maxHeight,
+  overflowY: 'hidden', // restore outer scroll as before
+  overflowX: 'hidden', // prevent horizontal scroll
+  wordWrap: 'break-word', // long words wrap
+  wordBreak: 'break-word',
+  whiteSpace: 'pre-wrap',
   border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'}`,
   borderRadius: '8px',
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
@@ -80,10 +88,12 @@ const EditorContainer = styled(Box)<{
   mode: 'split' | 'edit' | 'preview';
   minHeight?: string;
   maxHeight?: string;
-}>(({ theme, mode, minHeight = '300px', maxHeight = '500px' }) => ({
+}>(({ theme, mode, minHeight = '400px', maxHeight = '400px' }) => ({
   display: 'flex',
-  height: mode === 'split' ? 'auto' : minHeight,
-  maxHeight,
+  height: 'auto', // let container grow with content
+  minHeight: '100%',
+  // maxHeight removed to prevent fixed height
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f8f8f8',
   
   [theme.breakpoints.down('md')]: {
     flexDirection: mode === 'split' ? 'column' : 'row',
@@ -95,6 +105,10 @@ const EditPane = styled(Box)<{ visible: boolean }>(({ theme, visible }) => ({
   flex: 1,
   display: visible ? 'block' : 'none',
   position: 'relative',
+  maxHeight: '400px',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f8f8f8',
   
   '& .MuiTextField-root': {
     '& .MuiOutlinedInput-root': {
@@ -120,6 +134,11 @@ const EditPane = styled(Box)<{ visible: boolean }>(({ theme, visible }) => ({
     fontSize: '14px',
     lineHeight: 1.6,
     resize: 'none',
+    overflowX: 'hidden',
+    wordWrap: 'break-word',
+    wordBreak: 'break-word',
+    whiteSpace: 'pre-wrap',
+    overflowY: 'auto',
   },
 }));
 
@@ -128,8 +147,10 @@ const PreviewPane = styled(Box)<{ visible: boolean }>(({ theme, visible }) => ({
   display: visible ? 'block' : 'none',
   borderLeft: visible ? `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'}` : 'none',
   padding: '16px',
-  overflow: 'auto',
-  backgroundColor: theme.palette.background.default,
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  maxHeight: '400px',
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f8f8f8',
   
   [theme.breakpoints.down('md')]: {
     borderLeft: 'none',
@@ -268,7 +289,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   placeholder = '마크다운으로 작성해보세요...',
   readOnly = false,
   minHeight = '300px',
-  maxHeight = '500px',
+  maxHeight = '400px',
   disabled = false,
   expanded = false,
   animate = false,
@@ -456,7 +477,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }
   }, [handleImageUpload]);
 
-  const actualMinHeight = expanded ? '60vh' : minHeight;
+  const actualMinHeight = expanded ? '40vh' : minHeight;
   const actualMaxHeight = expanded ? '80vh' : maxHeight;
 
   return (
