@@ -36,9 +36,13 @@ import SplitscreenIcon from '@mui/icons-material/Splitscreen';
 const MarkdownEditorWrapper = styled(Box)<{ 
   minHeight?: string;
   maxHeight?: string;
-}>(({ theme, minHeight = '300px', maxHeight = '500px' }) => ({
+}>(({ theme, minHeight = '300px', maxHeight = '400px' }) => ({
   width: '100%',
   position: 'relative',
+  // Apply size constraints so the editor does not push other content down
+  minHeight,
+  maxHeight,
+  overflowY: 'auto',
   border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'}`,
   borderRadius: '8px',
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
@@ -80,7 +84,7 @@ const EditorContainer = styled(Box)<{
   mode: 'split' | 'edit' | 'preview';
   minHeight?: string;
   maxHeight?: string;
-}>(({ theme, mode, minHeight = '300px', maxHeight = '500px' }) => ({
+}>(({ theme, mode, minHeight = '300px', maxHeight = '400px' }) => ({
   display: 'flex',
   height: mode === 'split' ? 'auto' : minHeight,
   maxHeight,
@@ -268,7 +272,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   placeholder = '마크다운으로 작성해보세요...',
   readOnly = false,
   minHeight = '300px',
-  maxHeight = '500px',
+  maxHeight = '400px',
   disabled = false,
   expanded = false,
   animate = false,
