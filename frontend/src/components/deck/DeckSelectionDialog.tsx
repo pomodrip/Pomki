@@ -83,9 +83,24 @@ const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
         {loading && <CircularProgress />}
         {error && <Typography color="error">덱을 불러오는 데 실패했습니다: {error}</Typography>}
         <List sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
-          {decks.map((deck) => (
-            <ListItem button key={deck.deckId} onClick={() => handleDeckClick(deck)}>
-              <ListItemText primary={deck.deckName} secondary={`카드 수: ${deck.cardCnt}`} />
+          {decks.map((deck: CardDeck) => (
+            <ListItem
+              button
+              key={deck.deckId}
+              onClick={() => handleDeckClick(deck)}
+              sx={{
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  border: '2px solid #1976d2', // primary color highlight
+                  borderRadius: '8px',
+                },
+              }}
+            >
+              <ListItemText
+                primary={deck.deckName}
+                secondary={`카드 수: ${deck.cardCnt}`}
+              />
             </ListItem>
           ))}
         </List>
