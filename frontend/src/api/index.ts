@@ -99,7 +99,6 @@ api.interceptors.response.use(
       
       try {
         // refreshToken 쿠키 확인
-        if (cookies.hasRefreshToken()) {
           // 서버에 토큰 갱신 요청 (refreshToken은 쿠키로 자동 전송됨)
           const refreshUrl = import.meta.env.DEV ? '/api/auth/refresh' : `${API_BASE_URL}/api/auth/refresh`;
           const response = await axios.post(refreshUrl, {}, {
@@ -117,7 +116,6 @@ api.interceptors.response.use(
           // 원래 요청에 새 토큰 적용
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
-        }
       } catch (refreshError) {
         // 토큰 갱신 실패 시 쿠키 제거 및 로그인 페이지로 이동
         console.error('Token refresh failed:', refreshError);
@@ -138,16 +136,16 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      // refreshToken이 없는 경우에도 스낵바 표시 후 자동 리디렉션
-      if (window.location.pathname !== '/login') {
-        cookies.clearAuthCookies();
-        if (store) {
-          const { clearAuth } = await import('../store/slices/authSlice');
-          const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
-          store.dispatch(clearAuth());
-          store.dispatch(show401ErrorSnackbar());
-        }
-      }
+      // // refreshToken이 없는 경우에도 스낵바 표시 후 자동 리디렉션
+      // if (window.location.pathname !== '/login') {
+      //   cookies.clearAuthCookies();
+      //   if (store) {
+      //     const { clearAuth } = await import('../store/slices/authSlice');
+      //     const { show401ErrorSnackbar } = await import('../store/slices/snackbarSlice');
+      //     store.dispatch(clearAuth());
+      //     store.dispatch(show401ErrorSnackbar());
+      //   }
+      // }
     }
     
     return Promise.reject(error);
