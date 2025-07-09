@@ -89,11 +89,17 @@ const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
               key={deck.deckId}
               onClick={() => handleDeckClick(deck)}
               sx={{
-                transition: 'all 0.2s ease',
+                transition: 'all 0.15s ease-in-out',
                 '&:hover': {
                   backgroundColor: 'transparent',
                   border: '2px solid #1976d2', // primary color highlight
                   borderRadius: '8px',
+                  '& .MuiListItemText-primary': {
+                    fontSize: '1.1em',
+                  },
+                  '& .MuiListItemText-secondary': {
+                    fontSize: '1.1em',
+                  },
                 },
               }}
             >
@@ -104,7 +110,7 @@ const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
             </ListItem>
           ))}
         </List>
-        
+
         <Box component="div" sx={{ mt: 2 }}>
             <Typography variant="h6" gutterBottom>
               새 덱 생성
