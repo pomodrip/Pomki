@@ -130,13 +130,6 @@ export const validateToken = createAsyncThunk<
   }
 >('auth/validateToken', async (_, { rejectWithValue, dispatch }) => {
   try {
-    console.log("리프레시 요청 성공 1");
-    // refreshToken 쿠키가 있는지 확인
-    if (!cookies.hasRefreshToken()) {
-      console.log("리프레시 요청 성공 1-1");
-      // return rejectWithValue('No refresh token found');
-    }
-    console.log("리프레시 요청 성공 2");
     // 1. refreshToken으로 새 accessToken 발급
     const refreshResponse = await authApi.refreshTokenFromCookie();
     const { accessToken } = refreshResponse;
