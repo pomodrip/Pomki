@@ -558,7 +558,7 @@ const FlashCardListPage: React.FC = () => {
         </Button>
       </Box>
 
-      {/* API Fallback 정보 표시 */}
+      {/* API Fallback 정보 표시
       {fallbackCards.length > 0 && (
         <Box
           sx={{
@@ -576,7 +576,7 @@ const FlashCardListPage: React.FC = () => {
             ℹ️ API Fallback이 활성화되어 Mock 데이터를 표시하고 있습니다. ({fallbackCards.length}개 카드)
           </Typography>
         </Box>
-      )}
+      )} */}
 
       {/* 검색 */}
       <Box sx={{ mb: 2 }}>
