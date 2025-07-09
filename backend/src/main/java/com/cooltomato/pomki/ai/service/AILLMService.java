@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.web.client.RestTemplate;
 import com.cooltomato.pomki.ai.dto.gemini.GeminiResDto;
+import com.cooltomato.pomki.ai.dto.gemini.GenerationConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AILLMService {
 
     private final RestTemplate geminiRestTemplate;
-    private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=";
+    private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -32,7 +33,11 @@ public class AILLMService {
     public String generateContent(String promptText) {
         String geminiURL = GEMINI_API_URL + geminiApiKey;
         GeminiReqDto request = new GeminiReqDto();
-        request.createGeminiReqDto(promptText);
+        GenerationConfig config = GenerationConfig.builder()
+                .maxOutputTokens(2048)
+                .temperature(0.7)
+                .build();
+        request.createGeminiReqDto(promptText, config);
 
         try {
             GeminiResDto response = geminiRestTemplate.postForObject(geminiURL, request, GeminiResDto.class);
