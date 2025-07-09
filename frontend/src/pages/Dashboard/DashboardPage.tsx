@@ -151,13 +151,21 @@ const DashboardPage: React.FC = () => {
   // 🔄 로컬 스토리지 기반 복습 일정 계산
   const [reviewCounts, setReviewCounts] = React.useState(() => calculateReviewCounts());
 
-  // storage 이벤트 리스너를 통해 다른 탭에서 변경 시 동기화
+  // storage 또는 커스텀 이벤트(reviewScheduleUpdated)로 숫자 실시간 동기화
   React.useEffect(() => {
     const updateCounts = () => setReviewCounts(calculateReviewCounts());
-    // 최초 계산
+
+    // 최초 1회 계산
     updateCounts();
+
+    // 다른 탭(localStorage) & 같은 탭(custom event) 모두 처리
     window.addEventListener('storage', updateCounts);
-    return () => window.removeEventListener('storage', updateCounts);
+    window.addEventListener('reviewScheduleUpdated', updateCounts as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', updateCounts);
+      window.removeEventListener('reviewScheduleUpdated', updateCounts as EventListener);
+    };
   }, []);
 
   const todayCards = dashboardData?.review?.todayCount ?? reviewCounts.todayCount;

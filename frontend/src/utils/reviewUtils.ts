@@ -48,6 +48,16 @@ export function loadReviewSchedule(): Record<string, ReviewScheduleEntry> {
   }
 }
 
+// 리뷰 일정이 변했음을 알리는 커스텀 이벤트 헬퍼
+function notifyScheduleChange() {
+  // 같은 탭에서도 대시보드가 변화를 감지하도록 커스텀 이벤트를 발행
+  try {
+    window.dispatchEvent(new Event('reviewScheduleUpdated'));
+  } catch {
+    /* window 가 없는 실행 환경(SSR 등)에서는 무시 */
+  }
+}
+
 export function saveReviewEntry(cardId: string, difficulty: ReviewDifficulty): void {
   const schedule = loadReviewSchedule();
   schedule[cardId] = {
@@ -56,6 +66,7 @@ export function saveReviewEntry(cardId: string, difficulty: ReviewDifficulty): v
     scheduledAt: getNextReviewDate(difficulty).toISOString(),
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule));
+  notifyScheduleChange();
 }
 
 export function removeReviewEntry(cardId: string): void {
@@ -63,6 +74,7 @@ export function removeReviewEntry(cardId: string): void {
   if (schedule[cardId]) {
     delete schedule[cardId];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule));
+    notifyScheduleChange();
   }
 }
 
