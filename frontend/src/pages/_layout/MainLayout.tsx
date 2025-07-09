@@ -5,6 +5,7 @@ import Header from '../../components/common/Header';
 import BottomNav from '../../components/common/BottomNav';
 import TimerTicker from '../../components/common/TimerTicker';
 import { useResponsive } from '../../hooks/useResponsive';
+import FocusLoopGuard from '../../components/common/FocusLoopGuard';
 
 const MainLayout: React.FC = () => {
   const { isMobile } = useResponsive();
@@ -38,7 +39,10 @@ const MainLayout: React.FC = () => {
           pb: isMobile ? '64px' : 0,
         }}
       >
+        {/* Sentinel to keep focus inside page */}
+        <FocusLoopGuard />
         <Outlet />
+        <FocusLoopGuard />
       </Box>
       
       {/* BottomNav는 모바일에서만 렌더링됨 */}

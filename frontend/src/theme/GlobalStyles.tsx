@@ -26,6 +26,10 @@ const GlobalStyles = () => {
           width: '100%',
           height: '100%',
         },
+        '*:focus-visible': {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: '2px',
+        },
       })}
     />
   );
