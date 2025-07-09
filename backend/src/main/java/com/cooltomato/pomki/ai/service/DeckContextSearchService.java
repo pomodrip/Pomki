@@ -12,10 +12,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +56,7 @@ public class DeckContextSearchService {
             }
 
             // 프롬프트 템플릿 로드
-            String promptTemplate = loadPrompt("classpath:prompts/DeckContextSearch.txt");
+            String promptTemplate = loadPrompt("prompts/DeckContextSearch.txt");
 
             // 카드 내용을 컨텍스트로 구성
             String cardContents = buildCardContents(cards);
@@ -193,8 +197,10 @@ public class DeckContextSearchService {
 
     private String loadPrompt(String path) {
         try {
-            File file = ResourceUtils.getFile(path);
-            return new String(Files.readAllBytes(file.toPath()));
+            ClassPathResource resource = new ClassPathResource(path);
+            try (InputStream inputStream = resource.getInputStream()) {
+                return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
         } catch (Exception e) {
             log.error("프롬프트 파일을 불러오는 데 실패했습니다: {}", path, e);
             throw new RuntimeException("필요한 프롬프트 파일을 불러올 수 없습니다.", e);

@@ -5,10 +5,14 @@ import com.cooltomato.pomki.ai.dto.NoteEnhancementResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 @Service
@@ -21,7 +25,7 @@ public class AiNoteService {
 
     public NoteEnhancementResponseDto enhanceNote(NoteEnhancementRequestDto requestDto) {
         try {
-            String promptTemplate = loadPrompt("classpath:prompts/NoteEnhancementDetailed.txt");
+            String promptTemplate = loadPrompt("prompts/NoteEnhancementDetailed.txt");
 
             String title = requestDto.getNoteTitle() != null ? requestDto.getNoteTitle() : "";
             String content = requestDto.getNoteContent();
@@ -48,8 +52,10 @@ public class AiNoteService {
 
     private String loadPrompt(String path) {
         try {
-            File file = ResourceUtils.getFile(path);
-            return new String(Files.readAllBytes(file.toPath()));
+            ClassPathResource resource = new ClassPathResource(path);
+            try (InputStream inputStream = resource.getInputStream()) {
+                return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
         } catch (Exception e) {
             log.error("프롬프트 파일을 불러오는 데 실패했습니다: {}", path, e);
             throw new RuntimeException("필요한 프롬프트 파일을 불러올 수 없습니다.", e);
