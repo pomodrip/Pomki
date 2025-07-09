@@ -33,7 +33,6 @@ public class NoteController {
     private final NoteService noteService;
     
     @Operation(summary = "노트 생성", description = "새로운 노트를 생성합니다. 이미지 파일도 함께 업로드할 수 있습니다.")
-    @Operation(summary = "노트 생성", description = "새로운 노트를 생성합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<NoteResponseDto> createNote(
             @Parameter(description = "노트 생성 요청 데이터", required = true)
