@@ -53,8 +53,8 @@ export default defineConfig(({ mode }) => {
               type: 'image/png',
             },
             {
-              src: 'icon-256x256.png',
-              sizes: '256x256',
+              src: 'icon-192x192.png',
+              sizes: '192x192',
               type: 'image/png',
             },
             {
