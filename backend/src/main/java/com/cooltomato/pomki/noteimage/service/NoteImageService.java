@@ -177,6 +177,22 @@ public class NoteImageService {
     }
 
     @Transactional
+    public void deleteImage(Long imageId) {
+        NoteImage image = noteImageRepository.findById(imageId)
+                .orElseThrow(() -> new NoteNotFoundException("해당 ID의 이미지를 찾을 수 없습니다."));
+        
+        // S3에서 이미지 삭제
+        deleteFromS3(extractS3KeyFromUrl(image.getImageUrl()));
+        if (image.getResizeImageUrl() != null) {
+            deleteFromS3(extractS3KeyFromUrl(image.getResizeImageUrl()));
+        }
+        
+        // 데이터베이스에서 이미지 삭제
+        noteImageRepository.delete(image);
+        log.info("이미지 삭제 완료: imageId={}", imageId);
+    }
+
+    @Transactional
     public void deleteImagesByNoteId(String noteId) {
         List<NoteImage> images = noteImageRepository.findByNote_NoteId(noteId);
         

@@ -14,7 +14,10 @@ import com.cooltomato.pomki.note.dto.NoteListResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.noteimage.entity.NoteImage;
+import com.cooltomato.pomki.noteimage.dto.NoteImageResponseDto;
 import com.cooltomato.pomki.noteimage.service.NoteImageService;
+import com.cooltomato.pomki.noteimage.repository.NoteImageRepository;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
 import com.cooltomato.pomki.tag.entity.Tag;
@@ -26,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -47,9 +51,10 @@ public class NoteService {
     private final AIService aiService;
     private final BookmarkRepository bookmarkRepository;
     private final NoteImageService noteImageService;
+    private final NoteImageRepository noteImageRepository;
 
     @Transactional
-    public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
+    public NoteResponseDto createNote(NoteCreateRequestDto noteRequestDto, List<MultipartFile> imageFiles, PrincipalMember memberInfoDto) {
         Member member = getMember(memberInfoDto.getMemberId());
 
         Note note = new Note();
@@ -61,13 +66,27 @@ public class NoteService {
         note.setAiEnhanced(noteRequestDto.getAiEnhanced());
         note.setCreatedAt(LocalDateTime.now());
         note.setIsDeleted(false);
-        note.setIsDeleted(false);
-
-        NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
-        noteResponseDto.setIsBookmarked(false);
 
         Note savedNote = noteRepository.save(note);
-        return NoteResponseDto.from(savedNote);
+
+        // 이미지 처리
+        List<NoteImageResponseDto> imageResponses = new ArrayList<>();
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            // 빈 파일 제거
+            List<MultipartFile> validFiles = imageFiles.stream()
+                    .filter(file -> file != null && !file.isEmpty())
+                    .collect(Collectors.toList());
+            
+            if (!validFiles.isEmpty()) {
+                imageResponses = noteImageService.uploadMultipleImages(savedNote.getNoteId(), validFiles);
+            }
+        }
+
+        NoteResponseDto noteResponseDto = NoteResponseDto.from(savedNote);
+        noteResponseDto.setIsBookmarked(false);
+        noteResponseDto.setImages(imageResponses);
+
+        return noteResponseDto;
     }
 
     public List<NoteListResponseDto> readNote(PrincipalMember memberInfoDto) {
@@ -75,10 +94,14 @@ public class NoteService {
         List<Note> notes = noteRepository.findAllByMemberAndIsDeletedIsFalse(member);
         List<NoteListResponseDto> noteListResponseDtos = new ArrayList<>();
         List<Bookmark> bookmarkedNotes = bookmarkRepository.findByMemberMemberId(member.getMemberId());
+        
         for(Note note : notes) {
             List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(note.getNoteId(), member.getMemberId());
+            List<NoteImageResponseDto> images = noteImageService.readImagesByNoteId(note.getNoteId());
+            
             NoteListResponseDto noteListResponseDto = NoteListResponseDto.from(note);
             noteListResponseDto.setTags(tags);
+            noteListResponseDto.setImages(images);
             noteListResponseDto.setIsBookmarked(bookmarkedNotes.stream().anyMatch(bookmark -> bookmark.getNote().getNoteId().equals(note.getNoteId())));
             noteListResponseDtos.add(noteListResponseDto);
         }
@@ -89,8 +112,13 @@ public class NoteService {
         Member member = getMember(memberInfoDto.getMemberId());
         Note note = getNote(id, member);
         List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(id, member.getMemberId());
+        
+        // 이미지 정보 조회
+        List<NoteImageResponseDto> images = noteImageService.readImagesByNoteId(id);
+        
         NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
         noteResponseDto.setTags(tags);
+        noteResponseDto.setImages(images);
         
         Optional<Bookmark> bookmarked = bookmarkRepository.findByMemberMemberIdAndNoteNoteId(member.getMemberId(), note.getNoteId());
 
@@ -138,9 +166,6 @@ public class NoteService {
                 log.info("debug >>> CardService deleteNote 태그 삭제 완료: " + tagName);
             }
         }
-
-        
-        
     }
 
     @Transactional
@@ -157,7 +182,7 @@ public class NoteService {
     }
 
     @Transactional
-    public NoteResponseDto updateNote(String id, NoteUpdateRequestDto noteRequestDto, PrincipalMember memberInfoDto) {
+    public NoteResponseDto updateNote(String id, NoteUpdateRequestDto noteRequestDto, List<MultipartFile> imageFiles, PrincipalMember memberInfoDto) {
         Member member = getMember(memberInfoDto.getMemberId());
         Note note = getNote(id, member);
 
@@ -167,6 +192,28 @@ public class NoteService {
         note.setUpdatedAt(LocalDateTime.now());
         noteRepository.save(note);
 
+        // 삭제할 이미지 처리
+        if (noteRequestDto.getDeleteImageIds() != null && !noteRequestDto.getDeleteImageIds().isEmpty()) {
+            for (Long imageId : noteRequestDto.getDeleteImageIds()) {
+                noteImageService.deleteImage(imageId);
+            }
+        }
+
+        // 새로운 이미지 추가
+        List<NoteImageResponseDto> newImages = new ArrayList<>();
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            List<MultipartFile> validFiles = imageFiles.stream()
+                    .filter(file -> file != null && !file.isEmpty())
+                    .collect(Collectors.toList());
+            
+            if (!validFiles.isEmpty()) {
+                newImages = noteImageService.uploadMultipleImages(id, validFiles);
+            }
+        }
+
+        // 현재 노트의 모든 이미지 정보 조회
+        List<NoteImageResponseDto> allImages = noteImageService.readImagesByNoteId(id);
+
         List<NoteTag> noteTags = noteTagRepository.findByNoteId(id);
         List<String> tagNames = noteTags.stream()
                 .map(NoteTag::getTagName)
@@ -174,6 +221,7 @@ public class NoteService {
 
         NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
         noteResponseDto.setTags(tagNames);
+        noteResponseDto.setImages(allImages);
 
         return noteResponseDto;
     }

@@ -86,7 +86,7 @@ public class AIController {
             updateDto.setNoteTitle(noteResponse.getNoteTitle());
             updateDto.setNoteContent(polishedContent);
             updateDto.setAiEnhanced(true);
-            noteService.updateNote(noteId, updateDto, principalMember);
+            noteService.updateNote(noteId, updateDto, null, principalMember);
             
             return ResponseEntity.ok("노트가 성공적으로 업데이트되었습니다");
             
