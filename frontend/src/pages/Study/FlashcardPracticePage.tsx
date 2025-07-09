@@ -30,7 +30,8 @@ import { fetchCardsInDeck, setCurrentDeck } from '../../store/slices/deckSlice';
 import { showToast } from '../../store/slices/toastSlice';
 import { getSessionCards, batchCompleteReview } from '../../api/reviewApi';
 import type { Card } from '../../types/card';
-import type { ReviewResult, ReviewDifficulty } from '../../types/study';
+import type { ReviewResult } from '../../types/study';
+import { saveReviewEntry, removeReviewEntry } from '../../utils/reviewUtils';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(2),
@@ -230,6 +231,13 @@ const FlashcardPracticePage: React.FC = () => {
       handleNext();
     } else if (!newDifficulty && currentCard) {
       setCardDifficultyResults(prev => prev.filter(result => result.cardId !== currentCard.cardId));
+    }
+
+    // 난이도 선택 후 저장
+    if (newDifficulty && currentCard) {
+      saveReviewEntry(String(currentCard.cardId), newDifficulty);
+    } else if (!newDifficulty && currentCard) {
+      removeReviewEntry(String(currentCard.cardId));
     }
   };
 
