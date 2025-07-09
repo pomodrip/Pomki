@@ -37,12 +37,13 @@ export default defineConfig(({ mode }) => {
         ],
         },
         manifest: {
-          name: 'Pomkist',
+          name: 'Pomkist - 효율적인 공부복습',
           short_name: 'Pomkist',
-          description: '효율적인 포모도로 학습을 위한 서비스.',
+          description: '효율적인 학습을 위한 서비스.',
           theme_color: '#2979FF',
           background_color: '#F5F5F7',
-          display: "minimal-ui",
+          display: "standalone",
+          orientation: "portrait-primary",
           scope: '/',
           start_url: '/',
           icons: [
@@ -68,6 +69,9 @@ export default defineConfig(({ mode }) => {
               purpose: 'any maskable',
             },
           ],
+          categories:[
+            "education"
+          ]
         },
       }),
     ],
