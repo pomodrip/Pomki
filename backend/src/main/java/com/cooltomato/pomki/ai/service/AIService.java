@@ -26,6 +26,7 @@ public class AIService {
     // private final AIPromptRepository aiPromptRepository;
     private final MemberRepository memberRepository;
     private final MemberAiHistoryService memberAiHistoryService;
+    private final GoogleGeminiService googleGeminiService;
     private final RestTemplate restTemplate = new RestTemplate();
     
     @Value("${ai.openai.api-key:}")
@@ -68,6 +69,20 @@ public class AIService {
         } catch (Exception e) {
             log.error("AI flashcard generation failed: {}", e.getMessage());
             return "플래시카드 생성에 실패했습니다.";
+        }
+    }
+    
+    /**
+     * 사용자 질문에 AI로 답변 (Gemini 사용)
+     * 노트 작성 중 궁금한 내용을 질문하면 답변 제공
+     */
+    public String answerQuestion(String question, String context) {
+        try {
+            log.info("Answering question with Gemini: {}", question.substring(0, Math.min(50, question.length())));
+            return googleGeminiService.answerQuestion(question, context);
+        } catch (Exception e) {
+            log.error("AI question answering failed: {}", e.getMessage());
+            throw new RuntimeException("AI 답변 생성에 실패했습니다: " + e.getMessage());
         }
     }
     

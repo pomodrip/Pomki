@@ -3,6 +3,9 @@ package com.cooltomato.pomki.deck.controller;
 import com.cooltomato.pomki.deck.dto.DeckRequestDto;
 import com.cooltomato.pomki.deck.dto.DeckResponseDto;
 import com.cooltomato.pomki.deck.service.DeckService;
+import com.cooltomato.pomki.ai.dto.DeckContextSearchRequestDto;
+import com.cooltomato.pomki.ai.dto.DeckContextSearchResponseDto;
+import com.cooltomato.pomki.ai.service.DeckContextSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +27,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
+import jakarta.validation.Valid;
 
 
 
@@ -35,6 +43,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public class DeckController {
     
     private final DeckService deckService;
+    private final DeckContextSearchService deckContextSearchService;
 
     @Operation(summary = "덱 생성", description = "새로운 덱을 생성합니다.")
     @ApiResponses(value = {
@@ -128,5 +137,77 @@ public class DeckController {
         log.info("debug >>> DeckController searchCardsInDeck 덱 목록에서 카드 검색");
         List<CardResponseDto> cards = deckService.searchCardsInDeckService(principal, query, deckId);
         return ResponseEntity.ok(cards);
+    }
+
+    @Operation(
+        summary = "AI 기반 덱 컨텍스트 검색",
+        description = "덱 내 모든 카드를 컨텍스트로 하여 AI가 사용자의 질문에 답변합니다.",
+        security = @SecurityRequirement(name = "Bearer Auth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "AI 검색 성공",
+            content = @Content(schema = @Schema(implementation = DeckContextSearchResponseDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 실패"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "덱을 찾을 수 없음"
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "AI 서비스 오류"
+        )
+    })
+    @PostMapping("/ai-search")
+    public ResponseEntity<DeckContextSearchResponseDto> searchWithAI(
+        @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal,
+        @Parameter(description = "AI 검색 요청 정보", required = true) 
+        @Valid @RequestBody DeckContextSearchRequestDto request) {
+        
+        DeckContextSearchResponseDto response = deckContextSearchService.searchWithContext(principal, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+        summary = "간단 AI 검색",
+        description = "키워드 매칭과 AI 요약을 결합한 간단한 검색 기능입니다.",
+        security = @SecurityRequirement(name = "Bearer Auth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "검색 성공",
+            content = @Content(schema = @Schema(implementation = DeckContextSearchResponseDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 실패"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "덱을 찾을 수 없음"
+        )
+    })
+    @GetMapping("/{deckId}/ai-search/{keyword}")
+    public ResponseEntity<DeckContextSearchResponseDto> simpleAISearch(
+        @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal,
+        @Parameter(description = "덱 ID", required = true) @PathVariable("deckId") String deckId,
+        @Parameter(description = "검색 키워드", required = true) @PathVariable("keyword") String keyword) {
+        
+        DeckContextSearchResponseDto response = deckContextSearchService.simpleSearch(principal, deckId, keyword);
+        return ResponseEntity.ok(response);
     }
 }

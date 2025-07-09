@@ -7,20 +7,20 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 @Component
-@ConfigurationProperties(prefix = "ai")
+@ConfigurationProperties(prefix = "gemini")
 @Getter
 @Setter
-public class AiProperties {
-    private Map<String, Provider> providers;
-
+public class GeminiProperties {
+    private Api api;
+    
     @Getter
     @Setter
-    public static class Provider {
-        private String apiKey;
+    public static class Api {
+        private String key;
         private String baseUrl;
         private Map<String, String> models;
         private String defaultModel;
         private Double temperature;
         private Integer maxTokens;
     }
-}
+} 
