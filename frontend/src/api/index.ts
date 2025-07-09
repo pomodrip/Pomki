@@ -23,7 +23,7 @@ export const setStoreReference = (storeInstance: EnhancedStore) => {
 // axios 인스턴스 생성
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // 1분으로 변경
   headers: {
     'Accept': 'application/json',
   },
