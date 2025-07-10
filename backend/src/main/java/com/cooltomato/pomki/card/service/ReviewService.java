@@ -28,6 +28,7 @@ public class ReviewService {
 
     private final CardStatRepository cardStatRepository;
     private final MemberRepository memberRepository;
+    private final CardRepository cardRepository;
 
     /**
      * 오늘 복습해야 할 모든 카드를 조회합니다.
@@ -87,7 +88,7 @@ public class ReviewService {
         for (CardReviewRequestDto request : reviewRequests) {
             CardStat cardStat = cardStatRepository
                     .findByMemberAndCard_CardId(member, request.getCardId())
-                    .orElseThrow(() -> new NotFoundException("해당 카드의 학습 정보를 찾을 수 없습니다. Card ID: " + request.getCardId()));
+                    .orElseGet(() -> createCardStat(member, request.getCardId()));
 
             // CardStat 엔티티의 비즈니스 메서드를 호출하여 상태 업데이트
             cardStat.updateReviewStatus(request.getDifficulty());
@@ -95,6 +96,31 @@ public class ReviewService {
         }
 
         log.info("학습 세션 완료: memberId={}, reviewCount={}", member.getMemberId(), reviewRequests.size());
+    }
+
+    /**
+     * 새로운 CardStat을 생성합니다.
+     * 새 카드의 경우 학습 기록이 없으므로 기본값으로 초기화합니다.
+     *
+     * @param member 사용자 엔티티
+     * @param cardId 카드 ID
+     * @return 새로 생성된 CardStat
+     */
+    private CardStat createCardStat(Member member, Long cardId) {
+        Card card = cardRepository.findByCardIdAndIsDeletedFalse(cardId)
+                .orElseThrow(() -> new NotFoundException("카드를 찾을 수 없습니다. ID: " + cardId));
+        
+        CardStat newCardStat = CardStat.builder()
+                .card(card)
+                .member(member)
+                .deck(card.getDeck())
+                .intervalDays(1)
+                .dueAt(LocalDateTime.now()) // 즉시 복습 가능
+                .totalReviews(0)
+                .build();
+        
+        log.info("새로운 학습 기록 생성: memberId={}, cardId={}", member.getMemberId(), cardId);
+        return cardStatRepository.save(newCardStat);
     }
 
     private CardResponseDto mapToCardResponseDto(CardStat cardStat) {
