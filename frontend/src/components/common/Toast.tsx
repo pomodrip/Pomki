@@ -260,7 +260,6 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         aria-valuenow={Math.round(toast.progress)}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="토스트 진행률"
         aria-live="off"
       />
     </ToastItemBox>

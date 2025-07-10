@@ -19,7 +19,7 @@ let theme = createTheme({
     },
     text: {
       primary: '#212121', // 6. Text Primary
-      secondary: '#757575', // 7. Text Secondary
+      secondary: '#4F4F4F', // 7. Text Secondary
     },
     background: {
       paper: '#FFFFFF', // 8. Background Paper

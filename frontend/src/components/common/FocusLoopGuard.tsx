@@ -44,7 +44,9 @@ const FocusLoopGuard: React.FC = () => {
     };
   }, []);
 
-  // Hide the sentinels visually but keep them focusable.
+  // Hide the sentinels visually but keep them focusable for accessibility.
+  // We use role="none" and descriptive aria-labels instead of aria-hidden="true"
+  // to avoid violating the rule that focusable elements should not be aria-hidden.
   const sentinelStyle: React.CSSProperties = {
     width: 0,
     height: 0,
@@ -56,9 +58,21 @@ const FocusLoopGuard: React.FC = () => {
 
   return (
     <>
-      <div ref={startRef} tabIndex={0} style={sentinelStyle} aria-hidden="true" />
+      <div 
+        ref={startRef} 
+        tabIndex={0} 
+        style={sentinelStyle} 
+        aria-label="Focus boundary start"
+        role="none"
+      />
       {/* Render children via props in future if needed */}
-      <div ref={endRef} tabIndex={0} style={sentinelStyle} aria-hidden="true" />
+      <div 
+        ref={endRef} 
+        tabIndex={0} 
+        style={sentinelStyle} 
+        aria-label="Focus boundary end"
+        role="none"
+      />
     </>
   );
 };

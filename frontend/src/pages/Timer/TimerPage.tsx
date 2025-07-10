@@ -932,7 +932,7 @@ const TimerPage: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+            <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : 'text.secondary', whiteSpace: 'nowrap' }}>
               백그라운드 저장
             </Text>
             <Switch
@@ -1101,7 +1101,7 @@ const TimerPage: React.FC = () => {
                 },
                 '&:disabled': {
                   backgroundColor: '#D1D5DB',
-                  color: '#9CA3AF',
+                  color: 'text.secondary',
                 },
                 fontWeight: 600,
                 textTransform: 'none',
@@ -1139,7 +1139,7 @@ const TimerPage: React.FC = () => {
               },
               '&:disabled': {
                 borderColor: '#D1D5DB',
-                color: '#9CA3AF',
+                color: 'text.secondary',
               },
               fontWeight: 600,
               textTransform: 'none',
@@ -1239,7 +1239,7 @@ const TimerPage: React.FC = () => {
               },
               '&:disabled': {
                 backgroundColor: '#D1D5DB',
-                color: '#9CA3AF',
+                color: 'text.secondary',
               },
               fontWeight: 600,
               textTransform: 'none',
@@ -1278,7 +1278,7 @@ const TimerPage: React.FC = () => {
               },
               '&:disabled': {
                 borderColor: '#D1D5DB',
-                color: '#9CA3AF',
+                color: 'text.secondary',
               },
               fontWeight: 600,
               textTransform: 'none',
@@ -1384,7 +1384,7 @@ const TimerPage: React.FC = () => {
         <Box
           sx={{
             margin: '32px 0 0 0',
-            color: '#9CA3AF',
+            color: 'text.secondary',
             fontSize: '16px',
             textAlign: 'center',
             maxWidth: { xs: '300px', sm: 'none' },
@@ -1420,7 +1420,7 @@ const TimerPage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : '#9CA3AF', whiteSpace: 'nowrap' }}>
+                <Text sx={{ fontSize: '12px', color: autoSaveEnabled ? '#10B981' : 'text.secondary', whiteSpace: 'nowrap' }}>
                   백그라운드 저장
                 </Text>
                 <Switch
@@ -1584,7 +1584,7 @@ const TimerPage: React.FC = () => {
                 },
                 '&:disabled': {
                   backgroundColor: '#D1D5DB',
-                  color: '#9CA3AF',
+                  color: 'text.secondary',
                 },
                 fontWeight: 600,
                 textTransform: 'none',
@@ -1627,7 +1627,7 @@ const TimerPage: React.FC = () => {
                 },
                 '&:disabled': {
                   borderColor: '#D1D5DB',
-                  color: '#9CA3AF',
+                  color: 'text.secondary',
                 },
                 fontWeight: 600,
                 textTransform: 'none',
@@ -1669,7 +1669,7 @@ const TimerPage: React.FC = () => {
             이전에 작성하던 내용이 임시 저장되어 있습니다. 복원하시겠습니까?
           </Text>
           {tempSaveStatus.lastSaved && (
-            <Text sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
+            <Text sx={{ fontSize: '12px', color: 'text.secondary', mt: 1 }}>
               마지막 저장: {
                 (() => {
                   try {
