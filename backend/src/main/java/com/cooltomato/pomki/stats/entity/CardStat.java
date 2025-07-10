@@ -16,7 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "CARD_STAT")
+@Table(name = "card_stat")
 @Getter
 @Setter
 @Builder
@@ -26,8 +26,8 @@ import java.time.LocalDateTime;
 public class CardStat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "card_stat_id")
-    private Long cardStatId;
+    @Column(name = "stat_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", nullable = false)
