@@ -29,6 +29,7 @@ import {
   updateDeck,
   deleteDeck,
   clearError,
+  updateDeckCardCount,
 } from '../../store/slices/deckSlice';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
