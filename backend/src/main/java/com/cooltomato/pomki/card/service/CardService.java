@@ -8,6 +8,8 @@ import com.cooltomato.pomki.bookmark.entity.Bookmark;
 import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
 import com.cooltomato.pomki.bookmark.repository.CardBookmarkRepository;
+import com.cooltomato.pomki.card.dto.CardListRequestDto;
+import com.cooltomato.pomki.card.dto.CardListResponseDto;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,10 +48,10 @@ public class CardService {
     @Transactional
     public CardResponseDto createOneCardService(PrincipalMember principal, String deckId, CardRequestDto request) {
         log.info("debug >>> CardService createCardService 카드 한 장 생성");
-        Optional<Deck> deck = deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), deckId) ;
+        Deck deck = getDeckWithLock(principal.getMemberId(), deckId);
             
         Card entity = Card.builder()
-                                    .deck(deck.get())
+                                    .deck(deck)
                                     .content(request.getContent())
                                     .answer(request.getAnswer())
                                     .isDeleted(false)
@@ -56,11 +59,7 @@ public class CardService {
         cardRepository.save(entity);
         log.info("debug >>> CardService createCardService 카드 생성 성공");
 
-        deck.get().setCardCnt(deck.get().getCardCnt() + 1);
-        deck.get().setUpdatedAt(LocalDateTime.now());
-        
-
-        deckRepository.save(deck.get());
+        updateDeckCardCount(deck, 1);
         log.info("debug >>> CardService createCardService 덱별 카드 카운트 업데이트 성공");
 
         return CardResponseDto.builder()
@@ -76,6 +75,66 @@ public class CardService {
                                         .collect(Collectors.toList()))
                                 .isDeleted(entity.getIsDeleted())
                             .build();
+    }
+
+    @Transactional
+    public CardListResponseDto createMultipleCardsService(PrincipalMember principal, String deckId, CardListRequestDto request) {
+        log.info("debug >>> CardService createMultipleCardsService 카드 여러 장 생성 시작");
+        
+        if (request.getCards() == null || request.getCards().isEmpty()) {
+            throw new IllegalArgumentException("생성할 카드 목록이 비어있습니다.");
+        }
+        
+        // 비관적 락으로 덱 조회
+        Deck deck = getDeckWithLock(principal.getMemberId(), deckId);
+        
+        List<CardResponseDto> createdCards = new ArrayList<>();
+        List<Card> cardsToSave = new ArrayList<>();
+        
+        // 카드들을 배치로 생성
+        for (CardRequestDto cardRequest : request.getCards()) {
+            Card entity = Card.builder()
+                    .deck(deck)
+                    .content(cardRequest.getContent())
+                    .answer(cardRequest.getAnswer())
+                    .isDeleted(false)
+                    .build();
+            cardsToSave.add(entity);
+        }
+        
+        // 카드들을 배치로 저장
+        List<Card> savedCards = cardRepository.saveAll(cardsToSave);
+        log.info("debug >>> CardService createMultipleCardsService {} 장의 카드 생성 성공", savedCards.size());
+        
+        // 응답 DTO 생성
+        for (Card savedCard : savedCards) {
+            CardResponseDto cardResponse = CardResponseDto.builder()
+                    .cardId(savedCard.getCardId())
+                    .content(savedCard.getContent())
+                    .answer(savedCard.getAnswer())
+                    .createdAt(savedCard.getCreatedAt())
+                    .updatedAt(savedCard.getUpdatedAt())
+                    .deckId(savedCard.getDeck().getDeckId())
+                    .deckName(savedCard.getDeck().getDeckName())
+                    .tags(savedCard.getCardTags().stream()
+                            .map(CardTag::getTagName)
+                            .collect(Collectors.toList()))
+                    .isDeleted(savedCard.getIsDeleted())
+                    .build();
+            createdCards.add(cardResponse);
+        }
+        
+        // 덱 카드 개수 업데이트 (한 번에 처리)
+        updateDeckCardCount(deck, savedCards.size());
+        log.info("debug >>> CardService createMultipleCardsService 덱별 카드 카운트 업데이트 성공");
+        
+        return CardListResponseDto.builder()
+                .deckId(deck.getDeckId())
+                .deckName(deck.getDeckName())
+                .totalCreated(savedCards.size())
+                .createdCards(createdCards)
+                .updatedCardCnt(deck.getCardCnt())
+                .build();
     }
 
     
@@ -161,12 +220,7 @@ public class CardService {
             log.info("debug >>> CardService deleteAcardService 카드 삭제 성공");
 
             // 덱 카드 개수 감소
-            deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalse(principal.getMemberId(), aCardOp.get().getDeck().getDeckId())
-                .ifPresent(deck -> {
-                    deck.setCardCnt(deck.getCardCnt() - 1);
-                    deck.setUpdatedAt(LocalDateTime.now());
-                    deckRepository.save(deck);
-            });
+            updateDeckCardCount(principal.getMemberId(), aCardOp.get().getDeck().getDeckId(), -1);
 
             cardBookmarkRepository.deleteByCardCardIdAndMemberMemberId(cardId, principal.getMemberId());
             log.info("debug >>> CardService deleteOneCardService 카드 북마크 삭제 성공");
@@ -237,5 +291,37 @@ public class CardService {
                 .isBookmarked(cardBookmarkRepository.existsByMemberMemberIdAndCardCardId(principal.getMemberId(), card.getCardId()))
                 .build()
         ).toList();
+    }
+
+    /**
+     * 비관적 락을 사용하여 덱을 조회하는 메서드
+     */
+    private Deck getDeckWithLock(Long memberId, String deckId) {
+        return deckRepository.findByMemberIdAndDeckIdAndIsDeletedFalseWithLock(memberId, deckId)
+                .orElseThrow(() -> new IllegalArgumentException("덱을 찾을 수 없습니다."));
+    }
+
+    /**
+     * 덱의 카드 개수를 업데이트하는 메서드
+     * @param deck 업데이트할 덱 (이미 락이 걸린 상태)
+     * @param countChange 변경할 개수 (양수: 증가, 음수: 감소)
+     */
+    private void updateDeckCardCount(Deck deck, int countChange) {
+        deck.setCardCnt(deck.getCardCnt() + countChange);
+        deck.setUpdatedAt(LocalDateTime.now());
+        deckRepository.save(deck);
+        log.info("debug >>> 덱 카드 개수 업데이트: deckId={}, change={}, newCount={}", 
+                deck.getDeckId(), countChange, deck.getCardCnt());
+    }
+
+    /**
+     * 덱의 카드 개수를 업데이트하는 메서드 (덱 조회부터 처리)
+     * @param memberId 회원 ID
+     * @param deckId 덱 ID
+     * @param countChange 변경할 개수 (양수: 증가, 음수: 감소)
+     */
+    private void updateDeckCardCount(Long memberId, String deckId, int countChange) {
+        Deck deck = getDeckWithLock(memberId, deckId);
+        updateDeckCardCount(deck, countChange);
     }
 } 
