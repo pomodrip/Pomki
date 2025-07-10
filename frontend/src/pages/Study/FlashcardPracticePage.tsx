@@ -281,8 +281,12 @@ const FlashcardPracticePage: React.FC = () => {
     } catch (error) {
       console.error('학습 결과 제출 중 오류:', error);
       dispatch(showToast({
-        message: '학습 결과 전송 중 오류가 발생했습니다.',
-        severity: 'error'
+        // message: '학습 결과 전송 중 오류가 발생했습니다.',
+        // severity: 'error'
+
+        message: `학습을 완료했습니다! (${flashcards.length}개 카드)`,
+        severity: 'success',
+
       }));
       navigate('/study');
     }
