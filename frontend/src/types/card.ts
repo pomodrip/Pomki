@@ -93,3 +93,20 @@ export interface AddCardTagRequest {
   cardId: number;
   tagNames: string[];
 }
+
+/**
+ * 여러 카드 생성 요청의 개별 카드 데이터
+ * API: POST /api/card/batch
+ */
+export interface NewCardData {
+  content: string;
+  answer: string;
+}
+
+/**
+ * 여러 카드 생성 요청 DTO
+ * API: POST /api/card/batch?deckId={deckId}
+ */
+export interface CreateCardsRequest {
+  cards: NewCardData[];
+}

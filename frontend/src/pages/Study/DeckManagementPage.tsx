@@ -1,3 +1,4 @@
+import { CardForm } from '../../components/card/CardForm';
 import React, { useState, useEffect } from 'react';
 import { styled } from '@mui/material/styles';
 import {
@@ -63,6 +64,7 @@ const DeckManagementPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [deckName, setDeckName] = useState('');
+  const [addCardDeckId, setAddCardDeckId] = useState<string | null>(null);
   
   // 🔔 Redux 기반 알림 시스템
   const { error: notifyError, success: notifySuccess } = useNotifications();
@@ -146,6 +148,18 @@ const DeckManagementPage: React.FC = () => {
     setEditingDeckId(null);
   };
 
+  const handleAddCardClick = (deckId: string) => {
+    setAddCardDeckId(deckId);
+  };
+
+  const handleCardsCreated = (newCards: any[]) => {
+    setAddCardDeckId(null);
+    notifySuccess('카드 추가 완료', `${newCards.length}개의 카드가 추가되었습니다.`);
+    if (addCardDeckId && newCards.length > 0) {
+        dispatch(updateDeckCardCount({ deckId: addCardDeckId, change: newCards.length }));
+    }
+  };
+
   return (
           <StyledContainer maxWidth="md">
       {/* 헤더 */}
@@ -209,6 +223,13 @@ const DeckManagementPage: React.FC = () => {
             </CardContent>
             
             <CardActions>
+              <Button 
+                size="small" 
+                startIcon={<AddIcon />}
+                onClick={() => handleAddCardClick(deck.deckId)}
+              >
+                카드 추가
+              </Button>
               <Button 
                 size="small" 
                 startIcon={<PlayIcon />}
@@ -285,6 +306,17 @@ const DeckManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {addCardDeckId && (
+        <Dialog open={!!addCardDeckId} onClose={() => setAddCardDeckId(null)} maxWidth="md" fullWidth>
+          <DialogTitle>카드 추가</DialogTitle>
+          <DialogContent>
+            <CardForm deckId={addCardDeckId} onCardsCreated={handleCardsCreated} />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAddCardDeckId(null)}>취소</Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
     </StyledContainer>
   );

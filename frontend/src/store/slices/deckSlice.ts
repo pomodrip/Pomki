@@ -7,9 +7,10 @@ import type {
   Card,
   CreateDeckRequest,
   UpdateDeckRequest,
+  CreateCardsRequest,
   UpdateCardRequest,
-  CreateCardRequest,
   AddCardTagRequest,
+  CreateCardRequest,
 } from '../../types/card';
 import { createSelector } from '@reduxjs/toolkit';
 
@@ -184,6 +185,19 @@ export const createCard = createAsyncThunk<
   }
 });
 
+// 카드 일괄 생성
+export const createMultipleCards = createAsyncThunk<
+  Card[],
+  { deckId: string; data: CreateCardsRequest },
+  { state: RootState; rejectValue: string }
+>('deck/createMultipleCards', async ({ deckId, data }, { rejectWithValue }) => {
+  try {
+    return await cardService.createMultipleCards(deckId, data);
+  } catch (error) {
+    return rejectWithValue(handleAsyncError(error));
+  }
+});
+
 // 카드 수정
 export const updateCard = createAsyncThunk<
   Card,
@@ -336,6 +350,18 @@ const deckSlice = createSlice({
       if (cardIndex !== -1) {
         state.currentDeckCards[cardIndex].bookmarked = !state.currentDeckCards[cardIndex].bookmarked;
         state.currentDeckCards[cardIndex].updatedAt = new Date().toISOString();
+      }
+    },
+
+    // 카드 개수 업데이트
+    updateDeckCardCount: (state, action: PayloadAction<{ deckId: string; change: number }>) => {
+      const { deckId, change } = action.payload;
+      const deckIndex = state.decks.findIndex(deck => deck.deckId === deckId);
+      if (deckIndex !== -1) {
+        state.decks[deckIndex].cardCnt += change;
+      }
+      if (state.selectedDeck?.deckId === deckId) {
+        state.selectedDeck.cardCnt += change;
       }
     },
 
@@ -595,6 +621,7 @@ export const {
   setLoading,
   toggleCardBookmarkLocal,
   setCurrentDeck,
+  updateDeckCardCount,
 } = deckSlice.actions;
 
 export default deckSlice.reducer;

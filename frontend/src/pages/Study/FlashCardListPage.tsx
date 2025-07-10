@@ -452,29 +452,24 @@ const FlashCardListPage: React.FC = () => {
     // 사용자 제공 예시: deckId = "ea42d25e-e197-41bd-8eb0-f6572b1d4cdd"
     const apiDeckId = deckId;
     
-    const sampleCards: CreateCardRequest[] = [
+    const sampleCards: Omit<CreateCardRequest, 'deckId'>[] = [
       {
-        deckId: apiDeckId,
         content: "React란 무엇인가요?",
         answer: "React는 사용자 인터페이스를 구축하기 위한 JavaScript 라이브러리입니다."
       },
       {
-        deckId: apiDeckId,
         content: "JSX는 무엇의 줄임말인가요?",
         answer: "JSX는 JavaScript XML의 줄임말입니다."
       },
       {
-        deckId: apiDeckId,
         content: "useState Hook의 역할은?",
         answer: "함수형 컴포넌트에서 상태를 관리할 수 있게 해주는 Hook입니다."
       },
       {
-        deckId: apiDeckId,
         content: "useEffect Hook은 언제 사용하나요?",
         answer: "컴포넌트가 렌더링될 때 특정 작업(side effect)을 수행할 때 사용합니다."
       },
       {
-        deckId: apiDeckId,
         content: "Props란 무엇인가요?",
         answer: "부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 방법입니다."
       }
@@ -486,12 +481,8 @@ const FlashCardListPage: React.FC = () => {
         severity: 'info'
       }));
 
-      // 순차적으로 카드 생성
-      const createdCards = [];
-      for (const cardData of sampleCards) {
-        const createdCard = await cardApi.createCard(apiDeckId, cardData);
-        createdCards.push(createdCard);
-      }
+      // 일괄적으로 카드 생성
+      const createdCards = await cardApi.createMultipleCards(apiDeckId, { cards: sampleCards });
 
       dispatch(showToast({
         message: `총 ${createdCards.length}개의 카드가 생성되었습니다!`,

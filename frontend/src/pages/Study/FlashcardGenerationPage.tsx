@@ -24,7 +24,7 @@ import ArrowBackIosNew from '@mui/icons-material/ArrowBackIosNew';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
 import type { QuizItem } from '../../types/quiz';
-import { createCard } from '../../store/slices/deckSlice';
+import { createMultipleCards } from '../../store/slices/deckSlice';
 import type { CardDeck } from '../../types/card';
 import DeckSelectionDialog from '../../components/deck/DeckSelectionDialog';
 import { useSnackbar } from '../../hooks/useSnackbar';
@@ -241,21 +241,12 @@ const FlashcardGenerationPage: React.FC = () => {
     }
 
     try {
-      // Promise.all을 사용하여 여러 카드를 병렬로 생성
-      await Promise.all(
-        selectedQuizData.map(cardData =>
-          dispatch(
-            createCard({
-              deckId: deck.deckId,
-              data: {
-                deckId: deck.deckId,
-                content: cardData.content,
-                answer: cardData.answer,
-              },
-            })
-          ).unwrap()
-        )
-      );
+      await dispatch(
+        createMultipleCards({
+          deckId: deck.deckId,
+          data: { cards: selectedQuizData },
+        })
+      ).unwrap();
       
       showSnackbar(`${deck.deckName} 덱에 ${selectedQuizData.length}개의 카드가 생성되었습니다.`, 'success');
       navigate(`/flashcards/${deck.deckId}/cards`);
