@@ -550,12 +550,12 @@ const FlashCardListPage: React.FC = () => {
             {selectedDeck?.deckName || '덱 이름 없음'}
           </Typography>
         </Box>
-        <Button
+        {/* <Button
           variant="contained"
           onClick={handleCreateSampleCards}
         >
           카드 추가
-        </Button>
+        </Button> */}
       </Box>
 
       {/* API Fallback 정보 표시
