@@ -56,4 +56,6 @@ export interface NoteState {
   currentNote: Note | null; // 상세 정보는 전체 타입 사용
   loading: boolean;
   error: string | null;
+  noteTags: { [noteId: string]: string[] }; // 노트별 태그 목록
+  bookmarkedNoteIds: string[]; // 북마크된 노트 ID 목록
 }

@@ -124,3 +124,20 @@ export const removeNoteTag = async (noteId: string, tagName: string): Promise<vo
     },
   });
 };
+
+// 모든 노트의 태그 정보 가져오기
+export const getAllNoteTags = async (): Promise<{ [noteId: string]: string[] }> => {
+  const response: AxiosResponse<{ noteId: string; tagNames: string; memberId: number }[]> = await api.get('/api/note-tag');
+  const noteTags: { [noteId: string]: string[] } = {};
+
+  response.data.forEach(item => {
+    if (!noteTags[item.noteId]) {
+      noteTags[item.noteId] = [];
+    }
+    // tagNames가 쉼표로 구분된 문자열일 경우 배열로 변환
+    const tags = item.tagNames.split(',').map(tag => tag.trim());
+    noteTags[item.noteId].push(...tags);
+  });
+
+  return noteTags;
+};

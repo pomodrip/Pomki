@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { AxiosError } from 'axios';
-import { getNotes, getNote, createNote, updateNote, deleteNote, addNoteTags as apiAddNoteTags, removeNoteTag as apiRemoveNoteTag } from '../../api/noteApi';
+import { getNotes, getNote, createNote, updateNote, deleteNote, addNoteTags as apiAddNoteTags, removeNoteTag as apiRemoveNoteTag, getAllNoteTags } from '../../api/noteApi';
 import type {
   Note,
   NoteState,
@@ -11,6 +11,7 @@ import type {
 } from '../../types/note';
 import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import { addBookmark, getBookmarkedNotes, removeBookmark } from '@/api/noteBookmarkApi';
 
 interface ErrorResponse {
   message: string;
@@ -21,13 +22,46 @@ const initialState: NoteState = {
   currentNote: null,
   loading: false,
   error: null,
+  noteTags: {},
+  bookmarkedNoteIds: [],
 };
 
 // Async Thunks
-export const fetchNotes = createAsyncThunk('note/fetchNotes', async () => {
+export const fetchNotes = createAsyncThunk('note/fetchNotes', async (_, { dispatch }) => {
   const response = await getNotes();
+  dispatch(fetchNoteTags()); // 노트 목록을 가져온 후 태그 정보를 가져옵니다.
   return response;
 });
+
+export const fetchNoteTags = createAsyncThunk('note/fetchNoteTags', async () => {
+  const response = await getAllNoteTags();
+  return response;
+});
+
+export const fetchNoteBookmarks = createAsyncThunk('note/fetchNoteBookmarks', async () => {
+  const response = await getBookmarkedNotes();
+  return response.map(bookmark => bookmark.noteId);
+});
+
+export const toggleNoteBookmark = createAsyncThunk(
+  'note/toggleNoteBookmark',
+  async (noteId: string, { getState, rejectWithValue }) => {
+    const { note } = getState() as { note: NoteState };
+    const isBookmarked = note.bookmarkedNoteIds.includes(noteId);
+
+    try {
+      if (isBookmarked) {
+        await removeBookmark(noteId);
+      } else {
+        await addBookmark(noteId);
+      }
+      return noteId;
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      return rejectWithValue(err.response?.data.message || err.message || 'Failed to toggle bookmark');
+    }
+  },
+);
 
 export const fetchNote = createAsyncThunk('note/fetchNote', async (noteId: string) => {
   const response = await getNote(noteId);
@@ -127,6 +161,27 @@ const noteSlice = createSlice({
       .addCase(fetchNotes.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch notes.';
+      })
+
+      // Fetch Note Tags
+      .addCase(fetchNoteTags.fulfilled, (state, action: PayloadAction<{ [noteId: string]: string[] }>) => {
+        state.noteTags = action.payload;
+      })
+
+      // Fetch Note Bookmarks
+      .addCase(fetchNoteBookmarks.fulfilled, (state, action: PayloadAction<string[]>) => {
+        state.bookmarkedNoteIds = action.payload;
+      })
+
+      // Toggle Note Bookmark
+      .addCase(toggleNoteBookmark.fulfilled, (state, action: PayloadAction<string>) => {
+        const noteId = action.payload;
+        const index = state.bookmarkedNoteIds.indexOf(noteId);
+        if (index >= 0) {
+          state.bookmarkedNoteIds.splice(index, 1);
+        } else {
+          state.bookmarkedNoteIds.push(noteId);
+        }
       })
 
       // Fetch Note by ID
