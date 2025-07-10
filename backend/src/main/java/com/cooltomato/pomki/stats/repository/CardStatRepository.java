@@ -3,6 +3,8 @@ package com.cooltomato.pomki.stats.repository;
 import com.cooltomato.pomki.stats.entity.CardStat;
 import com.cooltomato.pomki.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -40,7 +42,8 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
      * @param now 현재 시각
      * @return int
      */
-    int countByMember_MemberIdAndDueAtLessThanEqual(Long memberId, LocalDateTime now);
+    @Query("SELECT COUNT(cs) FROM CardStat cs WHERE cs.member.id = :memberId AND cs.dueAt <= :now")
+    int countByMember_MemberIdAndDueAtLessThanEqual(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
 
     /**
      * 특정 기간 동안 사용자가 복습을 완료한 카드의 개수를 조회합니다.
@@ -50,7 +53,8 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
      * @param end 종료 시각
      * @return int
      */
-    int countByMember_MemberIdAndLastReviewedAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
+    @Query("SELECT COUNT(cs) FROM CardStat cs WHERE cs.member.id = :memberId AND cs.lastReviewedAt BETWEEN :start AND :end")
+    int countByMember_MemberIdAndLastReviewedAtBetween(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     /**
      * 특정 기간 내에 복습이 예정된 카드의 개수를 조회합니다.
@@ -60,7 +64,8 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
      * @param end 종료 시각
      * @return int
      */
-    int countByMember_MemberIdAndDueAtBetween(Long memberId, LocalDateTime start, LocalDateTime end);
+    @Query("SELECT COUNT(cs) FROM CardStat cs WHERE cs.member.id = :memberId AND cs.dueAt BETWEEN :start AND :end")
+    int countByMember_MemberIdAndDueAtBetween(@Param("memberId") Long memberId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     /**
      * 특정 시각 이전에 복습 기한이 도래한 카드의 개수를 조회합니다. (미완료 카드)
@@ -69,7 +74,8 @@ public interface CardStatRepository extends JpaRepository<CardStat, Long> {
      * @param now 현재 시각
      * @return int
      */
-    int countByMember_MemberIdAndDueAtBefore(Long memberId, LocalDateTime now);
+    @Query("SELECT COUNT(cs) FROM CardStat cs WHERE cs.member.id = :memberId AND cs.dueAt < :now")
+    int countByMember_MemberIdAndDueAtBefore(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
 
     /**
      * 특정 시각 이전에 복습 기한이 도래한 카드 목록을 조회합니다. (미완료 카드 목록)
