@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import api from './index';
-import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest, CreateCardsRequest } from '../types/card';
 
 /**
  * 카드 생성 
@@ -12,6 +12,21 @@ export const createCard = async (
   data: CreateCardRequest,
 ): Promise<Card> => {
   const response: AxiosResponse<Card> = await api.post('/api/card', data, {
+    params: { deckId },
+  });
+  return response.data;
+};
+
+/**
+ * 여러 카드 한번에 생성
+ * @param deckId 카드를 추가할 덱 ID
+ * @param data 생성할 카드 데이터
+ */
+export const createMultipleCards = async (
+  deckId: string,
+  data: CreateCardsRequest,
+): Promise<Card[]> => {
+  const response: AxiosResponse<Card[]> = await api.post('/api/card/batch', data, {
     params: { deckId },
   });
   return response.data;

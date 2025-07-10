@@ -1,4 +1,4 @@
-import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest } from '../types/card';
+import type { Card, CreateCardRequest, SearchCard, UpdateCardRequest, AddCardTagRequest, CreateCardsRequest } from '../types/card';
 import * as cardApi from '../api/cardApi';
 import { deckService } from './deckService';
 
@@ -6,6 +6,7 @@ import { deckService } from './deckService';
 export interface ICardService {
   getCard(cardId: number): Promise<Card>;
   createCard(deckId: string, data: CreateCardRequest): Promise<Card>;
+  createMultipleCards(deckId: string, data: CreateCardsRequest): Promise<Card[]>;
   updateCard(cardId: number, data: UpdateCardRequest): Promise<Card>;
   deleteCard(cardId: number): Promise<void>;
   searchCards(keyword: string): Promise<SearchCard[]>;
@@ -92,6 +93,45 @@ class MockCardService implements ICardService {
       mockSvc.cards[deckId].push({ ...newCard });
     }
     return newCard;
+  }
+
+  async createMultipleCards(deckId: string, data: CreateCardsRequest): Promise<Card[]> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const deck = this.mockDecks.find(d => d.deckId === deckId);
+    if (!deck) {
+        throw new Error('덱을 찾을 수 없습니다.');
+    }
+
+    const createdCards: Card[] = data.cards.map(cardData => {
+        const newCard: Card = {
+            cardId: this.nextCardId++,
+            content: cardData.content,
+            answer: cardData.answer,
+            deckId,
+            isDeleted: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            deckName: deck.deckName,
+            tags: [],
+            bookmarked: false
+        };
+        this.cards.push(newCard);
+        return newCard;
+    });
+
+    const dsAny = deckService as any;
+    if ('cards' in dsAny) {
+        if (!dsAny.cards) dsAny.cards = {};
+        if (!dsAny.cards[deckId]) dsAny.cards[deckId] = [];
+        dsAny.cards[deckId].push(...createdCards);
+    } else if ('mockService' in dsAny && dsAny.mockService && 'cards' in dsAny.mockService) {
+        const mockSvc = dsAny.mockService as any;
+        if (!mockSvc.cards[deckId]) mockSvc.cards[deckId] = [];
+        mockSvc.cards[deckId].push(...createdCards);
+    }
+
+    return createdCards;
   }
 
   async updateCard(cardId: number, data: UpdateCardRequest): Promise<Card> {
@@ -204,6 +244,15 @@ class RealCardService implements ICardService {
     } catch (error) {
       console.warn('⚠️ Real API (createCard) 실패! Mock 데이터로 대체합니다.', error);
       return this.mockService.createCard(deckId, data);
+    }
+  }
+
+  async createMultipleCards(deckId: string, data: CreateCardsRequest): Promise<Card[]> {
+    try {
+      return await cardApi.createMultipleCards(deckId, data);
+    } catch (error) {
+      console.warn('⚠️ Real API (createMultipleCards) 실패! Mock 데이터로 대체합니다.', error);
+      return this.mockService.createMultipleCards(deckId, data);
     }
   }
 
