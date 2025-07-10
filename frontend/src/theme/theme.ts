@@ -12,7 +12,7 @@ let theme = createTheme({
       main: '#6C757D', // 3. Secondary Main
     },
     error: {
-      main: '#D9534F', // 4. Error Main
+      main: '#9D2520', // 4. Error Main
     },
     success: {
       main: '#4CAF50', // 5. Success Main
