@@ -62,7 +62,6 @@ const FocusLoopGuard: React.FC = () => {
         ref={startRef} 
         tabIndex={0} 
         style={sentinelStyle} 
-        aria-label="Focus boundary start"
         role="none"
       />
       {/* Render children via props in future if needed */}
@@ -70,7 +69,6 @@ const FocusLoopGuard: React.FC = () => {
         ref={endRef} 
         tabIndex={0} 
         style={sentinelStyle} 
-        aria-label="Focus boundary end"
         role="none"
       />
     </>
