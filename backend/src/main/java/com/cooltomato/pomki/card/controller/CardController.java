@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.card.dto.CardListRequestDto;
-import com.cooltomato.pomki.card.dto.CardListResponseDto;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.service.CardService;
@@ -66,12 +65,12 @@ public class CardController {
         @ApiResponse(responseCode = "404", description = "덱을 찾을 수 없음")
     })
     @PostMapping("/batch")
-    public ResponseEntity<CardListResponseDto> createMultipleCards(
+    public ResponseEntity<List<CardResponseDto>> createMultipleCards(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal PrincipalMember principal, 
         @Parameter(description = "덱 ID") @RequestParam("deckId") String deckId, 
         @Parameter(description = "배치 카드 생성 내용") @RequestBody CardListRequestDto request) {
         System.out.println("debug >>> CardCtrl createMultipleCards");
-        CardListResponseDto response = service.createMultipleCardsService(principal, deckId, request);
+        List<CardResponseDto> response = service.createMultipleCardsService(principal, deckId, request);
         return ResponseEntity.ok(response);
     }
 

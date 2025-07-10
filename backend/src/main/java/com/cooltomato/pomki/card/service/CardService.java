@@ -9,7 +9,6 @@ import com.cooltomato.pomki.bookmark.entity.CardBookmark;
 import com.cooltomato.pomki.bookmark.repository.BookmarkRepository;
 import com.cooltomato.pomki.bookmark.repository.CardBookmarkRepository;
 import com.cooltomato.pomki.card.dto.CardListRequestDto;
-import com.cooltomato.pomki.card.dto.CardListResponseDto;
 import com.cooltomato.pomki.card.dto.CardRequestDto;
 import com.cooltomato.pomki.card.dto.CardResponseDto;
 import com.cooltomato.pomki.card.entity.Card;
@@ -78,7 +77,7 @@ public class CardService {
     }
 
     @Transactional
-    public CardListResponseDto createMultipleCardsService(PrincipalMember principal, String deckId, CardListRequestDto request) {
+    public List<CardResponseDto> createMultipleCardsService(PrincipalMember principal, String deckId, CardListRequestDto request) {
         log.info("debug >>> CardService createMultipleCardsService 카드 여러 장 생성 시작");
         
         if (request.getCards() == null || request.getCards().isEmpty()) {
@@ -128,13 +127,7 @@ public class CardService {
         updateDeckCardCount(deck, savedCards.size());
         log.info("debug >>> CardService createMultipleCardsService 덱별 카드 카운트 업데이트 성공");
         
-        return CardListResponseDto.builder()
-                .deckId(deck.getDeckId())
-                .deckName(deck.getDeckName())
-                .totalCreated(savedCards.size())
-                .createdCards(createdCards)
-                .updatedCardCnt(deck.getCardCnt())
-                .build();
+        return createdCards;
     }
 
     
