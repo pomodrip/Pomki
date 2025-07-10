@@ -24,7 +24,7 @@ import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
 import Bookmark from '@mui/icons-material/Bookmark';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { deleteNoteAsync, fetchNotes, fetchNote } from '../../store/slices/noteSlice';
+import { deleteNoteAsync, fetchNotes, fetchNote, toggleNoteBookmark } from '../../store/slices/noteSlice';
 import { useDialog } from '../../hooks/useDialog';
 import { showToast } from '../../store/slices/toastSlice';
 import { setFilters } from '../../store/slices/studySlice';
@@ -149,7 +149,7 @@ const FloatingFab = styled(Fab)<{ isMobile: boolean }>(({ theme, isMobile }) => 
 const NoteListPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { notes, loading, error } = useAppSelector(state => state.note);
+  const { notes, loading, error, noteTags, bookmarkedNoteIds } = useAppSelector(state => state.note);
   const { filters } = useAppSelector((state) => state.study);
   const { showConfirmDialog } = useDialog();
   const { isMobile } = useResponsive();
@@ -160,7 +160,7 @@ const NoteListPage: React.FC = () => {
   const bookmarkFilterButtonRef = useRef<HTMLButtonElement>(null);
 
   // 🎯 클라이언트 측 상태 (북마크, 태그) 및 퀴즈 생성 로딩 상태
-  const [clientSideInfo, setClientSideInfo] = useState<{ [noteId: string]: ClientSideNoteInfo }>({});
+  
   const [generatingQuizId, setGeneratingQuizId] = useState<string | null>(null);
   
   // 🎯 메뉴 상태
@@ -194,32 +194,14 @@ const NoteListPage: React.FC = () => {
     };
   }, [dispatch, isMobile, bottomNavVisible]);
 
-  // 🎯 Mock 데이터로 클라이언트 측 정보 초기화
-  useEffect(() => {
-    if (notes.length > 0) {
-      setClientSideInfo(prevInfo => {
-        const newInfo = { ...prevInfo };
-        notes.forEach((note) => {
-          if (!newInfo[note.noteId]) {
-            // 📌 북마크 여부만 랜덤으로 설정 (태그는 노트 데이터 자체에서 관리)
-            newInfo[note.noteId] = {
-              isBookmarked: Math.random() > 0.5,
-            };
-          }
-        });
-        return newInfo;
-      });
-    }
-  }, [notes]);
-
   // 🎯 필터링 및 UI 렌더링을 위한 데이터 합치기
   const enrichedNotes: EnrichedNote[] = useMemo(() => {
     return notes.map(note => ({
       ...note,
-      tags: note.tags || [], // 노트 자체 태그 우선
-      isBookmarked: clientSideInfo[note.noteId]?.isBookmarked || false,
+      tags: noteTags[note.noteId] || [], // 🏷️ Redux에서 가져온 태그 정보 사용
+      isBookmarked: bookmarkedNoteIds.includes(note.noteId),
     })) as EnrichedNote[];
-  }, [notes, clientSideInfo]);
+  }, [notes, noteTags, bookmarkedNoteIds]);
   
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -305,19 +287,21 @@ const NoteListPage: React.FC = () => {
     bookmarkFilterButtonRef.current?.focus();
   };
 
-  const handleToggleBookmark = (noteId: string, event: React.MouseEvent) => {
+  const handleToggleBookmark = async (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setClientSideInfo(prev => ({
-      ...prev,
-      [noteId]: {
-        ...prev[noteId],
-        isBookmarked: !prev[noteId]?.isBookmarked,
-      },
-    }));
-    dispatch(showToast({
-      message: clientSideInfo[noteId]?.isBookmarked ? '북마크에서 제거했습니다.' : '북마크에 추가했습니다.',
-      severity: 'success',
-    }));
+    const isBookmarked = bookmarkedNoteIds.includes(noteId);
+    try {
+      await dispatch(toggleNoteBookmark(noteId)).unwrap();
+      dispatch(
+        showToast({
+          message: isBookmarked ? '북마크에서 제거했습니다.' : '북마크에 추가했습니다.',
+          severity: 'success',
+        }),
+      );
+    } catch (err) {
+      const error = err as Error;
+      dispatch(showToast({ message: error.message || '북마크 변경에 실패했습니다.', severity: 'error' }));
+    }
   };
 
   const formatDate = (createdAt: string, updatedAt: string) => {
@@ -621,8 +605,8 @@ const NoteListPage: React.FC = () => {
               {/* 노트 이름과 북마크 버튼 */}
               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ minHeight: 40 }}>
                 <Typography variant="h6" noWrap sx={{ maxWidth: 'calc(100% - 32px)' }}>{note.noteTitle}</Typography>
-                <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)}>
-                  <BookmarkBorder aria-label="북마크 추가" />
+                <IconButton size="small" onClick={(e) => handleToggleBookmark(note.noteId, e)} aria-label={note.isBookmarked ? '북마크 제거' : '북마크 추가'}>
+                  {note.isBookmarked ? <Bookmark /> : <BookmarkBorder />}
                 </IconButton>
               </Box>
               
