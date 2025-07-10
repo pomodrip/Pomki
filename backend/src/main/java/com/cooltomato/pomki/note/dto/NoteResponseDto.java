@@ -1,6 +1,7 @@
 package com.cooltomato.pomki.note.dto;
 
 import com.cooltomato.pomki.note.entity.Note;
+import com.cooltomato.pomki.noteimage.dto.NoteImageResponseDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,7 @@ public class NoteResponseDto {
     private LocalDateTime updatedAt;
     private List<String> tags;
     private boolean isBookmarked;
+    private List<NoteImageResponseDto> images;
 
     public static NoteResponseDto from(Note note) {
         return NoteResponseDto.builder()

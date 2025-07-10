@@ -14,6 +14,7 @@ import com.cooltomato.pomki.note.dto.NoteListResponseDto;
 import com.cooltomato.pomki.note.dto.NoteUpdateRequestDto;
 import com.cooltomato.pomki.note.entity.Note;
 import com.cooltomato.pomki.note.repository.NoteRepository;
+import com.cooltomato.pomki.noteimage.dto.NoteImageResponseDto;
 import com.cooltomato.pomki.noteimage.service.NoteImageService;
 import com.cooltomato.pomki.notetag.entity.NoteTag;
 import com.cooltomato.pomki.notetag.repository.NoteTagRepository;
@@ -61,13 +62,27 @@ public class NoteService {
         note.setAiEnhanced(noteRequestDto.getAiEnhanced());
         note.setCreatedAt(LocalDateTime.now());
         note.setIsDeleted(false);
-        note.setIsDeleted(false);
-
-        NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
-        noteResponseDto.setIsBookmarked(false);
 
         Note savedNote = noteRepository.save(note);
-        return NoteResponseDto.from(savedNote);
+        
+        // 이미지 파일이 있는 경우 업로드 처리
+        if (noteRequestDto.getImageFiles() != null && !noteRequestDto.getImageFiles().isEmpty()) {
+            try {
+                noteImageService.uploadMultipleImages(savedNote.getNoteId(), noteRequestDto.getImageFiles());
+                log.info("노트 생성 시 이미지 업로드 완료: noteId={}, 이미지 개수={}", 
+                        savedNote.getNoteId(), noteRequestDto.getImageFiles().size());
+            } catch (Exception e) {
+                log.error("노트 생성 시 이미지 업로드 실패: noteId={}, error={}", 
+                        savedNote.getNoteId(), e.getMessage(), e);
+                // 이미지 업로드 실패 시에도 노트는 생성되도록 처리
+                // 필요에 따라 예외를 던져 트랜잭션 롤백을 할 수도 있음
+            }
+        }
+
+        NoteResponseDto noteResponseDto = NoteResponseDto.from(savedNote);
+        noteResponseDto.setIsBookmarked(false);
+        
+        return noteResponseDto;
     }
 
     public List<NoteListResponseDto> readNote(PrincipalMember memberInfoDto) {
@@ -89,8 +104,13 @@ public class NoteService {
         Member member = getMember(memberInfoDto.getMemberId());
         Note note = getNote(id, member);
         List<String> tags = noteTagRepository.findTagNameByNoteIdAndMemberId(id, member.getMemberId());
+        
+        // 노트에 연결된 이미지 정보 조회
+        List<NoteImageResponseDto> images = noteImageService.readImagesByNoteId(id);
+        
         NoteResponseDto noteResponseDto = NoteResponseDto.from(note);
         noteResponseDto.setTags(tags);
+        noteResponseDto.setImages(images);
         
         Optional<Bookmark> bookmarked = bookmarkRepository.findByMemberMemberIdAndNoteNoteId(member.getMemberId(), note.getNoteId());
 
