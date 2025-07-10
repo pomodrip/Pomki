@@ -11,9 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
@@ -25,10 +27,41 @@ import java.util.List;
 public class NoteController {
 
     private final NoteService noteService;
-    @Operation(summary = "노트 생성", description = "새로운 노트를 생성합니다.")
-    @PostMapping
-    public ResponseEntity<NoteResponseDto> createNote(@Valid @RequestBody NoteCreateRequestDto noteRequestDto,
-                                                      @AuthenticationPrincipal PrincipalMember memberInfoDto) {
+    
+    @Operation(summary = "노트 생성 (JSON)", description = "새로운 노트를 생성합니다. (이미지 업로드 없음)")
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<NoteResponseDto> createNote(
+            @Valid @RequestBody NoteCreateRequestDto noteRequestDto,
+            @AuthenticationPrincipal PrincipalMember memberInfoDto) {
+        
+        NoteResponseDto responseDto = noteService.createNote(noteRequestDto, memberInfoDto);
+        return ResponseEntity.created(URI.create("/api/notes/" + responseDto.getNoteId()))
+                .body(responseDto);
+    }
+
+    @Operation(summary = "노트 생성 (이미지 포함)", description = "새로운 노트를 생성합니다. 이미지 파일도 함께 업로드할 수 있습니다.")
+    @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<NoteResponseDto> createNoteWithImages(
+            @Parameter(description = "노트 제목", required = true) 
+            @RequestPart("noteTitle") String noteTitle,
+            @Parameter(description = "노트 내용", required = true) 
+            @RequestPart("noteContent") String noteContent,
+            @Parameter(description = "AI 향상 여부") 
+            @RequestPart(value = "aiEnhanced", required = false) String aiEnhanced,
+            @Parameter(description = "원본 내용") 
+            @RequestPart(value = "originalContent", required = false) String originalContent,
+            @Parameter(description = "이미지 파일 리스트") 
+            @RequestPart(value = "imageFiles", required = false) List<MultipartFile> imageFiles,
+            @AuthenticationPrincipal PrincipalMember memberInfoDto) {
+        
+        // DTO 생성 및 설정
+        NoteCreateRequestDto noteRequestDto = new NoteCreateRequestDto();
+        noteRequestDto.setNoteTitle(noteTitle);
+        noteRequestDto.setNoteContent(noteContent);
+        noteRequestDto.setAiEnhanced(aiEnhanced != null ? Boolean.parseBoolean(aiEnhanced) : null);
+        noteRequestDto.setOriginalContent(originalContent);
+        noteRequestDto.setImageFiles(imageFiles);
+        
         NoteResponseDto responseDto = noteService.createNote(noteRequestDto, memberInfoDto);
         return ResponseEntity.created(URI.create("/api/notes/" + responseDto.getNoteId()))
                 .body(responseDto);
@@ -58,6 +91,7 @@ public class NoteController {
         noteService.deleteNote(id, memberInfoDto);
         return ResponseEntity.noContent().build();
     }
+    
     @Operation(summary = "노트 수정", description = "노트의 제목, 내용을 수정합니다.")
     @PutMapping("/{id}")
     public ResponseEntity<NoteResponseDto> updateNote(@Parameter(name = "id", example = "1", description = "복습노트 고유 아이디", required = true)

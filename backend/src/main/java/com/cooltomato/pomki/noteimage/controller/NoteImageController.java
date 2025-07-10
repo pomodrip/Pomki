@@ -26,11 +26,10 @@ public class NoteImageController {
     private final NoteImageService noteImageService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "이미지 업로드", description = "노트에 이미지를 업로드합니다.")
+    @Operation(summary = "이미지 업로드", description = "노트에 이미지를 업로드합니다. noteId는 선택사항입니다.")
     public ResponseEntity<NoteImageResponseDto> uploadImage(
-            @Parameter(description = "노트 ID", required = true)
-            @RequestParam("noteId") @NotBlank(message = "노트 ID는 필수입니다.") String noteId,
-            
+            @Parameter(description = "노트 ID (선택사항)", required = false)
+            @RequestParam(value = "noteId", required = false) String noteId,
             @Parameter(description = "업로드할 이미지 파일", required = true)
             @RequestParam("imageFile") MultipartFile imageFile) {
 

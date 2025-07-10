@@ -61,8 +61,12 @@ public class NoteImageService {
         MultipartFile file = requestDto.getImageFile();
         String noteId = requestDto.getNoteId();
 
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new NoteNotFoundException("해당 ID의 노트를 찾을 수 없습니다."));
+        // noteId가 null이 아닌 경우에만 노트 조회
+        Note note = null;
+        if (noteId != null && !noteId.trim().isEmpty()) {
+            note = noteRepository.findById(noteId)
+                    .orElseThrow(() -> new NoteNotFoundException("해당 ID의 노트를 찾을 수 없습니다."));
+        }
 
         if (file.isEmpty()) {
             throw new EmptyFileException("이미지 파일이 비어있습니다.");
@@ -120,7 +124,7 @@ public class NoteImageService {
 
             return NoteImageResponseDto.builder()
                     .imageId(savedNoteImage.getImageId())
-                    .noteId(savedNoteImage.getNote().getNoteId())
+                    .noteId(savedNoteImage.getNote() != null ? savedNoteImage.getNote().getNoteId() : null)
                     .imageUrl(savedNoteImage.getImageUrl())
                     .imageName(savedNoteImage.getImageName())
                     .fileSize(savedNoteImage.getFileSize())
@@ -146,7 +150,7 @@ public class NoteImageService {
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
                 NoteImageRequestDto requestDto = NoteImageRequestDto.builder()
-                        .noteId(noteId)
+                        .noteId(noteId) // noteId는 null일 수 있음
                         .imageFile(file)
                         .build();
                 
