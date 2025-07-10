@@ -74,7 +74,7 @@ public class AIService {
     
     /**
      * 사용자 질문에 AI로 답변 (Gemini 사용)
-     * 노트 작성 중 궁금한 내용을 질문하면 답변 제공
+     * 노트 작성 중 궁금한 내용을 질문하면 답변 제공 
      */
     public String answerQuestion(String question, String context) {
         try {
