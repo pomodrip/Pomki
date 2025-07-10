@@ -5,7 +5,7 @@ let theme = createTheme({
   // I.A. 색상 (Palette) 
   palette: {
     primary: {
-      main: '#2979FF', // 1. Primary Main
+      main: '#0F6BFF', // 1. Primary Main
       light: '#E3F2FD', // 2. Primary Light
     },
     secondary: {
