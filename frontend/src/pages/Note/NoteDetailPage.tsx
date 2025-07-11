@@ -10,6 +10,7 @@ import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import ListIcon from '@mui/icons-material/List';
 import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 import theme from '../../theme/theme';
 
 const NoteDetailPage: React.FC = () => {
@@ -62,7 +63,9 @@ const NoteDetailPage: React.FC = () => {
   }));
 
   const sanitizedContent = useMemo(() => {
-    return currentNote ? DOMPurify.sanitize(currentNote.noteContent) : '';
+    if (!currentNote) return '';
+    const rawMarkup = marked(currentNote.noteContent);
+    return DOMPurify.sanitize(rawMarkup);
   }, [currentNote]);
 
   return (

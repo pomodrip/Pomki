@@ -296,7 +296,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onImageUpload,
   ...props
 }) => {
-  const [mode, setMode] = useState<'split' | 'edit' | 'preview'>('split');
+  const [mode, setMode] = useState<'split' | 'edit' | 'preview'>('edit');
   const [markdown, setMarkdown] = useState(value);
   const [htmlContent, setHtmlContent] = useState('');
   const [isUploading, setIsUploading] = useState(false);
