@@ -41,10 +41,11 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
       title=""
       actions={actions}
       hideTitle
+      aria-labelledby="modal-modal-title"
     >
       <Box sx={{ textAlign: 'left', width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Text variant="h6" fontWeight="bold">
+          <Text variant="h6" fontWeight="bold" id="modal-modal-title">
             새로운 소식
           </Text>
           <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }} aria-label="닫기">
