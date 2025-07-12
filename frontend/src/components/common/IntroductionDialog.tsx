@@ -41,6 +41,7 @@ const IntroductionDialog: React.FC<IntroductionDialogProps> = ({ open, onClose, 
       title=""
       actions={actions}
       hideTitle
+      aria-label="새로운 알림"
     >
       <Box sx={{ textAlign: 'left', width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
