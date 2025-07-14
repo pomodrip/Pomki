@@ -37,6 +37,7 @@ import type { Note } from '../../types/note';
 import { useResponsive } from '../../hooks/useResponsive';
 import Toast from '../../components/common/Toast';
 import { generateQuizPreview } from '../../api/quizApi';
+import { formatDateToLocalDateString } from '@/utils/formatDate';
 
 // 🎯 클라이언트 측에서만 관리할 추가 정보 (isBookmarked, tags)
 interface ClientSideNoteInfo {
@@ -318,9 +319,9 @@ const NoteListPage: React.FC = () => {
     }
 
     if (updatedDate && updatedDate.getTime() > createdDate.getTime() + 60000) { // 1분 이상 차이
-      return `${updatedDate.toLocaleDateString('ko-KR')} 수정됨`;
+      return `${formatDateToLocalDateString(updatedAt)} 수정됨`;
     }
-    return `${createdDate.toLocaleDateString('ko-KR')} 작성됨`;
+    return `${formatDateToLocalDateString(createdAt)} 작성됨`;
   };
 
   const handleNoteClick = (noteId: string) => {
