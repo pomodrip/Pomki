@@ -12,6 +12,7 @@ import ListIcon from '@mui/icons-material/List';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import theme from '../../theme/theme';
+import { formatDateToLocal } from '../../utils/formatDate';
 
 const NoteDetailPage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
@@ -119,9 +120,9 @@ const NoteDetailPage: React.FC = () => {
 
             {/* 메타 정보 */}
             <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-              생성: {new Date(currentNote.createdAt).toLocaleString()}
+              생성: {formatDateToLocal(currentNote.createdAt)}
               {currentNote.updatedAt && currentNote.updatedAt !== currentNote.createdAt && (
-                <> / 수정: {new Date(currentNote.updatedAt).toLocaleString()}</>
+                <> / 수정: {formatDateToLocal(currentNote.updatedAt)}</>
               )}
             </Typography>
 
