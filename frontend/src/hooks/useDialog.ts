@@ -11,6 +11,7 @@ interface ConfirmDialogOptions {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  confirmColor?: "error" | "success" | "warning" | "info" | "primary" | "secondary" | undefined;
 }
 
 export const useDialog = () => {
@@ -38,7 +39,11 @@ export const useDialog = () => {
         dispatch(openDialog({
           title: options.title,
           content: options.message,
-          onConfirm: () => resolve(true),
+          confirmColor: options.confirmColor,
+          onConfirm: () => {
+            resolve(true);
+            dispatch(closeDialogAction());
+          },
         }));
       });
     },

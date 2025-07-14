@@ -7,7 +7,7 @@ import { closeDialog, selectDialog } from '../../store/slices/dialogSlice';
 
 const ConfirmDialog: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isOpen, title, content, onConfirm } = useAppSelector(selectDialog);
+  const { isOpen, title, content, onConfirm, confirmColor } = useAppSelector(selectDialog);
 
   const handleClose = () => {
     dispatch(closeDialog());
@@ -25,7 +25,7 @@ const ConfirmDialog: React.FC = () => {
       <Button onClick={handleClose} variant="outlined">
         Cancel
       </Button>
-      <Button onClick={handleConfirm} variant="contained" color="error">
+      <Button onClick={handleConfirm} variant="contained" color={confirmColor || 'error'}>
         Confirm
       </Button>
     </>

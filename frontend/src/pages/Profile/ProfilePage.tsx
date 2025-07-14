@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, FormControlLabel, Switch, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
@@ -11,7 +11,20 @@ import MembershipBadge from '../../components/common/MembershipBadge';
 import NavListButton from '../../components/ui/NavListButton';
 
 
+import { useNotification } from '../../hooks/useNotification';
+
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+
 const ProfilePage: React.FC = () => {
+  const { permissionStatus, requestPermission, disableNotifications } = useNotification();
+
+  const handleNotificationToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      requestPermission();
+    } else {
+      disableNotifications();
+    }
+  };
   // const { isMobile } = useResponsive();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -90,6 +103,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ pt: 2, pb: 10 }}>
+      <ConfirmDialog />
       <Typography variant="h1" gutterBottom sx={{ mb: 3 }}>
         프로필
       </Typography>
@@ -139,6 +153,28 @@ const ProfilePage: React.FC = () => {
             </Box>
           </Box>
 
+          {/* 구분선 */}
+          <Box sx={{
+            height: '1px',
+            backgroundColor: 'divider',
+            opacity: 0.12
+          }} />
+
+          {/* 알림 설정 섹션 */}
+          <Box>
+            <Typography variant="h3" gutterBottom sx={{ mb: 3 }}>
+              알림
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={permissionStatus === 'granted'}
+                  onChange={handleNotificationToggle}
+                />
+              }
+              label="알림 받기"
+            />
+          </Box>
           {/* 구분선 */}
           <Box sx={{
             height: '1px',
