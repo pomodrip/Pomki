@@ -187,7 +187,7 @@ const ToastComponent: React.FC<{ toast: ToastItem }> = ({ toast }) => {
         window.clearInterval(intervalRef.current);
       }
     };
-  }, [toast.id, toast.duration, toast.progress, dispatch]);
+  }, [toast.id, toast.duration, toast.progress, dispatch, handleClose]);
 
   return (
     <ToastItemBox 
