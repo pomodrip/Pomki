@@ -15,9 +15,8 @@ import ErrorSnackbar from './components/common/ErrorSnackbar';
 import Toast from './components/common/Toast';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { initializePrefetch } from './utils/prefetch';
-import { requestPermissionAndGetToken, onForegroundMessage } from './utils/fcmUtils';
-import { openDialog } from './store/slices/dialogSlice';
 import IntroductionDialog from './components/common/IntroductionDialog';
+import GlobalNotifications from './components/common/GlobalNotifications';
 
 const INTRO_POPUP_STORAGE_KEY = 'pomki-intro-popup-last-seen';
 
@@ -80,17 +79,7 @@ function UIInitializer() {
     handleCloseIntroDialog();
   };
 
-  useEffect(() => {
-    
-    // 사용자가 인증된 상태일 때만 알림 권한 요청
-    if (isAuthenticated) {
-      requestPermissionAndGetToken(dispatch);
-      const unsubscribe  = onForegroundMessage();
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [isAuthenticated]);
+  
 
   // Redux 테마에 따라 MUI 테마 동적 생성
   const dynamicTheme = createTheme({
@@ -174,6 +163,7 @@ function UIInitializer() {
           <AppRoutes />
           <ErrorSnackbar />
           <Toast />
+          <GlobalNotifications />
           <IntroductionDialog
             open={isIntroDialogOpen}
             onClose={handleCloseIntroDialog}
@@ -184,6 +174,7 @@ function UIInitializer() {
     </ThemeProvider>
   );
 }
+
 
 function App() {
   return (
