@@ -4,6 +4,8 @@ import { getDashboardData, recordAttendance as recordAttendanceApi } from '../..
 import { checkTodayAttendance } from '../../api/analysisApi';
 import type { DashboardStats } from '../../types/study';
 import { showToast } from './toastSlice';
+import { showErrorSnackbar } from './snackbarSlice';
+
 
 // ==========================================
 // 1. 상태 인터페이스
@@ -38,11 +40,30 @@ export const fetchDashboardData = createAsyncThunk<
   { state: RootState; rejectValue: string }
 >('dashboard/fetchDashboardData', async (_, { rejectWithValue }) => {
   try {
-    const [data, attendanceStatus] = await Promise.all([
+    // API 응답을 any 타입으로 받습니다.
+    const [apiData, attendanceStatus]: [any, { attended: boolean }] = await Promise.all([
       getDashboardData(),
       checkTodayAttendance(),
     ]);
-    return { data, hasAttendedToday: attendanceStatus.attended };
+
+    // 프론트엔드 타입에 맞게 데이터 구조를 변환합니다.
+    const transformedData: DashboardStats = {
+      studyTime: {
+        todayStudyMinutes: apiData.todayStudy.totalFocusMinutes,
+        dailyGoalMinutes: apiData.todayStudy.goalMinutes,
+      },
+      attendance: {
+        consecutiveDays: apiData.weeklyStats.currentStreak,
+        attendedDates: apiData.attendanceDates,
+      },
+      review: {
+        todayCount: apiData.reviewStats.todayReviewCards,
+        upcomingCount: apiData.reviewStats.upcoming3DaysCards,
+        overdueCount: apiData.reviewStats.overdueCards,
+      },
+    };
+
+    return { data: transformedData, hasAttendedToday: attendanceStatus.attended };
   } catch (error: any) {
     return rejectWithValue(error?.message ?? '대시보드 데이터를 불러오지 못했습니다.');
   }
@@ -124,6 +145,7 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? 'Unknown error';
+        showErrorSnackbar({ message: action.payload ?? '대시보드 데이터를 불러오는데 실패했습니다.' });
       })
       .addCase(recordAttendanceThunk.rejected, (state, action) => {
         state.error = action.payload ?? 'Unknown error';
