@@ -8,11 +8,7 @@ import type {
 } from '../types/user';
 import type { ApiResponse } from '../types/api';
 
-// FCM 토큰 전송
-export const sendFcmToken = async (fcmToken: string): Promise<ApiResponse> => {
-  const response: AxiosResponse<ApiResponse> = await api.post('/api/notification/tokens', { token:fcmToken, platform:"WEB" });
-  return response.data;
-};
+
 
 // 내 정보 조회
 export const getMyInfo = async (): Promise<MyInfoResponse> => {
