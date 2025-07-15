@@ -7,6 +7,10 @@ public class JwtUtil {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
+    
+    // 토큰 만료 시간 상수
+    public static final long ACCESS_TOKEN_EXPIRE_TIME = 60 * 10; // 10분
+    public static final long REFRESH_TOKEN_EXPIRE_TIME = 60 * 60 * 24 * 3; // 3일
 
     public static String resolveToken(String authorization) {
         String bearer = authorization;
@@ -26,5 +30,17 @@ public class JwtUtil {
             }
         }
         return null;
+    }
+    
+    public static long getAccessTokenExpireTime() {
+        return ACCESS_TOKEN_EXPIRE_TIME;
+    }
+    
+    public static long getRefreshTokenExpireTime() {
+        return REFRESH_TOKEN_EXPIRE_TIME;
+    }
+    
+    public static int getRefreshTokenExpireTimeForCookie() {
+        return (int) (REFRESH_TOKEN_EXPIRE_TIME >= Integer.MAX_VALUE ? 60 * 60 * 24 * 365 : REFRESH_TOKEN_EXPIRE_TIME);
     }
 } 

@@ -47,9 +47,6 @@ public class JwtProvider {
 
     private SecretKey key;
 
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 60 * 10; // 10분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 60 * 60 * 24 * 3; // 3일
-
     @PostConstruct
     public void init() {
         key = Keys.hmacShaKeyFor(secret.getBytes());
@@ -64,7 +61,7 @@ public class JwtProvider {
                 .refreshToken(refreshToken)
                 .memberId(memberInfo.getMemberId())
                 .createdAt(LocalDateTime.now())
-                .expiresAt(REFRESH_TOKEN_EXPIRE_TIME)
+                .expiresAt(JwtUtil.getRefreshTokenExpireTime())
                 .build();
         refreshTokenRepository.save(tokenEntity);
 
@@ -76,7 +73,7 @@ public class JwtProvider {
 
     public String createAccessToken(MemberInfoDto memberInfo) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(JwtUtil.getAccessTokenExpireTime());
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
@@ -108,7 +105,7 @@ public class JwtProvider {
         }
 
         Instant now = Instant.now();
-        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(JwtUtil.getAccessTokenExpireTime());
 
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
@@ -124,7 +121,7 @@ public class JwtProvider {
 
     public String createRefreshToken(MemberInfoDto memberInfo) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusSeconds(REFRESH_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(JwtUtil.getRefreshTokenExpireTime());
         return Jwts.builder()
                 .subject(String.valueOf(memberInfo.getMemberId()))
                 .claim("role", memberInfo.getRoles().name())
@@ -252,13 +249,9 @@ public class JwtProvider {
         refreshTokenRepository.deleteAll(userTokens);
     }
 
-    public int getRefreshTokenExpireTime() {
-        return (int) (REFRESH_TOKEN_EXPIRE_TIME>=Integer.MAX_VALUE?60*60*24*365:REFRESH_TOKEN_EXPIRE_TIME);
-    }
-
     public String createEmailVerificationToken(String email) {
         Instant now = Instant.now();
-        Instant expires_time = now.plusSeconds(ACCESS_TOKEN_EXPIRE_TIME);
+        Instant expires_time = now.plusSeconds(JwtUtil.getAccessTokenExpireTime());
         return Jwts.builder()
                 .subject(email)
                 .claim("type", "EMAIL_VERIFICATION")
