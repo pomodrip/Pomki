@@ -17,6 +17,7 @@ import com.cooltomato.pomki.auth.dto.OAuth2UserInfo;
 import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.global.constant.AuthType;
 import com.cooltomato.pomki.global.constant.Role;
+import com.cooltomato.pomki.global.exception.AlreadyExistsEmailException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
 
@@ -40,9 +41,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String providerUserId = userInfo.getProviderId();
         String email = userInfo.getEmail();
         String name = userInfo.getName();
+        
 
         Optional<Member> member = memberRepository.findByProviderAndProviderUserId(provider, providerUserId);
         if(member.isEmpty()){
+            memberRepository.findByMemberEmail(email).ifPresent(m -> {
+            throw new OAuth2AuthenticationException("이미 사용중인 이메일입니다.");
+        });
             Member newMember=Member.builder()
                 .memberEmail(email)
                 .currentEmail(email)

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.cooltomato.pomki.global.constant.Role;
+import com.cooltomato.pomki.global.exception.AlreadyExistsEmailException;
 import com.cooltomato.pomki.global.exception.BadRequestException;
 import com.cooltomato.pomki.global.exception.MemberNotFoundException;
 import com.cooltomato.pomki.member.dto.MemberInfoResponseDto;
@@ -66,7 +67,7 @@ public class MemberService {
     }
     private Member createMember(MemberSignUpRequestDto request) {
         if (memberRepository.existsByMemberEmail(request.getEmail())) {
-            throw new RuntimeException("이미 사용중인 이메일입니다.");
+            throw new AlreadyExistsEmailException("이미 사용중인 이메일입니다.");
         }
 
         Member newMember = Member.builder()
@@ -119,8 +120,23 @@ public class MemberService {
     public void softDeleteMember(Long memberId) {
         Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
+        if (member.isSocialLogin() && member.getProvider() != null) {
+            switch (member.getProvider()) {
+                case KAKAO -> unlinkKakao(member);
+                case GOOGLE -> unlinkGoogle(member);
+                default -> {/* do nothing */}
+            }
+        }
         member.setDeleted(true);
         member.setDeletedAt(LocalDateTime.now());
+    }
+
+    private void unlinkKakao(Member member) {
+        // 구현예정
+    }
+
+    private void unlinkGoogle(Member member) {
+        // 구현예정
     }
 
     @Transactional

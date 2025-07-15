@@ -11,6 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.net.URI;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -24,18 +29,23 @@ import io.swagger.v3.oas.annotations.Operation;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-
+    @Value("${pomki.frontend.base-url}")
+    private String frontendBaseUrl;
+    
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하여 토큰을 발급받습니다.")
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto request, HttpServletResponse response) {
         TokenResponseDto tokenDto = authService.login(request);
 
-        Cookie cookie = new Cookie("refresh_token", tokenDto.getRefreshToken());
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setSecure(true);
-
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", tokenDto.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .domain(URI.create(frontendBaseUrl).getHost())
+                .maxAge(JwtUtil.getRefreshTokenExpireTimeForCookie())
+                .sameSite("Lax")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return ResponseEntity.ok(AccessTokenResponseDto.builder()
                 .accessToken(tokenDto.getAccessToken())

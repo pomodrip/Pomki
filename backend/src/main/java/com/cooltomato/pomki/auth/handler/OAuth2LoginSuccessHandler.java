@@ -4,6 +4,7 @@ import com.cooltomato.pomki.auth.dto.PrincipalMember;
 import com.cooltomato.pomki.auth.dto.TokenResponseDto;
 import com.cooltomato.pomki.auth.dto.MemberInfoDto;
 import com.cooltomato.pomki.auth.jwt.JwtProvider;
+import com.cooltomato.pomki.auth.jwt.JwtUtil;
 import com.cooltomato.pomki.global.exception.MemberNotFoundException;
 import com.cooltomato.pomki.member.entity.Member;
 import com.cooltomato.pomki.member.repository.MemberRepository;
@@ -73,7 +74,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 .secure(true)
                 .path("/")
                 .domain(URI.create(frontendBaseUrl).getHost())
-                .maxAge(tokenProvider.getRefreshTokenExpireTime())
+                .maxAge(JwtUtil.getRefreshTokenExpireTimeForCookie())
                 .sameSite("Lax")
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
