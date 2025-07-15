@@ -24,7 +24,7 @@ public class CardBookmarkController {
     @PostMapping("/{cardId}")
     public ResponseEntity<Void> addCardBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable Long cardId) {
+            @PathVariable(name = "cardId") Long cardId) {
         
         cardBookmarkService.addCardBookmark(principalMember.getMemberId(), cardId);
         return ResponseEntity.ok().build();
@@ -34,7 +34,7 @@ public class CardBookmarkController {
     @DeleteMapping("/{cardId}")
     public ResponseEntity<Void> removeCardBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable Long cardId) {
+            @PathVariable(name = "cardId") Long cardId) {
         
         cardBookmarkService.removeCardBookmark(principalMember.getMemberId(), cardId);
         return ResponseEntity.ok().build();
@@ -53,7 +53,7 @@ public class CardBookmarkController {
     @GetMapping("/{cardId}/status")
     public ResponseEntity<Boolean> isCardBookmarked(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable Long cardId) {
+            @PathVariable(name = "cardId") Long cardId) {
         
         boolean isBookmarked = cardBookmarkService.isCardBookmarked(principalMember.getMemberId(), cardId);
         return ResponseEntity.ok(isBookmarked);

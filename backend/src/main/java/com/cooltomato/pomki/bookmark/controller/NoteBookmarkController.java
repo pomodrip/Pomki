@@ -24,7 +24,7 @@ public class NoteBookmarkController {
     @PostMapping("/notes/{noteId}")
     public ResponseEntity<Void> addNoteBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable String noteId) {
+            @PathVariable(name = "noteId") String noteId) {
         
         bookmarkService.addBookmark(principalMember.getMemberId(), noteId);
         return ResponseEntity.ok().build();
@@ -34,7 +34,7 @@ public class NoteBookmarkController {
     @DeleteMapping("/notes/{noteId}")
     public ResponseEntity<Void> removeNoteBookmark(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable String noteId) {
+            @PathVariable(name = "noteId") String noteId) {
         
         bookmarkService.removeBookmark(principalMember.getMemberId(), noteId);
         return ResponseEntity.ok().build();
@@ -53,7 +53,7 @@ public class NoteBookmarkController {
     @GetMapping("/notes/{noteId}/status")
     public ResponseEntity<Boolean> isNoteBookmarked(
             @AuthenticationPrincipal PrincipalMember principalMember,
-            @PathVariable String noteId) {
+            @PathVariable(name = "noteId") String noteId) {
         
         boolean isBookmarked = bookmarkService.isBookmarked(principalMember.getMemberId(), noteId);
         return ResponseEntity.ok(isBookmarked);
