@@ -14,6 +14,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByMemberEmail(String email);
     boolean existsByMemberEmail(String email);
     Optional<Member> findByMemberIdAndIsDeletedIsFalse(Long memberId);
+    Optional<Member> findByProviderAndProviderUserIdAndIsDeletedIsFalse(AuthType provider, String providerUserId);
     Optional<Member> findByProviderAndProviderUserId(AuthType provider, String providerUserId);
     
     @Query("SELECT m FROM Member m LEFT JOIN FETCH m.bookmarks WHERE m.memberId = :memberId AND m.isDeleted = false")

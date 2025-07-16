@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,9 +60,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             redisTemplate.opsForValue().set(redisKeyAccessToken, accessToken.getTokenValue(), 3, TimeUnit.HOURS);
         }
 
-        Optional<Member> member = memberRepository.findByProviderAndProviderUserId(provider, providerUserId);
-        if(member.isEmpty()){
-            Member newMember=Member.builder()
+        Optional<Member> memberOptional = memberRepository.findByProviderAndProviderUserIdAndIsDeletedIsFalse(provider, providerUserId);
+
+        if (memberOptional.isEmpty()) {
+            // 탈퇴한 회원인지 확인
+            if (memberRepository.findByProviderAndProviderUserId(provider, providerUserId).isPresent()) {
+                OAuth2Error error = new OAuth2Error("DELETED_USER_ACCOUNT", "This account has been deleted.", null);
+                throw new OAuth2AuthenticationException(error, error.getErrorCode());
+            }
+            
+            Member newMember = Member.builder()
                 .memberEmail(email)
                 .currentEmail(email)
                 .memberNickname(name)
@@ -79,9 +87,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .build();
         }
         
-
         return PrincipalMember.builder()
-                .memberInfo(MemberInfoDto.from(member.get()))
+                .memberInfo(MemberInfoDto.from(memberOptional.get()))
                 .attributes(oAuth2User.getAttributes())
                 .build();
     }

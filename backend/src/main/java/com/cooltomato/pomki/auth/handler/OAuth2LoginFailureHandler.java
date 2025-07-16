@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -27,21 +28,27 @@ public class OAuth2LoginFailureHandler extends SimpleUrlAuthenticationFailureHan
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
         AuthenticationException exception) throws IOException, ServletException {
       log.info("OAuth2 Login 실패: {}", exception.getMessage());
-      try {
-        loginFailure(request, response);
-      } catch (IOException e) {
-        log.error("로그인 실패 처리 중 에러 발생 :{}", e.getLocalizedMessage());
-      }
-    }
 
-    private void loginFailure(HttpServletRequest request, HttpServletResponse response) throws IOException {
+      String errorCode = "login_failed";
+      int resultCode = 403;
+
+      if (exception instanceof OAuth2AuthenticationException) {
+          String errorCd = ((OAuth2AuthenticationException) exception).getError().getErrorCode();
+          switch (errorCd) {
+              case "DELETED_USER_ACCOUNT":
+                  errorCode = "deleted_user";
+                  resultCode = 409;
+                  break;
+          }
+      }
+
       // fromHttpUrl 왜 사라진?
       UriComponents uriComponent= UriComponentsBuilder.fromUriString(frontendBaseUrl)
               .pathSegment("auth","login")
-              .queryParam("resultCode",403)
-              .queryParam("error","loginFail")
+              .queryParam("resultCode", resultCode)
+              .queryParam("error", errorCode)
               .encode()
-          .build();
+              .build();
       getRedirectStrategy().sendRedirect(request, response, uriComponent.toString());
-  }
+    }
 }
