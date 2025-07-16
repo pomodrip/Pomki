@@ -197,4 +197,10 @@ public class GlobalExceptionHandler {
         log.error("TokenNotFoundException: ", exception);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
     }
+
+    @ExceptionHandler(SocialUnlinkFailedException.class)
+    public ResponseEntity<String> handleSocialUnlinkFailedException(SocialUnlinkFailedException exception) {
+        log.error("SocialUnlinkFailedException: ", exception);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
 }
