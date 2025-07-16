@@ -26,9 +26,17 @@ import com.cooltomato.pomki.email.constant.EmailVerificationCode;
 import com.cooltomato.pomki.email.dto.EmailVerificationRequestDto;
 import com.cooltomato.pomki.email.service.EmailService;
 import com.cooltomato.pomki.auth.jwt.JwtProvider;
-
+import com.cooltomato.pomki.global.constant.AuthType;
+import com.cooltomato.pomki.global.exception.SocialUnlinkFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +47,8 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtProvider jwtProvider;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final RestTemplate restTemplate;
 
     @Transactional
     public void signUp(MemberSignUpRequestDto request) {
@@ -120,23 +130,13 @@ public class MemberService {
     public void softDeleteMember(Long memberId) {
         Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
-        if (member.isSocialLogin() && member.getProvider() != null) {
-            switch (member.getProvider()) {
-                case KAKAO -> unlinkKakao(member);
-                case GOOGLE -> unlinkGoogle(member);
-                default -> {/* do nothing */}
-            }
+
+        if (member.isSocialLogin()) {
+            unlinkSocialAccount(member);
         }
+
         member.setDeleted(true);
         member.setDeletedAt(LocalDateTime.now());
-    }
-
-    private void unlinkKakao(Member member) {
-        // 구현예정
-    }
-
-    private void unlinkGoogle(Member member) {
-        // 구현예정
     }
 
     @Transactional
@@ -144,8 +144,60 @@ public class MemberService {
         Member member = memberRepository.findByMemberIdAndIsDeletedIsFalse(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 사용자입니다."));
         
+        if (member.isSocialLogin()) {
+            unlinkSocialAccount(member);
+        }
+        
         memberRepository.deleteById(memberId);
     }
+
+    private void unlinkSocialAccount(Member member) {
+        String provider = member.getProvider().name();
+        String providerUserId = member.getProviderUserId();
+        String redisKey = "social:accessToken:" + provider + ":" + providerUserId;
+        String accessToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (accessToken != null) {
+            if (member.getProvider() == AuthType.KAKAO) {
+                unlinkKakao(accessToken);
+            } else if (member.getProvider() == AuthType.GOOGLE) {
+                unlinkGoogle(accessToken);
+            }
+            redisTemplate.delete(redisKey);
+        }
+    }
+
+    private void unlinkKakao(String accessToken) {
+        String url = "https://kapi.kakao.com/v1/user/unlink";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            throw new SocialUnlinkFailedException("카카오 연동 해제에 실패했습니다. 다시 로그인 후 시도해주세요.", e);
+        }
+    }
+
+    private void unlinkGoogle(String accessToken) {
+        String url = "https://accounts.google.com/o/oauth2/revoke?token=" + accessToken;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            throw new SocialUnlinkFailedException("구글 연동 해제에 실패했습니다. 다시 로그인 후 시도해주세요.", e);
+        }
+    }
+
 
     @Scheduled(cron = "0 0 2 */2 * ?")
     @Transactional

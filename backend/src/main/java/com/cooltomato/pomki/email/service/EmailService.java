@@ -105,7 +105,7 @@ public class EmailService {
     
     private String buildVerificationEmailContent(String verificationCode) {
         return String.format("""
-            Pomki 이메일 인증 메일
+            Pomkist 이메일 인증 메일
             
             이메일 인증을 완료하기 위해 아래 인증코드를 입력해주세요.
             
