@@ -80,7 +80,7 @@ const snackbarSlice = createSlice({
       state.redirectConfig = {
         enabled: true,
         targetPath: '/login',
-        delay: 2000,
+        delay: 0,
         shouldClearAuth: true,
       };
     },
