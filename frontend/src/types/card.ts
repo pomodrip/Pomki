@@ -1,0 +1,112 @@
+// API 명세서를 기반으로 한 타입 정의
+
+/**
+ * 덱 응답 DTO
+ * API: /api/decks/**
+ */
+export interface CardDeck {
+  deckId: string;
+  deckName: string;
+  memberId: number;
+  cardCnt: number;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 카드 응답 DTO
+ * API: /api/card/**, /api/decks/{deckId}/cards
+ */
+export interface Card {
+  answer: string;
+  content: string;
+  deckId: string;
+  deckName: string;
+  cardId: number;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  tags: string[];
+  bookmarked: boolean;
+}
+
+
+/**
+ * 카드 검색 응답 DTO
+ * API: /api/card/search/{keyword}
+ */
+export interface SearchCard {
+  answer: string;
+  content: string;
+  deckId: string;
+  deckName: string;
+  cardId: number;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+  tags: string[];
+  bookmarked: boolean;
+}
+
+/**
+ * 덱 생성 요청 DTO
+ * API: POST /api/decks
+ */
+export interface CreateDeckRequest extends Record<string, unknown> {
+  deckName: string;
+  [key: string]: unknown;
+}
+
+/**
+ * 덱 수정 요청 DTO
+ * API: PUT /api/decks/{deckId}
+ */
+export interface UpdateDeckRequest {
+  deckName: string;
+}
+
+/**
+ * 카드 생성 요청 DTO
+ * API: POST /api/card?deckId={deckId}
+ */
+export interface CreateCardRequest {
+  deckId: string;
+  content: string;
+  answer: string;
+}
+
+/**
+ * 카드 수정 요청 DTO
+ * API: PUT /api/card/{cardId}
+ */
+export interface UpdateCardRequest {
+  content: string;
+  answer: string;
+}
+
+/**
+ * 카드 태그 추가 요청 DTO
+ * API: POST /api/card-tag
+ */
+export interface AddCardTagRequest {
+  cardId: number;
+  tagNames: string[];
+}
+
+/**
+ * 여러 카드 생성 요청의 개별 카드 데이터
+ * API: POST /api/card/batch
+ */
+export interface NewCardData {
+  content: string;
+  answer: string;
+}
+
+/**
+ * 여러 카드 생성 요청 DTO
+ * API: POST /api/card/batch?deckId={deckId}
+ */
+export interface CreateCardsRequest {
+  cards: NewCardData[];
+}
