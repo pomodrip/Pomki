@@ -1,0 +1,73 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.6'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.cooltomato'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	runtimeOnly 'com.h2database:h2'
+	// jwt
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+	// swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	// S3
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.3.1'
+	// thumbnailator
+	implementation 'net.coobird:thumbnailator:0.4.20'
+	// AI Integration (추후 OpenAI, Anthropic 등과 연동)
+	implementation 'org.springframework:spring-webflux:6.1.0'
+	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.100.Final:osx-aarch_64'
+	// Kafka for async messaging (추후 메시지 브로커 연동용)
+	// implementation 'org.springframework.kafka:spring-kafka'
+	// WebSocket for real-time notifications (추후 실시간 알림용)
+	// implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	// Scheduling for SRS
+	implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
+
+
+	//	 WebClient 사용을 위해 추가
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// fcm
+	implementation 'com.google.firebase:firebase-admin:9.5.0'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

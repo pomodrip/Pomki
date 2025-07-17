@@ -1,0 +1,324 @@
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import type { AxiosError } from 'axios';
+import { getNotes, getNote, createNote, updateNote, deleteNote, addNoteTags as apiAddNoteTags, removeNoteTag as apiRemoveNoteTag, getAllNoteTags } from '../../api/noteApi';
+import type {
+  Note,
+  NoteState,
+  NoteCreateRequest,
+  NoteUpdateRequest,
+  NoteListItem,
+  AddNoteTagRequest,
+} from '../../types/note';
+import { createSelector } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
+import { addBookmark, getBookmarkedNotes, removeBookmark } from '@/api/noteBookmarkApi';
+
+interface ErrorResponse {
+  message: string;
+}
+
+const initialState: NoteState = {
+  notes: [],
+  currentNote: null,
+  loading: false,
+  error: null,
+  noteTags: {},
+  bookmarkedNoteIds: [],
+};
+
+// Async Thunks
+export const fetchNotes = createAsyncThunk('note/fetchNotes', async (_, { dispatch }) => {
+  const response = await getNotes();
+  dispatch(fetchNoteTags()); // 노트 목록을 가져온 후 태그 정보를 가져옵니다.
+  return response;
+});
+
+export const fetchNoteTags = createAsyncThunk('note/fetchNoteTags', async () => {
+  const response = await getAllNoteTags();
+  return response;
+});
+
+export const fetchNoteBookmarks = createAsyncThunk('note/fetchNoteBookmarks', async () => {
+  const response = await getBookmarkedNotes();
+  return response.map(bookmark => bookmark.noteId);
+});
+
+export const toggleNoteBookmark = createAsyncThunk(
+  'note/toggleNoteBookmark',
+  async (noteId: string, { getState, rejectWithValue }) => {
+    const { note } = getState() as { note: NoteState };
+    const isBookmarked = note.bookmarkedNoteIds.includes(noteId);
+
+    try {
+      if (isBookmarked) {
+        await removeBookmark(noteId);
+      } else {
+        await addBookmark(noteId);
+      }
+      return noteId;
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      return rejectWithValue(err.response?.data.message || err.message || 'Failed to toggle bookmark');
+    }
+  },
+);
+
+export const fetchNote = createAsyncThunk('note/fetchNote', async (noteId: string) => {
+  const response = await getNote(noteId);
+  return response;
+});
+
+export const createNoteAsync = createAsyncThunk(
+  'note/createNote',
+  async (data: NoteCreateRequest, { rejectWithValue }) => {
+    try {
+      const response = await createNote(data);
+      return response;
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      return rejectWithValue(err.response?.data.message || err.message || 'Failed to create note');
+    }
+  },
+);
+
+export const updateNoteAsync = createAsyncThunk(
+  'note/updateNote',
+  async ({ noteId, data }: { noteId: string; data: NoteUpdateRequest }, { rejectWithValue }) => {
+    try {
+      const response = await updateNote(noteId, data);
+      return response;
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      return rejectWithValue(err.response?.data.message || err.message || 'Failed to update note');
+    }
+  },
+);
+
+export const deleteNoteAsync = createAsyncThunk(
+  'note/deleteNote',
+  async (noteId: string, { rejectWithValue }) => {
+    try {
+      await deleteNote(noteId);
+      return noteId;
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      return rejectWithValue(err.response?.data.message || err.message || 'Failed to delete note');
+    }
+  },
+);
+
+export const addNoteTags = createAsyncThunk<
+  { noteId: string; addedTags: string[] },
+  AddNoteTagRequest
+>('note/addNoteTags', async (data, { rejectWithValue }) => {
+  try {
+    await apiAddNoteTags(data);
+    return { noteId: data.noteId, addedTags: data.tagNames };
+  } catch (error) {
+    const err = error as AxiosError<ErrorResponse>;
+    return rejectWithValue(err.response?.data.message || err.message || 'Failed to add tags');
+  }
+});
+
+export const removeNoteTagAsync = createAsyncThunk<
+  { noteId: string; removedTag: string },
+  { noteId: string; tagName: string }
+>('note/removeNoteTag', async ({ noteId, tagName }, { rejectWithValue }) => {
+  try {
+    await apiRemoveNoteTag(noteId, tagName);
+    return { noteId, removedTag: tagName };
+  } catch (error) {
+    const err = error as AxiosError<ErrorResponse>;
+    return rejectWithValue(err.response?.data.message || err.message || 'Failed to remove tag');
+  }
+});
+
+const noteSlice = createSlice({
+  name: 'note',
+  initialState,
+  reducers: {
+    clearError: state => {
+      state.error = null;
+    },
+    clearCurrentNote: state => {
+      state.currentNote = null;
+    },
+    setCurrentNote: (state, action: PayloadAction<Note | null>) => {
+      state.currentNote = action.payload;
+    },
+  },
+  extraReducers: builder => {
+    builder
+      // Fetch Notes
+      .addCase(fetchNotes.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchNotes.fulfilled, (state, action: PayloadAction<NoteListItem[]>) => {
+        state.loading = false;
+        state.notes = action.payload;
+      })
+      .addCase(fetchNotes.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to fetch notes.';
+      })
+
+      // Fetch Note Tags
+      .addCase(fetchNoteTags.fulfilled, (state, action: PayloadAction<{ [noteId: string]: string[] }>) => {
+        state.noteTags = action.payload;
+      })
+
+      // Fetch Note Bookmarks
+      .addCase(fetchNoteBookmarks.fulfilled, (state, action: PayloadAction<string[]>) => {
+        state.bookmarkedNoteIds = action.payload;
+      })
+
+      // Toggle Note Bookmark
+      .addCase(toggleNoteBookmark.fulfilled, (state, action: PayloadAction<string>) => {
+        const noteId = action.payload;
+        const index = state.bookmarkedNoteIds.indexOf(noteId);
+        if (index >= 0) {
+          state.bookmarkedNoteIds.splice(index, 1);
+        } else {
+          state.bookmarkedNoteIds.push(noteId);
+        }
+      })
+
+      // Fetch Note by ID
+      .addCase(fetchNote.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchNote.fulfilled, (state, action: PayloadAction<Note>) => {
+        state.loading = false;
+        state.currentNote = action.payload;
+      })
+      .addCase(fetchNote.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to fetch note details.';
+      })
+
+      // Create Note
+      .addCase(createNoteAsync.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createNoteAsync.fulfilled, (state, action: PayloadAction<Note>) => {
+        state.loading = false;
+        const now = new Date().toISOString();
+        const newNote: NoteListItem = {
+          noteId: action.payload.noteId,
+          noteTitle: action.payload.noteTitle,
+          aiEnhanced: action.payload.aiEnhanced,
+          createdAt: action.payload.createdAt || now,
+          updatedAt: action.payload.updatedAt || now,
+          tags: action.payload.tags || [],
+        };
+        state.notes.unshift(newNote);
+      })
+      .addCase(createNoteAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to create note.';
+      })
+
+      // Update Note
+      .addCase(updateNoteAsync.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateNoteAsync.fulfilled, (state, action: PayloadAction<Note>) => {
+        state.loading = false;
+        const now = new Date().toISOString();
+        const index = state.notes.findIndex(note => note.noteId === action.payload.noteId);
+        if (index !== -1) {
+          state.notes[index] = {
+            ...state.notes[index],
+            noteTitle: action.payload.noteTitle,
+            aiEnhanced: action.payload.aiEnhanced,
+            updatedAt: action.payload.updatedAt || now,
+            tags: action.payload.tags || state.notes[index].tags,
+          };
+        }
+        if (state.currentNote?.noteId === action.payload.noteId) {
+          state.currentNote = {
+            ...action.payload,
+            updatedAt: action.payload.updatedAt || now,
+            tags: action.payload.tags || state.currentNote?.tags,
+          };
+        }
+      })
+      .addCase(updateNoteAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to update note.';
+      })
+
+      // Delete Note
+      .addCase(deleteNoteAsync.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteNoteAsync.fulfilled, (state, action: PayloadAction<string>) => {
+        state.loading = false;
+        state.notes = state.notes.filter(note => note.noteId !== action.payload);
+      })
+      .addCase(deleteNoteAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to delete note.';
+      })
+
+      // Add Note Tags
+      .addCase(addNoteTags.fulfilled, (state, action) => {
+        const { noteId, addedTags } = action.payload;
+        if (!addedTags || addedTags.length === 0) return;
+
+        // Update currentNote
+        if (state.currentNote?.noteId === noteId) {
+          const currentTags = state.currentNote.tags || [];
+          state.currentNote.tags = Array.from(new Set([...currentTags, ...addedTags]));
+        }
+
+        // Update notes list
+        const idx = state.notes.findIndex(n => n.noteId === noteId);
+        if (idx !== -1) {
+          const listTags = (state.notes[idx] as any).tags || [];
+          (state.notes[idx] as any).tags = Array.from(new Set([...listTags, ...addedTags]));
+        }
+      })
+      .addCase(addNoteTags.rejected, (state, action) => {
+        state.error = (action.payload as string) || 'Failed to add tags';
+      })
+
+      // Remove Note Tag
+      .addCase(removeNoteTagAsync.fulfilled, (state, action) => {
+        const { noteId, removedTag } = action.payload;
+
+        // Update currentNote
+        if (state.currentNote?.noteId === noteId) {
+          state.currentNote.tags = (state.currentNote.tags || []).filter(t => t !== removedTag);
+        }
+
+        // Update notes list
+        const idx = state.notes.findIndex(n => n.noteId === noteId);
+        if (idx !== -1) {
+          (state.notes[idx] as any).tags = ((state.notes[idx] as any).tags || []).filter((t: string) => t !== removedTag);
+        }
+      })
+      .addCase(removeNoteTagAsync.rejected, (state, action) => {
+        state.error = (action.payload as string) || 'Failed to remove tag';
+      });
+  },
+});
+
+export const { clearError, clearCurrentNote, setCurrentNote } = noteSlice.actions;
+export default noteSlice.reducer;
+
+// 메모이즈된 selector: 노트 제목 검색
+export const selectNotes = (state: RootState) => state.note.notes;
+
+export const selectNotesBySearch = createSelector(
+  [selectNotes, (_: RootState, q: string) => q],
+  (notes, q) =>
+    q && q.trim()
+      ? notes.filter((n: NoteListItem) => n.noteTitle.toLowerCase().includes(q.toLowerCase()))
+      : notes
+);
