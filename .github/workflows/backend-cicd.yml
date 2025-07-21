@@ -11,7 +11,13 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend-cicd.yml'
-
+  workflow_dispatch:
+    inputs:
+      message:
+        description: '수동 실행 원인 설명'
+        type: text
+        required: false
+  
 env:
   BE_DIR: backend
   GH_TOKEN: ${{ secrets.POMKI_CI_PAT || secrets.GITHUB_TOKEN }}
