@@ -58,28 +58,28 @@ Pomkist는 **AI 기술과 포모도로 학습법**을 결합하여, 학습의 �
 ## 주요 서비스 화면
 - **집중 타이머**
   <div style="display : flex; flex-direction : row; gap:10px;">
-    <img src="./assets/timer_page1.png" width=250px/>
-    <img src="./assets/timer_page2.png" width=250px/>
+    <img src="./assets/timer_page1.png" width=250px height=320px/>
+    <img src="./assets/timer_page2.png" width=250px height=320px/>
   </div>
 </br>
 
 - **복습 노트 작성**
   <div style="display : flex; flex-direction : row; gap:10px;">
-    <img src="./assets/timer_page_editer.png" width=250px/>
-    <img src="./assets/note_generate_img1.png" width=250px/>
+    <img src="./assets/timer_page_editer.png" width=250px height=320px/>
+    <img src="./assets/note_generate_img1.png" width=250px height=320px/>
   </div>
 </br>
 
 - **복습 문제과 덱 복습**
   <div style="display : flex; flex-direction : row; gap:10px;">
-    <img src="./assets/generate_quiz_img.png" width=250px/>
-    <img src="./assets/flashcard_img.png" width=250px/>
+    <img src="./assets/generate_quiz_img.png" width=250px height=320px/>
+    <img src="./assets/flashcard_img.png" width=250px height=320px/>
   </div>
 </br>
 
 - **학습통계 및 복습주기 확인**
   <div style="display : flex; flex-direction : row; gap:10px;">
-    <img src="./assets/dashboard_page_img.png" width=250px/>
+    <img src="./assets/dashboard_page_img.png" width=250px height=320px/>
   </div>
 </br>
 
