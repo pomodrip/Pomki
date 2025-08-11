@@ -4,6 +4,8 @@
 
 Pomkist는 **AI 기술과 포모도로 학습법**을 결합하여, 학습의 흐름을 끊지 않고 메모 작성부터 노트 정리, 복습 문제 생성, 플래시카드 등록까지 한 번에 해결하는 **통합 학습 플랫폼**입니다.  
 학습자가 본질적인 학습에 집중할 수 있도록, 반복적이고 번거로운 복습 준비 과정을 자동화합니다.
+<img width="1225" height="907" alt="image" src="https://github.com/user-attachments/assets/c7050bda-a448-453e-b524-0b69967b1a3a" />
+
 
 ## 주요 기능
 
@@ -25,6 +27,10 @@ Pomkist는 **AI 기술과 포모도로 학습법**을 결합하여, 학습의 �
 
 - **PWA 지원**
   - 웹앱으로 어디서나 접근 가능, 모바일 친화적
+ 
+  <img width="326" height="401" alt="image" src="https://github.com/user-attachments/assets/2d46e30f-d958-4f5a-ae4b-a40ec8066423" />
+<img width="263" height="402" alt="image" src="https://github.com/user-attachments/assets/7f853c5e-24ff-4129-8dff-3eeeb899332a" />
+
 
 ## 기술 스택
 
@@ -42,12 +48,20 @@ Pomkist는 **AI 기술과 포모도로 학습법**을 결합하여, 학습의 �
 - **CI/CD**: GitHub Actions + AWS CodeDeploy 자동화 배포
 - **보안**: OAuth2, JWT 기반 인증/인가
 - **접근성/성능 테스트**: Lighthouse, Axe-core로 자동화
+<img width="1558" height="944" alt="image" src="https://github.com/user-attachments/assets/553c91a0-f455-4555-af52-0a0133df4f8d" />
+
+
+
+
 
 ## 협업 및 개발 문화
 
 - **애자일 기반 협업**: Jira, Notion, Discord, Figma 적극 활용
 - **코드 컨벤션**: Git flow, 커밋 메시지 규칙(feat, fix, refactor 등)
 - **정기 코드 리뷰 및 데일리 스크럼**: 품질 및 일정 관리
+<img width="1610" height="610" alt="image" src="https://github.com/user-attachments/assets/762c5766-c1d4-49d6-abf2-510126062515" />
+
+<img width="949" height="937" alt="image" src="https://github.com/user-attachments/assets/08b7f16c-2b8b-445e-9a0c-d7350716ece5" />
 
 ## 핵심 가치
 
@@ -70,6 +84,7 @@ Pomkist는 **AI 기술과 포모도로 학습법**을 결합하여, 학습의 �
 - **AI 에이전트 적극 활용**으로 빠른 기능 구현과 생산성 향상
 - **접근성/성능 최적화**: Lighthouse 96점, Axe-core 기반 WCAG 2.1 준수
 - **협업 문화**: 데일리 스크럼, 코드 리뷰, 긍정적 소통 문화 확립
+- 
 
 ## 데모/배포
 
