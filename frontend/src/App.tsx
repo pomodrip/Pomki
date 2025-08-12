@@ -17,6 +17,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { initializePrefetch } from './utils/prefetch';
 import IntroductionDialog from './components/common/IntroductionDialog';
 import GlobalNotifications from './components/common/GlobalNotifications';
+import Footer from './Footer';
 
 const INTRO_POPUP_STORAGE_KEY = 'pomki-intro-popup-last-seen';
 
@@ -180,7 +181,8 @@ function App() {
   return (
     <ErrorBoundary>
       <UIInitializer />
-    </ErrorBoundary>
+    <Footer/>
+  </ErrorBoundary>
   );
 }
 
